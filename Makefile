@@ -44,8 +44,9 @@ prodDeps: .venv      ##@deps Create a venv and install common and prod dependenc
 
 
 devEnv: .venv devDeps
-	source .venv/bin/activate && pip install -U pre-commit
+##	source .venv/bin/activate && pip install -U pre-commit
 ##	source .venv/bin/activate && pre-commit install --install-hooks
+
 
 
 test:       ##@best_practices Run pystest against the test folder
