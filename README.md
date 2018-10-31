@@ -6,7 +6,13 @@ IMPC Extraction, Transformation and Loading process to generate the data that su
 - make
 
 ## How to run it
-Download the latest release package from the [releases page](https://github.com/mpi2/impc-etl/releases).
+Download the latest release package from the [releases page](https://github.com/mpi2/impc-etl/releases) and decompress it.
+The submit your job to your Spark 2 cluster using:
+
+```console
+spark-submit --py-files jobs.zip,shared.zip,libs.zip impc_etl.py
+```
+
 
 
 ## Development environment setup
@@ -30,13 +36,26 @@ Then update and run the unit tests:
 make test
 ```
 
-Run pylint:
+Run pylint to be sure that we are using the best practices:
 
 ```console
 make lint
 ```
 
-And finally commit and push your changes to you fork and the make a pull request to the original repo when you are ready to go.
+And finally commit and push your changes to your fork and the make a pull request to the original repo when you are ready to go.
 Another member of the team will review your changes and after having two +1 you will be ready to merge them to the base repo.
+
+In order to sync your forked local version with the base repo you need to add an _upstream_ remote:
+
+```console
+git remote add upstream https://github.com/mpi2/impc-etl.git
+git fetch upstream
+git checkout master
+git merge upstream/master
+```
+
+Please procure to have your version in sync with the base repo to avoid merging hell.
+
+
 
 
