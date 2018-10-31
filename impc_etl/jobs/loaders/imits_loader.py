@@ -5,9 +5,10 @@ IMITS loader module
     load_product_file: loads the Product TSV file into a Spark Dataframe
 """
 from pyspark.sql import DataFrame, SparkSession
+from impc_etl.shared import utils
 
 
-def load(spark_session: SparkSession):
+def load(spark_session: SparkSession) -> DataFrame:
     """
     Load IMITS data into a given Spark Context.
     :param spark_session: Spark Context to load the IMITS data
@@ -16,49 +17,36 @@ def load(spark_session: SparkSession):
     print(spark_session)
 
 
-def load_alleles(spark_session: SparkSession, file_path='.'):
+def load_alleles(spark_session: SparkSession, file_path='.') -> DataFrame:
     """
 
     :param spark_session:
     :param file_path:
     :return alleleDataframe:
     """
-    allele2_df = _load_tsv(spark_session, file_path)
+    allele2_df = utils.load_tsv(spark_session, file_path)
     allele_df = allele2_df.where(allele2_df.type == 'Allele')
     return allele_df
 
 
-def load_products(spark_session: SparkSession, file_path='.'):
+def load_products(spark_session: SparkSession, file_path='.') -> DataFrame:
     """
 
     :param spark_session:
     :param file_path:
     :return productDataframe:
     """
-    product_df = _load_tsv(spark_session, file_path).withColumn()
+    product_df = utils.load_tsv(spark_session, file_path).withColumn()
     return product_df
 
 
-def load_genes(spark_session: SparkSession, file_path='.'):
+def load_genes(spark_session: SparkSession, file_path='.') -> DataFrame:
     """
 
     :param spark_session:
     :param file_path:
     :return:
     """
-    allele2_df = _load_tsv(spark_session, file_path)
+    allele2_df = utils.load_tsv(spark_session, file_path)
     allele_df = allele2_df.where(allele2_df.type == 'Gene')
     return allele_df
-
-
-def _load_tsv(spark_session, file_path) -> DataFrame:
-    """
-
-    :param spark_session:
-    :param file_path:
-    :return:
-    """
-    return spark_session.read.csv(file_path,
-                                  header=True,
-                                  mode='DROPMALFORMED',
-                                  sep='\t').load(file_path)
