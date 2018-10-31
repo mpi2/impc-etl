@@ -13,8 +13,6 @@ The submit your job to your Spark 2 cluster using:
 spark-submit --py-files jobs.zip,shared.zip,libs.zip impc_etl.py
 ```
 
-
-
 ## Development environment setup
 Fork this repo and then clone your forked version:
 ```console
