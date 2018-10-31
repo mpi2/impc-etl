@@ -47,13 +47,16 @@ In order to sync your forked local version with the base repo you need to add an
 
 ```console
 git remote add upstream https://github.com/mpi2/impc-etl.git
-git fetch upstream
-git checkout master
-git merge upstream/master
 ```
 
 Please procure to have your version in sync with the base repo to avoid merging hell.
 
+```console
+git fetch upstream
+git checkout master
+git merge upstream/master`
+git push origin master
+``
 
 
 
