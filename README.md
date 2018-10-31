@@ -1,4 +1,4 @@
-# IMPC ETL Process
+# IMPC ETL Process [![Build Status](https://travis-ci.com/mpi2/impc-etl.svg?branch=master)](https://travis-ci.com/mpi2/impc-etl)
 IMPC Extraction, Transformation and Loading process to generate the data that supports [mousephenotype.org](http://mousephenotype.org) among with other internal processes.
 ## Requirements
 - Python 3+
