@@ -1,7 +1,8 @@
 """
 Utils package
 """
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import DataFrame, SparkSession, Row
+from collections import OrderedDict
 
 
 def load_tsv(spark_session: SparkSession, file_path: str) -> DataFrame:
@@ -15,3 +16,12 @@ def load_tsv(spark_session: SparkSession, file_path: str) -> DataFrame:
                                   header=True,
                                   mode='DROPMALFORMED',
                                   sep='\t').load(file_path)
+
+
+def convert_to_row(d: dict) -> Row:
+    """
+
+    :param d:
+    :return:
+    """
+    return Row(**OrderedDict(sorted(d.items())))
