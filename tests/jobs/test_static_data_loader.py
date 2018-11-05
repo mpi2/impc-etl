@@ -11,3 +11,4 @@ def test_load_phenotyping_centres_info():
     """
     session_mock = MagicMock()
     load_phenotyping_centres(session_mock, 'some/path')
+    assert 5 == 5
