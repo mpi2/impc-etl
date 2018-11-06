@@ -1,8 +1,8 @@
 """
-Static Data loader
-    load_human_gene_orthologues:
-    load_phenotyping_centres:
-    load_ontology_terms:
+Static Data extractor
+    extract_human_gene_orthologues:
+    extract_phenotyping_centres:
+    extract_ontology_terms:
 """
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType
@@ -13,7 +13,7 @@ from typing import List
 from impc_etl.config import OntologySchema
 
 
-def load_human_gene_orthologues(spark_session: SparkSession, file_path: str) -> DataFrame:
+def extract_human_gene_orthologues(spark_session: SparkSession, file_path: str) -> DataFrame:
     """
 
     :param spark_session:
@@ -26,21 +26,21 @@ def load_human_gene_orthologues(spark_session: SparkSession, file_path: str) -> 
     schema_fields = [StructField(field_name, StringType(), True) for field_name in file_string_fields]
     schema_fields.extend([StructField(field_name, ArrayType(), True) for field_name in file_array_fields])
     hmd_file_schema = StructType(schema_fields)
-    human_gene_orthologues_df = utils.load_tsv(spark_session, file_path, hmd_file_schema)
+    human_gene_orthologues_df = utils.extract_tsv(spark_session, file_path, hmd_file_schema)
     return human_gene_orthologues_df
 
 
-def load_phenotyping_centres(spark_session: SparkSession, file_path: str) -> DataFrame:
+def extract_phenotyping_centres(spark_session: SparkSession, file_path: str) -> DataFrame:
     """
     :param spark_session:
     :param file_path:
     :return:
     """
-    phenotyping_centres_df = utils.load_tsv(spark_session, file_path)
+    phenotyping_centres_df = utils.extract_tsv(spark_session, file_path)
     return phenotyping_centres_df
 
 
-def load_ontology_terms(spark_session: SparkSession, ontologies_path: str) -> DataFrame:
+def extract_ontology_terms(spark_session: SparkSession, ontologies_path: str) -> DataFrame:
     """
 
     :param spark_session:

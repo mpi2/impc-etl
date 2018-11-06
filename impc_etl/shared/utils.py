@@ -6,7 +6,7 @@ from pyspark.sql.types import StructType
 from collections import OrderedDict
 
 
-def load_tsv(spark_session: SparkSession, file_path: str, schema: StructType = None) -> DataFrame:
+def extract_tsv(spark_session: SparkSession, file_path: str, schema: StructType = None) -> DataFrame:
     """
 
     :param spark_session:
