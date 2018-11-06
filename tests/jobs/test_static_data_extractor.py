@@ -1,17 +1,17 @@
 """
-STATIC DATA LOADER TEST SUITE
+STATIC DATA EXTRACTOR TEST SUITE
 """
 from mock import MagicMock
-from impc_etl.jobs.loaders.static_data_loader import load_phenotyping_centres, _parse_ontology
+from impc_etl.jobs.extraction.static_data_extractor import extract_phenotyping_centres, _parse_ontology
 from owlready2 import *
 
 
-def test_load_phenotyping_centres_info():
+def test_extract_phenotyping_centres_info():
     """
     If the
     """
     session_mock = MagicMock()
-    load_phenotyping_centres(session_mock, 'some/path')
+    extract_phenotyping_centres(session_mock, 'some/path')
     session_mock.read.csv.assert_called_with('some/path', header=True, mode='DROPMALFORMED', schema=None, sep='\t')
 
 
