@@ -5,7 +5,7 @@ import logging
 import pytest
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
-from impc_etl import config
+from impc_etl.config import SparkConfig
 
 
 def quiet_py4j():
@@ -22,7 +22,7 @@ def spark_session(request):
     :param request: pytest.FixtureRequest object
     :return spark: pyspark.sql.SparkSession
     """
-    conf = SparkConf().setAll([('spark.jars.packages', config.SPARK_JAR_PACKAGES)])
+    conf = SparkConf().setAll([('spark.jars.packages', SparkConfig.SPARK_JAR_PACKAGES)])
     spark = SparkSession.builder.appName("IMPC_ETL_TEST").config(conf=conf).getOrCreate()
     request.addfinalizer(lambda: spark.stop())
     quiet_py4j()
