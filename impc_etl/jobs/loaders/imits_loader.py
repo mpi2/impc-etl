@@ -22,7 +22,7 @@ def load_alleles(spark_session: SparkSession, file_path='.') -> DataFrame:
 
     :param spark_session:
     :param file_path:
-    :return alleleDataframe:
+    :return allele_df:
     """
     allele2_df = utils.load_tsv(spark_session, file_path)
     allele_df = allele2_df.where(allele2_df.type == 'Allele')
@@ -34,7 +34,7 @@ def load_products(spark_session: SparkSession, file_path='.') -> DataFrame:
 
     :param spark_session:
     :param file_path:
-    :return productDataframe:
+    :return product_df:
     """
     product_df = utils.load_tsv(spark_session, file_path).withColumn()
     return product_df
@@ -45,8 +45,8 @@ def load_genes(spark_session: SparkSession, file_path='.') -> DataFrame:
 
     :param spark_session:
     :param file_path:
-    :return:
+    :return genes_df:
     """
     allele2_df = utils.load_tsv(spark_session, file_path)
-    allele_df = allele2_df.where(allele2_df.type == 'Gene')
-    return allele_df
+    genes_df = allele2_df.where(allele2_df.type == 'Gene')
+    return genes_df
