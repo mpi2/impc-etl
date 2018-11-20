@@ -22,7 +22,7 @@ def spark_session(request):
     :param request: pytest.FixtureRequest object
     :return spark: pyspark.sql.SparkSession
     """
-    conf = SparkConf().setAll([('spark.jars.packages', SparkConfig.SPARK_JAR_PACKAGES)])
+    conf = SparkConf().setAll([('spark.jars.packages', ','.join(SparkConfig.SPARK_JAR_PACKAGES))])
     spark = SparkSession.builder.appName("IMPC_ETL_TEST").config(conf=conf).getOrCreate()
     request.addfinalizer(lambda: spark.stop())
     quiet_py4j()

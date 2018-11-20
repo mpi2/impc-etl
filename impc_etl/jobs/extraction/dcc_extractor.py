@@ -10,7 +10,7 @@ DCC loader module
 from typing import Tuple
 
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import explode
+from pyspark.sql.functions import explode, concat_ws
 
 
 def extract_observations(spark_session: SparkSession, file_path: str) -> Tuple[DataFrame, DataFrame]:
