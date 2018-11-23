@@ -1,8 +1,11 @@
-import findspark
-findspark.init()
-
+"""
+Conftest: configuration for testing
+"""
 import logging
 import pytest
+import findspark
+findspark.init()
+# pylint:disable=C0413
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from impc_etl.config import SparkConfig
@@ -24,6 +27,6 @@ def spark_session(request):
     """
     conf = SparkConf().setAll([('spark.jars.packages', ','.join(SparkConfig.SPARK_JAR_PACKAGES))])
     spark = SparkSession.builder.appName("IMPC_ETL_TEST").config(conf=conf).getOrCreate()
-    request.addfinalizer(lambda: spark.stop())
+    request.addfinalizer(spark.stop)
     quiet_py4j()
     return spark

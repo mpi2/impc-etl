@@ -6,13 +6,14 @@ default: clean devDeps test lint build
 	if [ ! -e ".venv/bin/activate" ] ; then python3 -m venv --clear .venv ; fi
 
 lint:           ##@best_practices Run pylint against the main script and the shared, jobs and test folders
-	source .venv/bin/activate && pylint -r n impc_etl/impc_etl.py impc_etl/shared/ impc_etl/jobs/ tests/
+	source .venv/bin/activate && pylint -r n impc_etl/main.py impc_etl/shared/ impc_etl/jobs/ tests/
 
 build: clean        ##@deploy Build to the dist package
 	mkdir ./dist
-	cp ./impc_etl/impc_etl.py ./dist/
-	cd ./impc_etl && zip -x impc_etl.py -x -x \*shared\* -r ../dist/jobs.zip .
-	cd ./impc_etl && zip -x impc_etl.py -x -x \*jobs\* -r ../dist/shared.zip .
+	cp ./impc_etl/main.py ./dist/
+##	cd ./impc_etl && zip -x main.py -x -x \*shared\* -r ../dist/jobs.zip .
+##	cd ./impc_etl && zip -x main.py -x -x \*jobs\* -r ../dist/shared.zip .
+	zip -x main.py -r ./dist/impc_etl.zip impc_etl
 	cd ./dist && mkdir libs
 	source .venv/bin/activate && pip install -U -r requirements/common.txt -t ./dist/libs
 	source .venv/bin/activate && pip install -U -r requirements/prod.txt -t ./dist/libs
