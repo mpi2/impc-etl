@@ -2,4 +2,3 @@ pytest
 pyspark
 pylint
 mock
-findspark
