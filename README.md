@@ -10,7 +10,7 @@ Download the latest release package from the [releases page](https://github.com/
 The submit your job to your Spark 2 cluster using:
 
 ```console
-spark-submit --py-files jobs.zip,shared.zip,libs.zip impc_etl.py
+spark-submit --py-files impc_etl.zip,libs.zip main.py
 ```
 
 ## Development environment setup
