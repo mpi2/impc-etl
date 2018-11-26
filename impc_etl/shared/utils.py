@@ -4,6 +4,7 @@ Utils package
 from collections import OrderedDict
 from pyspark.sql import DataFrame, SparkSession, Row
 from pyspark.sql.types import StructType
+from pyspark.sql.functions import col
 
 
 def extract_tsv(spark_session: SparkSession,
@@ -26,7 +27,17 @@ def extract_tsv(spark_session: SparkSession,
 def convert_to_row(dictionary: dict) -> Row:
     """
 
-    :param d:
+    :param dictionary:
     :return:
     """
     return Row(**OrderedDict(sorted(dictionary.items())))
+
+
+def flatten_struct(schema, prefix=""):
+    result = []
+    for elem in schema:
+        if isinstance(elem.dataType, StructType):
+            result += flatten_struct(elem.dataType, prefix + elem.name + ".")
+        else:
+            result.append(col(prefix + elem.name).alias(elem.name))
+    return result
