@@ -22,10 +22,13 @@ import findspark
 findspark.init()
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType
+from pyspark.sql.functions import col, asc
 
 
 # pylint:disable=C0413
 from impc_etl.jobs.extraction.impress_extractor import extract_impress
+from impc_etl.jobs.load.prisma_graphql import load
 
 
 def impc_pipeline(spark_context):
@@ -48,17 +51,7 @@ def main():
         impress_api_url = 'http://sandbox.mousephenotype.org/impress/'
         impress_pipeline_type = 'pipeline'
         impress_df = extract_impress(spark, impress_api_url, impress_pipeline_type)
-    impress_df.printSchema()
-    print(impress_df.count())
-    impress_df.show()
-    parameters_df = impress_df.select('parameter')\
-        .withColumnRenamed("parameter.parameterKey", "parameter.parameterStableId")\
-        .distinct()
-    parameters_df = parameters_df
-    parameters_df.printSchema()
-    print('Procedures {}'.format(parameters_df.count()))
-    parameters_df.show(160)
-    parameters_df.write.json("procedures.json")
+    load(None, None, None, None, impress_df)
 
 
 if __name__ == "__main__":
