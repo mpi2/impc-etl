@@ -37,7 +37,7 @@ def extract_products(spark_session: SparkSession, file_path='.') -> DataFrame:
     :param file_path:
     :return product_df:
     """
-    product_df = utils.extract_tsv(spark_session, file_path).withColumn()
+    product_df = utils.extract_tsv(spark_session, file_path)
     return product_df
 
 
@@ -51,3 +51,14 @@ def extract_genes(spark_session: SparkSession, file_path='.') -> DataFrame:
     allele2_df = utils.extract_tsv(spark_session, file_path)
     genes_df = allele2_df.where(allele2_df.type == 'Gene')
     return genes_df
+
+
+def extract_phenotyping_colonies(spark_session, file_path=',') -> DataFrame:
+    """
+
+    :param spark_session:
+    :param file_path:
+    :return:
+    """
+    phenotyping_colonies_df = utils.extract_tsv(spark_session, file_path)
+    return phenotyping_colonies_df
