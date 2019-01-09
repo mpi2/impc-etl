@@ -7,7 +7,7 @@ IMPC Extraction, Transformation and Loading process to generate the data that su
 
 ## How to run it
 Download the latest release package from the [releases page](https://github.com/mpi2/impc-etl/releases) and decompress it.
-The submit your job to your Spark 2 cluster using:
+Then submit your job to your Spark 2 cluster using:
 
 ```console
 spark-submit --py-files impc_etl.zip,libs.zip main.py

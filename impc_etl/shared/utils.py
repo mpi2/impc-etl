@@ -21,7 +21,7 @@ def extract_tsv(spark_session: SparkSession,
                                   header=True,
                                   schema=schema,
                                   mode='DROPMALFORMED',
-                                  sep='\t').load(file_path)
+                                  sep='\t')
 
 
 def convert_to_row(dictionary: dict) -> Row:
