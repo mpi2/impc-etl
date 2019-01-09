@@ -28,7 +28,9 @@ from pyspark.sql.functions import col, asc
 
 # pylint:disable=C0413
 from impc_etl.jobs.extraction.impress_extractor import extract_impress
-from impc_etl.jobs.load.prisma_graphql import load
+from impc_etl.jobs.extraction.imits_extractor import *
+from impc_etl.jobs.extraction.dcc_extractor import extract_samples
+from impc_etl.jobs.load.prisma_loader import load
 
 
 def impc_pipeline(spark_context):
@@ -51,7 +53,14 @@ def main():
         impress_api_url = 'http://sandbox.mousephenotype.org/impress/'
         impress_pipeline_type = 'pipeline'
         impress_df = extract_impress(spark, impress_api_url, impress_pipeline_type)
-    load(None, None, None, None, impress_df)
+
+    genes_df = extract_genes(spark, '../tests/data/imits/allele2Entries.tsv')
+    alleles_df = extract_alleles(spark, '../tests/data/imits/allele2Entries.tsv')
+    products_df = extract_products(spark, '../tests/data/imits/productEntries.tsv')
+    samples_df = extract_samples(spark, '/Users/federico/data/*specimen.xml')
+    experiments_df = ext
+    phenotyping_colonies_df = extract_phenotyping_colonies(spark, '../tests/data/imits/mp2_load_phenotyping_colonies_report.tsv')
+    load(genes_df, alleles_df, products_df, phenotyping_colonies_df, samples_df, None, impress_df)
 
 
 if __name__ == "__main__":

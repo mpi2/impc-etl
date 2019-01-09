@@ -10,7 +10,7 @@ DCC loader module
 from typing import Tuple
 
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import explode
+from pyspark.sql.functions import explode, lit
 
 
 def extract_observations(spark_session: SparkSession,
@@ -21,7 +21,7 @@ def extract_observations(spark_session: SparkSession,
     :param file_path:
     :return:
     """
-    experiments_df = _extract_experiment_files(spark_session, file_path)
+    experiments_df = extract_experiment_files(spark_session, file_path)
     unidimensional_observations = extract_unidimensional_observations(experiments_df)
     ontological_observations = extract_ontological_observations(experiments_df)
     return unidimensional_observations, ontological_observations
@@ -104,16 +104,8 @@ def extract_categorical_observations(experiments_df: DataFrame) -> DataFrame:
     return experiments_df
 
 
-def extract_samples(specimens_dataframe: DataFrame) -> DataFrame:
-    """
-    :param specimens_dataframe:
-    :return:
-    """
-    return specimens_dataframe
-
-
-def _extract_experiment_files(spark_session: SparkSession,
-                              experiment_dir_path: str) -> DataFrame:
+def extract_experiment_files(spark_session: SparkSession,
+                             experiment_dir_path: str) -> DataFrame:
     """
 
     :param spark_session:
@@ -121,12 +113,11 @@ def _extract_experiment_files(spark_session: SparkSession,
     :return:
     """
     experiments_df = spark_session.read.format("com.databricks.spark.xml") \
-        .options(rowTag="experiment").load(experiment_dir_path)
+        .options(rowTag="experiment", samplingRatio="1").load(experiment_dir_path)
     return experiments_df
 
 
-def _extract_specimen_files(spark_session: SparkSession,
-                            specimen_dir_path: str) -> Tuple[DataFrame, DataFrame]:
+def extract_samples(spark_session: SparkSession, specimen_dir_path: str) -> DataFrame:
     """
 
     :param spark_session:
@@ -137,4 +128,6 @@ def _extract_specimen_files(spark_session: SparkSession,
         .options(rowTag="mouse").load(specimen_dir_path)
     embryos_df = spark_session.read.format("com.databricks.spark.xml") \
         .options(rowTag="embryo").load(specimen_dir_path)
-    return mice_df, embryos_df
+    mice_df = mice_df.withColumn('type', lit('Mouse')).withColumn('_stage', lit(None)).withColumn('_stageUnit', lit(None))
+    embryos_df = embryos_df.withColumn('type', lit('Embryo')).withColumn('_DOB', lit(None)).select(mice_df.schema.names)
+    return mice_df.unionAll(embryos_df)
