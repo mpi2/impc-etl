@@ -128,6 +128,8 @@ def extract_samples(spark_session: SparkSession, specimen_dir_path: str) -> Data
         .options(rowTag="mouse").load(specimen_dir_path)
     embryos_df = spark_session.read.format("com.databricks.spark.xml") \
         .options(rowTag="embryo").load(specimen_dir_path)
-    mice_df = mice_df.withColumn('type', lit('Mouse')).withColumn('_stage', lit(None)).withColumn('_stageUnit', lit(None))
-    embryos_df = embryos_df.withColumn('type', lit('Embryo')).withColumn('_DOB', lit(None)).select(mice_df.schema.names)
+    mice_df = mice_df.withColumn('type', lit('Mouse')).withColumn('_stage', lit(None)).withColumn(
+        '_stageUnit', lit(None))
+    embryos_df = embryos_df.withColumn('type', lit('Embryo')).withColumn('_DOB', lit(None)).select(
+        mice_df.schema.names)
     return mice_df.unionAll(embryos_df)
