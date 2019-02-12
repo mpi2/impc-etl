@@ -116,6 +116,11 @@ def main():
 
     df: DataFrame = None
 
+
+    if 1 == 1:
+        return
+
+
     specimens_df.createOrReplaceTempView('specimens')
     df = spark.sql("SELECT * FROM specimens WHERE _specimenID IN ('170501-0002F12605-4', '387150', 'JMC300001364')")
     # spark.sql("SELECT _centreID, mouse._specimenID FROM specimens ").take(5)
