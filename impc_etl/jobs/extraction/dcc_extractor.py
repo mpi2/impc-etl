@@ -7,10 +7,13 @@ DCC loader module
     extract_categorical_observations:
     extract_samples:
 """
-from typing import Tuple
+from typing import Tuple, List, Dict
 
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import explode, lit
+from pyspark.sql.functions import explode, lit, input_file_name
+from pyspark.sql.types import StringType, StructField, StructType, TimestampType, DoubleType, IntegerType, BooleanType, ArrayType
+
+from impc_etl.jobs.extraction.dcc_schemas import get_specimen_centre_schema, flatten_specimen_df
 
 
 def extract_observations(spark_session: SparkSession,
@@ -104,7 +107,7 @@ def extract_categorical_observations(experiments_df: DataFrame) -> DataFrame:
     return experiments_df
 
 
-def extract_experiment_files(spark_session: SparkSession,
+def extract_experiment_files2(spark_session: SparkSession,
                              experiment_dir_path: str) -> DataFrame:
     """
 
@@ -116,20 +119,180 @@ def extract_experiment_files(spark_session: SparkSession,
         .options(rowTag="experiment", samplingRatio="1").load(experiment_dir_path)
     return experiments_df
 
+def extract_experiment_files(spark_session: SparkSession, schema, xml_inputs: List[Dict]) -> DataFrame:
 
-def extract_samples(spark_session: SparkSession, specimen_dir_path: str) -> DataFrame:
+    result_df: DataFrame = None
+
+    for input_experiments in xml_inputs:
+        datasource_short_name = input_experiments.get('ds_short_name')
+        path = input_experiments.get('file_path') + "/*experiment*"
+
+        print(f"loading datasource '{datasource_short_name}' from path '{path}'")
+
+        experiments_df = spark_session.read.format("com.databricks.spark.xml") \
+            .options(rowTag='experiment')\
+            .schema(schema)\
+            .load(path)\
+            .withColumn('_type', lit('Experiment'))\
+            .withColumn('_datasourceShortName', lit(datasource_short_name))
+
+        lines_df = spark_session.read.format("com.databricks.spark.xml") \
+            .options(rowTag='line')\
+            .load(path)\
+            .withColumn('_type', lit('Line'))\
+            .withColumn('_datasourceShortName', lit(datasource_short_name))
+
+        result_df = merge_tables(merge_tables(experiments_df, lines_df), result_df)
+
+    return result_df
+
+def extract_specimen_files_WORKING(spark_session: SparkSession, xml_inputs: List[Dict]):
+
+    result_df: DataFrame = None
+
+    for input_specimens in xml_inputs:
+        datasource_short_name = input_specimens.get('ds_short_name')
+        path = input_specimens.get('file_path') + "/*specimen*"
+        schema = get_specimen_centre_schema()
+
+        print(f"loading datasource '{datasource_short_name}' from path '{path}'")
+
+        row_tag = 'ns2:mouse' if datasource_short_name == '3i' else 'mouse'
+
+        row_tag = 'centre'
+
+        mice_df = spark_session.read.format("com.databricks.spark.xml") \
+            .options(rowTag=row_tag)\
+            .load(path)\
+            .withColumn('_type', lit('Mouse'))\
+            .withColumn('_datasourceShortName', lit(datasource_short_name))
+
+        print('inferred schema: ', mice_df.printSchema())
+
+
+        mice_df_hg = spark_session.read.format("com.databricks.spark.xml") \
+            .options(rowTag=row_tag)\
+            .schema(schema)\
+            .load(path)\
+            .withColumn('_sourceFile', input_file_name())\
+            .withColumn('_datasourceShortName', lit(datasource_short_name))
+
+        print('\nhome-grown schema: ', mice_df_hg.printSchema())
+
+        row_tag = 'ns2:embryo' if datasource_short_name == '3i' else 'embryo'
+        embryos_df = spark_session.read.format("com.databricks.spark.xml") \
+            .options(rowTag=row_tag)\
+            .schema(schema)\
+            .load(path)\
+            .withColumn('_type', lit('Embryo'))\
+            .withColumn('_datasourceShortName', lit(datasource_short_name))
+
+        result_df = merge_tables(merge_tables(mice_df, embryos_df), result_df)
+
+    return result_df
+
+def extract_specimen_files(spark_session: SparkSession, xml_inputs: List[Dict]):
+
+    schema = get_specimen_centre_schema()
+
+    printed: bool = False
+
+    specimen_df: DataFrame = None
+
+    for input_specimens in xml_inputs:
+        datasource_short_name = input_specimens.get('ds_short_name')
+        path = input_specimens.get('file_path') + "/*specimen*"
+
+        print(f"loading datasource '{datasource_short_name}' from path '{path}'")
+
+        row_tag = 'ns2:centre' if datasource_short_name == '3i' else 'centre'
+        this_df = spark_session.read.format("com.databricks.spark.xml") \
+            .options(rowTag=row_tag)\
+            .schema(schema)\
+            .load(path)
+            # .withColumn('sourceFile', input_file_name())\
+            # .withColumn('datasourceShortName', lit(datasource_short_name))
+
+        if not printed:
+            this_df.printSchema()
+            printed = True
+
+        specimen_df = merge_tables(spark_session, specimen_df, this_df, input_file_name(), datasource_short_name)
+
+    return specimen_df
+
+
+def merge_tables2(df1: DataFrame, df2: DataFrame) -> DataFrame:
+    """
+    Given two DataFrames with potentially different schemas, returns a new, single schema merged from the two
+    input DataFrames, with all columns from both DataFrames (added columns initialised to None). The returned
+    dataframe is sorted by column name. If either DataFrame has no columns, the other DataFrame is returned.
     """
 
-    :param spark_session:
-    :param specimen_dir_path:
-    :return:
+    if (df1 is None) or (len(df1.columns) == 0):
+        return df2
+    elif (df2 is None) or (len(df2.columns) == 0):
+        return df1
+
+    cols1 = set(df1.columns)
+    cols2 = set(df2.columns)
+
+    diff = cols1.difference(cols2)
+    for colname in diff:
+        df2 = df2.withColumn(colname, lit(None))
+    diff = cols2.difference(cols1)
+    for colname in diff:
+        df1 = df1.withColumn(colname, lit(None))
+    cols = set(df1.columns)
+    cols = sorted(cols)
+    df1 = df1.select(cols)
+    df2 = df2.select(cols)
+
+    max_tries = 10
+    for i in range(max_tries):
+        try:
+            return df1.union(df2)
+        except Exception as err:
+            if i == max_tries - 1:
+                print(f"  [{i}]: ERROR - Max Tries Exceeded: df1.union(df2 failed! Skipping...")
+                return
+
+            print(f"  [{i}]: df1.union(df2) mismatch. Retrying.")
+            remap_all_cols([df1, df2])
+
+
+
+def merge_tables(spark_session: SparkSession, df1: DataFrame, df2: DataFrame, source_file: str, datasource_short_name: str) -> DataFrame:
     """
-    mice_df = spark_session.read.format("com.databricks.spark.xml") \
-        .options(rowTag="mouse").load(specimen_dir_path)
-    embryos_df = spark_session.read.format("com.databricks.spark.xml") \
-        .options(rowTag="embryo").load(specimen_dir_path)
-    mice_df = mice_df.withColumn('type', lit('Mouse')).withColumn('_stage', lit(None)).withColumn(
-        '_stageUnit', lit(None))
-    embryos_df = embryos_df.withColumn('type', lit('Embryo')).withColumn('_DOB', lit(None)).select(
-        mice_df.schema.names)
-    return mice_df.unionAll(embryos_df)
+    Given two DataFrames with potentially different schemas, returns a new, single schema merged from the two
+    input DataFrames, with all columns from both DataFrames (added columns initialised to None). The returned
+    dataframe is sorted by column name. If either DataFrame has no columns, the other DataFrame is returned.
+    """
+
+    if (df1 is None) or (len(df1.columns) == 0):
+        df2 = flatten_specimen_df(spark_session, df2, source_file, datasource_short_name)
+        return df2
+    elif (df2 is None) or (len(df2.columns) == 0):
+        df1 = flatten_specimen_df(spark_session, df1, source_file, datasource_short_name)
+        return df1
+
+    df1 = flatten_specimen_df(spark_session, df1, source_file, datasource_short_name)
+    df2 = flatten_specimen_df(spark_session, df2, source_file, datasource_short_name)
+
+    return df1.union(df2)
+
+
+def remap_all_cols(dataframes: List[DataFrame]):
+    for df in dataframes:
+        remap_cols(df)
+
+
+def remap_cols(df: DataFrame):
+    for tup in df.dtypes:
+        print(tup)
+        if tup[0] == '_specimenID' and tup[1] == 'bigint':
+            df = df.withColumn(tup[0], df[tup[0]].cast("string"))
+            print(f"  remapping  column '{tup[0]}' from '{tup[1]}' to 'string'")
+        elif not tup[0].startswith('_'):
+            print(tup)
+            print(tup)
