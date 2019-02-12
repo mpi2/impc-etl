@@ -222,45 +222,6 @@ def extract_specimen_files(spark_session: SparkSession, xml_inputs: List[Dict]):
     return specimen_df
 
 
-def merge_tables2(df1: DataFrame, df2: DataFrame) -> DataFrame:
-    """
-    Given two DataFrames with potentially different schemas, returns a new, single schema merged from the two
-    input DataFrames, with all columns from both DataFrames (added columns initialised to None). The returned
-    dataframe is sorted by column name. If either DataFrame has no columns, the other DataFrame is returned.
-    """
-
-    if (df1 is None) or (len(df1.columns) == 0):
-        return df2
-    elif (df2 is None) or (len(df2.columns) == 0):
-        return df1
-
-    cols1 = set(df1.columns)
-    cols2 = set(df2.columns)
-
-    diff = cols1.difference(cols2)
-    for colname in diff:
-        df2 = df2.withColumn(colname, lit(None))
-    diff = cols2.difference(cols1)
-    for colname in diff:
-        df1 = df1.withColumn(colname, lit(None))
-    cols = set(df1.columns)
-    cols = sorted(cols)
-    df1 = df1.select(cols)
-    df2 = df2.select(cols)
-
-    max_tries = 10
-    for i in range(max_tries):
-        try:
-            return df1.union(df2)
-        except Exception as err:
-            if i == max_tries - 1:
-                print(f"  [{i}]: ERROR - Max Tries Exceeded: df1.union(df2 failed! Skipping...")
-                return
-
-            print(f"  [{i}]: df1.union(df2) mismatch. Retrying.")
-            remap_all_cols([df1, df2])
-
-
 
 def merge_tables(spark_session: SparkSession, df1: DataFrame, df2: DataFrame, source_file: str, datasource_short_name: str) -> DataFrame:
     """
@@ -280,19 +241,3 @@ def merge_tables(spark_session: SparkSession, df1: DataFrame, df2: DataFrame, so
     df2 = flatten_specimen_df(spark_session, df2, source_file, datasource_short_name)
 
     return df1.union(df2)
-
-
-def remap_all_cols(dataframes: List[DataFrame]):
-    for df in dataframes:
-        remap_cols(df)
-
-
-def remap_cols(df: DataFrame):
-    for tup in df.dtypes:
-        print(tup)
-        if tup[0] == '_specimenID' and tup[1] == 'bigint':
-            df = df.withColumn(tup[0], df[tup[0]].cast("string"))
-            print(f"  remapping  column '{tup[0]}' from '{tup[1]}' to 'string'")
-        elif not tup[0].startswith('_'):
-            print(tup)
-            print(tup)

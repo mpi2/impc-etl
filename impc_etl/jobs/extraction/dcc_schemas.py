@@ -1,5 +1,5 @@
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import lit, explode_outer, input_file_name, udf
+from pyspark.sql.functions import lit, explode_outer
 from pyspark.sql.types import StructField, StringType, StructType, DoubleType, IntegerType, ArrayType, BooleanType
 
 # SPECIMEN SCHEMA
@@ -63,19 +63,24 @@ centreField = [StructField('_centreID', StringType(), True),
 def get_specimen_centre_schema():
     return StructType(centreField)
 
-def get_specimen_schema():
-    return StructType(specimenField)
-
 def flatten_specimen_df(spark_session: SparkSession,
                         centre_df: DataFrame,
                         source_file: str,
                         datasource_short_name: str) -> DataFrame:
     """
-    Given a DataFrame with rowTag 'centre', tuple '_centreID, xxx', and zero or more 'mouse' or 'embryo' tags,
-    returns a new DataFrame with each 'mouse' or 'embryo' ROW, a _type ('Mouse' or 'Embryo'), and the _centreID.
+    Flattens out the centreID, mouse, and embryo specimen data and adds type ('mouse' or 'embryo'),
+    source file, and datasourceShortName (e.g. IMPC, 3i), returning the flattened DataFrame.
 
-    :param centre_df:
-    :return:
+    :param centre_df: The hierarchical DataFrame containing centreID and optional sub components 'mouse' and 'embryo'
+    :param source_file: The xml source file name
+    :param datasource_short_name: The data source (e.g. IMPC, 3i)
+    :return: A dataframe containing, at the top level:
+        _centreID
+        _type ('mouse' or 'embryo')
+        _sourceFile (the xml source file)
+        _datasourceShortName (the data source (e.g. IMPC, 3i)
+        the flattened contents of the 'mouse' and 'embryo' records
+
     """
     df: DataFrame
 
