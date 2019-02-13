@@ -1,4 +1,4 @@
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import DataFrame
 from pyspark.sql.functions import lit, explode_outer
 from pyspark.sql.types import StructField, StringType, StructType, DoubleType, IntegerType, ArrayType, BooleanType
 
@@ -58,13 +58,16 @@ specimenField = [
 
 centreField = [StructField('_centreID', StringType(), True),
                StructField('embryo', ArrayType(StructType(specimenField)), True),
-               StructField('mouse', ArrayType(StructType(specimenField)), True)]
+               StructField('mouse', ArrayType(StructType(specimenField)), True),
+               StructField('ns2:embryo', ArrayType(StructType(specimenField)), True),
+               StructField('ns2:mouse', ArrayType(StructType(specimenField)), True)]
+
 
 def get_specimen_centre_schema():
     return StructType(centreField)
 
-def flatten_specimen_df(spark_session: SparkSession,
-                        centre_df: DataFrame,
+
+def flatten_specimen_df(centre_df: DataFrame,
                         source_file: str,
                         datasource_short_name: str) -> DataFrame:
     """
@@ -81,21 +84,29 @@ def flatten_specimen_df(spark_session: SparkSession,
         _datasourceShortName (the data source (e.g. IMPC, 3i)
         the flattened contents of the 'mouse' and 'embryo' records
 
+    NOTE: SparkXml does not support namespaces, so hacks have to be made to accommodate 3i (which uses one)
+
     """
     df: DataFrame
 
     if centre_df is None:
         return df
 
-    mice_df = centre_df.select(centre_df['_centreID'], centre_df.mouse)
-    embryos_df = centre_df.select(centre_df['_centreID'], centre_df.embryo)
+    # HACK for Spark Xml's inability to handle NAMESPACES!
+    mouse_col_name = 'mouse' if datasource_short_name != '3i' else 'ns2:mouse'
+    embryo_col_name = 'embryo' if datasource_short_name != '3i' else 'ns2:embryo'
+
+    mice_df = centre_df.select(centre_df['_centreID'], centre_df[mouse_col_name])
+    embryos_df = centre_df.select(centre_df['_centreID'], centre_df[embryo_col_name])
+    # mice_df = centre_df.select(centre_df['_centreID'], centre_df.mouse)
+    # embryos_df = centre_df.select(centre_df['_centreID'], centre_df.embryo)
 
     exploded_mice = mice_df\
-        .withColumn('tmp', explode_outer(mice_df.mouse)).select('tmp.*', '_centreID')\
+        .withColumn('tmp', explode_outer(mice_df[mouse_col_name])).select('tmp.*', '_centreID')\
         .withColumn('_type', lit('mouse'))
 
     exploded_embryos = embryos_df\
-        .withColumn('tmp', explode_outer(embryos_df.embryo)).select('tmp.*', '_centreID')\
+        .withColumn('tmp', explode_outer(embryos_df[embryo_col_name])).select('tmp.*', '_centreID')\
         .withColumn('_type', lit('embryo'))
 
     df = exploded_mice.union(exploded_embryos)\
