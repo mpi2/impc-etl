@@ -1,13 +1,18 @@
 """
 IMPC ETL Pipeline
 """
-import glob
 import os
 import sys
 import datetime
 import argparse
 
-from typing import List, Dict
+from impc_etl.jobs.extraction.impress_extractor import extract_impress
+from impc_etl.jobs.extraction.imits_extractor import *
+from impc_etl.jobs.extraction.dcc_extractor import extract_specimen_files, get_inputs, extract_procedure_files
+from pyspark import SparkConf
+import findspark
+
+findspark.init()
 
 if os.path.exists('libs.zip'):
     sys.path.insert(0, 'libs.zip')
@@ -18,21 +23,6 @@ if os.path.exists('impc_etl.zip'):
     sys.path.insert(0, './impc_etl.zip')
 else:
     sys.path.insert(0, '.')
-
-# pylint:disable=E0401,C0412
-# try:
-#     from pyspark import SparkConf
-#     from pyspark.sql import SparkSession
-# except ModuleNotFoundError:
-import findspark
-findspark.init()
-from pyspark import SparkConf
-
-
-# pylint:disable=C0413
-from impc_etl.jobs.extraction.impress_extractor import extract_impress
-from impc_etl.jobs.extraction.imits_extractor import *
-from impc_etl.jobs.extraction.dcc_extractor import extract_specimen_files, extract_experiment_files, get_inputs
 
 
 def impc_pipeline(spark_context):
@@ -59,11 +49,13 @@ def main():
                         metavar='PATH_TO_XML_FILES',
                         nargs=1,
                         dest='dcc_xml_file_path',
-                        help="Create the dcc.samples.parquet and dcc.experiments.parquet from the xml files contained in the required PATH_TO_XML_FILES parameter. "
-                             "The child directory names are interpreted as datasourceShortNames. The xml files are below the child directories. "
-                             "For example, given the directory structure /home/data/IMPC/J/*.xml and /home/data/3i/*.xml, specifying -dcc /home/data "
-                             "creates dcc.samples.parquet and dcc.experiments.parquet from /home/dcc/IMPC/J/*.xml with datasourceShortName 'IMPC' and "
-                             "/home/dcc/3i/*.xml with datasourceShortName '3i'.")
+                        help="Create the dcc.specimens.parquet and dcc.procedures.parquet from the xml files contained"
+                             " in the required PATH_TO_XML_FILES parameter. The child directory names are interpreted"
+                             " as datasourceShortNames. The xml files are below the child directories. For example,"
+                             " given the directory structure /home/data/IMPC/J/*.xml and /home/data/3i/*.xml,"
+                             " specifying -dcc /home/data creates dcc.specimens.parquet and dcc.procedures.parquet from"
+                             " /home/dcc/IMPC/J/*.xml with datasourceShortName 'IMPC' and /home/dcc/3i/*.xml with"
+                             " datasourceShortName '3i'.")
     args = parser.parse_args()
     print(f"command-line args: {args}")
 
@@ -87,6 +79,9 @@ def main():
         impress_df.write.mode('overwrite').parquet("../impress.parquet")
         print("Impress load from DCC web service ended:   ", datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"))
 
+    xml_inputs: []
+    specimens_df: DataFrame
+    procedures_df: DataFrame
     if dcc_xml_file_path is None:
         if os.path.exists('../specimens.parquet'):
             print('Specimen load from parquet started: ', datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"))
@@ -106,42 +101,35 @@ def main():
 
     spot_check_specimens(specimens_df, spark)
 
-    if (1 == 1):
-        return
-
-
     if dcc_xml_file_path is None:
-        if os.path.exists('../experiments.parquet'):
+        if os.path.exists('../procedures.parquet'):
             print('Experiment load from parquet started: ', datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"))
-            experiments_df = spark.read.parquet('../experiments.parquet')
+            procedures_df = spark.read.parquet('../experiments.parquet')
             print('Experiment load from parquet ended:   ', datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"), '(', specimens_df.count(), ')')
     else:
-        print('Experiment load from dcc xml files started: ', datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"))
+        print('Procedure load from dcc xml files started: ', datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"))
+        procedures_df = extract_procedure_files(spark, xml_inputs)
+        print('\nprocedures_df schema:')
+        procedures_df.printSchema()
+        procedures_df.write.mode('overwrite').parquet("../procedures.parquet")
+        print('Procedure load from dcc xml files ended:   ',
+              datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"))
 
-        experiment_schema = get_schema('/Users/mrelac/workspace/PhenotypeData/loads/src/main/resources/xsd/procedure_definition.xsd')
-        #xml_inputs = get_inputs(experiment_schema, dcc_xml_file_path)
-        experiments_df = extract_experiment_files(spark, experiment_schema, xml_inputs)
-        experiments_df.write.mode('overwrite').parquet("../experiments.parquet")
-        print('Experiment load from dcc xml files ended:   ', datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"), '(', specimens_df.count(), ')')
+    experiment_count = procedures_df.select(procedures_df['_type'] == 'experiment').count()
+    line_count = procedures_df.select(procedures_df['_type'] == 'line').count()
+    print(f'\nExperiment count: {experiment_count}')
+    print(f'\nLine count: {line_count}')
+
+    spot_check_lines(procedures_df, spark)
+    spot_check_experiments(procedures_df, spark)
 
 
     if (1 == 1):
         return
 
-    print("dcc load start - experiments: ", datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"))
-    dcc_experiments_df = extract_experiments(spark, xml_inputs.get('experiments'))
-    dcc_experiments_df.write.parquet("../dcc.experiments.parquet")
-    print("dcc load end:   - experiments", datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"))
-
-
-    # genes_df = extract_genes(spark, '../tests/data/imits/allele2Entries.tsv')
-    # alleles_df = extract_alleles(spark, '../tests/data/imits/allele2Entries.tsv')
-    # products_df = extract_products(spark, '../tests/data/imits/productEntries.tsv')
 
 
 
-    experiments_df.printSchema()
-    print(experiments_df.count())
     phenotyping_colonies_df = \
         extract_phenotyping_colonies(spark, '../tests/data/imits/mp2_load_phenotyping_colonies_report.tsv')
     #load(genes_df, alleles_df, products_df, phenotyping_colonies_df, samples_df, None, impress_df)
@@ -162,6 +150,40 @@ def spot_check_specimens(specimens_df: DataFrame, spark):
     specimens_df.createOrReplaceTempView('specimens')
     spark.sql(f"SELECT _datasourceShortName, _centreID, _specimenID, _type, _sourceFile FROM specimens"
               f" WHERE _specimenID IN ({test_specimen_ids_quoted})").show(len(test_specimen_ids), False)
+
+
+def spot_check_experiments(procedures_df: DataFrame, spark):
+    test_experiment_ids = ['IMPC_VIA_001', '3i_674736', '161163']
+    test_experiment_ids_quoted = "'" + "','".join(test_experiment_ids) + "'"
+    print(f'Spot-checking experiments. There should be {len(test_experiment_ids)} rows with _experimentIDs'
+          f'{test_experiment_ids}')
+
+    # Method 1:
+    procedures_df[procedures_df['_experimentID'].isin(test_experiment_ids)]\
+        ['_datasourceShortName', '_centreID', '_experimentID', '_type', '_sourceFile']\
+        .show(len(test_experiment_ids), False)
+
+    # Method 2:
+    procedures_df.createOrReplaceTempView('procedures')
+    spark.sql(f"SELECT _datasourceShortName, _centreID, __experimentID, _type, _sourceFile FROM procedures"
+              f" WHERE _experimentID IN ({test_experiment_ids_quoted})").show(len(test_experiment_ids), False)
+
+
+def spot_check_lines(procedures_df: DataFrame, spark):
+    test_line_ids = ['GPBRB', 'HMGU-HEPD0718_1_B06-1-1', 'H-Clstn3-C09-TM1B']
+    test_line_ids_quoted = "'" + "','".join(test_line_ids) + "'"
+    print(f'Spot-checking lines. There should be {len(test_line_ids)} rows with _lineIDs'
+          f'{test_line_ids}')
+
+    # Method 1:
+    procedures_df[procedures_df['_colonyID'].isin(test_line_ids)] and procedures_df[procedures_df['_type'] == 'line']\
+        ['_datasourceShortName', '_centreID', '_colonyID', '_type', '_sourceFile']\
+        .show(len(test_line_ids), False)
+
+    # Method 2:
+    procedures_df.createOrReplaceTempView('procedures')
+    spark.sql(f"SELECT _datasourceShortName, _centreID, __colonyID, _type, _sourceFile FROM procedures"
+              f" WHERE _colonyID IN ({test_line_ids_quoted}) AND _type = 'line'").show(len(test_line_ids), False)
 
 
 if __name__ == "__main__":

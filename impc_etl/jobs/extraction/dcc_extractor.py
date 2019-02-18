@@ -12,7 +12,8 @@ import os
 from typing import Tuple, List, Dict
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import explode, lit, input_file_name
-from impc_etl.jobs.extraction.dcc_schemas import get_specimen_centre_schema, flatten_specimen_df
+from impc_etl.jobs.extraction.dcc_schemas import get_centre_specimen_schema, flatten_specimen_df, \
+    get_centre_procedure_schema, flatten_procedure_df
 
 
 def extract_observations(spark_session: SparkSession,
@@ -119,7 +120,7 @@ def extract_experiment_files2(spark_session: SparkSession,
     return experiments_df
 
 
-def extract_experiment_files(spark_session: SparkSession, schema, xml_inputs: List[Dict]) -> DataFrame:
+def extract_experiment_files3(spark_session: SparkSession, schema, xml_inputs: List[Dict]) -> DataFrame:
 
     result_df: DataFrame = None
 
@@ -127,7 +128,7 @@ def extract_experiment_files(spark_session: SparkSession, schema, xml_inputs: Li
         datasource_short_name = input_experiments.get('ds_short_name')
         path = input_experiments.get('file_path') + "/*experiment*"
 
-        print(f"loading datasource '{datasource_short_name}' from path '{path}'")
+        print(f"loading specimen datasource '{datasource_short_name}' from path '{path}'")
 
         experiments_df = spark_session.read.format("com.databricks.spark.xml") \
             .options(rowTag='experiment')\
@@ -147,9 +148,39 @@ def extract_experiment_files(spark_session: SparkSession, schema, xml_inputs: Li
     return result_df
 
 
+def extract_procedure_files(spark_session: SparkSession, xml_inputs: List[Dict]):
+
+    schema = get_centre_procedure_schema()
+
+    printed: bool = False
+
+    procedure_df: DataFrame = None
+
+    for input_procedures in xml_inputs:
+        datasource_short_name = input_procedures.get('datasourceShortName')
+        path = input_procedures.get('file_path') + "/*experiment*"
+
+        print(f"loading procedure datasource '{datasource_short_name}' from path '{path}'")
+
+        centre_df = spark_session.read.format("com.databricks.spark.xml") \
+            .options(rowTag='centre')\
+            .schema(schema)\
+            .load(path)
+
+        if not printed:
+            print('\ncentre_df schema:')
+            centre_df.printSchema()
+            printed = True
+
+        flattened_df = flatten_procedure_df(centre_df, input_file_name(), datasource_short_name)
+        procedure_df = flattened_df if procedure_df is None else procedure_df.union(flattened_df)
+
+    return procedure_df
+
+
 def extract_specimen_files(spark_session: SparkSession, xml_inputs: List[Dict]):
 
-    schema = get_specimen_centre_schema()
+    schema = get_centre_specimen_schema()
 
     printed: bool = False
 
