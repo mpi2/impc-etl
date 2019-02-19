@@ -120,8 +120,8 @@ def main():
     print(f'\nExperiment count: {experiment_count}')
     print(f'\nLine count: {line_count}')
 
-    spot_check_lines(procedures_df, spark)
     spot_check_experiments(procedures_df, spark)
+    spot_check_lines(procedures_df, spark)
 
 
     if (1 == 1):
@@ -151,39 +151,42 @@ def spot_check_specimens(specimens_df: DataFrame, spark):
     spark.sql(f"SELECT _datasourceShortName, _centreID, _specimenID, _type, _sourceFile FROM specimens"
               f" WHERE _specimenID IN ({test_specimen_ids_quoted})").show(len(test_specimen_ids), False)
 
-
+show_max_lines = 20
 def spot_check_experiments(procedures_df: DataFrame, spark):
-    test_experiment_ids = ['IMPC_VIA_001', '3i_674736', '161163']
+    test_experiment_ids = ['3i_674736', '3i_674761', '63983', '31803', '52517', '96178', '75867', '1481',
+                           '83_27560_30300005_bw_bw', '84_27561_30300005', '4102319', '281762_29756']
     test_experiment_ids_quoted = "'" + "','".join(test_experiment_ids) + "'"
-    print(f'Spot-checking experiments. There should be {len(test_experiment_ids)} rows with _experimentIDs'
+    print(f'Spot-checking experiments. There should be {len(test_experiment_ids)} unique _experimentIDs'
           f'{test_experiment_ids}')
 
     # Method 1:
     procedures_df[procedures_df['_experimentID'].isin(test_experiment_ids)]\
-        ['_datasourceShortName', '_centreID', '_experimentID', '_type', '_sourceFile']\
-        .show(len(test_experiment_ids), False)
+        ['_datasourceShortName', '_centreID', '_type', '_experimentID', 'specimenID', '_sourceFile']\
+        .show(show_max_lines, False)
 
     # Method 2:
     procedures_df.createOrReplaceTempView('procedures')
-    spark.sql(f"SELECT _datasourceShortName, _centreID, __experimentID, _type, _sourceFile FROM procedures"
-              f" WHERE _experimentID IN ({test_experiment_ids_quoted})").show(len(test_experiment_ids), False)
+    spark.sql(f"SELECT _datasourceShortName, _centreID, _type, _experimentID, specimenID, _sourceFile FROM procedures"
+              f" WHERE _experimentID IN ({test_experiment_ids_quoted})").show(show_max_lines, False)
 
 
 def spot_check_lines(procedures_df: DataFrame, spark):
-    test_line_ids = ['GPBRB', 'HMGU-HEPD0718_1_B06-1-1', 'H-Clstn3-C09-TM1B']
+    test_line_ids = ['RICOB', 'MIFGB', 'SYNGB', 'GPBRB', 'PRSSB', 'HMGU-HEPD0718_1_B06-1-1', 'GSF-EPD0158_3_A11-1-1', 'H-Clstn3-C09-TM1B']
     test_line_ids_quoted = "'" + "','".join(test_line_ids) + "'"
-    print(f'Spot-checking lines. There should be {len(test_line_ids)} rows with _lineIDs'
+    print(f'Spot-checking lines. There should be {len(test_line_ids)} unique _colonyIDs'
           f'{test_line_ids}')
 
     # Method 1:
     procedures_df[procedures_df['_colonyID'].isin(test_line_ids)] and procedures_df[procedures_df['_type'] == 'line']\
         ['_datasourceShortName', '_centreID', '_colonyID', '_type', '_sourceFile']\
-        .show(len(test_line_ids), False)
+        .show(show_max_lines, False)
 
     # Method 2:
+    print(' ')
     procedures_df.createOrReplaceTempView('procedures')
-    spark.sql(f"SELECT _datasourceShortName, _centreID, __colonyID, _type, _sourceFile FROM procedures"
-              f" WHERE _colonyID IN ({test_line_ids_quoted}) AND _type = 'line'").show(len(test_line_ids), False)
+    spark.sql(f"SELECT _datasourceShortName, _centreID, _colonyID, _type, _sourceFile FROM procedures"
+              f" WHERE _colonyID IN ({test_line_ids_quoted}) AND _type = 'line'")\
+        .show(show_max_lines, False)
 
 
 if __name__ == "__main__":

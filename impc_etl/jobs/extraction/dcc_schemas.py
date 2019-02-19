@@ -1,5 +1,5 @@
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import lit, explode_outer
+from pyspark.sql.functions import lit, explode_outer, col, array
 from pyspark.sql.types import StructField, StringType, StructType, DoubleType, IntegerType, ArrayType, BooleanType
 
 # SPECIMEN SCHEMA
@@ -35,21 +35,27 @@ specimenSequenceField = [StructField('_relatedSpecimen', ArrayType(StructType(re
                          StructField('_parentalStrain', ArrayType(StructType(parentalStrainField)), True),
                          StructField('_statusCode', ArrayType(StructType(statusCodeField), True))]
 
-specimenField = [
-    StructField('_DOB',StringType(),True),
-    StructField('_stage',StringType(),True),
-    StructField('_stageUnit',StringType(),True),
-    StructField('_colonyID',StringType(),True),
-    StructField('_gender',StringType(),True),
-    StructField('_isBaseline',BooleanType(),True),
-    StructField('_litterId',StringType(),True),
-    StructField('_phenotypingCentre',StringType(),True),
-    StructField('_pipeline',StringType(),True),
-    StructField('_productionCentre',StringType(),True),
-    StructField('_project',StringType(),True),
-    StructField('_specimenID',StringType(),True),
-    StructField('_strainID',StringType(),True),
-    StructField('_zygosity',StringType(),True),
+# This is an amalgamation of the mouse, embryo, and specimen fields
+centreSpecimenCombinedField = [
+    # mouse
+    StructField('_DOB', StringType(), True),
+
+    # embryo
+    StructField('_stage', StringType(), True),
+    StructField('_stageUnit', StringType(), True),
+
+    # specimen
+    StructField('_colonyID', StringType(), True),
+    StructField('_gender', StringType(), True),
+    StructField('_isBaseline', BooleanType(), True),
+    StructField('_litterId', StringType(), True),
+    StructField('_phenotypingCentre', StringType(), True),
+    StructField('_pipeline', StringType(), True),
+    StructField('_productionCentre', StringType(), True),
+    StructField('_project', StringType(), True),
+    StructField('_specimenID', StringType(), True),
+    StructField('_strainID', StringType(), True),
+    StructField('_zygosity', StringType(), True),
     StructField('relatedSpecimen', StructType(relatedSpecimenField), True),
     StructField('genotype', StructType(genotypeField), True),
     StructField('chromosomalAlteration', StructType(chromosomalAlterationField), True),
@@ -57,10 +63,10 @@ specimenField = [
     StructField('statusCode', StructType(statusCodeField), True)]
 
 centreSpecimenField = [StructField('_centreID', StringType(), True),
-                       StructField('embryo', ArrayType(StructType(specimenField)), True),
-                       StructField('mouse', ArrayType(StructType(specimenField)), True),
-                       StructField('ns2:embryo', ArrayType(StructType(specimenField)), True),
-                       StructField('ns2:mouse', ArrayType(StructType(specimenField)), True)]
+                       StructField('embryo', ArrayType(StructType(centreSpecimenCombinedField)), True),
+                       StructField('mouse', ArrayType(StructType(centreSpecimenCombinedField)), True),
+                       StructField('ns2:embryo', ArrayType(StructType(centreSpecimenCombinedField)), True),
+                       StructField('ns2:mouse', ArrayType(StructType(centreSpecimenCombinedField)), True)]
 
 
 def get_centre_specimen_schema():
@@ -125,7 +131,7 @@ parameterAssociationField = [StructField('_dim', ArrayType(StructType(dimensionF
                              StructField('_sequenceID', IntegerType(), True)]
 
 procedureMetadataField = [StructField('_parameterStatus', StringType(), True),
-                          StructField('_value', StringType(), True),
+                          StructField('value', StringType(), True),
                           StructField('_parameterID', StringType(), True),
                           StructField('_sequenceID', IntegerType(), True)]
 
@@ -180,7 +186,7 @@ ontologyParameterField = [StructField('_term', ArrayType(StringType()), True),
                           StructField('_parameterID', StringType(), True),
                           StructField('_sequenceID', IntegerType(), True)]
 
-simpleParameterField = [StructField('_value', StringType(), True),
+simpleParameterField = [StructField('value', StringType(), True),
                         StructField('_parameterStatus', StringType(), True),
                         StructField('_parameterID', StringType(), True),
                         StructField('_unit', StringType(), True),
@@ -195,39 +201,36 @@ procedureField = [StructField('simpleParameter', ArrayType(StructType(simplePara
                   StructField('procedureMetadata', ArrayType(StructType(procedureMetadataField)), True),
                   StructField('_procedureID', StringType(), True)]
 
-# The fields in experimentField and lineField must match exactly in name, position, and type, as they are joined.
-# The fields not native to each field type have the 'Copied from ...' comment.
-experimentField = [
-    StructField('_specimenID', ArrayType(StringType()), True),
-    StructField('_colonyID', StringType(), True),               # Copied from lineField.
-    StructField('_sequenceID', StringType(), True),
+# This is an amalgamation of the experiment, line, and housing fields
+centreProcedureCombinedField = [
+    # experiment
+    StructField('specimenID', StringType(), True),
     StructField('_experimentID', StringType(), True),
+    StructField('_sequenceID', IntegerType(), True),
     StructField('_dateOfExperiment', StringType(), True),
-    StructField('procedure', StructType(procedureField), True),
-    StructField('statusCode', ArrayType(StructType(statusCodeField)), True)
 
-    # These fields exist in line but not in experiment. They are added here to make the line/experiment join compatible.
-]
-lineField = [
-    StructField('_specimenID', ArrayType(StringType()), True),
+    # line
     StructField('_colonyID', StringType(), True),
-    StructField('_sequenceID', StringType(), True),             # Copied from experimentField.
-    StructField('_experimentID', StringType(), True),           # Copied from experimentField.
-    StructField('_dateOfExperiment', StringType(), True),       # Copied from experimentField.
-    StructField('procedure', StructType(procedureField), True),
-    StructField('statusCode', ArrayType(StructType(statusCodeField)), True)
+
+    # housing
+    StructField('_fromLIMS', StringType(), True),
+    StructField('_lastUpdated', StringType(), True),
+
+    # experiment and line
+    StructField('statusCode', ArrayType(StructType(statusCodeField)), True),
+
+    # experiment line, and housing
+    StructField('procedure', StructType(procedureField), True)
 ]
 
-housingField = [StructField('procedure', StructType(procedureField), True),
-                StructField('_fromLIMS', BooleanType(), True),
-                StructField('_lastUpdated', StringType(), True)]
-
-centreProcedureField = [StructField('experiment', ArrayType(StructType(experimentField)), True),
-                        StructField('line', ArrayType(StructType(lineField)), True),
-                        StructField('housing', ArrayType(StructType(housingField)), True),
-                        StructField('_centreID', StringType(), True),
-                        StructField('_pipeline', StringType(), True),
-                        StructField('_project', StringType(), True)]
+centreProcedureField = [
+    StructField('_centreID', StringType(), True),
+    StructField('_pipeline', StringType(), True),
+    StructField('_project', StringType(), True),
+    StructField('experiment', ArrayType(StructType(centreProcedureCombinedField)), True),
+    StructField('line', ArrayType(StructType(centreProcedureCombinedField)), True),
+    StructField('housing', ArrayType(StructType(centreProcedureCombinedField)), True)
+]
 
 
 def get_centre_procedure_schema():
@@ -257,16 +260,8 @@ def flatten_procedure_df(centre_df: DataFrame,
     if centre_df is None:
         return df
 
-    # FIXME FIXME FIXME - No hack for experiments!
-    # HACK for Spark Xml's inability to handle NAMESPACES!
-    # mouse_col_name = 'mouse' if datasource_short_name != '3i' else 'ns2:mouse'
-    # embryo_col_name = 'embryo' if datasource_short_name != '3i' else 'ns2:embryo'
-
-    experiment_df = centre_df.na.drop(subset=['line']).select(centre_df['_centreID'], centre_df['experiment'])
-    line_df = centre_df.na.drop(subset=['experiment']).select(centre_df['_centreID'], centre_df['line'])
-
-    # experiment_df = centre_df.filter("centre_df.line is None").select(centre_df['_centreID'], centre_df['experiment'])
-    # line_df = centre_df.select(centre_df['_centreID'], centre_df['line']).filter(centre_df['experiment'] is None)
+    experiment_df = centre_df.na.drop(subset=['experiment']).select(centre_df['_centreID'], centre_df['_pipeline'], centre_df['_project'], centre_df['experiment'])
+    line_df = centre_df.na.drop(subset=['line']).select(centre_df['_centreID'], centre_df['_pipeline'], centre_df['_project'], centre_df['line'])
 
     exploded_experiments = experiment_df\
         .withColumn('tmp', explode_outer(experiment_df['experiment'])).select('tmp.*', '_centreID')\
