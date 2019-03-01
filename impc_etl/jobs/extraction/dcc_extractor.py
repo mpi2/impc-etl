@@ -7,10 +7,13 @@ DCC loader module
     extract_categorical_observations:
     extract_samples:
 """
-from typing import Tuple
 
+import os
+from typing import Tuple, List, Dict
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import explode, lit
+from pyspark.sql.functions import explode, lit, input_file_name
+from impc_etl.jobs.extraction.dcc_schemas import get_centre_specimen_schema, flatten_specimen_df, \
+    get_centre_procedure_schema, flatten_procedure_df
 
 
 def extract_observations(spark_session: SparkSession,
@@ -104,8 +107,8 @@ def extract_categorical_observations(experiments_df: DataFrame) -> DataFrame:
     return experiments_df
 
 
-def extract_experiment_files(spark_session: SparkSession,
-                             experiment_dir_path: str) -> DataFrame:
+def extract_experiment_files2(spark_session: SparkSession,
+                              experiment_dir_path: str) -> DataFrame:
     """
 
     :param spark_session:
@@ -117,19 +120,107 @@ def extract_experiment_files(spark_session: SparkSession,
     return experiments_df
 
 
-def extract_samples(spark_session: SparkSession, specimen_dir_path: str) -> DataFrame:
-    """
+def extract_experiment_files3(spark_session: SparkSession, schema, xml_inputs: List[Dict]) -> DataFrame:
 
-    :param spark_session:
-    :param specimen_dir_path:
-    :return:
-    """
-    mice_df = spark_session.read.format("com.databricks.spark.xml") \
-        .options(rowTag="mouse").load(specimen_dir_path)
-    embryos_df = spark_session.read.format("com.databricks.spark.xml") \
-        .options(rowTag="embryo").load(specimen_dir_path)
-    mice_df = mice_df.withColumn('type', lit('Mouse')).withColumn('_stage', lit(None)).withColumn(
-        '_stageUnit', lit(None))
-    embryos_df = embryos_df.withColumn('type', lit('Embryo')).withColumn('_DOB', lit(None)).select(
-        mice_df.schema.names)
-    return mice_df.unionAll(embryos_df)
+    result_df: DataFrame = None
+
+    for input_experiments in xml_inputs:
+        datasource_short_name = input_experiments.get('ds_short_name')
+        path = input_experiments.get('file_path') + "/*experiment*"
+
+        print(f"loading specimen datasource '{datasource_short_name}' from path '{path}'")
+
+        experiments_df = spark_session.read.format("com.databricks.spark.xml") \
+            .options(rowTag='experiment')\
+            .schema(schema)\
+            .load(path)\
+            .withColumn('_type', lit('Experiment'))\
+            .withColumn('_datasourceShortName', lit(datasource_short_name))
+
+        lines_df = spark_session.read.format("com.databricks.spark.xml") \
+            .options(rowTag='line')\
+            .load(path)\
+            .withColumn('_type', lit('Line'))\
+            .withColumn('_datasourceShortName', lit(datasource_short_name))
+
+        # result_df = merge_tables(merge_tables(experiments_df, lines_df), result_df)
+
+    return result_df
+
+
+def extract_procedure_files(spark_session: SparkSession, xml_inputs: List[Dict]):
+
+    schema = get_centre_procedure_schema()
+
+    printed: bool = False
+
+    procedure_df: DataFrame = None
+
+    for input_procedures in xml_inputs:
+        datasource_short_name = input_procedures.get('datasourceShortName')
+        path = input_procedures.get('file_path') + "/*experiment*"
+
+        print(f"loading procedure datasource '{datasource_short_name}' from path '{path}'")
+
+        centre_df = spark_session.read.format("com.databricks.spark.xml") \
+            .options(rowTag='centre')\
+            .schema(schema)\
+            .load(path)
+
+        if not printed:
+            print('\ncentre_df schema:')
+            centre_df.printSchema()
+            printed = True
+
+        flattened_df = flatten_procedure_df(centre_df, input_file_name(), datasource_short_name)
+        procedure_df = flattened_df if procedure_df is None else procedure_df.union(flattened_df)
+
+    return procedure_df
+
+
+def extract_specimen_files(spark_session: SparkSession, xml_inputs: List[Dict]):
+
+    schema = get_centre_specimen_schema()
+
+    printed: bool = False
+
+    specimen_df: DataFrame = None
+
+    for input_specimens in xml_inputs:
+        datasource_short_name = input_specimens.get('datasourceShortName')
+        path = input_specimens.get('file_path') + "/*specimen*"
+
+        print(f"loading datasource '{datasource_short_name}' from path '{path}'")
+
+        row_tag = 'ns2:centre' if datasource_short_name == '3i' else 'centre'
+        centre_df = spark_session.read.format("com.databricks.spark.xml") \
+            .options(rowTag=row_tag)\
+            .schema(schema)\
+            .load(path)
+
+        if not printed:
+            print('\ncentre_df schema:')
+            centre_df.printSchema()
+            printed = True
+
+        flattened_df = flatten_specimen_df(centre_df, input_file_name(), datasource_short_name)
+        specimen_df = flattened_df if specimen_df is None else specimen_df.union(flattened_df)
+
+    return specimen_df
+
+
+def get_inputs(dcc_xml_file_path):
+
+    xml_files_path = []
+
+    datasource_short_names = os.listdir(dcc_xml_file_path)
+
+    for datasource_short_name in datasource_short_names:
+        xml_path = dcc_xml_file_path + '/' + datasource_short_name
+
+        for root, directories, filenames in os.walk(xml_path):
+            if len(filenames) > 0:
+                datasource_part = {'datasourceShortName': datasource_short_name, 'file_path': root}
+                xml_files_path.append(datasource_part)
+
+    return xml_files_path

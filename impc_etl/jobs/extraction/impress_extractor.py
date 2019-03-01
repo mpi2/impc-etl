@@ -1,6 +1,6 @@
 """
 IMPRESS extractor
-    extract_impress: Extract Impress data and load it to a dratafram
+    extract_impress: Extract Impress data and load it to a dataframe
 """
 from typing import List
 import json
