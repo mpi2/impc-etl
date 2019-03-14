@@ -10,6 +10,7 @@ from pyspark.sql.types import StructType
 from pyspark.sql.functions import udf, explode_outer
 import requests
 from impc_etl.shared.utils import convert_to_row
+from impc_etl import logger
 
 
 def extract_impress(spark_session: SparkSession,
@@ -88,20 +89,20 @@ def get_impress_entity_by_id(impress_api_url: str, impress_type: str, impress_id
     :param retries:
     :return:
     """
-    #print('parsing :' + ("{}/{}/{}".format(impress_api_url, impress_type, impress_id)))
+    logger.info('parsing :' + ("{}/{}/{}".format(impress_api_url, impress_type, impress_id)))
     try:
         response = requests.get("{}/{}/{}".format(impress_api_url, impress_type, impress_id))
         entity = response.json()
     except json.decoder.JSONDecodeError:
-        print("{}/{}/{}".format(impress_api_url, impress_type, impress_id))
-        print("         " + response.text)
+        logger.info("{}/{}/{}".format(impress_api_url, impress_type, impress_id))
+        logger.info("         " + response.text)
         entity = None
     except requests.exceptions.ConnectionError:
         if retries < 4:
             time.sleep(1)
             entity = get_impress_entity_by_id(impress_api_url, impress_type, impress_id, retries+1)
         else:
-            print("Max retries for " + "{}/{}/{}".format(impress_api_url, impress_type, impress_id))
+            logger.info("Max retries for " + "{}/{}/{}".format(impress_api_url, impress_type, impress_id))
             entity = None
     return entity
 
