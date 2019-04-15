@@ -3,9 +3,10 @@ Utils package
 """
 from collections import OrderedDict
 from pyspark.sql import DataFrame, SparkSession, Row
-from pyspark.sql.types import StructType
-from pyspark.sql.functions import col, input_file_name, regexp_replace, concat_ws, collect_list
-import subprocess
+from pyspark.sql.types import StructType, SparkContext
+from pyspark.sql.functions import col
+import re
+
 
 def extract_tsv(spark_session: SparkSession,
                 file_path: str,
@@ -41,3 +42,18 @@ def flatten_struct(schema, prefix=""):
         else:
             result.append(col(prefix + elem.name).alias(elem.name))
     return result
+
+
+def file_exists(sc: SparkContext, path: str) -> bool:
+    fs = sc._jvm.org.apache.hadoop.fs.FileSystem.get(sc._jsc.hadoopConfiguration())
+    return fs.exists(sc._jvm.org.apache.hadoop.fs.Path(path))
+
+
+def pheno_dcc_derivator(sc: SparkContext, column):
+    from pyspark.sql.column import Column, _to_java_column, _to_seq
+    jc = sc._jvm.org.mousephenotype.dcc.derived.parameters.SparkDerivator
+    return Column(jc(_to_seq(sc, [column], _to_java_column)))
+
+
+def extract_parameters_from_derivation(derivation: str):
+    return list({match[0] for match in re.findall(r"\'(([A-Z]|\d|\_)*)\'", derivation)})

@@ -53,7 +53,7 @@ def extract_genes(spark_session: SparkSession, file_path='.') -> DataFrame:
     return genes_df
 
 
-def extract_phenotyping_colonies(spark_session, file_path=',') -> DataFrame:
+def extract_phenotyping_colonies(spark_session, file_path='.') -> DataFrame:
     """
 
     :param spark_session:
