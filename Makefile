@@ -4,7 +4,7 @@ default: clean devDeps build
 
 submit: clean devDeps build
 	scp ./dist/impc_etl.zip ./dist/main.py ../../phenodcc-derived-parameters/target/phenodcc-derived-parameters-1.1.0.jar hadoop-login-01:~/
-	ssh -t hadoop-login-01 spark2-submit --master yarn --conf spark.yarn.maxAppAttempts=1 --deploy-mode cluster --packages com.databricks:spark-xml_2.11:0.5.0,mysql:mysql-connector-java:5.1.38 --executor-memory 4G --jars phenodcc-derived-parameters-1.1.0.jar --driver-class-path phenodcc-derived-parameters-1.1.0.jar --py-files impc_etl.zip,libs.zip main.py  -d /user/federico/data/
+	ssh -t ${SPARK_HOST} spark2-submit --master yarn --conf spark.yarn.maxAppAttempts=1 --deploy-mode cluster --packages com.databricks:spark-xml_2.11:0.5.0,mysql:mysql-connector-java:5.1.38 --executor-memory 4G --jars phenodcc-derived-parameters-1.1.0.jar --driver-class-path phenodcc-derived-parameters-1.1.0.jar --py-files impc_etl.zip,libs.zip main.py  -d /user/federico/data/
 
 .venv:          ##@environment Create a venv
 	if [ ! -e ".venv/bin/activate" ] ; then python3 -m venv --clear .venv ; fi
@@ -51,6 +51,13 @@ prodDeps: .venv      ##@deps Create a venv and install common and prod dependenc
 devEnv: .venv devDeps
 ##	source .venv/bin/activate && pip install -U pre-commit
 ##	source .venv/bin/activate && pre-commit install --install-hooks
+
+
+download:            ##@download Download test data
+	scp ebi-cli:/nfs/komp2/web/phenotype_data/imits/imits-report.tsv ./tests/data/imits/
+	scp -r ebi-cli:/nfs/komp2/web/phenotype_data/3i/latest/ ./tests/data/3i/
+	scp -r ebi-cli:/nfs/komp2/web/phenotype_data/europhenome/2013-10-31/ ./tests/data/europhenome/
+	scp  ebi-cli:/nfs/komp2/web/phenotype_data/impc/latest/*/*.xml ./tests/data/dcc/
 
 
 

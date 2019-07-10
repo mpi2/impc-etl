@@ -1,4 +1,7 @@
 pytest
+pytest-spark
 pyspark
 pylint
 mock
+sphinx
+sphinx_rtd_theme

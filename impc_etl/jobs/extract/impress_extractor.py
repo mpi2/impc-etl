@@ -11,6 +11,7 @@ from pyspark.sql.functions import udf, explode_outer
 import requests
 from impc_etl.shared.utils import convert_to_row
 from impc_etl import logger
+import sys
 
 
 def extract_impress(spark_session: SparkSession,
@@ -120,3 +121,26 @@ def get_impress_entity_schema(spark_session: SparkSession, impress_api_url: str,
         "{}/{}/{}".format(impress_api_url, impress_type, schema_example)).text
     entity_rdd = spark_session.sparkContext.parallelize([first_entity])
     return spark_session.read.json(entity_rdd).schema
+
+
+def main(argv):
+    """
+    DCC Extractor job runner
+    :param list argv: the list elements should be:
+                    [1]: Input Path
+                    [2]: Output Path
+                    [3]: File type (experiment or specimen)
+                    [4]: Entity type (experiment, line, mouse or embryo)
+    """
+    impress_api_url = argv[1]
+    output_path = argv[2]
+    impress_root_type = argv[3]
+
+    spark = SparkSession.builder.getOrCreate()
+    impress_df = extract_impress(spark, impress_api_url, impress_root_type)
+
+    impress_df.write.mode('overwrite').parquet(output_path)
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

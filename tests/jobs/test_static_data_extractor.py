@@ -3,7 +3,7 @@ STATIC DATA EXTRACTOR TEST SUITE
 """
 from mock import MagicMock
 from owlready2 import get_ontology, Thing, AnnotationProperty
-from impc_etl.jobs.extraction.static_data_extractor import extract_phenotyping_centres, \
+from impc_etl.jobs.extract.static_data_extractor import extract_phenotyping_centres, \
     parse_ontology
 # pylint:disable=C0111,W0612,C0103
 

@@ -6,6 +6,10 @@ from pyspark.sql import DataFrame, SparkSession, Row
 from pyspark.sql.types import StructType, SparkContext
 from pyspark.sql.functions import col
 import re
+from datetime import datetime
+
+
+EPOCH = datetime.utcfromtimestamp(0)
 
 
 def extract_tsv(spark_session: SparkSession,
@@ -57,3 +61,7 @@ def pheno_dcc_derivator(sc: SparkContext, column):
 
 def extract_parameters_from_derivation(derivation: str):
     return list({match[0] for match in re.findall(r"\'(([A-Z]|\d|\_)*)\'", derivation)})
+
+
+def unix_time_millis(dt):
+    return (dt - EPOCH).total_seconds() * 1000.0
