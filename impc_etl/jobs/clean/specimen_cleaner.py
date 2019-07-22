@@ -26,7 +26,6 @@ def clean_specimens(spark_session: SparkSession, specimen_parquet_path: str) -> 
 def main(argv):
     input_path = argv[1]
     output_path = argv[2]
-    print(input_path)
     spark = SparkSession.builder.getOrCreate()
     specimen_clean_df = clean_specimens(spark, input_path)
     specimen_clean_df.write.mode('overwrite').parquet(output_path)
