@@ -39,8 +39,8 @@ def override_europhenome_datasource(dcc_df: DataFrame) -> DataFrame:
                                when((dcc_df['_dataSource'] == 'EuroPhenome')
                                     & (~lower(dcc_df['_colonyID']).startswith('baseline'))
                                     & (dcc_df['_colonyID'].isNotNull())
-                                    & ((dcc_df['Phenotyping Consortium'] == 'MGP') | (
-                                       dcc_df['Phenotyping Consortium'] == 'MGP Legacy')),
+                                    & ((dcc_df['phenotyping_consortium'] == 'MGP') | (
+                                       dcc_df['phenotyping_consortium'] == 'MGP Legacy')),
                                     lit('MGP'))
                                .otherwise(dcc_df['_dataSource'])
                                )
@@ -48,8 +48,8 @@ def override_europhenome_datasource(dcc_df: DataFrame) -> DataFrame:
                                when((dcc_df['_dataSource'] == 'EuroPhenome')
                                     & (~lower(dcc_df['_colonyID']).startswith('baseline'))
                                     & (dcc_df['_colonyID'].isNotNull())
-                                    & ((dcc_df['Phenotyping Consortium'] == 'MGP') | (
-                                       dcc_df['Phenotyping Consortium'] == 'MGP Legacy')),
+                                    & ((dcc_df['phenotyping_consortium'] == 'MGP') | (
+                                       dcc_df['phenotyping_consortium'] == 'MGP Legacy')),
                                     lit('MGP'))
                                .otherwise(dcc_df['_project'])
                                )

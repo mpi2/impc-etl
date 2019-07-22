@@ -110,6 +110,6 @@ venv.bak/
 .idea/*
 *.parquet
 
+*comparison.py
 
-impc_etl/comparison.py
 docs/build

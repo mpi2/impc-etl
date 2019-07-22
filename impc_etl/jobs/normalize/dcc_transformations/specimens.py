@@ -97,21 +97,22 @@ def override_3i_specimen_data(dcc_specimen_df: DataFrame):
 
 def override_3i_specimen_project(dcc_specimen_df: DataFrame):
     dcc_specimen_df.withColumn('_project', when(dcc_specimen_df['_dataSource'] == '3i',
-                                                col('Phenotyping Consortium')).otherwise(
+                                                col('phenotyping_consortium')).otherwise(
         '_project'))
     return dcc_specimen_df
 
 
 def add_mouse_life_stage_acc(dcc_specimen_df: DataFrame):
     dcc_specimen_df = dcc_specimen_df.withColumn('developmental_stage_acc',
-                               lit('EFO:0002948'))
+                                                 lit('EFO:0002948'))
     dcc_specimen_df = dcc_specimen_df.withColumn('developmental_stage_name',
-                               lit('postnatal'))
+                                                 lit('postnatal'))
     return dcc_specimen_df
 
 
 def add_embryo_life_stage_acc(dcc_specimen_df: DataFrame):
     efo_acc_udf = udf(lambda x: Constants.EFO_EMBRYONIC_STAGES[x], StringType())
     dcc_specimen_df = dcc_specimen_df.withColumn('developmental_stage_acc', efo_acc_udf('_stage'))
-    dcc_specimen_df = dcc_specimen_df.withColumn('developmental_stage_name', concat(lit('embryonic day '), col('_stage')))
+    dcc_specimen_df = dcc_specimen_df.withColumn('developmental_stage_name',
+                                                 concat(lit('embryonic day '), col('_stage')))
     return dcc_specimen_df

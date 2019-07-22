@@ -10,6 +10,7 @@ import sys
 
 def extract_imits_tsv(spark_session: SparkSession, file_path) -> DataFrame:
     imits_df = utils.extract_tsv(spark_session, file_path)
+    imits_df = imits_df.toDF(*[column_name.replace(" ", "_").lower() for column_name in imits_df.columns])
     return imits_df
 
 

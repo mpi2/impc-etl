@@ -15,7 +15,7 @@ from impc_etl.shared.utils import extract_parameters_from_derivation, unix_time_
 
 def process_experiments(dcc_experiment_df: DataFrame, mice_df: DataFrame, embryo_df: DataFrame,
                         impress_df: DataFrame):
-    dcc_experiment_df = dcc_experiment_df\
+    dcc_experiment_df = dcc_experiment_df \
         .transform(map_centre_id) \
         .transform(map_project_id) \
         .transform(standarize_europhenome_experiments) \
@@ -31,10 +31,10 @@ def process_experiments(dcc_experiment_df: DataFrame, mice_df: DataFrame, embryo
         .transform(generate_unique_id)
     mouse_specimens_df = mice_df.select('_centreID', '_specimenID', '_colonyID',
                                         '_isBaseline', '_productionCentre', '_phenotypingCentre',
-                                        'Phenotyping Consortium')
+                                        'phenotyping_consortium')
     embryo_specimens_df = embryo_df.select('_centreID', '_specimenID', '_colonyID',
                                            '_isBaseline', '_productionCentre', '_phenotypingCentre',
-                                           'Phenotyping Consortium')
+                                           'phenotyping_consortium')
     specimen_df = mouse_specimens_df.union(embryo_specimens_df)
     dcc_experiment_df = drop_null_colony_id(dcc_experiment_df, specimen_df)
     dcc_experiment_df = re_map_europhenome_experiments(dcc_experiment_df, specimen_df)
@@ -185,8 +185,7 @@ def re_map_europhenome_experiments(dcc_experiment_df, specimen_df: DataFrame):
                                                '_specimenID'])
                                            )
     experiment_df_a = experiment_df_a.transform(override_europhenome_datasource)
-    experiment_df_a = experiment_df_a.select('exp.*', '_dataSource', 'spe._colonyID',
-                                             'Phenotyping Consortium')
+    experiment_df_a = experiment_df_a.select('exp.*', '_dataSource')
     return experiment_df_a.dropDuplicates()
 
 
@@ -195,13 +194,13 @@ def generate_metadata_group(dcc_experiment_df: DataFrame, impress_df: DataFrame,
     experiment_df_a = dcc_experiment_df.alias('exp')
     specimen_df_a = specimen_df.alias('spe')
     experiment_metadata: DataFrame = experiment_df_a.join(specimen_df_a,
-                                                            (dcc_experiment_df['_centreID'] ==
+                                                          (dcc_experiment_df['_centreID'] ==
+                                                           specimen_df[
+                                                               '_centreID'])
+                                                          & (dcc_experiment_df['specimenID'] ==
                                                              specimen_df[
-                                                                 '_centreID'])
-                                                            & (dcc_experiment_df['specimenID'] ==
-                                                               specimen_df[
-                                                                   '_specimenID']), 'left_outer'
-                                                            )
+                                                                 '_specimenID']), 'left_outer'
+                                                          )
     experiment_metadata = experiment_metadata.withColumn('procedureMetadata',
                                                          explode('procedureMetadata'))
     impress_df_required = impress_df.where(
@@ -235,8 +234,7 @@ def generate_metadata_group(dcc_experiment_df: DataFrame, impress_df: DataFrame,
                                                               'metadataGroup'].isNull(),
                                                           md5(lit(''))).otherwise(
                                                          dcc_experiment_df['metadataGroup']))
-    dcc_experiment_df = dcc_experiment_df.select('exp.*', '_dataSource', 'metadataGroup',
-                                                 'spe._colonyID', 'Phenotyping Consortium')
+    dcc_experiment_df = dcc_experiment_df.select('exp.*', 'metadataGroup')
     return dcc_experiment_df
 
 
@@ -245,11 +243,11 @@ def generate_metadata(dcc_experiment_df: DataFrame, impress_df: DataFrame,
     experiment_df_a = dcc_experiment_df.alias('exp')
     specimen_df_a = specimen_df.alias('spe')
     experiment_metadata = experiment_df_a.join(specimen_df_a,
-                                                 (dcc_experiment_df['_centreID'] == specimen_df[
-                                                     '_centreID'])
-                                                 & (dcc_experiment_df['specimenID'] == specimen_df[
-                                                     '_specimenID']), 'left_outer'
-                                                 )
+                                               (dcc_experiment_df['_centreID'] == specimen_df[
+                                                   '_centreID'])
+                                               & (dcc_experiment_df['specimenID'] == specimen_df[
+                                                   '_specimenID']), 'left_outer'
+                                               )
     experiment_metadata = experiment_metadata.withColumn('procedureMetadata',
                                                          explode('procedureMetadata'))
     impress_df_required = impress_df.where(
@@ -286,9 +284,7 @@ def generate_metadata(dcc_experiment_df: DataFrame, impress_df: DataFrame,
         udf(_append_phenotyping_centre_to_metadata, ArrayType(StringType()))(col('metadata'), col(
             '_productionCentre'))).otherwise(col('metadata')))
     dcc_experiment_df = dcc_experiment_df.join(experiment_metadata, 'unique_id', 'left_outer')
-    dcc_experiment_df = dcc_experiment_df.select('exp.*', '_dataSource', 'metadata',
-                                                 'metadataGroup',
-                                                 'spe._colonyID', 'Phenotyping Consortium')
+    dcc_experiment_df = dcc_experiment_df.select('exp.*', 'metadataGroup', )
     return dcc_experiment_df
 
 
@@ -324,6 +320,8 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     weight_observations = weight_observations.join(mice_df,
                                                    weight_observations['specimenID'] == mice_df[
                                                        '_specimenID'], 'left_outer')
+    weight_observations.printSchema()
+    mice_df.printSchema()
     weight_observations = weight_observations.withColumn('weightDaysOld',
                                                          udf(calculate_age_in_days, StringType())(
                                                              'weightDate', '_DOB'))
