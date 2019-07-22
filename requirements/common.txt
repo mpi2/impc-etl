@@ -2,3 +2,4 @@ click
 owlready2
 requests
 findspark
+luigi

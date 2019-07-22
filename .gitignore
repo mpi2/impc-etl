@@ -108,3 +108,8 @@ venv.bak/
 
 .DS_Store
 .idea/*
+*.parquet
+
+*comparison.py
+
+docs/build
