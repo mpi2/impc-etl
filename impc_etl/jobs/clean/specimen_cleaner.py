@@ -1,6 +1,6 @@
 import sys
-from pyspark.sql import SparkSession
-from impc_etl.jobs.normalize.dcc_transformations.specimens import *
+from pyspark.sql import SparkSession, DataFrame
+from impc_etl.shared.transformations.specimens import *
 
 
 def clean_specimens(spark_session: SparkSession, specimen_parquet_path: str) -> DataFrame:
@@ -19,6 +19,7 @@ def clean_specimens(spark_session: SparkSession, specimen_parquet_path: str) -> 
         .transform(map_phenotyping_centre_id) \
         .transform(standarize_europhenome_specimen_ids) \
         .transform(standarize_europhenome_colony_ids) \
+        .transform(standarize_strain_ids)\
         .transform(override_3i_specimen_data)
     return specimen_df
 

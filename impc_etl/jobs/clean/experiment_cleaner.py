@@ -1,10 +1,10 @@
 import sys
-from impc_etl.jobs.normalize.dcc_transformations.experiments import *
+from impc_etl.shared.transformations.experiments import *
 
 
 def clean_experiments(spark_session: SparkSession, experiment_parquet_path: str) -> DataFrame:
     """
-    DCC specimen level experiment cleaner
+    DCC experiment level cleaner
 
     :param SparkSession spark_session: PySpark session object
     :param str experiment_parquet_path: path to a parquet file with experiment raw data

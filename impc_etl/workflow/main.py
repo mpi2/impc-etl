@@ -1,4 +1,4 @@
-from impc_etl.workflow.normalization import *
+from impc_etl.workflow.load import *
 
 
 class ImpcEtl(luigi.Task):
@@ -9,8 +9,11 @@ class ImpcEtl(luigi.Task):
 
     def requires(self):
         return [
-            ExperimentNormalizer(xml_path=self.dcc_xml_path, tsv_path=self.imits_report_tsv_path,
-                                 entity_type='experiment', output_path=self.output_path),
-            LineCleaner(xml_path=self.dcc_xml_path, output_path=self.output_path),
-            AlleleExtractor(tsv_path=self.imits_allele2_tsv_path, output_path=self.output_path),
+            StatsPipeLineLoader(xml_path=self.dcc_xml_path,
+                                imits_report_tsv_path=self.imits_report_tsv_path,
+                                imits_allele2_tsv_path=self.imits_allele2_tsv_path,
+                                output_path=self.output_path)
         ]
+
+    # def requires(self):
+    #     return [ImpressExtractor(output_path=self.output_path)]

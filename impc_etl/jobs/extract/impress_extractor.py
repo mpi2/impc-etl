@@ -6,8 +6,8 @@ from typing import List
 import json
 import time
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.types import StructType
-from pyspark.sql.functions import udf, explode_outer
+from pyspark.sql.types import StructType, ArrayType
+from pyspark.sql.functions import udf, explode_outer, lit, col
 import requests
 from impc_etl.shared.utils import convert_to_row
 from impc_etl import logger
@@ -23,6 +23,7 @@ def extract_impress(spark_session: SparkSession,
     :param start_type:
     :return:
     """
+    impress_api_url = impress_api_url[:-1] if impress_api_url.endswith('/') else impress_api_url
     root_index = requests.get("{}/{}/list".format(impress_api_url, start_type)).json()
     root_ids = [key for key in root_index.keys()]
     return get_entities_dataframe(spark_session, impress_api_url, start_type, root_ids)
@@ -60,25 +61,62 @@ def process_collection(spark_session, impress_api_url, current_schema, current_t
     :return:
     """
     impress_subtype = ''
+    collection_types = []
     for column_name in current_schema.names:
         if 'Collection' in column_name:
             impress_subtype = column_name.replace('Collection', '')
             if current_type != '':
                 column_name = current_type + '.' + column_name
-            entity_id_column_name = impress_subtype + 'Id'
-            entity_df = entity_df.withColumn(entity_id_column_name,
-                                             explode_outer(entity_df[column_name]))
             sub_entity_schema = get_impress_entity_schema(spark_session, impress_api_url,
                                                           impress_subtype)
-            get_entity_udf = udf(
-                lambda x: get_impress_entity_by_id(impress_api_url, impress_subtype, x),
-                StructType(sub_entity_schema))
-            entity_column_name = impress_subtype
-            entity_df = entity_df.withColumn(entity_column_name,
-                                             get_entity_udf(entity_df[entity_id_column_name]))
-            entity_df = process_collection(spark_session, impress_api_url, sub_entity_schema,
-                                           impress_subtype, entity_df)
+            get_entities_udf = udf(
+                lambda x: get_impress_entity_by_ids(impress_api_url, impress_subtype, x), ArrayType(StructType(sub_entity_schema)))
+            entity_df = entity_df.withColumn(impress_subtype,
+                                             get_entities_udf(entity_df[column_name]))
+            collection_types.append(dict(type=impress_subtype, schema=sub_entity_schema))
+            entity_df = entity_df.withColumn(impress_subtype,
+                                             explode_outer(entity_df[impress_subtype]))
+
+    for collection_type in collection_types:
+        logger.info('Calling to process:' + collection_type['type'])
+        entity_df = process_collection(spark_session, impress_api_url, collection_type['schema'],
+                                       collection_type['type'], entity_df)
     return entity_df
+
+
+def get_impress_entity_by_ids(impress_api_url: str, impress_type: str, impress_ids: List[int], retries=0):
+    """
+
+    :param impress_api_url:
+    :param impress_type:
+    :param impress_ids:
+    :param retries:
+    :return:
+    """
+    api_call_url = ("{}/{}/multiple".format(impress_api_url, impress_type))
+    logger.info('parsing :' + api_call_url)
+    if impress_ids is None or len(impress_ids) == 0:
+        return []
+    try:
+        response = requests.post(api_call_url, json=impress_ids)
+        try:
+            entity = response.json()
+        except json.decoder.JSONDecodeError:
+            logger.info("{}/{}/multiple".format(impress_api_url, impress_type))
+            logger.info("         " + response.text)
+            if response.text == '':
+                raise requests.exceptions.RequestException(response=response)
+            entity = []
+    except requests.exceptions.RequestException as e:
+        if retries < 4:
+            time.sleep(1)
+            entity = get_impress_entity_by_ids(impress_api_url, impress_type, impress_ids,
+                                              retries + 1)
+        else:
+            logger.info(
+                "Max retries for " + "{}/{}/multiple".format(impress_api_url, impress_type))
+            entity = []
+    return entity
 
 
 def get_impress_entity_by_id(impress_api_url: str, impress_type: str, impress_id: str, retries=0):
@@ -90,20 +128,28 @@ def get_impress_entity_by_id(impress_api_url: str, impress_type: str, impress_id
     :param retries:
     :return:
     """
-    logger.info('parsing :' + ("{}/{}/{}".format(impress_api_url, impress_type, impress_id)))
+    api_call_url = ("{}/{}/{}".format(impress_api_url, impress_type, impress_id))
+    logger.info('parsing :' + api_call_url)
+    if impress_id is None:
+        return None
     try:
-        response = requests.get("{}/{}/{}".format(impress_api_url, impress_type, impress_id))
-        entity = response.json()
-    except json.decoder.JSONDecodeError:
-        logger.info("{}/{}/{}".format(impress_api_url, impress_type, impress_id))
-        logger.info("         " + response.text)
-        entity = None
-    except requests.exceptions.ConnectionError:
+        response = requests.get(api_call_url, timeout=(5, 14))
+        try:
+            entity = response.json()
+        except json.decoder.JSONDecodeError:
+            logger.info("{}/{}/{}".format(impress_api_url, impress_type, impress_id))
+            logger.info("         " + response.text)
+            if response.text == '':
+                raise requests.exceptions.RequestException(response=response)
+            entity = None
+    except requests.exceptions.RequestException as e:
         if retries < 4:
             time.sleep(1)
-            entity = get_impress_entity_by_id(impress_api_url, impress_type, impress_id, retries+1)
+            entity = get_impress_entity_by_id(impress_api_url, impress_type, impress_id,
+                                              retries + 1)
         else:
-            logger.info("Max retries for " + "{}/{}/{}".format(impress_api_url, impress_type, impress_id))
+            logger.info(
+                "Max retries for " + "{}/{}/{}".format(impress_api_url, impress_type, impress_id))
             entity = None
     return entity
 
@@ -138,7 +184,6 @@ def main(argv):
 
     spark = SparkSession.builder.getOrCreate()
     impress_df = extract_impress(spark, impress_api_url, impress_root_type)
-
     impress_df.write.mode('overwrite').parquet(output_path)
 
 

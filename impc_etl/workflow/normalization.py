@@ -15,7 +15,7 @@ class SpecimenNormalizer(SparkSubmitTask):
         return luigi.LocalTarget(f"{self.output_path}{self.entity_type}_normalized_parquet")
 
     def app_options(self):
-        return [self.input()[0].path, self.input()[1].path, self.output().path]
+        return [self.input()[0].path, self.input()[1].path, self.entity_type, self.output().path]
 
 
 class MouseNormalizer(SpecimenNormalizer):
@@ -23,7 +23,7 @@ class MouseNormalizer(SpecimenNormalizer):
 
     def requires(self):
         return [MouseCleaner(xml_path=self.xml_path, output_path=self.output_path),
-                ColonyExtractor(tsv_path=self.tsv_path, output_path=self.output_path)]
+                ColonyCleaner(tsv_path=self.tsv_path, output_path=self.output_path)]
 
 
 class EmbryoNormalizer(SpecimenNormalizer):
@@ -31,7 +31,7 @@ class EmbryoNormalizer(SpecimenNormalizer):
 
     def requires(self):
         return [EmbryoCleaner(xml_path=self.xml_path, output_path=self.output_path),
-                ColonyExtractor(tsv_path=self.tsv_path, output_path=self.output_path)]
+                ColonyCleaner(tsv_path=self.tsv_path, output_path=self.output_path)]
 
 
 class ExperimentNormalizer(SparkSubmitTask):
