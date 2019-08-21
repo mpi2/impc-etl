@@ -58,6 +58,14 @@ def main():
     exec_env = 'prod' if args.exec_env is None else args.exec_env[0]
     base_path = '' if exec_env is 'prod' else '../tests/'
 
+    logger.info('Not found parquet file for experiments data, loading from API')
+    impress_api_url = 'http://api.mousephenotype.org/impress/'
+    impress_pipeline_type = 'pipeline'
+    impress_df = impress_e.extract_impress(spark, impress_api_url, impress_pipeline_type)
+    impress_df.write.mode('overwrite').parquet(base_path + 'out/impress_df.parquet')
+
+    return
+
     logger.info('IMITS data load started')
     imits_df = imits_e.extract_phenotyping_colonies(spark,
                                                     base_path + 'data/imits/imits-report.tsv')

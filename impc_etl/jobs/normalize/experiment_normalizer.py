@@ -1,6 +1,6 @@
 import sys
 from pyspark.sql import SparkSession
-from impc_etl.jobs.normalize.dcc_transformations.experiments import *
+from impc_etl.shared.transformations.experiments import *
 
 
 def normalize_experiments(spark_session: SparkSession,
@@ -31,14 +31,28 @@ def normalize_experiments(spark_session: SparkSession,
     mouse_specimen_df = mouse_df.select(*specimen_cols)
     embryo_specimen_df = embryo_df.select(*specimen_cols)
     specimen_df = mouse_specimen_df.union(embryo_specimen_df)
+    experiment_df = experiment_df.alias('experiment')
+    specimen_df = specimen_df.alias('specimen')
+    experiment_specimen_df = experiment_df.join(specimen_df,
+                                                (experiment_df['_centreID'] == specimen_df[
+                                                    '_centreID'])
+                                                & (experiment_df['specimenID'] == specimen_df[
+                                                    '_specimenID'])
+                                                )
 
-    experiment_df = drop_null_colony_id(experiment_df, specimen_df)
-    experiment_df = re_map_europhenome_experiments(experiment_df, specimen_df)
-    experiment_df = generate_metadata_group(experiment_df, pipeline_df, specimen_df)
-    experiment_df = generate_metadata(experiment_df, pipeline_df, specimen_df)
+    experiment_specimen_df = drop_null_colony_id(experiment_specimen_df)
+    experiment_specimen_df = re_map_europhenome_experiments(experiment_specimen_df)
+    experiment_specimen_df = generate_metadata_group(experiment_specimen_df, pipeline_df)
+    experiment_specimen_df = generate_metadata(experiment_specimen_df, pipeline_df)
+    experiment_columns = ['experiment.' + col_name for col_name in experiment_df.columns if
+                          col_name not in ['_dataSource', '_project']] + ['metadata',
+                                                                          'metadataGroup',
+                                                                          'metadataGroupList',
+                                                                          '_project', '_dataSource']
+    experiment_df = experiment_specimen_df.select(experiment_columns)
+    experiment_df = get_derived_parameters(spark_session, experiment_df, pipeline_df)
     experiment_df = get_associated_body_weight(experiment_df, mouse_df)
     experiment_df = generate_age_information(experiment_df, mouse_df)
-    experiment_df = get_derived_parameters(spark_session, experiment_df, pipeline_df)
     return experiment_df
 
 

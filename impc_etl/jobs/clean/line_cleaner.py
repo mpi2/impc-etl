@@ -1,5 +1,5 @@
 import sys
-from impc_etl.jobs.normalize.dcc_transformations.experiments import *
+from impc_etl.shared.transformations.experiments import *
 
 
 def clean_lines(spark: SparkSession, line_parquet_path: str):
