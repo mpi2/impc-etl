@@ -49,7 +49,7 @@ class ImitsExtractor(SparkSubmitTask):
     def output(self):
         self.output_path = self.output_path + '/' if not self.output_path.endswith(
             '/') else self.output_path
-        return luigi.LocalTarget(f"{self.output_path}{self.entity_type.lower()}_parquet")
+        return luigi.LocalTarget(f"{self.output_path}{self.entity_type.lower()}_raw_parquet")
 
     def app_options(self):
         return [self.tsv_path, self.output().path, self.entity_type]

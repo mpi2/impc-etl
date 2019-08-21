@@ -3,13 +3,13 @@ import math
 from datetime import datetime
 from typing import List, Dict
 
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import explode_outer, lit, col, lower, concat, \
-    md5, explode, concat_ws, collect_list, create_map, sort_array, collect_set, struct
+from pyspark.sql import SparkSession, Window
+from pyspark.sql.functions import explode_outer, col, concat, \
+    md5, explode, concat_ws, collect_list, create_map, sort_array, collect_set, struct, max
 from pyspark.sql.types import BooleanType, ArrayType, StructType, StructField, \
     IntegerType, Row
 
-from impc_etl.jobs.normalize.dcc_transformations.commons import *
+from impc_etl.shared.transformations.commons import *
 from impc_etl.shared.utils import extract_parameters_from_derivation, unix_time_millis
 
 
@@ -157,52 +157,21 @@ def generate_unique_id(dcc_experiment_df: DataFrame):
     return dcc_experiment_df
 
 
-def drop_null_colony_id(experiment_df: DataFrame, specimen_df: DataFrame) -> DataFrame:
-    specimen_df = specimen_df.where(
-        (specimen_df['_colonyID'].isNotNull()) | (specimen_df['_isBaseline'] == True)
-    ).dropDuplicates()
-    experiment_df_a = experiment_df.alias('exp')
-    specimen_df_a = specimen_df.alias('spe')
-
-    experiment_df_a = experiment_df_a.join(specimen_df_a,
-                                           (experiment_df_a['_centreID'] == specimen_df_a[
-                                               '_centreID'])
-                                           & (experiment_df_a['specimenID'] == specimen_df_a[
-                                               '_specimenID'])
-                                           )
-    experiment_df = experiment_df_a.select('exp.*')
-    return experiment_df.dropDuplicates()
+def drop_null_colony_id(experiment_specimen_df: DataFrame) -> DataFrame:
+    experiment_specimen_df = experiment_specimen_df.where(
+        (col('specimen._colonyID').isNotNull()) | (col('specimen._isBaseline') == True)
+    )
+    return experiment_specimen_df.dropDuplicates()
 
 
-def re_map_europhenome_experiments(dcc_experiment_df, specimen_df: DataFrame):
-    experiment_df_a = dcc_experiment_df.alias('exp')
-    specimen_df_a = specimen_df.alias('spe')
-
-    experiment_df_a = experiment_df_a.join(specimen_df_a,
-                                           (experiment_df_a['_centreID'] == specimen_df_a[
-                                               '_centreID'])
-                                           & (experiment_df_a['specimenID'] == specimen_df_a[
-                                               '_specimenID'])
-                                           )
-    experiment_df_a = experiment_df_a.transform(override_europhenome_datasource)
-    experiment_df_a = experiment_df_a.select('exp.*', '_dataSource')
-    return experiment_df_a.dropDuplicates()
+def re_map_europhenome_experiments(experiment_specimen_df: DataFrame):
+    experiment_specimen_df = experiment_specimen_df.transform(override_europhenome_datasource)
+    return experiment_specimen_df
 
 
-def generate_metadata_group(dcc_experiment_df: DataFrame, impress_df: DataFrame,
-                            specimen_df: DataFrame) -> DataFrame:
-    experiment_df_a = dcc_experiment_df.alias('exp')
-    specimen_df_a = specimen_df.alias('spe')
-    experiment_metadata: DataFrame = experiment_df_a.join(specimen_df_a,
-                                                          (dcc_experiment_df['_centreID'] ==
-                                                           specimen_df[
-                                                               '_centreID'])
-                                                          & (dcc_experiment_df['specimenID'] ==
-                                                             specimen_df[
-                                                                 '_specimenID']), 'left_outer'
-                                                          )
-    experiment_metadata = experiment_metadata.withColumn('procedureMetadata',
-                                                         explode('procedureMetadata'))
+def generate_metadata_group(experiment_specimen_df: DataFrame, impress_df: DataFrame) -> DataFrame:
+    experiment_metadata = experiment_specimen_df.withColumn('procedureMetadata',
+                                                            explode('procedureMetadata'))
     impress_df_required = impress_df.where(
         (col('parameter.isImportant') == True) & (col('parameter.type') == 'procedureMetadata'))
     experiment_metadata = experiment_metadata.join(impress_df_required,
@@ -216,9 +185,12 @@ def generate_metadata_group(dcc_experiment_df: DataFrame, impress_df: DataFrame,
                                          concat(col('parameter.name'), lit(' = '), col(
                                              'procedureMetadata.value'))
                                          ).otherwise(lit('')))
-    experiment_metadata = experiment_metadata.groupBy('unique_id', '_productionCentre',
+    window = Window.partitionBy('unique_id', '_productionCentre', '_phenotypingCentre').orderBy(
+        'parameter.parameterKey')
+    experiment_metadata_input = experiment_metadata.withColumn('metadataItems', collect_set(col('metadataItem')).over(window))
+    experiment_metadata = experiment_metadata_input.groupBy('unique_id', '_productionCentre',
                                                       '_phenotypingCentre') \
-        .agg(concat_ws('::', sort_array(collect_set(col('metadataItem'))))
+        .agg(concat_ws('::', max(col('metadataItems')))
              .alias('metadataGroupList'))
     experiment_metadata = experiment_metadata.withColumn('metadataGroupList', when(
         (col('_productionCentre').isNotNull()) & (
@@ -227,29 +199,22 @@ def generate_metadata_group(dcc_experiment_df: DataFrame, impress_df: DataFrame,
                col('_productionCentre'))).otherwise(col('metadataGroupList')))
     experiment_metadata = experiment_metadata.withColumn('metadataGroup',
                                                          md5(col('metadataGroupList')))
-    experiment_metadata = experiment_metadata.drop('metadataGroupList')
-    dcc_experiment_df = dcc_experiment_df.join(experiment_metadata, 'unique_id', 'left_outer')
-    dcc_experiment_df = dcc_experiment_df.withColumn('metadataGroup',
-                                                     when(dcc_experiment_df[
-                                                              'metadataGroup'].isNull(),
-                                                          md5(lit(''))).otherwise(
-                                                         dcc_experiment_df['metadataGroup']))
-    dcc_experiment_df = dcc_experiment_df.select('exp.*', 'metadataGroup')
-    return dcc_experiment_df
+    # experiment_metadata = experiment_metadata.drop('metadataGroupList')
+    experiment_specimen_df = experiment_specimen_df.join(experiment_metadata,
+                                                         ['unique_id', '_productionCentre',
+                                                          '_phenotypingCentre'], 'left_outer')
+    experiment_specimen_df = experiment_specimen_df.withColumn('metadataGroup',
+                                                               when(experiment_specimen_df[
+                                                                        'metadataGroup'].isNull(),
+                                                                    md5(lit(''))).otherwise(
+                                                                   experiment_specimen_df[
+                                                                       'metadataGroup']))
+    return experiment_specimen_df
 
 
-def generate_metadata(dcc_experiment_df: DataFrame, impress_df: DataFrame,
-                      specimen_df: DataFrame) -> DataFrame:
-    experiment_df_a = dcc_experiment_df.alias('exp')
-    specimen_df_a = specimen_df.alias('spe')
-    experiment_metadata = experiment_df_a.join(specimen_df_a,
-                                               (dcc_experiment_df['_centreID'] == specimen_df[
-                                                   '_centreID'])
-                                               & (dcc_experiment_df['specimenID'] == specimen_df[
-                                                   '_specimenID']), 'left_outer'
-                                               )
-    experiment_metadata = experiment_metadata.withColumn('procedureMetadata',
-                                                         explode('procedureMetadata'))
+def generate_metadata(experiment_specimen_df: DataFrame, impress_df: DataFrame) -> DataFrame:
+    experiment_metadata = experiment_specimen_df.withColumn('procedureMetadata',
+                                                            explode('procedureMetadata'))
     impress_df_required = impress_df.where(
         (col('parameter.type') == 'procedureMetadata'))
     experiment_metadata = experiment_metadata.join(impress_df_required,
@@ -283,9 +248,9 @@ def generate_metadata(dcc_experiment_df: DataFrame, impress_df: DataFrame,
                 col('_productionCentre') != col('_phenotypingCentre')),
         udf(_append_phenotyping_centre_to_metadata, ArrayType(StringType()))(col('metadata'), col(
             '_productionCentre'))).otherwise(col('metadata')))
-    dcc_experiment_df = dcc_experiment_df.join(experiment_metadata, 'unique_id', 'left_outer')
-    dcc_experiment_df = dcc_experiment_df.select('exp.*', 'metadataGroup', )
-    return dcc_experiment_df
+    experiment_specimen_df = experiment_specimen_df.join(experiment_metadata, 'unique_id',
+                                                         'left_outer')
+    return experiment_specimen_df
 
 
 def _append_phenotyping_centre_to_metadata(metadata: List, prod_centre: str):
@@ -320,15 +285,13 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     weight_observations = weight_observations.join(mice_df,
                                                    weight_observations['specimenID'] == mice_df[
                                                        '_specimenID'], 'left_outer')
-    weight_observations.printSchema()
-    mice_df.printSchema()
     weight_observations = weight_observations.withColumn('weightDaysOld',
                                                          udf(calculate_age_in_days, StringType())(
                                                              'weightDate', '_DOB'))
     weight_observations = weight_observations.groupBy('specimenID').agg(
         collect_set(
             struct('weightDate', 'weightParameterID', 'weightValue', 'weightDaysOld')).alias(
-            'weight'))
+            'weight_observations'))
 
     dcc_experiment_df = dcc_experiment_df.withColumn('procedureGroup', udf(
         lambda prod_id: prod_id[:prod_id.rfind('_')], StringType())(col('_procedureID')))
@@ -344,9 +307,9 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     dcc_experiment_df = experiment_df_a.join(mice_df_a, dcc_experiment_df['specimenID'] == mice_df[
         '_specimenID'], 'left_outer')
     get_associated_body_weight_udf = udf(_get_closest_weight, output_weight_schema)
-    dcc_experiment_df = dcc_experiment_df.withColumn('exp.weight', get_associated_body_weight_udf(
-        col('_dateOfExperiment'), col('procedureGroup'), col('weight')))
-    dcc_experiment_df = dcc_experiment_df.select('exp.*')
+    dcc_experiment_df = dcc_experiment_df.withColumn('weight', get_associated_body_weight_udf(
+        col('_dateOfExperiment'), col('procedureGroup'), col('weight_observations')))
+    dcc_experiment_df = dcc_experiment_df.select('exp.*', 'weight')
     return dcc_experiment_df
 
 
@@ -455,7 +418,7 @@ def get_derived_parameters(spark: SparkSession, dcc_experiment_df: DataFrame,
     results_df = spark.sql(
         """
            SELECT unique_id, parameterKey,
-                  derivationInputStr,phenodcc_derivator(derivationInputStr) as result
+                  derivationInputStr, phenodcc_derivator(derivationInputStr) as result
            FROM complete_derivations
         """
     )
@@ -474,7 +437,6 @@ def get_derived_parameters(spark: SparkSession, dcc_experiment_df: DataFrame,
     dcc_experiment_df = dcc_experiment_df.join(results_df,
                                                dcc_experiment_df['unique_id'] == results_df[
                                                    'unique_id_result'], 'left_outer')
-    dcc_experiment_df.printSchema()
     dcc_experiment_df = dcc_experiment_df.withColumn(
         'derivedParameters',
         when(
@@ -484,7 +446,7 @@ def get_derived_parameters(spark: SparkSession, dcc_experiment_df: DataFrame,
                 'simpleParameter')
         ).otherwise(col('simpleParameter').cast(simple_parameter_type)))
     dcc_experiment_df = dcc_experiment_df.drop('derivedParameters').drop(
-        'complete_derivations.unique_id')
+        'complete_derivations.unique_id').drop('results')
 
     return dcc_experiment_df
 
@@ -495,7 +457,9 @@ def _get_inputs_by_parameter_type(dcc_experiment_df, derived_parameters_ex, para
                                                        parameter_type))
     if parameter_type == 'seriesParameter':
         experiments_by_type = experiments_by_type.select('unique_id',
-                                                         parameter_type + '._parameterID',
+                                                         col(
+                                                             parameter_type + '._parameterID').alias(
+                                                             '_parameterID'),
                                                          explode(parameter_type + '.value').alias(
                                                              'value'))
         experiments_by_type = experiments_by_type.withColumn('value',

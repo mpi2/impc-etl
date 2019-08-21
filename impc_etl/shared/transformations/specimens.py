@@ -1,6 +1,6 @@
 from pyspark.sql.functions import col, concat
 
-from impc_etl.jobs.normalize.dcc_transformations.commons import *
+from impc_etl.shared.transformations.commons import *
 
 from impc_etl.config import Constants
 
@@ -62,6 +62,15 @@ def standarize_europhenome_colony_ids(dcc_df: DataFrame) -> DataFrame:
     return dcc_df
 
 
+def standarize_strain_ids(dcc_df: DataFrame) -> DataFrame:
+    dcc_df = dcc_df.withColumn('_strainID',
+                               when(dcc_df['_strainID'].startswith('MGI:'),
+                                    dcc_df['_strainID'])
+                               .otherwise(concat(lit('MGI:'), dcc_df['_strainID']))
+                               )
+    return dcc_df
+
+
 def standarize_europhenome_specimen_ids(dcc_df: DataFrame) -> DataFrame:
     dcc_df = dcc_df.withColumn('_specimenID',
                                when((dcc_df['_dataSource'] == 'EuroPhenome') | (
@@ -70,6 +79,52 @@ def standarize_europhenome_specimen_ids(dcc_df: DataFrame) -> DataFrame:
                                .otherwise(dcc_df['_specimenID'])
                                )
     return dcc_df
+
+
+def generate_allelic_composition(dcc_specimen_df: DataFrame) -> DataFrame:
+    generate_allelic_composition_udf = udf(_generate_allelic_composition, StringType())
+    dcc_specimen_df = dcc_specimen_df.withColumn('allelic_composition',
+                                                 generate_allelic_composition_udf(
+                                                     'specimen._zygosity',
+                                                     'colony.allele_symbol',
+                                                     'colony.marker_symbol',
+                                                     'specimen._isBaseline'
+                                                 )
+                                                 )
+    return dcc_specimen_df
+
+
+def _generate_allelic_composition(zigosity: str, allele_symbol: str,
+                                  gene_symbol: str, is_baseline: bool):
+    if is_baseline:
+        return ''
+
+    if zigosity in ['homozygous', 'homozygote']:
+        if allele_symbol is not 'baseline':
+            if allele_symbol is not '' and ' ' not in allele_symbol:
+                return f'{allele_symbol}/{allele_symbol}'
+            else:
+                return f'{gene_symbol}<?>/{gene_symbol}<?>'
+        else:
+            return f'{gene_symbol}<+>/{gene_symbol}<+>'
+
+    if zigosity in ['heterozygous', 'heterozygote']:
+        if allele_symbol is not 'baseline':
+            if allele_symbol is not '' and ' ' not in allele_symbol:
+                return f'{allele_symbol}/{gene_symbol}<+>'
+            else:
+                return f'{gene_symbol}<?>/{gene_symbol}<+>'
+        else:
+            return None
+
+    if zigosity in ['hemizygous', 'hemizygote']:
+        if allele_symbol is not 'baseline':
+            if allele_symbol is not '' and ' ' not in allele_symbol:
+                return f'{allele_symbol}/0'
+            else:
+                return f'{gene_symbol}<?>/0'
+        else:
+            return None
 
 
 def _truncate_colony_id(colony_id: str) -> str:
@@ -111,7 +166,7 @@ def add_mouse_life_stage_acc(dcc_specimen_df: DataFrame):
 
 
 def add_embryo_life_stage_acc(dcc_specimen_df: DataFrame):
-    efo_acc_udf = udf(lambda x: Constants.EFO_EMBRYONIC_STAGES[x], StringType())
+    efo_acc_udf = udf(lambda x: Constants.EFO_EMBRYONIC_STAGES[str(x).replace('E', '')], StringType())
     dcc_specimen_df = dcc_specimen_df.withColumn('developmental_stage_acc', efo_acc_udf('_stage'))
     dcc_specimen_df = dcc_specimen_df.withColumn('developmental_stage_name',
                                                  concat(lit('embryonic day '), col('_stage')))
