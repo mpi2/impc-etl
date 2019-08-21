@@ -4,7 +4,7 @@ Config file
 
 
 class SparkConfig:
-    SPARK_JAR_PACKAGES = 'com.databricks:spark-xml_2.11:0.5.0'
+    SPARK_JAR_PACKAGES = 'com.databricks:spark-xml_2.11:0.6.0'
 
 
 class OntologySchema:
@@ -89,7 +89,7 @@ class Constants:
         'biat': 'BIAT',
         'ph': 'PH',
         'cdta': 'CDTA',
-        'crl': 'CRL',
+        'crl': 'Crl',
         'riken brc': 'RBRC',
         'ccp-img': 'CCP-IMG',
         'monterotondo': 'Monterotondo',

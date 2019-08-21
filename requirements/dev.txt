@@ -5,3 +5,4 @@ pylint
 mock
 sphinx
 sphinx_rtd_theme
+bs4

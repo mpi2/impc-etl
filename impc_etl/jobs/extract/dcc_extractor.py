@@ -18,6 +18,7 @@ from impc_etl.shared.exceptions import UnsupportedEntityError, UnsupportedFileTy
 from typing import List
 from impc_etl import logger
 import sys
+import py4j
 
 
 def extract_dcc_xml_files(spark_session: SparkSession, xml_path: str, file_type: str) -> DataFrame:
@@ -39,16 +40,22 @@ def extract_dcc_xml_files(spark_session: SparkSession, xml_path: str, file_type:
     path = f"{xml_path}*/*{file_type}*.xml"
 
     logger.info(f"loading DCC data source from path '{path}'")
-    dcc_df = spark_session.read.format("com.databricks.spark.xml") \
-        .options(rowTag='centre', samplingRatio='1', nullValue='', mode='FAILFAST') \
-        .load(path)
+    try:
+        dcc_df = spark_session.read.format("com.databricks.spark.xml") \
+            .options(rowTag='centre', samplingRatio='1', nullValue='', mode='FAILFAST') \
+            .load(path)
 
-    logger.info(f"adding _dataSource column")
-    dcc_df = dcc_df.withColumn('_sourceFile', lit(input_file_name()))
-    data_source_extract = udf(lambda x: x.split('/')[-2], StringType())
-    dcc_df = dcc_df.withColumn('_dataSource', data_source_extract('_sourceFile'))
+        logger.info(f"adding _dataSource column")
+        dcc_df = dcc_df.withColumn('_sourceFile', lit(input_file_name()))
+        data_source_extract = udf(lambda x: x.split('/')[-2], StringType())
+        dcc_df = dcc_df.withColumn('_dataSource', data_source_extract('_sourceFile'))
 
-    logger.info(f"finished load of DCC data source from path '{path}'")
+        logger.info(f"finished load of DCC data source from path '{path}'")
+    except py4j.protocol.Py4JJavaError as e:
+        if 'InvalidInputException' in str(e):
+            raise FileNotFoundError
+        else:
+            raise e
     return dcc_df
 
 
@@ -131,13 +138,12 @@ def main(argv):
     spark = SparkSession.builder.getOrCreate()
     dcc_df = extract_dcc_xml_files(spark, input_path, file_type)
 
+    entities_df = None
+
     if file_type == 'experiment':
         entities_df = get_experiments_by_type(dcc_df, entity_type)
-
-    elif file_type == 'specimen':
+    if file_type == 'specimen':
         entities_df = get_specimens_by_type(dcc_df, entity_type)
-    else:
-        raise Exception
 
     entities_df.write.mode('overwrite').parquet(output_path)
 
