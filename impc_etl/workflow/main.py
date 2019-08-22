@@ -9,10 +9,12 @@ class ImpcEtl(luigi.Task):
 
     def requires(self):
         return [
-            StatsPipeLineLoader(xml_path=self.dcc_xml_path,
-                                imits_report_tsv_path=self.imits_report_tsv_path,
-                                imits_allele2_tsv_path=self.imits_allele2_tsv_path,
-                                output_path=self.output_path)
+            StatsPipeLineLoader(
+                xml_path=self.dcc_xml_path,
+                imits_report_tsv_path=self.imits_report_tsv_path,
+                imits_allele2_tsv_path=self.imits_allele2_tsv_path,
+                output_path=self.output_path,
+            )
         ]
 
     # def requires(self):

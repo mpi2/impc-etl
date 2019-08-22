@@ -12,9 +12,9 @@ from datetime import datetime
 EPOCH = datetime.utcfromtimestamp(0)
 
 
-def extract_tsv(spark_session: SparkSession,
-                file_path: str,
-                schema: StructType = None) -> DataFrame:
+def extract_tsv(
+    spark_session: SparkSession, file_path: str, schema: StructType = None
+) -> DataFrame:
     """
 
     :param spark_session:
@@ -22,11 +22,9 @@ def extract_tsv(spark_session: SparkSession,
     :param schema:
     :return:
     """
-    return spark_session.read.csv(file_path,
-                                  header=True,
-                                  schema=schema,
-                                  mode='DROPMALFORMED',
-                                  sep='\t')
+    return spark_session.read.csv(
+        file_path, header=True, schema=schema, mode="DROPMALFORMED", sep="\t"
+    )
 
 
 def convert_to_row(dictionary: dict) -> Row:
@@ -55,6 +53,7 @@ def file_exists(sc: SparkContext, path: str) -> bool:
 
 def pheno_dcc_derivator(sc: SparkContext, column):
     from pyspark.sql.column import Column, _to_java_column, _to_seq
+
     jc = sc._jvm.org.mousephenotype.dcc.derived.parameters.SparkDerivator
     return Column(jc(_to_seq(sc, [column], _to_java_column)))
 
