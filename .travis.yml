@@ -1,6 +1,6 @@
 language: python
 cache:
-  - pip
+  - pip: true
   - directories:
       - /home/travis/build/mpi2/impc-etl/tests/data/
 python:
