@@ -1,5 +1,8 @@
 language: python
-cache: pip
+cache:
+  - pip
+  - directories:
+      - /home/travis/build/mpi2/impc-etl/tests/data/
 python:
   - "3.6"
 install:
