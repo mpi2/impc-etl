@@ -21,7 +21,9 @@ import sys
 import py4j
 
 
-def extract_dcc_xml_files(spark_session: SparkSession, xml_path: str, file_type: str) -> DataFrame:
+def extract_dcc_xml_files(
+    spark_session: SparkSession, xml_path: str, file_type: str
+) -> DataFrame:
     """
     Extracts the DCC XML files into a Spark DataFrame
 
@@ -33,26 +35,28 @@ def extract_dcc_xml_files(spark_session: SparkSession, xml_path: str, file_type:
     :return: a Spark DataFrame with the XML files in it
     :rtype: DataFrame
     """
-    if file_type not in ['experiment', 'specimen']:
+    if file_type not in ["experiment", "specimen"]:
         raise UnsupportedFileTypeError
 
-    xml_path = xml_path + '/' if not xml_path.endswith('/') else xml_path
+    xml_path = xml_path + "/" if not xml_path.endswith("/") else xml_path
     path = f"{xml_path}*/*{file_type}*.xml"
 
     logger.info(f"loading DCC data source from path '{path}'")
     try:
-        dcc_df = spark_session.read.format("com.databricks.spark.xml") \
-            .options(rowTag='centre', samplingRatio='1', nullValue='', mode='FAILFAST') \
+        dcc_df = (
+            spark_session.read.format("com.databricks.spark.xml")
+            .options(rowTag="centre", samplingRatio="1", nullValue="", mode="FAILFAST")
             .load(path)
+        )
 
         logger.info(f"adding _dataSource column")
-        dcc_df = dcc_df.withColumn('_sourceFile', lit(input_file_name()))
-        data_source_extract = udf(lambda x: x.split('/')[-2], StringType())
-        dcc_df = dcc_df.withColumn('_dataSource', data_source_extract('_sourceFile'))
+        dcc_df = dcc_df.withColumn("_sourceFile", lit(input_file_name()))
+        data_source_extract = udf(lambda x: x.split("/")[-2], StringType())
+        dcc_df = dcc_df.withColumn("_dataSource", data_source_extract("_sourceFile"))
 
         logger.info(f"finished load of DCC data source from path '{path}'")
     except py4j.protocol.Py4JJavaError as e:
-        if 'InvalidInputException' in str(e):
+        if "InvalidInputException" in str(e):
             raise FileNotFoundError
         else:
             raise e
@@ -71,16 +75,18 @@ def get_experiments_by_type(dcc_df: DataFrame, entity_type: str) -> DataFrame:
     :rtype: DataFrame
     :raise: UnsupportedEntityError when the given entity_type is not supported
     """
-    if entity_type not in ['experiment', 'line']:
+    if entity_type not in ["experiment", "line"]:
         raise UnsupportedEntityError
 
-    experiment_df = _get_entity_by_type(dcc_df, entity_type,
-                                        ['_centreID', '_pipeline', '_project', '_sourceFile',
-                                         '_dataSource'])
+    experiment_df = _get_entity_by_type(
+        dcc_df,
+        entity_type,
+        ["_centreID", "_pipeline", "_project", "_sourceFile", "_dataSource"],
+    )
     return experiment_df.select(
-        ['procedure.*'] +
-        [column for column in experiment_df.columns if column is not 'procedure']) \
-        .drop('procedure')
+        ["procedure.*"]
+        + [column for column in experiment_df.columns if column is not "procedure"]
+    ).drop("procedure")
 
 
 def get_specimens_by_type(dcc_df: DataFrame, entity_type: str) -> DataFrame:
@@ -95,13 +101,16 @@ def get_specimens_by_type(dcc_df: DataFrame, entity_type: str) -> DataFrame:
     :rtype: DataFrame
     :raise: UnsupportedEntityError when the given entity_type is not supported
     """
-    if entity_type not in ['mouse', 'embryo']:
+    if entity_type not in ["mouse", "embryo"]:
         raise UnsupportedEntityError
-    return _get_entity_by_type(dcc_df, entity_type, ['_centreID', '_sourceFile', '_dataSource'])
+    return _get_entity_by_type(
+        dcc_df, entity_type, ["_centreID", "_sourceFile", "_dataSource"]
+    )
 
 
-def _get_entity_by_type(dcc_df: DataFrame, entity_type: str,
-                        centre_columns: List[str]) -> DataFrame:
+def _get_entity_by_type(
+    dcc_df: DataFrame, entity_type: str, centre_columns: List[str]
+) -> DataFrame:
     """
     Takes a DCC DataFrame and obtains a given the entity type
     adding a '_type' column to the DataFrame
@@ -112,13 +121,15 @@ def _get_entity_by_type(dcc_df: DataFrame, entity_type: str,
     :rtype: DataFrame
     """
     centre_columns.append(dcc_df[entity_type])
-    entity_df = dcc_df.where(dcc_df[entity_type].isNotNull()) \
-        .select(centre_columns + [entity_type])
-    entity_df = entity_df \
-        .withColumn('tmp', explode_outer(entity_df[entity_type])) \
-        .select(['tmp.*'] + centre_columns) \
-        .withColumn('_type', lit(entity_type)) \
+    entity_df = dcc_df.where(dcc_df[entity_type].isNotNull()).select(
+        centre_columns + [entity_type]
+    )
+    entity_df = (
+        entity_df.withColumn("tmp", explode_outer(entity_df[entity_type]))
+        .select(["tmp.*"] + centre_columns)
+        .withColumn("_type", lit(entity_type))
         .drop(entity_type)
+    )
     return entity_df
 
 
@@ -140,13 +151,13 @@ def main(argv):
 
     entities_df = None
 
-    if file_type == 'experiment':
+    if file_type == "experiment":
         entities_df = get_experiments_by_type(dcc_df, entity_type)
-    if file_type == 'specimen':
+    if file_type == "specimen":
         entities_df = get_specimens_by_type(dcc_df, entity_type)
 
-    entities_df.write.mode('overwrite').parquet(output_path)
+    entities_df.write.mode("overwrite").parquet(output_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

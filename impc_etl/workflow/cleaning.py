@@ -2,8 +2,8 @@ from impc_etl.workflow.extraction import *
 
 
 class ExperimentCleaner(SparkSubmitTask):
-    name = 'Experiment_Cleaner'
-    app = 'impc_etl/jobs/clean/experiment_cleaner.py'
+    name = "Experiment_Cleaner"
+    app = "impc_etl/jobs/clean/experiment_cleaner.py"
     output_path = luigi.Parameter()
     xml_path = luigi.Parameter()
 
@@ -11,7 +11,7 @@ class ExperimentCleaner(SparkSubmitTask):
         return ExperimentExtractor(xml_path=self.xml_path, output_path=self.output_path)
 
     def output(self):
-        output_path = self.input().path.replace('_raw', '')
+        output_path = self.input().path.replace("_raw", "")
         return luigi.LocalTarget(output_path)
 
     def app_options(self):
@@ -19,8 +19,8 @@ class ExperimentCleaner(SparkSubmitTask):
 
 
 class LineCleaner(SparkSubmitTask):
-    name = 'Experiment_Cleaner'
-    app = 'impc_etl/jobs/clean/line_cleaner.py'
+    name = "Experiment_Cleaner"
+    app = "impc_etl/jobs/clean/line_cleaner.py"
     output_path = luigi.Parameter()
     xml_path = luigi.Parameter()
 
@@ -28,7 +28,7 @@ class LineCleaner(SparkSubmitTask):
         return LineExtractor(xml_path=self.xml_path, output_path=self.output_path)
 
     def output(self):
-        output_path = self.input().path.replace('_raw', '')
+        output_path = self.input().path.replace("_raw", "")
         return luigi.LocalTarget(output_path)
 
     def app_options(self):
@@ -36,8 +36,8 @@ class LineCleaner(SparkSubmitTask):
 
 
 class MouseCleaner(SparkSubmitTask):
-    name = 'Mouse_Cleaner'
-    app = 'impc_etl/jobs/clean/specimen_cleaner.py'
+    name = "Mouse_Cleaner"
+    app = "impc_etl/jobs/clean/specimen_cleaner.py"
     output_path = luigi.Parameter()
     xml_path = luigi.Parameter()
 
@@ -45,7 +45,7 @@ class MouseCleaner(SparkSubmitTask):
         return MouseExtractor(xml_path=self.xml_path, output_path=self.output_path)
 
     def output(self):
-        output_path = self.input().path.replace('_raw', '')
+        output_path = self.input().path.replace("_raw", "")
         return luigi.LocalTarget(output_path)
 
     def app_options(self):
@@ -53,8 +53,8 @@ class MouseCleaner(SparkSubmitTask):
 
 
 class EmbryoCleaner(SparkSubmitTask):
-    name = 'Embryo_Cleaner'
-    app = 'impc_etl/jobs/clean/specimen_cleaner.py'
+    name = "Embryo_Cleaner"
+    app = "impc_etl/jobs/clean/specimen_cleaner.py"
     output_path = luigi.Parameter()
     xml_path = luigi.Parameter()
 
@@ -62,7 +62,7 @@ class EmbryoCleaner(SparkSubmitTask):
         return EmbryoExtractor(xml_path=self.xml_path, output_path=self.output_path)
 
     def output(self):
-        output_path = self.input().path.replace('_raw', '')
+        output_path = self.input().path.replace("_raw", "")
         return luigi.LocalTarget(output_path)
 
     def app_options(self):
@@ -70,8 +70,8 @@ class EmbryoCleaner(SparkSubmitTask):
 
 
 class ColonyCleaner(SparkSubmitTask):
-    name = 'Colony_Cleaner'
-    app = 'impc_etl/jobs/clean/colony_cleaner.py'
+    name = "Colony_Cleaner"
+    app = "impc_etl/jobs/clean/colony_cleaner.py"
     tsv_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
@@ -79,7 +79,7 @@ class ColonyCleaner(SparkSubmitTask):
         return ColonyExtractor(tsv_path=self.tsv_path, output_path=self.output_path)
 
     def output(self):
-        output_path = self.input().path.replace('_raw', '')
+        output_path = self.input().path.replace("_raw", "")
         return luigi.LocalTarget(output_path)
 
     def app_options(self):
