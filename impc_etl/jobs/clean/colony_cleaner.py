@@ -3,7 +3,9 @@ from pyspark.sql import SparkSession
 from impc_etl.shared.transformations.colonies import *
 
 
-def clean_colonies(spark_session: SparkSession, colonies_parquet_path: str) -> DataFrame:
+def clean_colonies(
+    spark_session: SparkSession, colonies_parquet_path: str
+) -> DataFrame:
     """
     DCC colonies cleaner
 
@@ -13,9 +15,9 @@ def clean_colonies(spark_session: SparkSession, colonies_parquet_path: str) -> D
     :rtype: DataFrame
     """
     colonies_df = spark_session.read.parquet(colonies_parquet_path)
-    colonies_df = colonies_df\
-        .transform(map_colonies_df_ids)\
-        .transform(generate_genetic_background)
+    colonies_df = colonies_df.transform(map_colonies_df_ids).transform(
+        generate_genetic_background
+    )
     return colonies_df
 
 
@@ -24,8 +26,8 @@ def main(argv):
     output_path = argv[2]
     spark = SparkSession.builder.getOrCreate()
     specimen_clean_df = clean_colonies(spark, input_path)
-    specimen_clean_df.write.mode('overwrite').parquet(output_path)
+    specimen_clean_df.write.mode("overwrite").parquet(output_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

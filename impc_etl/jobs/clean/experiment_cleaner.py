@@ -2,7 +2,9 @@ import sys
 from impc_etl.shared.transformations.experiments import *
 
 
-def clean_experiments(spark_session: SparkSession, experiment_parquet_path: str) -> DataFrame:
+def clean_experiments(
+    spark_session: SparkSession, experiment_parquet_path: str
+) -> DataFrame:
     """
     DCC experiment level cleaner
 
@@ -12,20 +14,21 @@ def clean_experiments(spark_session: SparkSession, experiment_parquet_path: str)
     :rtype: DataFrame
     """
     experiment_df = spark_session.read.parquet(experiment_parquet_path)
-    experiment_df = experiment_df\
-        .transform(map_centre_id) \
-        .transform(map_project_id) \
-        .transform(standarize_europhenome_experiments) \
-        .transform(drop_skipped_experiments) \
-        .transform(drop_skipped_procedures) \
-        .transform(standarize_3i_experiments) \
-        .transform(drop_null_centre_id) \
-        .transform(drop_null_data_source) \
-        .transform(drop_null_date_of_experiment) \
-        .transform(drop_null_pipeline) \
-        .transform(drop_null_project) \
-        .transform(drop_null_specimen_id) \
+    experiment_df = (
+        experiment_df.transform(map_centre_id)
+        .transform(map_project_id)
+        .transform(standarize_europhenome_experiments)
+        .transform(drop_skipped_experiments)
+        .transform(drop_skipped_procedures)
+        .transform(standarize_3i_experiments)
+        .transform(drop_null_centre_id)
+        .transform(drop_null_data_source)
+        .transform(drop_null_date_of_experiment)
+        .transform(drop_null_pipeline)
+        .transform(drop_null_project)
+        .transform(drop_null_specimen_id)
         .transform(generate_unique_id)
+    )
     return experiment_df
 
 
@@ -34,8 +37,8 @@ def main(argv):
     output_path = argv[2]
     spark = SparkSession.builder.getOrCreate()
     experiment_clean_df = clean_experiments(spark, input_path)
-    experiment_clean_df.write.mode('overwrite').parquet(output_path)
+    experiment_clean_df.write.mode("overwrite").parquet(output_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))
