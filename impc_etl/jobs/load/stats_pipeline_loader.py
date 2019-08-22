@@ -63,9 +63,9 @@ def load(
     )
     mice_experiments_df = rename_columns(mice_experiments_df)
     # mice_experiments_df.printSchema()
-    mice_experiments_df.select(
-        CSV_FIELDS + ["experiment._sourceFile", "metadataGroupList"]
-    ).show(10, vertical=True, truncate=False)
+    mice_experiments_df.select(CSV_FIELDS + ["experiment._sourceFile"]).show(
+        10, vertical=True, truncate=False
+    )
     raise Exception
     mice_experiments_df.select(CSV_FIELDS).show(10, vertical=True, truncate=False)
 

@@ -57,7 +57,7 @@ def normalize_experiments(
         "experiment." + col_name
         for col_name in experiment_df.columns
         if col_name not in ["_dataSource", "_project"]
-    ] + ["metadata", "metadataGroup", "metadataGroupList", "_project", "_dataSource"]
+    ] + ["metadata", "metadataGroup", "_project", "_dataSource"]
     experiment_df = experiment_specimen_df.select(experiment_columns)
     experiment_df = get_derived_parameters(spark_session, experiment_df, pipeline_df)
     experiment_df = get_associated_body_weight(experiment_df, mouse_df)
