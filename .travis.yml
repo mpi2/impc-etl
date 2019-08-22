@@ -5,7 +5,7 @@ python:
 install:
   - pip install -r requirements/common.txt && pip install -r requirements/dev.txt
   - set -e
-  - mkdir -p -- data/xml/impc tests/data/fixtures
+  - mkdir -p -- tests/data/xml/impc tests/data/fixtures
   - curl https://wwwdev.ebi.ac.uk/~federico/rbrc.tar.gz --output tests/data/xml/impc/rbrc.tar.gz
   - cd tests/data/xml/impc && tar -xvzf rbrc.tar.gz && rm rbrc.tar.gz
   - SPARK_VERSION='2.4.3'
