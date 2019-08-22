@@ -3,14 +3,17 @@ cache: pip
 python:
   - "3.6"
 install:
-  - echo "Current JAVA_HOME: $JAVA_HOME"
-  - echo "Current java -version:"
+  - curl https://raw.githubusercontent.com/amoe/travis-polyglot-test/master/jdk_switcher.sh
+  - curl https://raw.githubusercontent.com/amoe/travis-polyglot-test/master/custom_path.sh
   - java -version
-  - sudo add-apt-repository -y ppa:openjdk-r/ppa
-  - sudo apt-get -qq update
-  - sudo apt-get install -y openjdk-8-jdk --no-install-recommends
-  - sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
-  - export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+  - echo $PATH
+  - /usr/local/lib/jvm/openjdk11/bin/java -version
+  - /usr/bin/java -version
+  - source ./jdk_switcher.sh
+  - jdk_switcher use openjdk8
+  - source ./custom_path.sh
+  - export PATH=$(get_filtered_path /usr/local/lib/jvm/openjdk11/bin)
+  - java -version
   - pip install -r requirements/common.txt && pip install -r requirements/dev.txt
   - set -e
   - mkdir -p -- tests/data/xml/impc tests/data/fixtures
