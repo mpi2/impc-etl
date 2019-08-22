@@ -3,8 +3,8 @@ cache: pip
 python:
   - "3.6"
 install:
-  - curl https://raw.githubusercontent.com/amoe/travis-polyglot-test/master/jdk_switcher.sh
-  - curl https://raw.githubusercontent.com/amoe/travis-polyglot-test/master/custom_path.sh
+  - curl https://raw.githubusercontent.com/amoe/travis-polyglot-test/master/jdk_switcher.sh --output jdk_switcher.sh
+  - curl https://raw.githubusercontent.com/amoe/travis-polyglot-test/master/custom_path.sh --output custom_path.sh
   - java -version
   - echo $PATH
   - /usr/local/lib/jvm/openjdk11/bin/java -version
