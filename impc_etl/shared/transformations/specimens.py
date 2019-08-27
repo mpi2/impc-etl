@@ -94,7 +94,7 @@ def standarize_europhenome_specimen_ids(dcc_df: DataFrame) -> DataFrame:
 def generate_allelic_composition(dcc_specimen_df: DataFrame) -> DataFrame:
     generate_allelic_composition_udf = udf(_generate_allelic_composition, StringType())
     dcc_specimen_df = dcc_specimen_df.withColumn(
-        "allelic_composition",
+        "allelicComposition",
         generate_allelic_composition_udf(
             "specimen._zygosity",
             "colony.allele_symbol",

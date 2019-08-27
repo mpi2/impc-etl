@@ -37,7 +37,7 @@ def normalize_specimens(
     )
 
     specimen_df = specimen_df.select(
-        "specimen.*", "allelic_composition", "colony.phenotyping_consortium"
+        "specimen.*", "allelicComposition", "colony.phenotyping_consortium"
     )
     if entity_type == "embryo":
         specimen_df = specimen_df.transform(add_embryo_life_stage_acc)

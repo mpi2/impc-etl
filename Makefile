@@ -54,10 +54,10 @@ devEnv: .venv devDeps
 
 
 download:            ##@download Download test data
-	scp ebi-cli:/nfs/komp2/web/phenotype_data/imits/imits-report.tsv ./tests/data/imits/
-	scp -r ebi-cli:/nfs/komp2/web/phenotype_data/3i/latest/ ./tests/data/3i/
-	scp -r ebi-cli:/nfs/komp2/web/phenotype_data/europhenome/2013-10-31/ ./tests/data/europhenome/
-	scp  ebi-cli:/nfs/komp2/web/phenotype_data/impc/latest/*/*.xml ./tests/data/dcc/
+	scp ${TEST_DATA_HOST}:${TEST_DATA_PATH}/imits/imits-report.tsv ./tests/data/imits/
+	scp -r ${TEST_DATA_HOST}:${TEST_DATA_PATH}/3i/latest/ ./tests/data/3i/
+	scp -r ${TEST_DATA_HOST}:${TEST_DATA_PATH}/europhenome/2013-10-31/ ./tests/data/europhenome/
+	scp  ${TEST_DATA_HOST}:${TEST_DATA_PATH}/impc/latest/*/*.xml ./tests/data/dcc/
 
 
 
