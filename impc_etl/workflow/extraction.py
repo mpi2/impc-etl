@@ -96,3 +96,21 @@ class ImpressExtractor(SparkSubmitTask):
 
     def app_options(self):
         return [self.impress_api_url, self.output().path, self.impress_root_type]
+
+
+class MGIExtractor(SparkSubmitTask):
+    name = "IMPC_IMPRESS_Extractor"
+    app = "impc_etl/jobs/extract/mgi_extractor.py"
+    strain_input_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return luigi.LocalTarget(f"{self.output_path}strain_parquet")
+
+    def app_options(self):
+        return [self.strain_input_path, self.output().path]

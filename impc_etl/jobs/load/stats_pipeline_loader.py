@@ -48,6 +48,8 @@ CSV_FIELDS = [
     "data_point",
     "text_value",
     "category",
+    "strain_name",
+    "genetic_background",
 ]
 
 
@@ -57,11 +59,15 @@ def load(
     allele_df: DataFrame,
     colony_df: DataFrame,
     pipeline_df: DataFrame,
+    strain_df: DataFrame,
 ) -> DataFrame:
+
     experiment_df = experiment_df.alias("experiment")
     colony_df = colony_df.alias("colony")
     mouse_df = mouse_df.alias("specimen")
     allele_df = allele_df.alias("allele")
+    strain_df = strain_df.alias("strain")
+
     mouse_df = mouse_df.join(
         colony_df, mouse_df["specimen._colonyID"] == colony_df["colony.colony_name"]
     )
@@ -74,6 +80,12 @@ def load(
         allele_df,
         mice_experiments_df["colony.allele_symbol"]
         == allele_df["allele.allele_symbol"],
+    )
+
+    mice_experiments_df = mice_experiments_df.join(
+        strain_df,
+        col("colony.colony_background_strain") == col("strain.strainName"),
+        "left_outer",
     )
 
     mice_experiments_df = mice_experiments_df.drop(
@@ -102,7 +114,7 @@ def rename_columns(experiments_df: DataFrame):
         "project_name", col("experiment._project")
     )
     experiments_df = experiments_df.withColumn(
-        "strain_accession_id", col("specimen._strainID")
+        "strain_accession_id", col("strain.mgiStrainID")
     )
     experiments_df = experiments_df.withColumn("litter_id", col("specimen._litterId"))
     experiments_df = experiments_df.withColumn(
@@ -149,9 +161,9 @@ def rename_columns(experiments_df: DataFrame):
     experiments_df = experiments_df.withColumn("colony_id", col("specimen._colonyID"))
     experiments_df = experiments_df.withColumn("zygosity", col("specimen._zygosity"))
 
-    experiments_df = experiments_df.drop(col("colony.production_centre"))
+    experiments_df = experiments_df.drop(col("allele.production_centre"))
     experiments_df = experiments_df.withColumn(
-        "production_center", col("allele.production_centre")
+        "production_center", col("colony.production_centre")
     )
 
     experiments_df = experiments_df.withColumn(
@@ -175,6 +187,12 @@ def rename_columns(experiments_df: DataFrame):
     )
     experiments_df = experiments_df.withColumn(
         "weight_parameter_stable_id", col("weightStruct.weightParameterID")
+    )
+    experiments_df = experiments_df.withColumn(
+        "strain_name", col("colony.colony_background_strain")
+    )
+    experiments_df = experiments_df.withColumn(
+        "genetic_background", col("colony.genetic_background")
     )
     return experiments_df
 
@@ -263,16 +281,18 @@ def main(argv):
     allele_parquet_path = argv[3]
     colony_parquet_path = argv[4]
     pipeline_parquet_path = argv[5]
-    output_path = argv[6]
+    strain_parquet_path = argv[6]
+    output_path = argv[7]
     spark = SparkSession.builder.getOrCreate()
     experiment_df = spark.read.parquet(experiment_parquet_path)
     mouse_df = spark.read.parquet(mouse_parquet_path)
     allele_df = spark.read.parquet(allele_parquet_path)
     colony_df = spark.read.parquet(colony_parquet_path)
     pipeline_df = spark.read.parquet(pipeline_parquet_path)
+    strain_df = spark.read.parquet(strain_parquet_path)
 
     experiment_clean_df = load(
-        experiment_df, mouse_df, allele_df, colony_df, pipeline_df
+        experiment_df, mouse_df, allele_df, colony_df, pipeline_df, strain_df
     )
     experiment_clean_df.write.mode("overwrite").csv(output_path, header=True)
 

@@ -6,10 +6,8 @@ from typing import List
 import json
 import time
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.types import StructType
-from pyspark.sql.functions import udf, explode_outer, lit, col
+from pyspark.sql.functions import lit
 import requests
-from impc_etl.shared.utils import convert_to_row
 from impc_etl import logger
 import sys
 import vcr
@@ -44,14 +42,11 @@ def get_entities(
     :param impress_ids:
     :return:
     """
-    with vcr.use_cassette(
-        "/Users/federico/git/spark/impc-etl/tests/fixtures/vcr_cassettes/impress.yaml"
-    ):
-        entities = [
-            get_impress_entity_by_id(impress_api_url, impress_type, impress_id)
-            for impress_id in impress_ids
-        ]
-        entity_df = process_collection(impress_api_url, entities)
+    entities = [
+        get_impress_entity_by_id(impress_api_url, impress_type, impress_id)
+        for impress_id in impress_ids
+    ]
+    entity_df = process_collection(impress_api_url, entities)
     return entity_df
 
 

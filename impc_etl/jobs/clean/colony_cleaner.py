@@ -9,15 +9,16 @@ def clean_colonies(
     """
     DCC colonies cleaner
 
+    :param strain_parquet_path:
     :param SparkSession spark_session: PySpark session object
     :param str colonies_parquet_path: path to a parquet file with specimen raw data
     :return: a clean specimen parquet file
     :rtype: DataFrame
     """
     colonies_df = spark_session.read.parquet(colonies_parquet_path)
-    colonies_df = colonies_df.transform(map_colonies_df_ids).transform(
-        generate_genetic_background
-    )
+    colonies_df = colonies_df.transform(map_colonies_df_ids)
+    colonies_df = map_strain_names(colonies_df)
+    colonies_df = colonies_df.transform(generate_genetic_background)
     return colonies_df
 
 
