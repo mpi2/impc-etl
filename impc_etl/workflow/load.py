@@ -28,6 +28,7 @@ class StatsPipeLineLoader(SparkSubmitTask):
             ColonyCleaner(
                 tsv_path=self.imits_report_tsv_path, output_path=self.output_path
             ),
+            ImpressExtractor(output_path=self.output_path),
         ]
 
     def output(self):
@@ -44,5 +45,6 @@ class StatsPipeLineLoader(SparkSubmitTask):
             self.input()[1].path,
             self.input()[2].path,
             self.input()[3].path,
+            self.input()[4].path,
             self.output().path,
         ]

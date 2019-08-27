@@ -4,7 +4,8 @@ Stats pipeline input loader
 """
 import sys
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import concat_ws, col, when, lit
+from pyspark.sql.functions import concat_ws, col, when, lit, explode, udf, size, rand
+from pyspark.sql.types import StringType
 
 CSV_FIELDS = [
     "allele_accession_id",
@@ -35,6 +36,18 @@ CSV_FIELDS = [
     "weight_parameter_stable_id",
     "colony_id",
     "zygosity",
+    "allelic_composition",
+    "pipeline_name",
+    "pipeline_stable_id",
+    "procedure_name",
+    "procedure_stable_id",
+    "procedure_group",
+    "parameter_name",
+    "parameter_stable_id",
+    "observation_type",
+    "data_point",
+    "text_value",
+    "category",
 ]
 
 
@@ -43,6 +56,7 @@ def load(
     mouse_df: DataFrame,
     allele_df: DataFrame,
     colony_df: DataFrame,
+    pipeline_df: DataFrame,
 ) -> DataFrame:
     experiment_df = experiment_df.alias("experiment")
     colony_df = colony_df.alias("colony")
@@ -61,15 +75,20 @@ def load(
         mice_experiments_df["colony.allele_symbol"]
         == allele_df["allele.allele_symbol"],
     )
-    mice_experiments_df = rename_columns(mice_experiments_df)
-    # mice_experiments_df.printSchema()
-    mice_experiments_df.select(
-        CSV_FIELDS + ["experiment._sourceFile", "metadataGroupList"]
-    ).show(10, vertical=True, truncate=False)
-    raise Exception
-    mice_experiments_df.select(CSV_FIELDS).show(10, vertical=True, truncate=False)
 
-    return mice_experiments_df.select(CSV_FIELDS)
+    mice_experiments_df = mice_experiments_df.drop(
+        "ontologyParameter",
+        "procedureMetadata",
+        "seriesMediaParameter",
+        "seriesParameter",
+    )
+    mice_experiments_df = rename_columns(mice_experiments_df)
+    mice_experiments_df = mice_experiments_df.withColumn(
+        "simpleParameter", explode("simpleParameter")
+    )
+    mice_experiments_df = add_impress_info(mice_experiments_df, pipeline_df)
+    mice_experiments_df = mice_experiments_df.drop("pipeline.weight")
+    return mice_experiments_df.select(CSV_FIELDS).limit(10000)
 
 
 def rename_columns(experiments_df: DataFrame):
@@ -124,6 +143,9 @@ def rename_columns(experiments_df: DataFrame):
     experiments_df = experiments_df.withColumn(
         "allele_symbol", col("allele.allele_symbol")
     )
+    experiments_df = experiments_df.withColumn(
+        "allelic_composition", col("specimen.allelicComposition")
+    )
     experiments_df = experiments_df.withColumn("colony_id", col("specimen._colonyID"))
     experiments_df = experiments_df.withColumn("zygosity", col("specimen._zygosity"))
 
@@ -154,6 +176,83 @@ def rename_columns(experiments_df: DataFrame):
     experiments_df = experiments_df.withColumn(
         "weight_parameter_stable_id", col("weightStruct.weightParameterID")
     )
+    return experiments_df
+
+
+def add_impress_info(experiments_df, pipeline_df):
+    pipeline_columns = [
+        "pipeline.parameter",
+        "pipeline.procedure",
+        "pipeline.name",
+        "pipeline.pipelineKey",
+    ]
+    pipeline_df = (
+        pipeline_df.drop("weight")
+        .alias("pipeline")
+        .select(pipeline_columns)
+        .drop_duplicates()
+    )
+    experiments_df = experiments_df.join(
+        pipeline_df,
+        (col("simpleParameter._parameterID") == col("pipeline.parameter.parameterKey"))
+        & (col("_procedureID") == col("pipeline.procedure.procedureKey"))
+        & (col("experiment._pipeline") == col("pipeline.pipelineKey")),
+        "left",
+    )
+    experiments_df = experiments_df.withColumn("pipeline_name", col("pipeline.name"))
+    experiments_df = experiments_df.withColumn(
+        "pipeline_stable_id", col("pipeline.pipelineKey")
+    )
+
+    experiments_df = experiments_df.withColumn(
+        "procedure_name", col("pipeline.procedure.name")
+    )
+    experiments_df = experiments_df.withColumn(
+        "procedure_stable_id", col("pipeline.procedure.procedureKey")
+    )
+    get_procedure_group_udf = udf(lambda x: x[: x.rfind("_")], StringType())
+    experiments_df = experiments_df.withColumn(
+        "procedure_group",
+        get_procedure_group_udf(col("pipeline.procedure.procedureKey")),
+    )
+
+    experiments_df = experiments_df.withColumn(
+        "parameter_name", col("pipeline.parameter.name")
+    )
+    experiments_df = experiments_df.withColumn(
+        "parameter_stable_id", col("pipeline.parameter.parameterKey")
+    )
+    experiments_df = experiments_df.withColumn(
+        "observation_type",
+        when(
+            col("pipeline.parameter.valueType") != "TEXT", lit("unidimensional")
+        ).otherwise(
+            when(
+                size(col("pipeline.parameter.optionCollection")) > 0, lit("categorical")
+            ).otherwise(lit("text"))
+        ),
+    )
+
+    experiments_df = experiments_df.withColumn(
+        "data_point",
+        when(
+            col("observation_type") == "unidimensional", col("simpleParameter.value")
+        ).otherwise(lit(None)),
+    )
+
+    experiments_df = experiments_df.withColumn(
+        "text_value",
+        when(col("observation_type") == "text", col("simpleParameter.value")).otherwise(
+            lit(None)
+        ),
+    )
+
+    experiments_df = experiments_df.withColumn(
+        "category",
+        when(
+            col("observation_type") == "categorical", col("simpleParameter.value")
+        ).otherwise(lit(None)),
+    )
 
     return experiments_df
 
@@ -163,14 +262,18 @@ def main(argv):
     mouse_parquet_path = argv[2]
     allele_parquet_path = argv[3]
     colony_parquet_path = argv[4]
-    output_path = argv[5]
+    pipeline_parquet_path = argv[5]
+    output_path = argv[6]
     spark = SparkSession.builder.getOrCreate()
     experiment_df = spark.read.parquet(experiment_parquet_path)
     mouse_df = spark.read.parquet(mouse_parquet_path)
     allele_df = spark.read.parquet(allele_parquet_path)
     colony_df = spark.read.parquet(colony_parquet_path)
+    pipeline_df = spark.read.parquet(pipeline_parquet_path)
 
-    experiment_clean_df = load(experiment_df, mouse_df, allele_df, colony_df)
+    experiment_clean_df = load(
+        experiment_df, mouse_df, allele_df, colony_df, pipeline_df
+    )
     experiment_clean_df.write.mode("overwrite").csv(output_path, header=True)
 
 

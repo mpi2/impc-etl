@@ -8,8 +8,8 @@ from pathlib import Path
 import os
 import bs4
 
-INPUT_PATH = "../data/xml/"
-FIXTURES_PATH = "../data/fixtures/"
+INPUT_PATH = "tests/data/xml/"
+FIXTURES_PATH = "tests/data/fixtures/"
 
 
 @pytest.fixture(scope="session")

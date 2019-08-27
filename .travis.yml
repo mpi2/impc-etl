@@ -1,16 +1,34 @@
 language: python
+cache:
+  - pip: true
+  - directories:
+      - /home/travis/build/mpi2/impc-etl/tests/data/
 python:
   - "3.6"
 install:
+  - curl https://raw.githubusercontent.com/amoe/travis-polyglot-test/master/jdk_switcher.sh --output jdk_switcher.sh
+  - curl https://raw.githubusercontent.com/amoe/travis-polyglot-test/master/custom_path.sh --output custom_path.sh
+  - java -version
+  - echo $PATH
+  - /usr/local/lib/jvm/openjdk11/bin/java -version
+  - /usr/bin/java -version
+  - source ./jdk_switcher.sh
+  - jdk_switcher use openjdk8
+  - source ./custom_path.sh
+  - export PATH=$(get_filtered_path /usr/local/lib/jvm/openjdk11/bin)
+  - java -version
   - pip install -r requirements/common.txt && pip install -r requirements/dev.txt
   - set -e
-  - SPARK_VERSION='2.3.3'
+  - mkdir -p -- tests/data/xml/impc tests/data/fixtures
+  - curl https://wwwdev.ebi.ac.uk/~federico/rbrc.tar.gz --output tests/data/xml/impc/rbrc.tar.gz
+  - cd tests/data/xml/impc && tar -xvzf rbrc.tar.gz && rm rbrc.tar.gz
+  - SPARK_VERSION='2.4.3'
   - HADOOP_VERSION='2.7'
   - curl http://apache.mirror.gtcomm.net/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz --output /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
   - cd /tmp && tar -xvzf /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
-
+  - cd $TRAVIS_BUILD_DIR
 env:
     global:
-        - SPARK_HOME=/tmp/spark-2.3.3-bin-hadoop2.7
+        - SPARK_HOME=/tmp/spark-2.4.3-bin-hadoop2.7
 script:
-  - pytest
+  - pytest tests/jobs/
