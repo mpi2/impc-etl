@@ -42,7 +42,7 @@ class StatsPipeLineLoader(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return luigi.LocalTarget(f"{self.output_path}impc_stats_input_csv")
+        return luigi.LocalTarget(f"{self.output_path}impc_stats_input_parquet")
 
     def app_options(self):
         return [
