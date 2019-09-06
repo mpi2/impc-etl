@@ -13,17 +13,18 @@ EPOCH = datetime.utcfromtimestamp(0)
 
 
 def extract_tsv(
-    spark_session: SparkSession, file_path: str, schema: StructType = None
+    spark_session: SparkSession, file_path: str, schema: StructType = None, header=True
 ) -> DataFrame:
     """
 
+    :param header:
     :param spark_session:
     :param file_path:
     :param schema:
     :return:
     """
     return spark_session.read.csv(
-        file_path, header=True, schema=schema, mode="DROPMALFORMED", sep="\t"
+        file_path, header=header, schema=schema, mode="DROPMALFORMED", sep="\t"
     )
 
 

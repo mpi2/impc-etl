@@ -7,6 +7,7 @@ class StatsPipeLineLoader(SparkSubmitTask):
     xml_path = luigi.Parameter()
     imits_report_tsv_path = luigi.Parameter()
     imits_allele2_tsv_path = luigi.Parameter()
+    strain_report_tsv_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -29,6 +30,10 @@ class StatsPipeLineLoader(SparkSubmitTask):
                 tsv_path=self.imits_report_tsv_path, output_path=self.output_path
             ),
             ImpressExtractor(output_path=self.output_path),
+            MGIExtractor(
+                strain_input_path=self.strain_report_tsv_path,
+                output_path=self.output_path,
+            ),
         ]
 
     def output(self):
@@ -37,7 +42,7 @@ class StatsPipeLineLoader(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return luigi.LocalTarget(f"{self.output_path}impc_stats_input_csv")
+        return luigi.LocalTarget(f"{self.output_path}impc_stats_input_parquet")
 
     def app_options(self):
         return [
@@ -46,5 +51,6 @@ class StatsPipeLineLoader(SparkSubmitTask):
             self.input()[2].path,
             self.input()[3].path,
             self.input()[4].path,
+            self.input()[5].path,
             self.output().path,
         ]

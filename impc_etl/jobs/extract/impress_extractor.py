@@ -7,7 +7,7 @@ import json
 import time
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType, ArrayType
-from pyspark.sql.functions import udf, explode_outer, lit, col
+from pyspark.sql.functions import udf, explode_outer
 import requests
 from impc_etl.shared.utils import convert_to_row
 from impc_etl import logger
@@ -215,10 +215,9 @@ def main(argv):
     """
     DCC Extractor job runner
     :param list argv: the list elements should be:
-                    [1]: Input Path
+                    [1]: Impress API URL
                     [2]: Output Path
-                    [3]: File type (experiment or specimen)
-                    [4]: Entity type (experiment, line, mouse or embryo)
+                    [3]: Impress root type to start scraping from
     """
     impress_api_url = argv[1]
     output_path = argv[2]

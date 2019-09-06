@@ -3,3 +3,4 @@ owlready2
 requests
 findspark
 luigi
+pysolr
