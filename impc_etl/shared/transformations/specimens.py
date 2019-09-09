@@ -5,44 +5,6 @@ from impc_etl.shared.transformations.commons import *
 from impc_etl.config import Constants
 
 
-def process_specimens(dcc_specimen_df: DataFrame, imits_df: DataFrame):
-    imits_df = imits_df.withColumn(
-        "Phenotyping Centre", udf(map_centre_ids, StringType())("Phenotyping Centre")
-    )
-    imits_df = imits_df.withColumn(
-        "Production Centre", udf(map_centre_ids, StringType())("Production Centre")
-    )
-    imits_df = imits_df.withColumn(
-        "Phenotyping Consortium",
-        udf(map_project_ids, StringType())("Phenotyping Consortium"),
-    )
-    imits_df = imits_df.withColumn(
-        "Production Consortium",
-        udf(map_project_ids, StringType())("Production Consortium"),
-    )
-    dcc_specimen_df = (
-        dcc_specimen_df.transform(map_centre_id)
-        .transform(map_project_id)
-        .transform(map_production_centre_id)
-        .transform(map_phenotyping_centre_id)
-        .transform(standarize_europhenome_specimen_ids)
-        .transform(standarize_europhenome_colony_ids)
-        .transform(override_3i_specimen_data)
-    )
-    dcc_specimen_df = dcc_specimen_df.join(
-        imits_df,
-        (dcc_specimen_df["_colonyID"] == imits_df["Colony Name"])
-        & (
-            lower(dcc_specimen_df["_centreID"]) == lower(imits_df["Phenotyping Centre"])
-        ),
-        "left_outer",
-    )
-    dcc_specimen_df = dcc_specimen_df.transform(
-        override_europhenome_datasource
-    ).transform(override_3i_specimen_project)
-    return dcc_specimen_df
-
-
 def map_production_centre_id(dcc_experiment_df: DataFrame):
     if "_productionCentre" not in dcc_experiment_df.columns:
         dcc_experiment_df = dcc_experiment_df.withColumn("_productionCentre", lit(None))

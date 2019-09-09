@@ -21,7 +21,6 @@ CSV_FIELDS = [
     "date_of_birth",
     "metadata",
     "metadata_group",
-    # "sequence_id",
     "experiment_source_id",
     "gene_symbol",
     "biological_sample_group",
