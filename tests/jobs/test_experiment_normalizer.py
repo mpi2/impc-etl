@@ -6,13 +6,13 @@ import os
 import pytest
 
 FIXTURES_PATH = (
-    "FIXTURES_PATH" in os.environ
-    if os.environ["FIXTURES_PATH"] is not None
+    os.environ["FIXTURES_PATH"]
+    if "FIXTURES_PATH" in os.environ is not None
     else "tests/data/fixtures/"
 )
 INPUT_PATH = (
-    "INPUT_PATH" in os.environ
-    if os.environ["INPUT_PATH"] is not None
+    os.environ["INPUT_PATH"]
+    if "INPUT_PATH" in os.environ is not None
     else "tests/data/xml/"
 )
 
