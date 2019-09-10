@@ -2,9 +2,9 @@ language: python
 cache:
   - pip: true
   - directories:
-      - /home/travis/build/mpi2/impc-etl/tests/data/
+      - /home/travis/data/
 python:
-  - "3.6"
+  - "3.7.4"
 install:
   - curl https://raw.githubusercontent.com/amoe/travis-polyglot-test/master/jdk_switcher.sh --output jdk_switcher.sh
   - curl https://raw.githubusercontent.com/amoe/travis-polyglot-test/master/custom_path.sh --output custom_path.sh
@@ -20,8 +20,8 @@ install:
   - pip install -r requirements/common.txt && pip install -r requirements/dev.txt
   - set -e
   - mkdir -p -- tests/data/xml/impc tests/data/fixtures
-  - curl https://wwwdev.ebi.ac.uk/~federico/rbrc.tar.gz --output tests/data/xml/impc/rbrc.tar.gz
-  - cd tests/data/xml/impc && tar -xvzf rbrc.tar.gz && rm rbrc.tar.gz
+  - curl https://wwwdev.ebi.ac.uk/~federico/rbrc.tar.gz --output $INPUT_PATH/impc/rbrc.tar.gz
+  - cd  $INPUT_PATH/impc && tar -xvzf rbrc.tar.gz && rm rbrc.tar.gz
   - SPARK_VERSION='2.4.4'
   - HADOOP_VERSION='2.7'
   - curl http://apache.mirror.gtcomm.net/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz --output /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
@@ -30,5 +30,7 @@ install:
 env:
     global:
         - SPARK_HOME=/tmp/spark-2.4.4-bin-hadoop2.7
+        - FIXTURES_PATH=/home/travis/data/fixtures/
+        - INPUT_PATH=/home/travis/data/xml/
 script:
   - pytest tests/jobs/
