@@ -2,8 +2,7 @@ language: python
 cache:
   - pip: true
   - directories:
-      - /home/travis/data/fixtures/
-      - /home/travis/data/xml/
+      - /home/travis/data/
 python:
   - "3.7.4"
 install:
@@ -20,7 +19,7 @@ install:
   - java -version
   - pip install -r requirements/common.txt && pip install -r requirements/dev.txt
   - set -e
-  - mkdir -p -- tests/data/xml/impc tests/data/fixtures
+  - mkdir -p -- $INPUT_PATH/impc $FIXTURES_PATH
   - curl https://wwwdev.ebi.ac.uk/~federico/rbrc.tar.gz --output $INPUT_PATH/impc/rbrc.tar.gz
   - cd  $INPUT_PATH/impc && tar -xvzf rbrc.tar.gz && rm rbrc.tar.gz
   - SPARK_VERSION='2.4.4'
