@@ -29,6 +29,6 @@ install:
   - cd $TRAVIS_BUILD_DIR
 env:
     global:
-        - SPARK_HOME=/tmp/spark-2.4.3-bin-hadoop2.7
+        - SPARK_HOME=/tmp/spark-2.4.4-bin-hadoop2.7
 script:
   - pytest tests/jobs/

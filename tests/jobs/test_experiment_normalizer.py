@@ -1,5 +1,6 @@
 from impc_etl.shared.transformations.experiments import *
 from impc_etl.jobs.extract.dcc_extractor import *
+from impc_etl.jobs.clean.experiment_cleaner import *
 from impc_etl.jobs.extract.impress_extractor import extract_impress
 import os
 import pytest
@@ -15,6 +16,7 @@ def experiment_df(spark_session):
     else:
         dcc_df = extract_dcc_xml_files(spark_session, INPUT_PATH, "experiment")
         experiment_df = get_experiments_by_type(dcc_df, "experiment")
+        experiment_df = clean_experiments(experiment_df)
         experiment_df.write.mode("overwrite").parquet(
             FIXTURES_PATH + "experiment_parquet"
         )

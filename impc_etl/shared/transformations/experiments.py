@@ -31,21 +31,6 @@ from impc_etl.shared.transformations.commons import *
 from impc_etl.shared.utils import extract_parameters_from_derivation, unix_time_millis
 
 
-def process_lines(dcc_experiment_df: DataFrame):
-    dcc_experiment_df = (
-        dcc_experiment_df.transform(map_centre_id)
-        .transform(map_project_id)
-        .transform(drop_skipped_procedures)
-        .transform(standarize_3i_experiments)
-        .transform(drop_null_centre_id)
-        .transform(drop_null_data_source)
-        .transform(drop_null_pipeline)
-        .transform(drop_null_project)
-        .transform(generate_unique_id)
-    )
-    return dcc_experiment_df
-
-
 def map_centre_id(dcc_experiment_df: DataFrame):
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "_centreID", udf(map_centre_ids, StringType())("_centreID")
@@ -455,7 +440,7 @@ def _get_closest_weight(
     days_diff = nearest_diff / 86400000
     nearest_weight = (
         nearest_weight
-        if days_diff < 4
+        if days_diff < 5
         else {
             "weightDate": None,
             "weightValue": None,

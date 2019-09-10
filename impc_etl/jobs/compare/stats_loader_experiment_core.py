@@ -127,50 +127,12 @@ def compare(experiment_core_parquet, stats_input_parquet):
     #     (col("experiment_source_id") == "IMPC_BWT_001_2015-08-28")
     #     & (col("biological_sample_group") == "control")
     # )
-    experiment_core_df = experiment_core_df.select(
-        [
-            c
-            for c in CSV_FIELDS
-            if c
-            not in [
-                "weight",
-                "weight_date",
-                "weight_days_old",
-                "weight_parameter_stable_id",
-            ]
-        ]
-    )
-    stats_input_df = stats_input_df.select(
-        [
-            c
-            for c in CSV_FIELDS
-            if c
-            not in [
-                "weight",
-                "weight_date",
-                "weight_days_old",
-                "weight_parameter_stable_id",
-            ]
-        ]
-    )
     diff_df = experiment_core_df.exceptAll(stats_input_df)
     # experiment_core_df.sort(col("external_sample_id")).show(
     #     vertical=True, truncate=False
     # )
     # stats_input_df.sort(col("external_sample_id")).show(vertical=True, truncate=False)
-    diff_df.sort(
-        [
-            c
-            for c in CSV_FIELDS
-            if c
-            not in [
-                "weight",
-                "weight_date",
-                "weight_days_old",
-                "weight_parameter_stable_id",
-            ]
-        ]
-    ).show(vertical=True, truncate=False)
+    diff_df.sort(CSV_FIELDS).show(vertical=True, truncate=False)
     print(experiment_core_df.count())
     print(stats_input_df.count())
     print(diff_df.count())

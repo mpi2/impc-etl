@@ -2,18 +2,14 @@ import sys
 from impc_etl.shared.transformations.experiments import *
 
 
-def clean_experiments(
-    spark_session: SparkSession, experiment_parquet_path: str
-) -> DataFrame:
+def clean_experiments(experiment_df: DataFrame) -> DataFrame:
     """
     DCC experiment level cleaner
 
-    :param SparkSession spark_session: PySpark session object
-    :param str experiment_parquet_path: path to a parquet file with experiment raw data
-    :return: a clean experiment parquet file
+    :param experiment_df: a raw experiment DataFrame
+    :return: a clean experiment DataFrame
     :rtype: DataFrame
     """
-    experiment_df = spark_session.read.parquet(experiment_parquet_path)
     experiment_df = (
         experiment_df.transform(map_centre_id)
         .transform(map_project_id)
@@ -36,7 +32,8 @@ def main(argv):
     input_path = argv[1]
     output_path = argv[2]
     spark = SparkSession.builder.getOrCreate()
-    experiment_clean_df = clean_experiments(spark, input_path)
+    experiment_df = spark.read.parquet(input_path)
+    experiment_clean_df = clean_experiments(experiment_df)
     experiment_clean_df.write.mode("overwrite").parquet(output_path)
 
 
