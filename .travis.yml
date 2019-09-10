@@ -19,9 +19,9 @@ install:
   - java -version
   - pip install -r requirements/common.txt && pip install -r requirements/dev.txt
   - set -e
-  - mkdir -p -- $INPUT_PATH/impc $FIXTURES_PATH
-  - curl https://wwwdev.ebi.ac.uk/~federico/rbrc.tar.gz --output $INPUT_PATHimpc/rbrc.tar.gz
-  - cd  $INPUT_PATHimpc/ && tar -xvzf rbrc.tar.gz && rm rbrc.tar.gz
+  - mkdir -p -- $IMPC_PATH $FIXTURES_PATH
+  - curl https://wwwdev.ebi.ac.uk/~federico/rbrc.tar.gz --output $IMPC_PATH/rbrc.tar.gz
+  - cd  $IMPC_PATH && tar -xvzf rbrc.tar.gz && rm rbrc.tar.gz
   - SPARK_VERSION='2.4.4'
   - HADOOP_VERSION='2.7'
   - curl http://apache.mirror.gtcomm.net/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz --output /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
@@ -32,5 +32,6 @@ env:
         - SPARK_HOME=/tmp/spark-2.4.4-bin-hadoop2.7
         - FIXTURES_PATH=/home/travis/data/fixtures/
         - INPUT_PATH=/home/travis/data/xml/
+        - IMPC_PATH=/home/travis/data/xml/impc
 script:
   - pytest tests/
