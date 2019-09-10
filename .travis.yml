@@ -33,4 +33,4 @@ env:
         - FIXTURES_PATH=/home/travis/data/fixtures/
         - INPUT_PATH=/home/travis/data/xml/
 script:
-  - pytest tests/jobs/
+  - pytest tests/
