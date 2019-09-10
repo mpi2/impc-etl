@@ -20,8 +20,8 @@ install:
   - pip install -r requirements/common.txt && pip install -r requirements/dev.txt
   - set -e
   - mkdir -p -- $INPUT_PATH/impc $FIXTURES_PATH
-  - curl https://wwwdev.ebi.ac.uk/~federico/rbrc.tar.gz --output $INPUT_PATH/impc/rbrc.tar.gz
-  - cd  $INPUT_PATH/impc && tar -xvzf rbrc.tar.gz && rm rbrc.tar.gz
+  - curl https://wwwdev.ebi.ac.uk/~federico/rbrc.tar.gz --output $INPUT_PATHimpc/rbrc.tar.gz
+  - cd  $INPUT_PATHimpc/ && tar -xvzf rbrc.tar.gz && rm rbrc.tar.gz
   - SPARK_VERSION='2.4.4'
   - HADOOP_VERSION='2.7'
   - curl http://apache.mirror.gtcomm.net/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz --output /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
