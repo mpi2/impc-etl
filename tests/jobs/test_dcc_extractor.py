@@ -8,8 +8,14 @@ from pathlib import Path
 import os
 import bs4
 
-INPUT_PATH = "tests/data/xml/"
-FIXTURES_PATH = "tests/data/fixtures/"
+FIXTURES_PATH = (
+    os.environ["FIXTURES_PATH"]
+    if "FIXTURES_PATH" in os.environ
+    else "tests/data/fixtures/"
+)
+INPUT_PATH = (
+    os.environ["INPUT_PATH"] if "INPUT_PATH" in os.environ else "tests/data/xml/"
+)
 
 
 @pytest.fixture(scope="session")

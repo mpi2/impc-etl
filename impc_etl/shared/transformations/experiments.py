@@ -31,72 +31,6 @@ from impc_etl.shared.transformations.commons import *
 from impc_etl.shared.utils import extract_parameters_from_derivation, unix_time_millis
 
 
-def process_experiments(
-    dcc_experiment_df: DataFrame,
-    mice_df: DataFrame,
-    embryo_df: DataFrame,
-    impress_df: DataFrame,
-):
-    dcc_experiment_df = (
-        dcc_experiment_df.transform(map_centre_id)
-        .transform(map_project_id)
-        .transform(standarize_europhenome_experiments)
-        .transform(drop_skipped_experiments)
-        .transform(drop_skipped_procedures)
-        .transform(standarize_3i_experiments)
-        .transform(drop_null_centre_id)
-        .transform(drop_null_data_source)
-        .transform(drop_null_date_of_experiment)
-        .transform(drop_null_pipeline)
-        .transform(drop_null_project)
-        .transform(drop_null_specimen_id)
-        .transform(generate_unique_id)
-    )
-    mouse_specimens_df = mice_df.select(
-        "_centreID",
-        "_specimenID",
-        "_colonyID",
-        "_isBaseline",
-        "_productionCentre",
-        "_phenotypingCentre",
-        "phenotyping_consortium",
-    )
-    embryo_specimens_df = embryo_df.select(
-        "_centreID",
-        "_specimenID",
-        "_colonyID",
-        "_isBaseline",
-        "_productionCentre",
-        "_phenotypingCentre",
-        "phenotyping_consortium",
-    )
-    specimen_df = mouse_specimens_df.union(embryo_specimens_df)
-    dcc_experiment_df = drop_null_colony_id(dcc_experiment_df, specimen_df)
-    dcc_experiment_df = re_map_europhenome_experiments(dcc_experiment_df, specimen_df)
-    dcc_experiment_df = generate_metadata_group(
-        dcc_experiment_df, impress_df, specimen_df
-    )
-    dcc_experiment_df = generate_metadata(dcc_experiment_df, impress_df, specimen_df)
-    dcc_experiment_df = get_associated_body_weight(dcc_experiment_df, mice_df)
-    dcc_experiment_df = generate_age_information(dcc_experiment_df, mice_df)
-    return dcc_experiment_df
-
-
-def process_lines(dcc_experiment_df: DataFrame):
-    dcc_experiment_df = (
-        dcc_experiment_df.transform(map_centre_id)
-        .transform(map_project_id)
-        .transform(drop_skipped_procedures)
-        .transform(standarize_3i_experiments)
-        .transform(drop_null_centre_id)
-        .transform(drop_null_data_source)
-        .transform(drop_null_pipeline)
-        .transform(drop_null_project)
-        .transform(generate_unique_id)
-    )
-    return dcc_experiment_df
-
-
 def map_centre_id(dcc_experiment_df: DataFrame):
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "_centreID", udf(map_centre_ids, StringType())("_centreID")
@@ -468,6 +402,7 @@ def _get_closest_weight(
 ) -> Dict:
     experiment_date = datetime.strptime(experiment_date, "%Y-%m-%d")
     nearest_weight = None
+    nearest_diff = 5 * 86400000
     for candidate_weight in specimen_weights:
         if nearest_weight is None:
             nearest_weight = candidate_weight
@@ -484,6 +419,7 @@ def _get_closest_weight(
         nearest_diff = abs(
             unix_time_millis(experiment_date) - unix_time_millis(nearest_weight_date)
         )
+        # TODO put a cap on the absolute date diff to 4 days max, if is bigger just put null
 
         candidate_weight_value = float(candidate_weight["weightValue"])
         nearest_weight_value = float(nearest_weight["weightValue"])
@@ -501,6 +437,17 @@ def _get_closest_weight(
                     nearest_weight = candidate_weight
             elif candidate_weight_value > nearest_weight_value:
                 nearest_weight = candidate_weight
+    days_diff = nearest_diff / 86400000
+    nearest_weight = (
+        nearest_weight
+        if days_diff < 5
+        else {
+            "weightDate": None,
+            "weightValue": None,
+            "weightParameterID": None,
+            "weightDaysOld": None,
+        }
+    )
     return nearest_weight
 
 

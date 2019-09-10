@@ -3,8 +3,14 @@ from impc_etl.jobs.extract.dcc_extractor import *
 import os
 import pytest
 
-FIXTURES_PATH = "tests/data/fixtures/"
-INPUT_PATH = "tests/data/xml/"
+FIXTURES_PATH = (
+    os.environ["FIXTURES_PATH"]
+    if "FIXTURES_PATH" in os.environ
+    else "tests/data/fixtures/"
+)
+INPUT_PATH = (
+    os.environ["INPUT_PATH"] if "INPUT_PATH" in os.environ else "tests/data/xml/"
+)
 
 
 @pytest.fixture(scope="session")

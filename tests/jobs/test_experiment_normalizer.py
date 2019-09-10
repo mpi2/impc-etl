@@ -1,11 +1,18 @@
 from impc_etl.shared.transformations.experiments import *
 from impc_etl.jobs.extract.dcc_extractor import *
+from impc_etl.jobs.clean.experiment_cleaner import *
 from impc_etl.jobs.extract.impress_extractor import extract_impress
 import os
 import pytest
 
-FIXTURES_PATH = "tests/data/fixtures/"
-INPUT_PATH = "tests/data/xml/"
+FIXTURES_PATH = (
+    os.environ["FIXTURES_PATH"]
+    if "FIXTURES_PATH" in os.environ
+    else "tests/data/fixtures/"
+)
+INPUT_PATH = (
+    os.environ["INPUT_PATH"] if "INPUT_PATH" in os.environ else "tests/data/xml/"
+)
 
 
 @pytest.fixture(scope="session")
@@ -15,6 +22,7 @@ def experiment_df(spark_session):
     else:
         dcc_df = extract_dcc_xml_files(spark_session, INPUT_PATH, "experiment")
         experiment_df = get_experiments_by_type(dcc_df, "experiment")
+        experiment_df = clean_experiments(experiment_df)
         experiment_df.write.mode("overwrite").parquet(
             FIXTURES_PATH + "experiment_parquet"
         )
@@ -63,6 +71,7 @@ def pipeline_df(spark_session):
     return pipeline_df
 
 
+@pytest.mark.skip(reason="no way of currently testing this")
 class TestExperimentNormalizer:
     def test_generate_metadata_group(
         self, experiment_df, mouse_df, embryo_df, pipeline_df
