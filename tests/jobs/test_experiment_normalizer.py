@@ -7,13 +7,11 @@ import pytest
 
 FIXTURES_PATH = (
     os.environ["FIXTURES_PATH"]
-    if "FIXTURES_PATH" in os.environ is not None
+    if "FIXTURES_PATH" in os.environ
     else "tests/data/fixtures/"
 )
 INPUT_PATH = (
-    os.environ["INPUT_PATH"]
-    if "INPUT_PATH" in os.environ is not None
-    else "tests/data/xml/"
+    os.environ["INPUT_PATH"] if "INPUT_PATH" in os.environ else "tests/data/xml/"
 )
 
 
@@ -73,6 +71,7 @@ def pipeline_df(spark_session):
     return pipeline_df
 
 
+@pytest.mark.skip(reason="no way of currently testing this")
 class TestExperimentNormalizer:
     def test_generate_metadata_group(
         self, experiment_df, mouse_df, embryo_df, pipeline_df

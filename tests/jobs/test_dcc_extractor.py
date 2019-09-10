@@ -10,13 +10,11 @@ import bs4
 
 FIXTURES_PATH = (
     os.environ["FIXTURES_PATH"]
-    if os.environ["FIXTURES_PATH"] is not None
+    if "FIXTURES_PATH" in os.environ
     else "tests/data/fixtures/"
 )
 INPUT_PATH = (
-    os.environ["INPUT_PATH"]
-    if os.environ["INPUT_PATH"] is not None
-    else "tests/data/xml/"
+    os.environ["INPUT_PATH"] if "INPUT_PATH" in os.environ else "tests/data/xml/"
 )
 
 
