@@ -2,7 +2,8 @@ language: python
 cache:
   - pip: true
   - directories:
-      - /home/travis/data/
+      - /home/travis/data/fixtures/
+      - /home/travis/data/xml/
 python:
   - "3.7.4"
 install:
