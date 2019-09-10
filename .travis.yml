@@ -22,10 +22,10 @@ install:
   - mkdir -p -- tests/data/xml/impc tests/data/fixtures
   - curl https://wwwdev.ebi.ac.uk/~federico/rbrc.tar.gz --output tests/data/xml/impc/rbrc.tar.gz
   - cd tests/data/xml/impc && tar -xvzf rbrc.tar.gz && rm rbrc.tar.gz
-  - SPARK_VERSION='2.4.3'
+  - SPARK_VERSION='2.4.4'
   - HADOOP_VERSION='2.7'
   - curl http://apache.mirror.gtcomm.net/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz --output /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
-  - cd /tmp && tar -xvf /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
+  - cd /tmp && tar -xzvf /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
   - cd $TRAVIS_BUILD_DIR
 env:
     global:
