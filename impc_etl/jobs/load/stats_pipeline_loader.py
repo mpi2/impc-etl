@@ -298,7 +298,6 @@ def add_impress_info(experiments_df, pipeline_df):
         (col("simpleParameter._parameterID") == col("pipeline.parameter.parameterKey"))
         & (col("_procedureID") == col("pipeline.procedure.procedureKey"))
         & (col("experiment._pipeline") == col("pipeline.pipelineKey")),
-        "left",
     )
     experiments_df = experiments_df.withColumn("pipeline_name", col("pipeline.name"))
     experiments_df = experiments_df.withColumn(
@@ -311,10 +310,14 @@ def add_impress_info(experiments_df, pipeline_df):
     experiments_df = experiments_df.withColumn(
         "procedure_stable_id", col("pipeline.procedure.procedureKey")
     )
-    get_procedure_group_udf = udf(lambda x: x[: x.rfind("_")], StringType())
+    get_procedure_group_udf = udf(
+        lambda x: x[: x.rfind("_")] if x is not None else "ITWASNONE", StringType()
+    )
     experiments_df = experiments_df.withColumn(
-        "procedure_group",
-        get_procedure_group_udf(col("pipeline.procedure.procedureKey")),
+        "procedure_group", get_procedure_group_udf(col("procedure_stable_id"))
+    )
+    experiments_df.where(col("procedure_group") == "ITWASNONE").show(
+        vertical=True, truncate=False
     )
 
     experiments_df = experiments_df.withColumn(
@@ -329,7 +332,9 @@ def add_impress_info(experiments_df, pipeline_df):
             col("pipeline.parameter.valueType") != "TEXT", lit("unidimensional")
         ).otherwise(
             when(
-                size(col("pipeline.parameter.optionCollection")) > 0, lit("categorical")
+                (size(col("pipeline.parameter.optionCollection")) > 0)
+                | (col("pipeline.parameter.parameterKey") == "IMPC_EYE_092_001"),
+                lit("categorical"),
             ).otherwise(lit("text"))
         ),
     )

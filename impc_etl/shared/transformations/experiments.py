@@ -402,29 +402,23 @@ def _get_closest_weight(
 ) -> Dict:
     experiment_date = datetime.strptime(experiment_date, "%Y-%m-%d")
     nearest_weight = None
-    nearest_diff = 5 * 86400000
+    nearest_diff = None
     for candidate_weight in specimen_weights:
-        if nearest_weight is None:
-            nearest_weight = candidate_weight
-            continue
         candidate_weight_date = datetime.strptime(
             candidate_weight["weightDate"], "%Y-%m-%d"
-        )
-        nearest_weight_date = datetime.strptime(
-            nearest_weight["weightDate"], "%Y-%m-%d"
         )
         candidate_diff = abs(
             unix_time_millis(experiment_date) - unix_time_millis(candidate_weight_date)
         )
-        nearest_diff = abs(
-            unix_time_millis(experiment_date) - unix_time_millis(nearest_weight_date)
-        )
-        # TODO put a cap on the absolute date diff to 4 days max, if is bigger just put null
-
+        if nearest_weight is None:
+            nearest_weight = candidate_weight
+            nearest_diff = candidate_diff
+            continue
         candidate_weight_value = float(candidate_weight["weightValue"])
         nearest_weight_value = float(nearest_weight["weightValue"])
         if candidate_diff < nearest_diff:
             nearest_weight = candidate_weight
+            nearest_diff = candidate_diff
         elif candidate_diff == nearest_diff:
             if (
                 procedure_group is not None
@@ -432,23 +426,26 @@ def _get_closest_weight(
             ):
                 if candidate_weight_value > nearest_weight_value:
                     nearest_weight = candidate_weight
+                    nearest_diff = candidate_diff
             elif "_BWT" in candidate_weight["weightParameterID"]:
                 if candidate_weight_value > nearest_weight_value:
                     nearest_weight = candidate_weight
+                    nearest_diff = candidate_diff
             elif candidate_weight_value > nearest_weight_value:
                 nearest_weight = candidate_weight
+                nearest_diff = candidate_diff
+
     days_diff = nearest_diff / 86400000
-    nearest_weight = (
-        nearest_weight
-        if days_diff < 5
-        else {
+
+    if nearest_weight is not None and days_diff < 5:
+        return nearest_weight
+    else:
+        return {
             "weightDate": None,
             "weightValue": None,
             "weightParameterID": None,
             "weightDaysOld": None,
         }
-    )
-    return nearest_weight
 
 
 def get_derived_parameters(
@@ -549,7 +546,7 @@ def get_derived_parameters(
         "left_outer",
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
-        "derivedParameters",
+        "simpleParameter",
         when(
             results_df["results"].isNotNull(),
             udf(_append_simple_parameter, simple_parameter_type)(
@@ -558,8 +555,8 @@ def get_derived_parameters(
         ).otherwise(col("simpleParameter").cast(simple_parameter_type)),
     )
     dcc_experiment_df = (
-        dcc_experiment_df.drop("derivedParameters")
-        .drop("complete_derivations.unique_id")
+        dcc_experiment_df.drop("complete_derivations.unique_id")
+        .drop("unique_id_result")
         .drop("results")
     )
 
@@ -618,9 +615,11 @@ def _check_complete_input(input_list: List[str], input_str: str):
 
 
 def _append_simple_parameter(results: List[Dict], simple_parameter: List):
+    if results is None:
+        return simple_parameter
     for result in results:
         if simple_parameter is not None and result is not None:
-            parameter = result.keys()[0]
+            parameter = list(result.keys())[0]
             value = result[parameter]
             simple_parameter.append(
                 {
