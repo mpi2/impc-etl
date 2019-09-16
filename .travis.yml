@@ -22,6 +22,8 @@ install:
   - mkdir -p -- $IMPC_PATH $FIXTURES_PATH
   - curl https://wwwdev.ebi.ac.uk/~federico/rbrc.tar.gz --output $IMPC_PATH/rbrc.tar.gz
   - cd  $IMPC_PATH && tar -xvzf rbrc.tar.gz && rm rbrc.tar.gz
+  - curl https://wwwdev.ebi.ac.uk/~federico/pipeline_parquet.tar.gz --output $FIXTURES_PATH/pipeline_parquet.tar.gz
+  - cd  $FIXTURES_PATH && tar -xvzf pipeline_parquet.tar.gz  && rm pipeline_parquet.tar.gz
   - SPARK_VERSION='2.4.4'
   - HADOOP_VERSION='2.7'
   - curl http://apache.mirror.gtcomm.net/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz --output /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
