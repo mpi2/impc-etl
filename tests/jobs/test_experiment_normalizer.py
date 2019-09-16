@@ -72,7 +72,6 @@ def pipeline_df(spark_session):
     return pipeline_df
 
 
-@pytest.mark.skip(reason="takes to long")
 class TestExperimentNormalizer:
     def test_generate_metadata_group(
         self, experiment_df, mouse_df, embryo_df, pipeline_df
@@ -162,7 +161,7 @@ class TestExperimentNormalizer:
         experiment_specimen_df = get_derived_parameters(
             spark_session,
             experiment_specimen_df.where(
-                (experiment_specimen_df.specimenID == "IM0049_c0115M")
+                (experiment_specimen_df.specimenID == "IM0023_d0004F")
                 & (experiment_specimen_df._procedureID == "IMPC_EYE_001")
             ),
             pipeline_df,

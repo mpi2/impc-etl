@@ -1,4 +1,5 @@
 from impc_etl.workflow.cleaning import *
+from impc_etl.workflow.config import ImpcConfig
 
 
 class SpecimenNormalizer(SparkSubmitTask):
@@ -15,7 +16,7 @@ class SpecimenNormalizer(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return luigi.LocalTarget(
+        return ImpcConfig().get_target(
             f"{self.output_path}{self.entity_type}_normalized_parquet"
         )
 
@@ -78,7 +79,7 @@ class ExperimentNormalizer(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return luigi.LocalTarget(
+        return ImpcConfig().get_target(
             f"{self.output_path}{self.entity_type}_normalized_parquet"
         )
 

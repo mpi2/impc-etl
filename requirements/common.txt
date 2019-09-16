@@ -4,3 +4,5 @@ requests
 findspark
 luigi
 pysolr
+hdfs
+webhdfs

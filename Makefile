@@ -14,9 +14,7 @@ lint:           ##@best_practices Run pylint against the main script and the sha
 
 build: clean        ##@deploy Build to the dist package
 	mkdir ./dist
-	cp ./impc_etl/main.py ./dist/
-##	cd ./impc_etl && zip -x main.py -x -x \*shared\* -r ../dist/jobs.zip .
-##	cd ./impc_etl && zip -x main.py -x -x \*jobs\* -r ../dist/shared.zip .
+#	cp ./impc_etl/main.py ./dist/
 	zip -x main.py -r ./dist/impc_etl.zip impc_etl
 	cd ./dist && mkdir libs
 	source .venv/bin/activate && pip install -U -r requirements/common.txt -t ./dist/libs

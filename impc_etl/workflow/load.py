@@ -1,4 +1,5 @@
 from impc_etl.workflow.normalization import *
+from impc_etl.workflow.config import ImpcConfig
 
 
 class StatsPipeLineLoader(SparkSubmitTask):
@@ -42,7 +43,7 @@ class StatsPipeLineLoader(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return luigi.LocalTarget(f"{self.output_path}impc_stats_input_parquet")
+        return ImpcConfig().get_target(f"{self.output_path}impc_stats_input_parquet")
 
     def app_options(self):
         return [
