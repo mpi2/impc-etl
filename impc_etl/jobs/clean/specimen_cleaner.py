@@ -3,9 +3,7 @@ from pyspark.sql import SparkSession, DataFrame
 from impc_etl.shared.transformations.specimens import *
 
 
-def clean_specimens(
-    spark_session: SparkSession, specimen_parquet_path: str
-) -> DataFrame:
+def clean_specimens(specimen_df: DataFrame) -> DataFrame:
     """
     DCC specimen cleaner
 
@@ -14,7 +12,6 @@ def clean_specimens(
     :return: a clean specimen parquet file
     :rtype: DataFrame
     """
-    specimen_df = spark_session.read.parquet(specimen_parquet_path)
     specimen_df = (
         specimen_df.transform(map_centre_id)
         .transform(map_project_id)
@@ -31,8 +28,9 @@ def clean_specimens(
 def main(argv):
     input_path = argv[1]
     output_path = argv[2]
-    spark = SparkSession.builder.getOrCreate()
-    specimen_clean_df = clean_specimens(spark, input_path)
+    spark_session = SparkSession.builder.getOrCreate()
+    specimen_df = spark_session.read.parquet(input_path)
+    specimen_clean_df = clean_specimens(specimen_df)
     specimen_clean_df.write.mode("overwrite").parquet(output_path)
 
 

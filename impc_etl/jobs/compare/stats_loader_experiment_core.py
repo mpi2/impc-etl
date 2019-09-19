@@ -4,7 +4,7 @@ from pysolr import Solr
 from impc_etl import logger
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import sort_array, col, upper
+from pyspark.sql.functions import sort_array, col, upper, when, lit
 
 CSV_FIELDS = [
     "allele_accession_id",
@@ -118,8 +118,11 @@ def compare(experiment_core_parquet, stats_input_parquet):
         spark.read.parquet(stats_input_parquet)
         .select(CSV_FIELDS)
         .withColumn("datasource_name", upper(col("datasource_name")))
+        .withColumn(
+            "litter_id",
+            when(col("litter_id").isNull(), lit("")).otherwise(col("litter_id")),
+        )
     )
-
     for col_name in [
         "weight",
         "weight_date",
@@ -128,22 +131,21 @@ def compare(experiment_core_parquet, stats_input_parquet):
         "experiment_source_id",
         "data_point",
         "metadata",
+        "strain_name",
+        "genetic_background",
+        "strain_accession_id",
     ]:
         experiment_core_df = experiment_core_df.drop(col_name)
         stats_input_df = stats_input_df.drop(col_name)
-    # experiment_core_df = experiment_core_df.where(
-    #     (col("experiment_source_id") == "IMPC_BWT_001_2015-08-28")
-    #     & (col("biological_sample_group") == "control")
-    # )
-    # stats_input_df = stats_input_df.where(
-    #     (col("experiment_source_id") == "IMPC_BWT_001_2015-08-28")
-    #     & (col("biological_sample_group") == "control")
-    # )
+
+    experiment_core_df = experiment_core_df.where(
+        col("parameter_stable_id") != "IMPC_EYE_092_001"
+    ).where(col("age_in_days") > 0)
+    stats_input_df = stats_input_df.where(
+        col("parameter_stable_id") != "IMPC_EYE_092_001"
+    ).where(col("age_in_days") > 0)
+
     diff_df = experiment_core_df.exceptAll(stats_input_df)
-    # experiment_core_df.sort(col("external_sample_id")).show(
-    #     vertical=True, truncate=False
-    # )
-    # stats_input_df.sort(col("external_sample_id")).show(vertical=True, truncate=False)
     diff_df.sort(experiment_core_df.columns).show(vertical=True, truncate=False)
     print(experiment_core_df.count())
     print(stats_input_df.count())

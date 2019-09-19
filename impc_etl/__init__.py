@@ -2,16 +2,31 @@ import sys
 import logging
 from typing import Callable
 from pyspark.sql.dataframe import DataFrame
+import os
 
 
-logger = logging.getLogger(__name__)
-handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter(
-    "%(asctime)s %(levelname)-4s %(filename)s:%(funcName)s():%(lineno)s: %(message)4s"
-)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
+class YarnLogger:
+    @staticmethod
+    def setup_logger():
+        if "LOG_DIRS" not in os.environ:
+            sys.stderr.write(
+                "Missing LOG_DIRS environment variable, pyspark logging disabled"
+            )
+            return
+
+        file = os.environ["LOG_DIRS"].split(",")[0] + "/pyspark.log"
+        logging.basicConfig(
+            filename=file,
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)-4s %(filename)s:%(funcName)s():%(lineno)s: %(message)4s",
+        )
+
+    def __getattr__(self, key):
+        return getattr(logging, key)
+
+
+YarnLogger.setup_logger()
+logger = YarnLogger()
 
 
 def transform(self: DataFrame, f: Callable) -> DataFrame:

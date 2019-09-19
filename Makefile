@@ -58,7 +58,7 @@ download:            ##@download Download test data
 	scp -r ${TEST_DATA_HOST}:${TEST_DATA_PATH}/europhenome/2013-10-31/ ./tests/data/europhenome/
 	scp  ${TEST_DATA_HOST}:${TEST_DATA_PATH}/impc/latest/*/*.xml ./tests/data/dcc/
 	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output ./tests/data/mgi/MGI_Strain.rpt
-
+	curl http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt --output ./tests/data/mgi/MGI_GenePheno.rpt
 
 
 test:       ##@best_practices Run pystest against the test folder

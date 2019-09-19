@@ -17,6 +17,7 @@ from pyspark.sql.functions import (
     collect_set,
     struct,
     max,
+    first,
 )
 from pyspark.sql.types import (
     BooleanType,
@@ -325,9 +326,7 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     )
     weight_observations = weight_observations.where(col("weightValue").isNotNull())
     weight_observations = weight_observations.join(
-        mice_df,
-        weight_observations["specimenID"] == mice_df["_specimenID"],
-        "left_outer",
+        mice_df, weight_observations["specimenID"] == mice_df["_specimenID"]
     )
     weight_observations = weight_observations.withColumn(
         "weightDaysOld", udf(calculate_age_in_days, StringType())("weightDate", "_DOB")
@@ -344,7 +343,9 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
             col("_procedureID")
         ),
     )
-    dcc_experiment_df = dcc_experiment_df.join(weight_observations, "specimenID")
+    dcc_experiment_df = dcc_experiment_df.join(
+        weight_observations, "specimenID", "left_outer"
+    )
     output_weight_schema = StructType(
         [
             StructField("weightDate", StringType()),
@@ -376,7 +377,7 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
     mice_df_a = mice_df.alias("mice")
     dcc_experiment_df = experiment_df_a.join(
         mice_df_a,
-        dcc_experiment_df["specimenID"] == mice_df["_specimenID"],
+        experiment_df_a["specimenID"] == mice_df_a["_specimenID"],
         "left_outer",
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
@@ -386,12 +387,17 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
         ),
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
-        "ageInWeeks", udf(lambda x: math.floor(x / 7), IntegerType())(col("ageInDays"))
+        "ageInWeeks",
+        udf(lambda x: math.floor(x / 7) if x is not None else None, IntegerType())(
+            col("ageInDays")
+        ),
     )
     return dcc_experiment_df.select("exp.*", "ageInWeeks", "ageInDays")
 
 
 def calculate_age_in_days(experiment_date: str, dob: str) -> int:
+    if dob is None or experiment_date is None:
+        return None
     experiment_date = datetime.strptime(experiment_date, "%Y-%m-%d")
     dob = datetime.strptime(dob, "%Y-%m-%d")
     return (experiment_date - dob).days
@@ -400,6 +406,13 @@ def calculate_age_in_days(experiment_date: str, dob: str) -> int:
 def _get_closest_weight(
     experiment_date: str, procedure_group: str, specimen_weights: List[Dict]
 ) -> Dict:
+    if specimen_weights is None or len(specimen_weights) == 0:
+        return {
+            "weightDate": None,
+            "weightValue": None,
+            "weightParameterID": None,
+            "weightDaysOld": None,
+        }
     experiment_date = datetime.strptime(experiment_date, "%Y-%m-%d")
     nearest_weight = None
     nearest_diff = None
@@ -455,8 +468,13 @@ def get_derived_parameters(
         (impress_df["parameter.isDerived"] == True)
         & (impress_df["parameter.isDeprecated"] == False)
     ).select(
-        "parameter.parameterKey", "parameter.derivation", "parameter.type"
+        "procedure.procedureKey",
+        "parameter.parameterKey",
+        "parameter.derivation",
+        "parameter.type",
+        "unitName",
     ).dropDuplicates()
+
     extract_parameters_from_derivation_udf = udf(
         extract_parameters_from_derivation, ArrayType(StringType())
     )
@@ -466,7 +484,7 @@ def get_derived_parameters(
 
     derived_parameters_ex = derived_parameters.withColumn(
         "derivationInput", explode("derivationInputs")
-    ).select("parameterKey", "derivation", "derivationInput")
+    ).select("procedureKey", "parameterKey", "derivation", "derivationInput")
     derived_parameters_ex = derived_parameters_ex.where(
         ~col("derivation").contains("unimplemented")
     )
@@ -498,9 +516,33 @@ def get_derived_parameters(
         ).alias("derivationInputStr")
     )
 
+    provided_derivations = dcc_experiment_df.withColumn(
+        "simpleParameter", explode("simpleParameter")
+    )
+    provided_derivations = provided_derivations.join(
+        derived_parameters_ex,
+        col("simpleParameter._parameterID") == col("parameterKey"),
+        "left_outer",
+    )
+    provided_derivations = (
+        provided_derivations.where(col("parameterKey").isNotNull())
+        .select("unique_id", "parameterKey")
+        .dropDuplicates()
+    )
+
+    provided_derivations = provided_derivations.alias("provided")
+
+    experiments_vs_derivations = (
+        experiments_vs_derivations.join(
+            provided_derivations, ["parameterKey", "unique_id"], "left_outer"
+        )
+        .where(col("provided.unique_id").isNull())
+        .drop("provided.*")
+    )
     experiments_vs_derivations = experiments_vs_derivations.join(
         derived_parameters.drop("derivation"), "parameterKey"
     )
+
     experiments_vs_derivations = experiments_vs_derivations.withColumn(
         "isComplete",
         udf(_check_complete_input, BooleanType())(
@@ -520,15 +562,26 @@ def get_derived_parameters(
     )
     results_df = spark.sql(
         """
-           SELECT unique_id, parameterKey,
+           SELECT unique_id, procedureKey, parameterKey,
                   derivationInputStr, phenodcc_derivator(derivationInputStr) as result
            FROM complete_derivations
         """
     )
 
-    results_df = results_df.groupBy("unique_id").agg(
+    results_df = results_df.join(
+        derived_parameters, ["parameterKey", "procedureKey"], "left"
+    )
+
+    results_df = results_df.groupBy("unique_id", "procedureKey").agg(
         collect_list(
-            create_map(results_df["parameterKey"], results_df["result"])
+            create_map(
+                lit("parameter"),
+                results_df["parameterKey"],
+                lit("value"),
+                results_df["result"],
+                lit("unit"),
+                results_df["unitName"],
+            )
         ).alias("results")
     )
     results_df = results_df.withColumnRenamed("unique_id", "unique_id_result")
@@ -542,7 +595,8 @@ def get_derived_parameters(
 
     dcc_experiment_df = dcc_experiment_df.join(
         results_df,
-        dcc_experiment_df["unique_id"] == results_df["unique_id_result"],
+        (dcc_experiment_df["unique_id"] == results_df["unique_id_result"])
+        & (dcc_experiment_df["_procedureID"] == results_df["procedureKey"]),
         "left_outer",
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
@@ -567,11 +621,12 @@ def _get_inputs_by_parameter_type(
     dcc_experiment_df, derived_parameters_ex, parameter_type
 ):
     experiments_by_type = dcc_experiment_df.select(
-        "unique_id", explode(parameter_type).alias(parameter_type)
+        "unique_id", "_procedureID", explode(parameter_type).alias(parameter_type)
     )
     if parameter_type == "seriesParameter":
         experiments_by_type = experiments_by_type.select(
             "unique_id",
+            "_procedureID",
             col(parameter_type + "._parameterID").alias("_parameterID"),
             explode(parameter_type + ".value").alias("value"),
         )
@@ -579,7 +634,7 @@ def _get_inputs_by_parameter_type(
             "value", concat(col("value._incrementValue"), lit("|"), col("value._VALUE"))
         )
         experiments_by_type = experiments_by_type.groupBy(
-            "unique_id", "_parameterID"
+            "unique_id", "_parameterID", "_procedureID"
         ).agg(concat_ws("$", collect_list("value")).alias("value"))
 
     parameter_id_column = (
@@ -592,18 +647,22 @@ def _get_inputs_by_parameter_type(
     )
     experiments_vs_derivations = derived_parameters_ex.join(
         experiments_by_type,
-        experiments_by_type[parameter_id_column]
-        == derived_parameters_ex["derivationInput"],
-        "left_outer",
+        (
+            (
+                experiments_by_type[parameter_id_column]
+                == derived_parameters_ex["derivationInput"]
+            )
+            & (experiments_by_type._procedureID == derived_parameters_ex.procedureKey)
+        ),
     )
     experiments_vs_derivations: DataFrame = experiments_vs_derivations.withColumn(
         "derivationInput",
         concat(col("derivationInput"), lit("$"), col(parameter_value_column)),
     )
     return (
-        experiments_vs_derivations.drop(parameter_type)
+        experiments_vs_derivations.drop(parameter_type, "_procedureID")
         if parameter_type != "seriesParameter"
-        else experiments_vs_derivations.drop("value", "_parameterID")
+        else experiments_vs_derivations.drop("value", "_parameterID", "_procedureID")
     )
 
 
@@ -619,14 +678,12 @@ def _append_simple_parameter(results: List[Dict], simple_parameter: List):
         return simple_parameter
     for result in results:
         if simple_parameter is not None and result is not None:
-            parameter = list(result.keys())[0]
-            value = result[parameter]
             simple_parameter.append(
                 {
-                    "_parameterID": parameter,
-                    "value": value,
+                    "_parameterID": result["parameter"],
+                    "value": result["value"],
                     "_sequenceID": None,
-                    "_unit": None,
+                    "_unit": result["unit"],
                     "parameterStatus": None,
                 }
             )
