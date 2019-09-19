@@ -75,7 +75,7 @@ def pipeline_df(spark_session):
     return pipeline_df
 
 
-# @pytest.mark.skip(reason="no way of currently testing this")
+@pytest.mark.skip(reason="no way of currently testing this")
 class TestExperimentNormalizer:
     def test_generate_metadata_group(
         self, experiment_df, mouse_df, embryo_df, pipeline_df
