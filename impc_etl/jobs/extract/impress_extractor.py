@@ -2,12 +2,12 @@
 IMPRESS extractor
     extract_impress: Extract Impress data and load it to a dataframe
 """
-from typing import List
+from typing import List, Dict
 import json
 import time
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType, ArrayType
-from pyspark.sql.functions import udf, explode_outer
+from pyspark.sql.functions import udf, explode_outer, col
 import requests
 from impc_etl.shared.utils import convert_to_row
 from impc_etl import logger
@@ -57,6 +57,10 @@ def get_entities_dataframe(
     current_schema = entity_df.schema
     entity_df = process_collection(
         spark_session, impress_api_url, current_schema, current_type, entity_df
+    )
+    unit_df = get_impress_units(impress_api_url, spark_session)
+    entity_df = entity_df.join(
+        unit_df, entity_df["parameter.unit"] == unit_df["unitID"], "left_outer"
     )
     return entity_df
 
@@ -209,6 +213,15 @@ def get_impress_entity_schema(
     ).text
     entity_rdd = spark_session.sparkContext.parallelize([first_entity])
     return spark_session.read.json(entity_rdd).schema
+
+
+def get_impress_units(impress_api_url, spark_session):
+    json_obj: Dict = json.loads(
+        requests.get("{}/{}".format(impress_api_url, "unit/list")).text
+    )
+    unit_index = [{"unitID": key, "unitName": value} for key, value in json_obj.items()]
+    entity_rdd = spark_session.sparkContext.parallelize(unit_index)
+    return spark_session.read.json(entity_rdd)
 
 
 def main(argv):

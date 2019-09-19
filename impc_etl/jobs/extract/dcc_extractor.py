@@ -11,13 +11,13 @@ DCC Extractor module
         * europhenome
     Each directory containing the raw XML from the DCC.
 """
+import sys
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StringType
 from pyspark.sql.functions import input_file_name, udf, explode_outer, lit
 from impc_etl.shared.exceptions import UnsupportedEntityError, UnsupportedFileTypeError
 from typing import List
 from impc_etl import logger
-import sys
 import py4j
 
 

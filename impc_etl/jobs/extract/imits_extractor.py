@@ -5,10 +5,10 @@ IMITS extractor module
     entities, genes and alleles in the alleles report files; products in the product report files
     and colonies in the colony report files.
 """
+import sys
 from pyspark.sql import DataFrame, SparkSession
 from impc_etl.shared import utils
-from impc_etl.shared.exceptions import UnsupportedEntityError, UnsupportedFileTypeError
-import sys
+from impc_etl.shared.exceptions import UnsupportedEntityError
 
 
 def extract_imits_tsv(spark_session: SparkSession, file_path) -> DataFrame:

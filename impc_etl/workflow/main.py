@@ -18,6 +18,3 @@ class ImpcEtl(luigi.Task):
                 strain_report_tsv_path=self.strain_input_path,
             )
         ]
-
-    # def requires(self):
-    #     return [ImpressExtractor(output_path=self.output_path)]

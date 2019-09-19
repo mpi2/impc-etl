@@ -14,9 +14,7 @@ lint:           ##@best_practices Run pylint against the main script and the sha
 
 build: clean        ##@deploy Build to the dist package
 	mkdir ./dist
-	cp ./impc_etl/main.py ./dist/
-##	cd ./impc_etl && zip -x main.py -x -x \*shared\* -r ../dist/jobs.zip .
-##	cd ./impc_etl && zip -x main.py -x -x \*jobs\* -r ../dist/shared.zip .
+#	cp ./impc_etl/main.py ./dist/
 	zip -x main.py -r ./dist/impc_etl.zip impc_etl
 	cd ./dist && mkdir libs
 	source .venv/bin/activate && pip install -U -r requirements/common.txt -t ./dist/libs
@@ -60,7 +58,7 @@ download:            ##@download Download test data
 	scp -r ${TEST_DATA_HOST}:${TEST_DATA_PATH}/europhenome/2013-10-31/ ./tests/data/europhenome/
 	scp  ${TEST_DATA_HOST}:${TEST_DATA_PATH}/impc/latest/*/*.xml ./tests/data/dcc/
 	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output ./tests/data/mgi/MGI_Strain.rpt
-
+	curl http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt --output ./tests/data/mgi/MGI_GenePheno.rpt
 
 
 test:       ##@best_practices Run pystest against the test folder

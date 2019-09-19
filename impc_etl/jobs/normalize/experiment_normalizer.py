@@ -46,7 +46,6 @@ def normalize_experiments(
         (experiment_df["_centreID"] == specimen_df["_centreID"])
         & (experiment_df["specimenID"] == specimen_df["_specimenID"]),
     )
-
     experiment_specimen_df = drop_null_colony_id(experiment_specimen_df)
     experiment_specimen_df = re_map_europhenome_experiments(experiment_specimen_df)
     experiment_specimen_df = generate_metadata_group(

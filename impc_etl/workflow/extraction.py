@@ -1,5 +1,6 @@
 import luigi
 from luigi.contrib.spark import SparkSubmitTask
+from impc_etl.workflow.config import ImpcConfig
 
 
 class DCCExtractor(SparkSubmitTask):
@@ -16,7 +17,9 @@ class DCCExtractor(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return luigi.LocalTarget(f"{self.output_path}{self.entity_type}_raw_parquet")
+        return ImpcConfig().get_target(
+            f"{self.output_path}{self.entity_type}_raw_parquet"
+        )
 
     def app_options(self):
         return [self.xml_path, self.output().path, self.file_type, self.entity_type]
@@ -55,7 +58,7 @@ class ImitsExtractor(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return luigi.LocalTarget(
+        return ImpcConfig().get_target(
             f"{self.output_path}{self.entity_type.lower()}_raw_parquet"
         )
 
@@ -92,7 +95,9 @@ class ImpressExtractor(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return luigi.LocalTarget(f"{self.output_path}{self.impress_root_type}_parquet")
+        return ImpcConfig().get_target(
+            f"{self.output_path}{self.impress_root_type}_parquet"
+        )
 
     def app_options(self):
         return [self.impress_api_url, self.output().path, self.impress_root_type]
@@ -110,7 +115,7 @@ class MGIExtractor(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return luigi.LocalTarget(f"{self.output_path}strain_parquet")
+        return ImpcConfig().get_target(f"{self.output_path}strain_parquet")
 
     def app_options(self):
         return [self.strain_input_path, self.output().path]

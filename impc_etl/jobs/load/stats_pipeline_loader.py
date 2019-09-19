@@ -10,12 +10,11 @@ from pyspark.sql.functions import (
     when,
     lit,
     explode,
-    udf,
+    regexp_extract,
     size,
     upper,
     lower,
 )
-from pyspark.sql.types import StringType
 
 CSV_FIELDS = [
     "allele_accession_id",
@@ -98,7 +97,8 @@ def load(
     )
 
     mice_experiments_df_exp = mice_experiments_df.where(
-        lower(col("specimen._colonyID")) != "baseline"
+        (lower(col("specimen._colonyID")) != "baseline")
+        & (col("specimen._isBaseline") != True)
     ).join(
         strain_df,
         col("colony.colony_background_strain") == col("strain.strainName"),
@@ -106,7 +106,8 @@ def load(
     )
 
     mice_experiments_df_baseline = mice_experiments_df.where(
-        lower(col("specimen._colonyID")) == "baseline"
+        (lower(col("specimen._colonyID")) == "baseline")
+        | (col("specimen._isBaseline") == True)
     ).join(
         strain_df, col("specimen._strainID") == col("strain.mgiStrainID"), "left_outer"
     )
@@ -179,6 +180,13 @@ def rename_columns(experiments_df: DataFrame):
 
     experiments_df = experiments_df.withColumn(
         "zygosity",
+        when(col("zygosity") == "hemizygous", lit("hemizygote")).otherwise(
+            col("zygosity")
+        ),
+    )
+
+    experiments_df = experiments_df.withColumn(
+        "zygosity",
         when(col("zygosity") == "wild type", lit("homozygote")).otherwise(
             col("zygosity")
         ),
@@ -225,7 +233,9 @@ def rename_columns(experiments_df: DataFrame):
     experiments_df = experiments_df.withColumn(
         "colony_id",
         when(lower(col("specimen._colonyID")) == "baseline", lit("baseline")).otherwise(
-            col("specimen._colonyID")
+            when(col("specimen._colonyID").isNull(), "unknown").otherwise(
+                col("specimen._colonyID")
+            )
         ),
     )
 
@@ -258,14 +268,15 @@ def rename_columns(experiments_df: DataFrame):
     )
     experiments_df = experiments_df.withColumn(
         "strain_name",
-        when(col("colony_id") == "baseline", col("strain.strainName")).otherwise(
-            col("colony.colony_background_strain")
-        ),
+        when(
+            (col("colony_id") == "baseline") | (col("specimen._isBaseline") == True),
+            col("strain.strainName"),
+        ).otherwise(col("colony.colony_background_strain")),
     )
     experiments_df = experiments_df.withColumn(
         "genetic_background",
         when(
-            col("colony_id") == "baseline",
+            (col("colony_id") == "baseline") | (col("specimen._isBaseline") == True),
             concat(lit("involves: "), col("strain.strainName")),
         ).otherwise(col("colony.genetic_background")),
     )
@@ -298,7 +309,7 @@ def add_impress_info(experiments_df, pipeline_df):
         (col("simpleParameter._parameterID") == col("pipeline.parameter.parameterKey"))
         & (col("_procedureID") == col("pipeline.procedure.procedureKey"))
         & (col("experiment._pipeline") == col("pipeline.pipelineKey")),
-        "left",
+        "left_outer",
     )
     experiments_df = experiments_df.withColumn("pipeline_name", col("pipeline.name"))
     experiments_df = experiments_df.withColumn(
@@ -311,10 +322,8 @@ def add_impress_info(experiments_df, pipeline_df):
     experiments_df = experiments_df.withColumn(
         "procedure_stable_id", col("pipeline.procedure.procedureKey")
     )
-    get_procedure_group_udf = udf(lambda x: x[: x.rfind("_")], StringType())
     experiments_df = experiments_df.withColumn(
-        "procedure_group",
-        get_procedure_group_udf(col("pipeline.procedure.procedureKey")),
+        "procedure_group", regexp_extract(col("procedure_stable_id"), "(.+_.+)_.+", 1)
     )
 
     experiments_df = experiments_df.withColumn(
@@ -329,7 +338,9 @@ def add_impress_info(experiments_df, pipeline_df):
             col("pipeline.parameter.valueType") != "TEXT", lit("unidimensional")
         ).otherwise(
             when(
-                size(col("pipeline.parameter.optionCollection")) > 0, lit("categorical")
+                (size(col("pipeline.parameter.optionCollection")) > 0)
+                | (col("pipeline.parameter.parameterKey") == "IMPC_EYE_092_001"),
+                lit("categorical"),
             ).otherwise(lit("text"))
         ),
     )
