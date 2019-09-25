@@ -8,7 +8,8 @@ class StatsPipeLineLoader(SparkSubmitTask):
     xml_path = luigi.Parameter()
     imits_report_tsv_path = luigi.Parameter()
     imits_allele2_tsv_path = luigi.Parameter()
-    strain_report_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -24,16 +25,15 @@ class StatsPipeLineLoader(SparkSubmitTask):
                 xml_path=self.xml_path,
                 output_path=self.output_path,
             ),
-            AlleleExtractor(
-                tsv_path=self.imits_allele2_tsv_path, output_path=self.output_path
+            MGIAlleleExtractor(
+                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
             ),
             ColonyCleaner(
                 tsv_path=self.imits_report_tsv_path, output_path=self.output_path
             ),
             ImpressExtractor(output_path=self.output_path),
-            MGIExtractor(
-                strain_input_path=self.strain_report_tsv_path,
-                output_path=self.output_path,
+            MGIStrainExtractor(
+                mgi_input_path=self.mgi_strain_input_path, output_path=self.output_path
             ),
         ]
 

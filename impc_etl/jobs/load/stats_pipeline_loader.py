@@ -91,8 +91,7 @@ def load(
     )
     mice_experiments_df = mice_experiments_df.join(
         allele_df,
-        mice_experiments_df["colony.allele_symbol"]
-        == allele_df["allele.allele_symbol"],
+        mice_experiments_df["colony.allele_symbol"] == allele_df["allele.alleleSymbol"],
         "left_outer",
     )
 
@@ -140,26 +139,26 @@ def rename_columns(experiments_df: DataFrame):
     experiments_df = experiments_df.withColumn(
         "allele_accession_id",
         when(col("biological_sample_group") == "control", lit(None)).otherwise(
-            col("allele.allele_mgi_accession_id")
+            col("allele.mgiAlleleID")
         ),
     )
     experiments_df = experiments_df.withColumn(
         "gene_accession_id",
         when(col("biological_sample_group") == "control", lit(None)).otherwise(
-            col("allele.marker_mgi_accession_id")
+            col("allele.mgiMarkerAccessionID")
         ),
     )
     experiments_df = experiments_df.withColumn(
         "gene_symbol",
         when(col("biological_sample_group") == "control", lit(None)).otherwise(
-            col("colony.marker_symbol")
+            col("allele.markerSymbol")
         ),
     )
     experiments_df = experiments_df.drop(col("colony.allele_symbol"))
     experiments_df = experiments_df.withColumn(
         "allele_symbol",
         when(col("biological_sample_group") == "control", lit(None)).otherwise(
-            col("allele.allele_symbol")
+            col("allele.alleleSymbol")
         ),
     )
     experiments_df = experiments_df.withColumn("zygosity", col("specimen._zygosity"))
@@ -206,7 +205,10 @@ def rename_columns(experiments_df: DataFrame):
         "external_sample_id", col("specimen._specimenID")
     )
     experiments_df = experiments_df.withColumn(
-        "datasource_name", upper(col("experiment._dataSource"))
+        "datasource_name",
+        when(col("experiment._dataSource") == "impc", lit("IMPC")).otherwise(
+            col("experiment._dataSource")
+        ),
     )
     experiments_df = experiments_df.withColumn(
         "age_in_days", col("experiment.ageInDays")
@@ -239,7 +241,6 @@ def rename_columns(experiments_df: DataFrame):
         ),
     )
 
-    experiments_df = experiments_df.drop(col("allele.production_centre"))
     experiments_df = experiments_df.withColumn(
         "production_center", col("specimen._productionCentre")
     )

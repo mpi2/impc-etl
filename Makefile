@@ -59,6 +59,7 @@ download:            ##@download Download test data
 	scp  ${TEST_DATA_HOST}:${TEST_DATA_PATH}/impc/latest/*/*.xml ./tests/data/dcc/
 	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output ./tests/data/mgi/MGI_Strain.rpt
 	curl http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt --output ./tests/data/mgi/MGI_GenePheno.rpt
+	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output ./tests/data/mgi/MRK_List1.rpt
 
 
 test:       ##@best_practices Run pystest against the test folder

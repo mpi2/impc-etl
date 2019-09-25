@@ -4,7 +4,7 @@ from pysolr import Solr
 from impc_etl import logger
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import sort_array, col, upper, when, lit
+from pyspark.sql.functions import sort_array, col, upper, when, lit, count
 
 CSV_FIELDS = [
     "allele_accession_id",
@@ -58,24 +58,28 @@ def get_solr_core(solr_url: str, solr_query: str) -> List[Dict]:
     cursor_mark = "*"
     logger.debug("start")
     done = False
+    json_path = "tests/data/json/experiment_core"
+    result_count = 0
 
     while not done:
         current_results = solr.search(
-            solr_query, sort="id asc", rows=5000, cursorMark=cursor_mark
+            solr_query, sort="id asc", rows=25000, cursorMark=cursor_mark
         )
         next_cursor_mark = current_results.nextCursorMark
         done = cursor_mark == next_cursor_mark
         cursor_mark = next_cursor_mark
-        results.extend(current_results)
-        logger.debug(f"Collected {len(results)}")
-    return results
+        export_to_json(list(current_results), result_count, json_path)
+        result_count += 25000
+        print(f"Collected {result_count}")
 
 
-def export_to_json(experiments: List[Dict], output_path: str):
+def export_to_json(experiments: List[Dict], offset: int, output_path: str):
     i = 0
     for chunk in chunks(experiments, 1000):
         with open(
-            f"{output_path}/experiment_core_{i}_{i + 1000}.json", "w", encoding="utf-8"
+            f"{output_path}/experiment_core_{offset + i}_{offset + i + 1000}.json",
+            "w",
+            encoding="utf-8",
         ) as f:
             json.dump(chunk, f)
         i += 1000
@@ -147,6 +151,7 @@ def compare(experiment_core_parquet, stats_input_parquet):
 
     diff_df = experiment_core_df.exceptAll(stats_input_df)
     diff_df.sort(experiment_core_df.columns).show(vertical=True, truncate=False)
+    diff_df.groupBy("gene_symbol").agg(count(lit(1)).alias("# experiments")).show()
     print(experiment_core_df.count())
     print(stats_input_df.count())
     print(diff_df.count())
@@ -159,20 +164,28 @@ def chunks(l, n):
 
 
 if __name__ == "__main__":
+    # rbrc_qry = " AND ".join(
+    #     [
+    #         'phenotyping_center:"RBRC"',
+    #         'production_center:"RBRC"',
+    #         'observation_type:("unidimensional" OR "text" OR "categorical")',
+    #         'datasource_name:"IMPC"',
+    #     ]
+    # )
+    # europhenome_qry = " AND ".join(
+    #     [
+    #         'observation_type:("unidimensional" OR "text" OR "categorical")',
+    #         'datasource_name:("EuroPhenome" OR "MGP")',
+    #     ]
+    # )
+    # print("(" + rbrc_qry + ") OR (" + europhenome_qry + ")")
     # rbrc_experiments = get_solr_core(
     #     "http://ves-ebi-d0.ebi.ac.uk:8986/solr/experiment",
-    #     " AND ".join(
-    #         [
-    #             'phenotyping_center:"RBRC"',
-    #             'production_center:"RBRC"',
-    #             'observation_type:("unidimensional" OR "text" OR "categorical")',
-    #             'datasource_name:"IMPC"',
-    #         ]
-    #     ),
+    #     "(" + rbrc_qry + ") OR (" + europhenome_qry + ")",
     # )
-    # json_path = "tests/data/json/experiment_core"
+
     # parquet_path = "tests/data/parquet/experiment_core"
-    # export_to_json(rbrc_experiments, json_path)
+    # json_path = "tests/data/json/experiment_core"
     # generate_parquet(json_path, parquet_path)
     compare(
         "tests/data/parquet/experiment_core",
