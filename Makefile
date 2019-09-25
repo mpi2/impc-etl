@@ -3,8 +3,10 @@ all: default
 default: clean devDeps build
 
 submit: clean devDeps build
-	scp ./dist/impc_etl.zip ./dist/main.py ../../phenodcc-derived-parameters/target/phenodcc-derived-parameters-1.1.0.jar hadoop-login-01:~/
-	ssh -t ${SPARK_HOST} spark2-submit --master yarn --conf spark.yarn.maxAppAttempts=1 --deploy-mode cluster --packages com.databricks:spark-xml_2.11:0.5.0,mysql:mysql-connector-java:5.1.38 --executor-memory 4G --jars phenodcc-derived-parameters-1.1.0.jar --driver-class-path phenodcc-derived-parameters-1.1.0.jar --py-files impc_etl.zip,libs.zip main.py  -d /user/federico/data/
+	LUIGI_CONFIG_PATH=luigi-prod.cfg  PYTHONPATH='.' YARN_CONF_DIR=/Applications/spark-2.4.4-bin-hadoop2.7/yarn-conf/ luigi --module impc_etl.workflow.main ImpcEtl --workers 3
+
+submit-dev:
+	LUIGI_CONFIG_PATH=luigi-dev.cfg  PYTHONPATH='.' YARN_CONF_DIR='' luigi --module impc_etl.workflow.main ImpcEtl --workers 2
 
 .venv:          ##@environment Create a venv
 	if [ ! -e ".venv/bin/activate" ] ; then python3 -m venv --clear .venv ; fi
