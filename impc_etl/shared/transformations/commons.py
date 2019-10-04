@@ -36,31 +36,31 @@ def truncate_specimen_id(specimen_id: str) -> str:
         return specimen_id[: specimen_id.rfind("_")]
 
 
+def truncate_colony_id(colony_id: str) -> str:
+    if colony_id in Constants.EUROPHENOME_VALID_COLONIES or colony_id is None:
+        return colony_id
+    else:
+        return colony_id[: colony_id.rfind("_")].strip()
+
+
 def override_europhenome_datasource(dcc_df: DataFrame) -> DataFrame:
+
+    legacy_entity_cond = (
+        (dcc_df["_dataSource"] == "EuroPhenome")
+        & (~lower(dcc_df["_colonyID"]).startswith("baseline"))
+        & (dcc_df["_colonyID"].isNotNull())
+        & (
+            (dcc_df["phenotyping_consortium"] == "MGP")
+            | (dcc_df["phenotyping_consortium"] == "MGP Legacy")
+        )
+    )
+
+    dcc_df = dcc_df.withColumn(
+        "_project", when(legacy_entity_cond, lit("MGP")).otherwise(dcc_df["_project"])
+    )
+
     dcc_df = dcc_df.withColumn(
         "_dataSource",
-        when(
-            (dcc_df["_dataSource"] == "EuroPhenome")
-            & (~lower(dcc_df["_colonyID"]).startswith("baseline"))
-            & (dcc_df["_colonyID"].isNotNull())
-            & (
-                (dcc_df["phenotyping_consortium"] == "MGP")
-                | (dcc_df["phenotyping_consortium"] == "MGP Legacy")
-            ),
-            lit("MGP"),
-        ).otherwise(dcc_df["_dataSource"]),
-    )
-    dcc_df = dcc_df.withColumn(
-        "_project",
-        when(
-            (dcc_df["_dataSource"] == "EuroPhenome")
-            & (~lower(dcc_df["_colonyID"]).startswith("baseline"))
-            & (dcc_df["_colonyID"].isNotNull())
-            & (
-                (dcc_df["phenotyping_consortium"] == "MGP")
-                | (dcc_df["phenotyping_consortium"] == "MGP Legacy")
-            ),
-            lit("MGP"),
-        ).otherwise(dcc_df["_project"]),
+        when(legacy_entity_cond, lit("MGP")).otherwise(dcc_df["_dataSource"]),
     )
     return dcc_df

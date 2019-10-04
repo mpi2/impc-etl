@@ -5,7 +5,7 @@ DCC Extractor module
     entities, experiment and line in the experiment files; mouse and embryo in the specimen files.
 
     The files are expected to be organized by data source in the following directory structure:
-    <xml_path>
+    <dcc_xml_path>
         * 3i
         * impc
         * europhenome
@@ -22,13 +22,13 @@ import py4j
 
 
 def extract_dcc_xml_files(
-    spark_session: SparkSession, xml_path: str, file_type: str
+    spark_session: SparkSession, dcc_xml_path: str, file_type: str
 ) -> DataFrame:
     """
     Extracts the DCC XML files into a Spark DataFrame
 
     :param SparkSession spark_session: the Apache Spark session object
-    :param str xml_path: The directory containing the DCC XML files
+    :param str dcc_xml_path: The directory containing the DCC XML files
                          in the right directory structure
                          (see :py:mod:dcc_extractor).
     :param str file_type: 'specimen' or 'experiment'
@@ -38,8 +38,10 @@ def extract_dcc_xml_files(
     if file_type not in ["experiment", "specimen"]:
         raise UnsupportedFileTypeError
 
-    xml_path = xml_path + "/" if not xml_path.endswith("/") else xml_path
-    path = f"{xml_path}*/*{file_type}*.xml"
+    dcc_xml_path = (
+        dcc_xml_path + "/" if not dcc_xml_path.endswith("/") else dcc_xml_path
+    )
+    path = f"{dcc_xml_path}*/*{file_type}*.xml"
 
     logger.info(f"loading DCC data source from path '{path}'")
     try:

@@ -11,10 +11,10 @@ from pyspark.sql.functions import (
     lit,
     explode,
     regexp_extract,
-    size,
-    upper,
     lower,
+    regexp_replace,
 )
+from pyspark.sql.types import IntegerType
 
 CSV_FIELDS = [
     "allele_accession_id",
@@ -91,8 +91,7 @@ def load(
     )
     mice_experiments_df = mice_experiments_df.join(
         allele_df,
-        mice_experiments_df["colony.allele_symbol"]
-        == allele_df["allele.allele_symbol"],
+        mice_experiments_df["colony.allele_symbol"] == allele_df["allele.alleleSymbol"],
         "left_outer",
     )
 
@@ -109,7 +108,12 @@ def load(
         (lower(col("specimen._colonyID")) == "baseline")
         | (col("specimen._isBaseline") == True)
     ).join(
-        strain_df, col("specimen._strainID") == col("strain.mgiStrainID"), "left_outer"
+        strain_df,
+        when(
+            concat(lit("MGI:"), col("specimen._strainID")) == col("strain.mgiStrainID"),
+            concat(lit("MGI:"), col("specimen._strainID")) == col("strain.mgiStrainID"),
+        ).otherwise(col("specimen._strainID") == col("strain.strainName")),
+        "left_outer",
     )
 
     mice_experiments_df = mice_experiments_df_baseline.unionAll(mice_experiments_df_exp)
@@ -140,26 +144,48 @@ def rename_columns(experiments_df: DataFrame):
     experiments_df = experiments_df.withColumn(
         "allele_accession_id",
         when(col("biological_sample_group") == "control", lit(None)).otherwise(
-            col("allele.allele_mgi_accession_id")
+            col("allele.mgiAlleleID")
         ),
     )
+
+    experiments_df = experiments_df.withColumn(
+        "mgiMarkerAccessionID",
+        when(col("mgiMarkerAccessionID").isNull(), col("mgi_accession_id")).otherwise(
+            col("mgiMarkerAccessionID")
+        ),
+    )
+
     experiments_df = experiments_df.withColumn(
         "gene_accession_id",
         when(col("biological_sample_group") == "control", lit(None)).otherwise(
-            col("allele.marker_mgi_accession_id")
+            col("mgiMarkerAccessionID")
         ),
     )
+
+    experiments_df = experiments_df.withColumn(
+        "allele.markerSymbol",
+        when(
+            col("allele.markerSymbol").isNull(), col("colony.marker_symbol")
+        ).otherwise(col("allele.alleleSymbol")),
+    )
+
     experiments_df = experiments_df.withColumn(
         "gene_symbol",
         when(col("biological_sample_group") == "control", lit(None)).otherwise(
-            col("colony.marker_symbol")
+            when(
+                col("allele.markerSymbol").isNull(),
+                experiments_df["colony.marker_symbol"],
+            ).otherwise(col("allele.markerSymbol"))
         ),
     )
-    experiments_df = experiments_df.drop(col("colony.allele_symbol"))
+
     experiments_df = experiments_df.withColumn(
         "allele_symbol",
         when(col("biological_sample_group") == "control", lit(None)).otherwise(
-            col("allele.allele_symbol")
+            when(
+                experiments_df["allele.alleleSymbol"].isNull(),
+                experiments_df["colony.allele_symbol"],
+            ).otherwise(experiments_df["allele.alleleSymbol"])
         ),
     )
     experiments_df = experiments_df.withColumn("zygosity", col("specimen._zygosity"))
@@ -206,7 +232,12 @@ def rename_columns(experiments_df: DataFrame):
         "external_sample_id", col("specimen._specimenID")
     )
     experiments_df = experiments_df.withColumn(
-        "datasource_name", upper(col("experiment._dataSource"))
+        "datasource_name",
+        when(col("experiment._dataSource") == "impc", lit("IMPC")).otherwise(
+            when(
+                col("experiment._dataSource") == "EUROPHENOME", lit("EuroPhenome")
+            ).otherwise(col("experiment._dataSource"))
+        ),
     )
     experiments_df = experiments_df.withColumn(
         "age_in_days", col("experiment.ageInDays")
@@ -239,7 +270,6 @@ def rename_columns(experiments_df: DataFrame):
         ),
     )
 
-    experiments_df = experiments_df.drop(col("allele.production_centre"))
     experiments_df = experiments_df.withColumn(
         "production_center", col("specimen._productionCentre")
     )
@@ -298,6 +328,7 @@ def add_impress_info(experiments_df, pipeline_df):
         "pipeline.name",
         "pipeline.pipelineKey",
     ]
+    options_df = pipeline_df.select("option.*").distinct().alias("options")
     pipeline_df = (
         pipeline_df.drop("weight")
         .alias("pipeline")
@@ -335,14 +366,56 @@ def add_impress_info(experiments_df, pipeline_df):
     experiments_df = experiments_df.withColumn(
         "observation_type",
         when(
-            col("pipeline.parameter.valueType") != "TEXT", lit("unidimensional")
+            (col("pipeline.parameter.isOption") == True)
+            | (col("pipeline.parameter.parameterKey") == "IMPC_EYE_092_001"),
+            lit("categorical"),
         ).otherwise(
             when(
-                (size(col("pipeline.parameter.optionCollection")) > 0)
-                | (col("pipeline.parameter.parameterKey") == "IMPC_EYE_092_001"),
-                lit("categorical"),
+                (col("pipeline.parameter.valueType") != "TEXT")
+                | (
+                    col("parameter_stable_id").isin(
+                        [
+                            "ESLIM_006_001_035",
+                            "M-G-P_022_001_001_001",
+                            "M-G-P_022_001_001",
+                            "",
+                        ]
+                    )
+                ),
+                lit("unidimensional"),
             ).otherwise(lit("text"))
         ),
+    )
+
+    experiments_df = experiments_df.join(
+        options_df,
+        (
+            col("pipeline.parameter.optionCollection").getItem(
+                regexp_replace("simpleParameter.value", ".0", "").cast(IntegerType())
+            )
+            == col("options.optionId")
+        ),
+        "left_outer",
+    )
+
+    experiments_df = experiments_df.withColumn(
+        "category",
+        when(
+            col("observation_type") == "categorical",
+            when(
+                (col("pipeline.parameter.valueType") == "TEXT")
+                | (~col("simpleParameter.value").rlike("(^\d+.\d+$)|(^\d+$)")),
+                col("simpleParameter.value"),
+            ).otherwise(
+                when(
+                    (
+                        col("options.name").rlike("^\d+$")
+                        & col("options.description").isNotNull()
+                    ),
+                    col("options.description"),
+                ).otherwise(col("options.name"))
+            ),
+        ).otherwise(lit(None)),
     )
 
     experiments_df = experiments_df.withColumn(
@@ -367,13 +440,6 @@ def add_impress_info(experiments_df, pipeline_df):
         when(col("observation_type") == "text", col("simpleParameter.value")).otherwise(
             lit(None)
         ),
-    )
-
-    experiments_df = experiments_df.withColumn(
-        "category",
-        when(
-            col("observation_type") == "categorical", col("simpleParameter.value")
-        ).otherwise(lit(None)),
     )
 
     return experiments_df

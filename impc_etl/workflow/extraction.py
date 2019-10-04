@@ -7,7 +7,7 @@ class DCCExtractor(SparkSubmitTask):
     name = "IMPC_DCC_Extractor"
     app = "impc_etl/jobs/extract/dcc_extractor.py"
     file_type = luigi.Parameter()
-    xml_path = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
     entity_type = luigi.Parameter()
     output_path = luigi.Parameter()
 
@@ -22,7 +22,7 @@ class DCCExtractor(SparkSubmitTask):
         )
 
     def app_options(self):
-        return [self.xml_path, self.output().path, self.file_type, self.entity_type]
+        return [self.dcc_xml_path, self.output().path, self.file_type, self.entity_type]
 
 
 class MouseExtractor(DCCExtractor):
@@ -48,7 +48,7 @@ class LineExtractor(DCCExtractor):
 class ImitsExtractor(SparkSubmitTask):
     name = "IMPC_IMITS_Extractor"
     app = "impc_etl/jobs/extract/imits_extractor.py"
-    tsv_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
     entity_type = luigi.Parameter()
     output_path = luigi.Parameter()
 
@@ -63,7 +63,7 @@ class ImitsExtractor(SparkSubmitTask):
         )
 
     def app_options(self):
-        return [self.tsv_path, self.output().path, self.entity_type]
+        return [self.imits_colonies_tsv_path, self.output().path, self.entity_type]
 
 
 class AlleleExtractor(ImitsExtractor):
@@ -104,9 +104,10 @@ class ImpressExtractor(SparkSubmitTask):
 
 
 class MGIExtractor(SparkSubmitTask):
-    name = "IMPC_IMPRESS_Extractor"
+    name = "IMPC_MGI_Extractor"
     app = "impc_etl/jobs/extract/mgi_extractor.py"
-    strain_input_path = luigi.Parameter()
+    mgi_input_path = luigi.Parameter()
+    entity_type = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def output(self):
@@ -115,7 +116,17 @@ class MGIExtractor(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return ImpcConfig().get_target(f"{self.output_path}strain_parquet")
+        return ImpcConfig().get_target(
+            f"{self.output_path}{self.entity_type.lower()}_parquet"
+        )
 
     def app_options(self):
-        return [self.strain_input_path, self.output().path]
+        return [self.mgi_input_path, self.entity_type, self.output().path]
+
+
+class MGIAlleleExtractor(MGIExtractor):
+    entity_type = "allele"
+
+
+class MGIStrainExtractor(MGIExtractor):
+    entity_type = "strain"

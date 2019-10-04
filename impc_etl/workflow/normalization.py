@@ -5,8 +5,8 @@ from impc_etl.workflow.config import ImpcConfig
 class SpecimenNormalizer(SparkSubmitTask):
     name = "IMPC_Specimen_Normalizer"
     app = "impc_etl/jobs/normalize/specimen_normalizer.py"
-    xml_path = luigi.Parameter()
-    tsv_path = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
     entity_type = luigi.Parameter()
     output_path = luigi.Parameter()
 
@@ -34,8 +34,11 @@ class MouseNormalizer(SpecimenNormalizer):
 
     def requires(self):
         return [
-            MouseCleaner(xml_path=self.xml_path, output_path=self.output_path),
-            ColonyCleaner(tsv_path=self.tsv_path, output_path=self.output_path),
+            MouseCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
+            ColonyCleaner(
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+            ),
         ]
 
 
@@ -44,30 +47,35 @@ class EmbryoNormalizer(SpecimenNormalizer):
 
     def requires(self):
         return [
-            EmbryoCleaner(xml_path=self.xml_path, output_path=self.output_path),
-            ColonyCleaner(tsv_path=self.tsv_path, output_path=self.output_path),
+            EmbryoCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
+            ColonyCleaner(
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+            ),
         ]
 
 
 class ExperimentNormalizer(SparkSubmitTask):
     name = "IMPC_Experiment_Normalizer"
     app = "impc_etl/jobs/normalize/experiment_normalizer.py"
-    xml_path = luigi.Parameter()
-    tsv_path = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
     entity_type = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
         return [
-            ExperimentCleaner(xml_path=self.xml_path, output_path=self.output_path),
+            ExperimentCleaner(
+                dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
+            ),
             MouseNormalizer(
-                tsv_path=self.tsv_path,
-                xml_path=self.xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                dcc_xml_path=self.dcc_xml_path,
                 output_path=self.output_path,
             ),
             EmbryoNormalizer(
-                tsv_path=self.tsv_path,
-                xml_path=self.xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                dcc_xml_path=self.dcc_xml_path,
                 output_path=self.output_path,
             ),
             ImpressExtractor(output_path=self.output_path),

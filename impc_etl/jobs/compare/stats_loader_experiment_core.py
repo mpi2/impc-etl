@@ -4,7 +4,7 @@ from pysolr import Solr
 from impc_etl import logger
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import sort_array, col, upper, when, lit
+from pyspark.sql.functions import sort_array, col, size, when, lit, count
 
 CSV_FIELDS = [
     "allele_accession_id",
@@ -58,24 +58,28 @@ def get_solr_core(solr_url: str, solr_query: str) -> List[Dict]:
     cursor_mark = "*"
     logger.debug("start")
     done = False
+    json_path = "tests/data/json/experiment_core"
+    result_count = 0
 
     while not done:
         current_results = solr.search(
-            solr_query, sort="id asc", rows=5000, cursorMark=cursor_mark
+            solr_query, sort="id asc", rows=25000, cursorMark=cursor_mark
         )
         next_cursor_mark = current_results.nextCursorMark
         done = cursor_mark == next_cursor_mark
         cursor_mark = next_cursor_mark
-        results.extend(current_results)
-        logger.debug(f"Collected {len(results)}")
-    return results
+        export_to_json(list(current_results), result_count, json_path)
+        result_count += 25000
+        print(f"Collected {result_count}")
 
 
-def export_to_json(experiments: List[Dict], output_path: str):
+def export_to_json(experiments: List[Dict], offset: int, output_path: str):
     i = 0
     for chunk in chunks(experiments, 1000):
         with open(
-            f"{output_path}/experiment_core_{i}_{i + 1000}.json", "w", encoding="utf-8"
+            f"{output_path}/experiment_core_{offset + i}_{offset + i + 1000}.json",
+            "w",
+            encoding="utf-8",
         ) as f:
             json.dump(chunk, f)
         i += 1000
@@ -112,12 +116,22 @@ def compare(experiment_core_parquet, stats_input_parquet):
     experiment_core_df = (
         spark.read.parquet(experiment_core_parquet)
         .select(CSV_FIELDS)
-        .withColumn("metadata", sort_array(col("metadata")))
+        .withColumn(
+            "metadata",
+            when(size(col("metadata")) == 0, lit(None)).otherwise(
+                sort_array(col("metadata"))
+            ),
+        )
+        .withColumn(
+            "allele_accession_id",
+            when(col("allele_accession_id").like("%NULL%"), lit(None)).otherwise(
+                col("allele_accession_id")
+            ),
+        )
     )
     stats_input_df = (
         spark.read.parquet(stats_input_parquet)
         .select(CSV_FIELDS)
-        .withColumn("datasource_name", upper(col("datasource_name")))
         .withColumn(
             "litter_id",
             when(col("litter_id").isNull(), lit("")).otherwise(col("litter_id")),
@@ -130,10 +144,11 @@ def compare(experiment_core_parquet, stats_input_parquet):
         "weight_parameter_stable_id",
         "experiment_source_id",
         "data_point",
-        "metadata",
         "strain_name",
         "genetic_background",
         "strain_accession_id",
+        "datasource_name",
+        "project_name",
     ]:
         experiment_core_df = experiment_core_df.drop(col_name)
         stats_input_df = stats_input_df.drop(col_name)
@@ -146,7 +161,22 @@ def compare(experiment_core_parquet, stats_input_parquet):
     ).where(col("age_in_days") > 0)
 
     diff_df = experiment_core_df.exceptAll(stats_input_df)
-    diff_df.sort(experiment_core_df.columns).show(vertical=True, truncate=False)
+    diff_df = diff_df.alias("experiment_core")
+    stats_input_df = stats_input_df.alias("etl")
+    compare_df = diff_df.join(
+        stats_input_df,
+        (stats_input_df.external_sample_id == diff_df.external_sample_id)
+        & (stats_input_df.parameter_stable_id == diff_df.parameter_stable_id)
+        & (stats_input_df.date_of_experiment == diff_df.date_of_experiment),
+    )
+    output_cols = []
+    for column in experiment_core_df.columns:
+        output_cols.append("experiment_core." + column)
+        output_cols.append("etl." + column)
+    # compare_df.select(output_cols).show(vertical=True, truncate=False)
+    compare_df.where(
+        col("experiment_core.metadata_group") != col("etl.metadata_group")
+    ).select(output_cols).show(vertical=True, truncate=False)
     print(experiment_core_df.count())
     print(stats_input_df.count())
     print(diff_df.count())
@@ -159,20 +189,28 @@ def chunks(l, n):
 
 
 if __name__ == "__main__":
+    # rbrc_qry = " AND ".join(
+    #     [
+    #         'phenotyping_center:"RBRC"',
+    #         'production_center:"RBRC"',
+    #         'observation_type:("unidimensional" OR "text" OR "categorical")',
+    #         'datasource_name:"IMPC"',
+    #     ]
+    # )
+    # europhenome_qry = " AND ".join(
+    #     [
+    #         'observation_type:("unidimensional" OR "text" OR "categorical")',
+    #         'datasource_name:("EuroPhenome" OR "MGP")',
+    #     ]
+    # )
+    # print("(" + rbrc_qry + ") OR (" + europhenome_qry + ")")
     # rbrc_experiments = get_solr_core(
     #     "http://ves-ebi-d0.ebi.ac.uk:8986/solr/experiment",
-    #     " AND ".join(
-    #         [
-    #             'phenotyping_center:"RBRC"',
-    #             'production_center:"RBRC"',
-    #             'observation_type:("unidimensional" OR "text" OR "categorical")',
-    #             'datasource_name:"IMPC"',
-    #         ]
-    #     ),
+    #     "(" + rbrc_qry + ") OR (" + europhenome_qry + ")",
     # )
-    # json_path = "tests/data/json/experiment_core"
+
     # parquet_path = "tests/data/parquet/experiment_core"
-    # export_to_json(rbrc_experiments, json_path)
+    # json_path = "tests/data/json/experiment_core"
     # generate_parquet(json_path, parquet_path)
     compare(
         "tests/data/parquet/experiment_core",

@@ -5,35 +5,35 @@ from impc_etl.workflow.config import ImpcConfig
 class StatsPipeLineLoader(SparkSubmitTask):
     name = "IMPC_Stats_PipelineLoader"
     app = "impc_etl/jobs/load/stats_pipeline_loader.py"
-    xml_path = luigi.Parameter()
-    imits_report_tsv_path = luigi.Parameter()
-    imits_allele2_tsv_path = luigi.Parameter()
-    strain_report_tsv_path = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
         return [
             ExperimentNormalizer(
-                xml_path=self.xml_path,
-                tsv_path=self.imits_report_tsv_path,
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 entity_type="experiment",
                 output_path=self.output_path,
             ),
             MouseNormalizer(
-                tsv_path=self.imits_report_tsv_path,
-                xml_path=self.xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                dcc_xml_path=self.dcc_xml_path,
                 output_path=self.output_path,
             ),
-            AlleleExtractor(
-                tsv_path=self.imits_allele2_tsv_path, output_path=self.output_path
+            MGIAlleleExtractor(
+                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
             ),
             ColonyCleaner(
-                tsv_path=self.imits_report_tsv_path, output_path=self.output_path
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
             ),
             ImpressExtractor(output_path=self.output_path),
-            MGIExtractor(
-                strain_input_path=self.strain_report_tsv_path,
-                output_path=self.output_path,
+            MGIStrainExtractor(
+                mgi_input_path=self.mgi_strain_input_path, output_path=self.output_path
             ),
         ]
 

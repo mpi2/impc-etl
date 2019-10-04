@@ -172,6 +172,7 @@ class Constants:
         "j": "JAX",
         "jax": "JAX",
         "ncom": "CMHD",
+        "norcomm": "CMHD",
         "ning": "MARC",
         "marc": "MARC",
         "rbrc": "RBRC",

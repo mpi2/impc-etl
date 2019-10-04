@@ -154,7 +154,9 @@ def generate_unique_id(dcc_experiment_df: DataFrame):
 
 def drop_null_colony_id(experiment_specimen_df: DataFrame) -> DataFrame:
     experiment_specimen_df = experiment_specimen_df.where(
-        (col("specimen._colonyID").isNotNull()) | (col("specimen._isBaseline") == True)
+        (col("specimen._colonyID").isNotNull())
+        | (col("specimen._isBaseline") == True)
+        | (col("specimen._colonyID") == "baseline")
     )
     return experiment_specimen_df.dropDuplicates()
 
@@ -186,7 +188,7 @@ def generate_metadata_group(
         when(
             col("procedureMetadata.value").isNotNull(),
             concat(col("parameter.name"), lit(" = "), col("procedureMetadata.value")),
-        ).otherwise(lit("")),
+        ).otherwise(concat(col("parameter.name"), lit(" = "), lit("null"))),
     )
     window = Window.partitionBy(
         "unique_id", "_productionCentre", "_phenotypingCentre"
@@ -417,6 +419,11 @@ def _get_closest_weight(
     nearest_weight = None
     nearest_diff = None
     for candidate_weight in specimen_weights:
+        if (
+            candidate_weight["weightValue"] == "null"
+            or candidate_weight["weightDate"] == "null"
+        ):
+            continue
         candidate_weight_date = datetime.strptime(
             candidate_weight["weightDate"], "%Y-%m-%d"
         )
@@ -448,7 +455,7 @@ def _get_closest_weight(
                 nearest_weight = candidate_weight
                 nearest_diff = candidate_diff
 
-    days_diff = nearest_diff / 86400000
+    days_diff = nearest_diff / 86400000 if nearest_diff is not None else 6
 
     if nearest_weight is not None and days_diff < 5:
         return nearest_weight
@@ -467,6 +474,7 @@ def get_derived_parameters(
     derived_parameters: DataFrame = impress_df.where(
         (impress_df["parameter.isDerived"] == True)
         & (impress_df["parameter.isDeprecated"] == False)
+        & (~impress_df["parameter.derivation"].contains("archived"))
     ).select(
         "procedure.procedureKey",
         "parameter.parameterKey",
