@@ -188,7 +188,7 @@ def generate_metadata_group(
         when(
             col("procedureMetadata.value").isNotNull(),
             concat(col("parameter.name"), lit(" = "), col("procedureMetadata.value")),
-        ).otherwise(lit("")),
+        ).otherwise(concat(col("parameter.name"), lit(" = "), lit("null"))),
     )
     window = Window.partitionBy(
         "unique_id", "_productionCentre", "_phenotypingCentre"

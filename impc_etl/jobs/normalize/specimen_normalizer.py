@@ -4,32 +4,26 @@ from impc_etl.shared.transformations.specimens import *
 
 
 def normalize_specimens(
-    spark_session: SparkSession,
-    specimen_parquet_path: str,
-    colonies_parquet_path: str,
-    entity_type: str,
+    specimen_df: DataFrame, colonies_df: DataFrame, entity_type: str
 ) -> DataFrame:
     """
     DCC specimen normalizer
 
+    :param colonies_df:
+    :param specimen_df:
     :param entity_type:
-    :param colonies_parquet_path:  path to a parquet file with colonies clean data
-    :param SparkSession spark_session: PySpark session object
-    :param str specimen_parquet_path: path to a parquet file with specimen clean data
     :return: a normalized specimen parquet file
     :rtype: DataFrame
     """
-    specimen_df = spark_session.read.parquet(specimen_parquet_path)
-    colonies_df = spark_session.read.parquet(colonies_parquet_path)
     specimen_df = specimen_df.alias("specimen")
     colonies_df = colonies_df.alias("colony")
 
     specimen_df = specimen_df.join(
         colonies_df,
-        (specimen_df["_colonyID"] == colonies_df["colony_name"])
-        & (lower(specimen_df["_centreID"]) == lower(colonies_df["phenotyping_centre"])),
+        (specimen_df["_colonyID"] == colonies_df["colony_name"]),
         "left_outer",
     )
+
     specimen_df = (
         specimen_df.transform(generate_allelic_composition)
         .transform(override_europhenome_datasource)
@@ -52,9 +46,10 @@ def main(argv):
     entity_type = argv[3]
     output_path = argv[4]
     spark = SparkSession.builder.getOrCreate()
-    specimen_normalized_df = normalize_specimens(
-        spark, specimen_parquet_path, colonies_parquet_path, entity_type
-    )
+    specimen_df = spark.read.parquet(specimen_parquet_path)
+    colonies_df = spark.read.parquet(colonies_parquet_path)
+
+    specimen_normalized_df = normalize_specimens(specimen_df, colonies_df, entity_type)
     specimen_normalized_df.write.mode("overwrite").parquet(output_path)
 
 

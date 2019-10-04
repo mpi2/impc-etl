@@ -4,7 +4,7 @@ from pysolr import Solr
 from impc_etl import logger
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import sort_array, col, upper, when, lit, count
+from pyspark.sql.functions import sort_array, col, size, when, lit, count
 
 CSV_FIELDS = [
     "allele_accession_id",
@@ -116,12 +116,22 @@ def compare(experiment_core_parquet, stats_input_parquet):
     experiment_core_df = (
         spark.read.parquet(experiment_core_parquet)
         .select(CSV_FIELDS)
-        .withColumn("metadata", sort_array(col("metadata")))
+        .withColumn(
+            "metadata",
+            when(size(col("metadata")) == 0, lit(None)).otherwise(
+                sort_array(col("metadata"))
+            ),
+        )
+        .withColumn(
+            "allele_accession_id",
+            when(col("allele_accession_id").like("%NULL%"), lit(None)).otherwise(
+                col("allele_accession_id")
+            ),
+        )
     )
     stats_input_df = (
         spark.read.parquet(stats_input_parquet)
         .select(CSV_FIELDS)
-        .withColumn("datasource_name", upper(col("datasource_name")))
         .withColumn(
             "litter_id",
             when(col("litter_id").isNull(), lit("")).otherwise(col("litter_id")),
@@ -134,10 +144,11 @@ def compare(experiment_core_parquet, stats_input_parquet):
         "weight_parameter_stable_id",
         "experiment_source_id",
         "data_point",
-        "metadata",
         "strain_name",
         "genetic_background",
         "strain_accession_id",
+        "datasource_name",
+        "project_name",
     ]:
         experiment_core_df = experiment_core_df.drop(col_name)
         stats_input_df = stats_input_df.drop(col_name)
@@ -150,8 +161,22 @@ def compare(experiment_core_parquet, stats_input_parquet):
     ).where(col("age_in_days") > 0)
 
     diff_df = experiment_core_df.exceptAll(stats_input_df)
-    diff_df.sort(experiment_core_df.columns).show(vertical=True, truncate=False)
-    diff_df.groupBy("gene_symbol").agg(count(lit(1)).alias("# experiments")).show()
+    diff_df = diff_df.alias("experiment_core")
+    stats_input_df = stats_input_df.alias("etl")
+    compare_df = diff_df.join(
+        stats_input_df,
+        (stats_input_df.external_sample_id == diff_df.external_sample_id)
+        & (stats_input_df.parameter_stable_id == diff_df.parameter_stable_id)
+        & (stats_input_df.date_of_experiment == diff_df.date_of_experiment),
+    )
+    output_cols = []
+    for column in experiment_core_df.columns:
+        output_cols.append("experiment_core." + column)
+        output_cols.append("etl." + column)
+    # compare_df.select(output_cols).show(vertical=True, truncate=False)
+    compare_df.where(
+        col("experiment_core.metadata_group") != col("etl.metadata_group")
+    ).select(output_cols).show(vertical=True, truncate=False)
     print(experiment_core_df.count())
     print(stats_input_df.count())
     print(diff_df.count())

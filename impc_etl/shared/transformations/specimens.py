@@ -1,4 +1,4 @@
-from pyspark.sql.functions import col, concat
+from pyspark.sql.functions import col, concat, regexp_replace
 
 from impc_etl.shared.transformations.commons import *
 
@@ -26,7 +26,7 @@ def standarize_europhenome_colony_ids(dcc_df: DataFrame) -> DataFrame:
         "_colonyID",
         when(
             dcc_df["_dataSource"] == "EuroPhenome",
-            udf(_truncate_colony_id, StringType())(dcc_df["_colonyID"]),
+            udf(truncate_colony_id, StringType())(dcc_df["_colonyID"]),
         ).otherwise(dcc_df["_colonyID"]),
     )
     return dcc_df
@@ -34,10 +34,7 @@ def standarize_europhenome_colony_ids(dcc_df: DataFrame) -> DataFrame:
 
 def standarize_strain_ids(dcc_df: DataFrame) -> DataFrame:
     dcc_df = dcc_df.withColumn(
-        "_strainID",
-        when(dcc_df["_strainID"].startswith("MGI:"), dcc_df["_strainID"]).otherwise(
-            concat(lit("MGI:"), dcc_df["_strainID"])
-        ),
+        "_strainID", regexp_replace(dcc_df["_strainID"], "MGI:", "")
     )
     return dcc_df
 
@@ -62,15 +59,20 @@ def generate_allelic_composition(dcc_specimen_df: DataFrame) -> DataFrame:
             "colony.allele_symbol",
             "colony.marker_symbol",
             "specimen._isBaseline",
+            "specimen._colonyID",
         ),
     )
     return dcc_specimen_df
 
 
 def _generate_allelic_composition(
-    zigosity: str, allele_symbol: str, gene_symbol: str, is_baseline: bool
+    zigosity: str,
+    allele_symbol: str,
+    gene_symbol: str,
+    is_baseline: bool,
+    colony_id: str,
 ):
-    if is_baseline:
+    if is_baseline or colony_id == "baseline":
         return ""
 
     if zigosity in ["homozygous", "homozygote"]:
@@ -107,13 +109,6 @@ def _generate_allelic_composition(
                 return f"{gene_symbol}<?>/0"
         else:
             return None
-
-
-def _truncate_colony_id(colony_id: str) -> str:
-    if colony_id in Constants.EUROPHENOME_VALID_COLONIES or colony_id is None:
-        return colony_id
-    else:
-        return colony_id[: colony_id.rfind("_")].strip()
 
 
 def override_3i_specimen_data(dcc_specimen_df: DataFrame):

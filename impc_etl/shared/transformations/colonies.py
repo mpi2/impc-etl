@@ -39,8 +39,6 @@ def _map_strain_name(strain_name: str) -> str:
     if strain_name is None:
         return None
 
-    intermediate_backgrounds = []
-
     if "_" in strain_name:
         intermediate_backgrounds = strain_name.split("_")
     elif ";" in strain_name:

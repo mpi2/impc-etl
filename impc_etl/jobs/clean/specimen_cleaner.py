@@ -6,9 +6,6 @@ from impc_etl.shared.transformations.specimens import *
 def clean_specimens(specimen_df: DataFrame) -> DataFrame:
     """
     DCC specimen cleaner
-
-    :param SparkSession spark_session: PySpark session object
-    :param str specimen_parquet_path: path to a parquet file with specimen raw data
     :return: a clean specimen parquet file
     :rtype: DataFrame
     """

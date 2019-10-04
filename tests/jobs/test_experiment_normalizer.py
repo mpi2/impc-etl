@@ -99,7 +99,7 @@ class TestExperimentNormalizer:
             specimen_df,
             (experiment_df["_centreID"] == specimen_df["_centreID"])
             & (experiment_df["specimenID"] == specimen_df["_specimenID"]),
-        ).limit(10)
+        ).where(experiment_df["specimenID"].isin(["30216007"]))
         experiment_specimen_df = generate_metadata_group(
             experiment_specimen_df, pipeline_df
         )

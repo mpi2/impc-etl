@@ -3,7 +3,7 @@ from luigi.contrib.hdfs import HdfsTarget
 
 
 class ImpcConfig(luigi.Config):
-    xml_path = luigi.Parameter(default="./")
+    dcc_xml_path = luigi.Parameter(default="./")
     output_path = luigi.Parameter(default="./")
     deploy_mode = luigi.Parameter(default="local")
 

@@ -2,8 +2,7 @@ import sys
 from impc_etl.shared.transformations.experiments import *
 
 
-def clean_lines(spark: SparkSession, line_parquet_path: str):
-    line_df = spark.read.parquet(line_parquet_path)
+def clean_lines(line_df: DataFrame):
     line_df = (
         line_df.transform(map_centre_id)
         .transform(map_project_id)
@@ -21,7 +20,8 @@ def main(argv):
     input_path = argv[1]
     output_path = argv[2]
     spark = SparkSession.builder.getOrCreate()
-    experiment_clean_df = clean_lines(spark, input_path)
+    line_df = spark.read.parquet(input_path)
+    experiment_clean_df = clean_lines(line_df)
 
     experiment_clean_df.write.mode("overwrite").parquet(output_path)
 

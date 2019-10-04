@@ -60,7 +60,7 @@ def pheno_dcc_derivator(sc: SparkContext, column):
 
 
 def extract_parameters_from_derivation(derivation: str):
-    return list({match[0] for match in re.findall(r"\'(([A-Z]|\d|\_)*)\'", derivation)})
+    return list({match[0] for match in re.findall(r"\'(([A-Z]|\d|_)*)\'", derivation)})
 
 
 def unix_time_millis(dt):
