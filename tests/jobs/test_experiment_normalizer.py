@@ -1,5 +1,4 @@
 from impc_etl.shared.transformations.experiments import _get_closest_weight
-from impc_etl.shared.transformations.experiments import *
 from impc_etl.jobs.extract.dcc_extractor import *
 from impc_etl.jobs.clean.experiment_cleaner import *
 from impc_etl.jobs.clean.specimen_cleaner import clean_specimens
