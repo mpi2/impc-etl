@@ -8,42 +8,9 @@ from pathlib import Path
 import os
 import bs4
 
-FIXTURES_PATH = (
-    os.environ["FIXTURES_PATH"]
-    if "FIXTURES_PATH" in os.environ
-    else "tests/data/fixtures/"
-)
 INPUT_PATH = (
     os.environ["INPUT_PATH"] if "INPUT_PATH" in os.environ else "tests/data/xml/"
 )
-
-
-@pytest.fixture(scope="session")
-def dcc_experiment_df(spark_session):
-    if os.path.exists(FIXTURES_PATH + "dcc_experiment_df"):
-        dcc_experiment_df = spark_session.read.parquet(
-            FIXTURES_PATH + "dcc_experiment_df"
-        )
-    else:
-        dcc_experiment_df = extract_dcc_xml_files(
-            spark_session, INPUT_PATH, "experiment"
-        )
-        dcc_experiment_df.write.mode("overwrite").parquet(
-            FIXTURES_PATH + "dcc_experiment_df"
-        )
-    return dcc_experiment_df
-
-
-@pytest.fixture(scope="session")
-def dcc_specimen_df(spark_session):
-    if os.path.exists(FIXTURES_PATH + "dcc_specimen_df"):
-        dcc_specimen_df = spark_session.read.parquet(FIXTURES_PATH + "dcc_specimen_df")
-    else:
-        dcc_specimen_df = extract_dcc_xml_files(spark_session, INPUT_PATH, "specimen")
-        dcc_specimen_df.write.mode("overwrite").parquet(
-            FIXTURES_PATH + "dcc_specimen_df"
-        )
-    return dcc_specimen_df
 
 
 def tag_count(file_type, entity_type):
@@ -90,7 +57,7 @@ class TestDCCGetByType:
         as tags that match the target entity in the XML path
     """
 
-    def test_entity_type_not_supported(self, spark_session: SparkSession):
+    def test_entity_type_not_supported(self):
         with pytest.raises(UnsupportedEntityError):
             get_experiments_by_type(None, "UNKNOWN TYPE")
         with pytest.raises(UnsupportedEntityError):

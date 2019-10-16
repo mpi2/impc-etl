@@ -1,12 +1,14 @@
 """
 Utils package
 """
+from typing import List, Dict
 from collections import OrderedDict
 from pyspark.sql import DataFrame, SparkSession, Row
 from pyspark.sql.types import StructType, SparkContext
 from pyspark.sql.functions import col
 import re
 from datetime import datetime
+from impc_etl.config import Constants
 
 
 EPOCH = datetime.utcfromtimestamp(0)
@@ -26,6 +28,10 @@ def extract_tsv(
     return spark_session.read.csv(
         file_path, header=header, schema=schema, mode="DROPMALFORMED", sep="\t"
     )
+
+
+def convert_to_dataframe(spark: SparkSession, dict_list: List[Dict]) -> DataFrame:
+    return spark.sparkContext.parallelize(dict_list).map(convert_to_row).toDF()
 
 
 def convert_to_row(dictionary: dict) -> Row:
@@ -65,3 +71,27 @@ def extract_parameters_from_derivation(derivation: str):
 
 def unix_time_millis(dt):
     return (dt - EPOCH).total_seconds() * 1000.0
+
+
+def truncate_specimen_id(specimen_id: str) -> str:
+    if specimen_id.endswith("_MRC_Harwell"):
+        return specimen_id[: specimen_id.rfind("_MRC_Harwell")]
+    else:
+        return specimen_id[: specimen_id.rfind("_")]
+
+
+def truncate_colony_id(colony_id: str) -> str:
+    if colony_id in Constants.EUROPHENOME_VALID_COLONIES or colony_id is None:
+        return colony_id
+    else:
+        return colony_id[: colony_id.rfind("_")].strip()
+
+
+def map_centre_id(centre_id: str):
+    return Constants.CENTRE_ID_MAP[centre_id.lower()] if centre_id is not None else None
+
+
+def map_project_id(centre_id: str):
+    return (
+        Constants.PROJECT_ID_MAP[centre_id.lower()] if centre_id is not None else None
+    )

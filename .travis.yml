@@ -36,4 +36,4 @@ env:
         - INPUT_PATH=/home/travis/data/xml/
         - IMPC_PATH=/home/travis/data/xml/impc
 script:
-  - pytest tests/
+  - pytest tests/unit/
