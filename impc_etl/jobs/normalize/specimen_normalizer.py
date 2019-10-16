@@ -1,6 +1,11 @@
 import sys
-from pyspark.sql import SparkSession
-from impc_etl.shared.transformations.specimens import *
+from pyspark.sql.functions import col, concat, lit, udf, when
+from pyspark.sql.types import StringType
+from pyspark.sql import DataFrame, SparkSession
+from impc_etl.config import Constants
+from impc_etl.jobs.normalize.experiment_normalizer import (
+    override_europhenome_datasource,
+)
 
 
 def normalize_specimens(
@@ -51,6 +56,100 @@ def main(argv):
 
     specimen_normalized_df = normalize_specimens(specimen_df, colonies_df, entity_type)
     specimen_normalized_df.write.mode("overwrite").parquet(output_path)
+
+
+def generate_allelic_composition(dcc_specimen_df: DataFrame) -> DataFrame:
+    generate_allelic_composition_udf = udf(_generate_allelic_composition, StringType())
+    dcc_specimen_df = dcc_specimen_df.withColumn(
+        "allelicComposition",
+        generate_allelic_composition_udf(
+            "specimen._zygosity",
+            "colony.allele_symbol",
+            "colony.marker_symbol",
+            "specimen._isBaseline",
+            "specimen._colonyID",
+        ),
+    )
+    return dcc_specimen_df
+
+
+def override_3i_specimen_project(dcc_specimen_df: DataFrame):
+    dcc_specimen_df.withColumn(
+        "_project",
+        when(
+            dcc_specimen_df["_dataSource"] == "3i", col("phenotyping_consortium")
+        ).otherwise("_project"),
+    )
+    return dcc_specimen_df
+
+
+def _generate_allelic_composition(
+    zigosity: str,
+    allele_symbol: str,
+    gene_symbol: str,
+    is_baseline: bool,
+    colony_id: str,
+):
+    if is_baseline or colony_id == "baseline":
+        return ""
+
+    if zigosity in ["homozygous", "homozygote"]:
+        if allele_symbol is not None and allele_symbol is not "baseline":
+            if allele_symbol is not "" and " " not in allele_symbol:
+                return f"{allele_symbol}/{allele_symbol}"
+            else:
+                return f"{gene_symbol}<?>/{gene_symbol}<?>"
+        else:
+            return f"{gene_symbol}<+>/{gene_symbol}<+>"
+
+    if zigosity in ["heterozygous", "heterozygote"]:
+        if allele_symbol is not "baseline":
+            if (
+                allele_symbol is not None
+                and allele_symbol is not ""
+                and " " not in allele_symbol
+            ):
+                return f"{allele_symbol}/{gene_symbol}<+>"
+            else:
+                return f"{gene_symbol}<?>/{gene_symbol}<+>"
+        else:
+            return None
+
+    if zigosity in ["hemizygous", "hemizygote"]:
+        if allele_symbol is not "baseline":
+            if (
+                allele_symbol is not None
+                and allele_symbol is not ""
+                and " " not in allele_symbol
+            ):
+                return f"{allele_symbol}/0"
+            else:
+                return f"{gene_symbol}<?>/0"
+        else:
+            return None
+
+
+def add_mouse_life_stage_acc(dcc_specimen_df: DataFrame):
+    dcc_specimen_df = dcc_specimen_df.withColumn(
+        "developmental_stage_acc", lit("EFO:0002948")
+    )
+    dcc_specimen_df = dcc_specimen_df.withColumn(
+        "developmental_stage_name", lit("postnatal")
+    )
+    return dcc_specimen_df
+
+
+def add_embryo_life_stage_acc(dcc_specimen_df: DataFrame):
+    efo_acc_udf = udf(
+        lambda x: Constants.EFO_EMBRYONIC_STAGES[str(x).replace("E", "")], StringType()
+    )
+    dcc_specimen_df = dcc_specimen_df.withColumn(
+        "developmental_stage_acc", efo_acc_udf("_stage")
+    )
+    dcc_specimen_df = dcc_specimen_df.withColumn(
+        "developmental_stage_name", concat(lit("embryonic day "), col("_stage"))
+    )
+    return dcc_specimen_df
 
 
 if __name__ == "__main__":
