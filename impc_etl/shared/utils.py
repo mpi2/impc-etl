@@ -31,7 +31,7 @@ def extract_tsv(
 
 
 def convert_to_dataframe(spark: SparkSession, dict_list: List[Dict]) -> DataFrame:
-    return spark.sparkContext.parallelize(dict_list).map(convert_to_row).toDF()
+    return spark.createDataFrame([Row(**x) for x in dict_list], samplingRatio=1.0)
 
 
 def convert_to_row(dictionary: dict) -> Row:

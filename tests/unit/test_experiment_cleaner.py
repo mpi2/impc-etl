@@ -1,6 +1,6 @@
 from impc_etl.jobs.clean.experiment_cleaner import *
 from impc_etl.shared import utils
-from impc_etl import config
+import hashlib
 import pytest
 
 
@@ -176,3 +176,40 @@ class TestExperimentCleaner:
         experiment_df = utils.convert_to_dataframe(spark_session, experiments)
         experiment_df = drop_if_null(experiment_df, column_name)
         assert experiment_df.where(experiment_df[column_name].isNull()).count() == 0
+
+    def test_generate_unique_id(self, spark_session):
+        experiments = [
+            {
+                "_type": "type0",
+                "_sourceFile": "file0.xml",
+                "_VALUE": "NULL",
+                "procedureMetadata": "some value",
+                "statusCode": "FAILED",
+                "_sequenceID": None,
+                "_project": "CHMD",
+                "simpleParameter": "dskfdsap",
+                "uniqueField0": "A",
+                "uniqueField1": "B",
+                "uniqueField2": "C",
+            },
+            {
+                "_type": "type0",
+                "_sourceFile": "file0.xml",
+                "_VALUE": "NULL",
+                "procedureMetadata": "some value",
+                "statusCode": "FAILED",
+                "_sequenceID": "1",
+                "_project": "CHMD",
+                "simpleParameter": "dsdasda",
+                "uniqueField0": "D",
+                "uniqueField1": "E",
+                "uniqueField2": "F",
+            },
+        ]
+        experiment_df = utils.convert_to_dataframe(spark_session, experiments)
+        experiment_df = experiment_df.transform(generate_unique_id)
+        processed_experiments = experiment_df.collect()
+        assert (
+            processed_experiments[0]["unique_id"] == hashlib.md5(b"ABCNA").hexdigest()
+        )
+        assert processed_experiments[1]["unique_id"] == hashlib.md5(b"DEF1").hexdigest()

@@ -238,6 +238,17 @@ def drop_if_null(dcc_df: DataFrame, column: str) -> DataFrame:
 
 
 def generate_unique_id(dcc_experiment_df: DataFrame):
+    """
+    Generates an unique_id column using as an input every column
+    except from those that have non unique values and
+    the ones that correspond to parameter values.
+    Given that _sequenceID could be null, the function transforms it the to the string NA
+    when its null to avoid the nullifying the concat.
+    It concatenates the unique set of values and then applies
+    an MD5 hash function to the resulting string.
+    :param dcc_experiment_df:
+    :return: DataFrame
+    """
     non_unique_columns = [
         "_type",
         "_sourceFile",
