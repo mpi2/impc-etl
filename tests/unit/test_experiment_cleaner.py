@@ -8,12 +8,15 @@ class TestExperimentCleaner:
     """
     After mapping centre id, all the rows should contain the mapped ID using predefined CENTRE ID MAP
     After mapping project id, all the rows should contain the mapped ID using predefined PROJECT ID MAP
-    After standardize EuroPhenome experiments, all the EuroPhenome experiments
+    After truncate EuroPhenome experiments, all the EuroPhenome experiments
           should have the specimen id truncated
     After drop skipped experiments, there should not be not
           3i experiments with the predefined experiment ids
-    After standardize_3i_experiments, all the 3i experiments that don't have
+    After map_3i_experiments, all the 3i experiments that don't have
           a valid project id should have MGP instead
+    After dropping if null, the DataFrame should not contain any row with a null value in the specified column
+    After generate unique id, the DataFrame should contain a new column with an MD5 hash of the concatenation
+          of the unique columns values
     """
 
     NOT_NULL_COLUMNS = [
@@ -75,12 +78,12 @@ class TestExperimentCleaner:
             {
                 "specimenID": "30173140_HMGU",
                 "_experimentID": "0",
-                "_dataSource": "EuroPhenome",
+                "_dataSource": "europhenome",
             },
             {
                 "specimenID": "RUSSET/16.2b_4615141_MRC_Harwell",
                 "_experimentID": "1",
-                "_dataSource": "EuroPhenome",
+                "_dataSource": "europhenome",
             },
             {
                 "specimenID": "848974_1687897",

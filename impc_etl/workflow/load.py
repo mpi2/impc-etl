@@ -2,13 +2,14 @@ from impc_etl.workflow.normalization import *
 from impc_etl.workflow.config import ImpcConfig
 
 
-class StatsPipeLineLoader(SparkSubmitTask):
-    name = "IMPC_Stats_PipelineLoader"
-    app = "impc_etl/jobs/load/stats_pipeline_loader.py"
+class ObservationsMapper(SparkSubmitTask):
+    name = "IMPC_Observations_Mapper"
+    app = "impc_etl/jobs/load/observation_mapper.py"
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     mgi_allele_input_path = luigi.Parameter()
     mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -24,6 +25,11 @@ class StatsPipeLineLoader(SparkSubmitTask):
                 dcc_xml_path=self.dcc_xml_path,
                 output_path=self.output_path,
             ),
+            EmbryoNormalizer(
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                dcc_xml_path=self.dcc_xml_path,
+                output_path=self.output_path,
+            ),
             MGIAlleleExtractor(
                 mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
             ),
@@ -35,6 +41,10 @@ class StatsPipeLineLoader(SparkSubmitTask):
             MGIStrainExtractor(
                 mgi_input_path=self.mgi_strain_input_path, output_path=self.output_path
             ),
+            OntologyExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
         ]
 
     def output(self):
@@ -43,7 +53,7 @@ class StatsPipeLineLoader(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return ImpcConfig().get_target(f"{self.output_path}impc_stats_input_parquet")
+        return ImpcConfig().get_target(f"{self.output_path}observations_parquet")
 
     def app_options(self):
         return [
@@ -53,5 +63,7 @@ class StatsPipeLineLoader(SparkSubmitTask):
             self.input()[3].path,
             self.input()[4].path,
             self.input()[5].path,
+            self.input()[6].path,
+            self.input()[7].path,
             self.output().path,
         ]

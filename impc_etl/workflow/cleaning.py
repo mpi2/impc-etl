@@ -8,6 +8,7 @@ class ExperimentCleaner(SparkSubmitTask):
     output_path = luigi.Parameter()
     entity_type = "experiment"
     dcc_xml_path = luigi.Parameter()
+    resources = {"overwrite_resource": 1}
 
     def requires(self):
         return ExperimentExtractor(
@@ -28,6 +29,7 @@ class LineCleaner(SparkSubmitTask):
     output_path = luigi.Parameter()
     entity_type = "line"
     dcc_xml_path = luigi.Parameter()
+    resources = {"overwrite_resource": 1}
 
     def requires(self):
         return LineExtractor(
@@ -47,6 +49,7 @@ class MouseCleaner(SparkSubmitTask):
     app = "impc_etl/jobs/clean/specimen_cleaner.py"
     output_path = luigi.Parameter()
     dcc_xml_path = luigi.Parameter()
+    resources = {"overwrite_resource": 1}
 
     def requires(self):
         return MouseExtractor(
@@ -66,6 +69,7 @@ class EmbryoCleaner(SparkSubmitTask):
     app = "impc_etl/jobs/clean/specimen_cleaner.py"
     output_path = luigi.Parameter()
     dcc_xml_path = luigi.Parameter()
+    resources = {"overwrite_resource": 1}
 
     def requires(self):
         return EmbryoExtractor(
@@ -85,6 +89,7 @@ class ColonyCleaner(SparkSubmitTask):
     app = "impc_etl/jobs/clean/colony_cleaner.py"
     imits_colonies_tsv_path = luigi.Parameter()
     output_path = luigi.Parameter()
+    resources = {"overwrite_resource": 1}
 
     def requires(self):
         return ColonyExtractor(

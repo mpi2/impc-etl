@@ -14,6 +14,23 @@ from impc_etl import logger
 import sys
 
 
+def main(argv):
+    """
+    IMPRESS Extractor job runner
+    :param list argv: the list elements should be:
+                    [1]: Impress API URL
+                    [2]: Output Path
+                    [3]: Impress root type to start scraping from
+    """
+    impress_api_url = argv[1]
+    output_path = argv[2]
+    impress_root_type = argv[3]
+
+    spark = SparkSession.builder.getOrCreate()
+    impress_df = extract_impress(spark, impress_api_url, impress_root_type)
+    impress_df.write.mode("overwrite").parquet(output_path)
+
+
 def extract_impress(
     spark_session: SparkSession, impress_api_url: str, start_type: str
 ) -> DataFrame:
@@ -222,23 +239,6 @@ def get_impress_units(impress_api_url, spark_session):
     unit_index = [{"unitID": key, "unitName": value} for key, value in json_obj.items()]
     entity_rdd = spark_session.sparkContext.parallelize(unit_index)
     return spark_session.read.json(entity_rdd)
-
-
-def main(argv):
-    """
-    DCC Extractor job runner
-    :param list argv: the list elements should be:
-                    [1]: Impress API URL
-                    [2]: Output Path
-                    [3]: Impress root type to start scraping from
-    """
-    impress_api_url = argv[1]
-    output_path = argv[2]
-    impress_root_type = argv[3]
-
-    spark = SparkSession.builder.getOrCreate()
-    impress_df = extract_impress(spark, impress_api_url, impress_root_type)
-    impress_df.write.mode("overwrite").parquet(output_path)
 
 
 if __name__ == "__main__":

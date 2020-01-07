@@ -109,7 +109,7 @@ def truncate_europhenome_specimen_ids(dcc_df: DataFrame) -> DataFrame:
     dcc_df = dcc_df.withColumn(
         "specimenID",
         when(
-            (dcc_df["_dataSource"] == "EuroPhenome"),
+            (dcc_df["_dataSource"] == "europhenome"),
             udf(utils.truncate_specimen_id, StringType())(dcc_df["specimenID"]),
         ).otherwise(dcc_df["specimenID"]),
     )
@@ -140,12 +140,14 @@ def drop_skipped_procedures(dcc_df: DataFrame) -> DataFrame:
     :param dcc_df:
     :return:
     """
-    skip_procedure = (
+    dont_skip_procedure = (
         lambda procedure_name: procedure_name[: procedure_name.rfind("_")]
         not in Constants.SKIPPED_PROCEDURES
     )
-    skip_procedure_udf = udf(skip_procedure, BooleanType())(dcc_df["_procedureID"])
-    return dcc_df.where(skip_procedure_udf | (dcc_df["_dataSource"] == "3i"))
+    dont_skip_procedure_udf = udf(dont_skip_procedure, BooleanType())(
+        dcc_df["_procedureID"]
+    )
+    return dcc_df.where(dont_skip_procedure_udf | (dcc_df["_dataSource"] == "3i"))
 
 
 def map_3i_project_ids(dcc_df: DataFrame) -> DataFrame:

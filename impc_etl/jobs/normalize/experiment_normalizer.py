@@ -33,6 +33,7 @@ from pyspark.sql.types import (
 )
 from impc_etl.config import Constants
 from impc_etl.shared.utils import unix_time_millis, extract_parameters_from_derivation
+import re
 
 
 def main(argv):
@@ -95,20 +96,28 @@ def normalize_experiments(
         (experiment_df["_centreID"] == specimen_df["_centreID"])
         & (experiment_df["specimenID"] == specimen_df["_specimenID"]),
     )
+
     experiment_specimen_df = drop_null_colony_id(experiment_specimen_df)
+
     experiment_specimen_df = re_map_europhenome_experiments(experiment_specimen_df)
+
     experiment_specimen_df = generate_metadata_group(
         experiment_specimen_df, pipeline_df
     )
+
     experiment_specimen_df = generate_metadata(experiment_specimen_df, pipeline_df)
+
     experiment_columns = [
         "experiment." + col_name
         for col_name in experiment_df.columns
         if col_name not in ["_dataSource", "_project"]
     ] + ["metadata", "metadataGroup", "_project", "_dataSource"]
     experiment_df = experiment_specimen_df.select(experiment_columns)
+
     experiment_df = get_derived_parameters(spark_session, experiment_df, pipeline_df)
+
     experiment_df = get_associated_body_weight(experiment_df, mouse_df)
+
     experiment_df = generate_age_information(experiment_df, mouse_df)
     return experiment_df
 
@@ -131,7 +140,7 @@ def re_map_europhenome_experiments(experiment_specimen_df: DataFrame):
 
 def override_europhenome_datasource(dcc_df: DataFrame) -> DataFrame:
     legacy_entity_cond: Column = (
-        (dcc_df["_dataSource"] == "EuroPhenome")
+        (dcc_df["_dataSource"] == "europhenome")
         & (~lower(dcc_df["_colonyID"]).startswith("baseline"))
         & (dcc_df["_colonyID"].isNotNull())
         & (
@@ -443,6 +452,7 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     )
     weight_observations = weight_observations.select(
         "specimenID",
+        col("unique_id").alias("sourceExperimentId"),
         col("_dateOfExperiment").alias("weightDate"),
         col("simpleParameter._parameterID").alias("weightParameterID"),
         col("simpleParameter.value").alias("weightValue"),
@@ -456,7 +466,13 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     )
     weight_observations = weight_observations.groupBy("specimenID").agg(
         collect_set(
-            struct("weightDate", "weightParameterID", "weightValue", "weightDaysOld")
+            struct(
+                "sourceExperimentId",
+                "weightDate",
+                "weightParameterID",
+                "weightValue",
+                "weightDaysOld",
+            )
         ).alias("weight_observations")
     )
 
@@ -471,10 +487,12 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     )
     output_weight_schema = StructType(
         [
+            StructField("sourceExperimentId", StringType()),
             StructField("weightDate", StringType()),
             StructField("weightParameterID", StringType()),
             StructField("weightValue", StringType()),
             StructField("weightDaysOld", StringType()),
+            StructField("error", ArrayType(StringType())),
         ]
     )
     experiment_df_a = dcc_experiment_df.alias("exp")
@@ -527,10 +545,11 @@ def calculate_age_in_days(experiment_date: str, dob: str) -> int:
 
 
 def _get_closest_weight(
-    experiment_date: str, procedure_group: str, specimen_weights: List[Dict]
+    experiment_date: str, procedure_group: str, specimen_weights: List[Row]
 ) -> Dict:
     if specimen_weights is None or len(specimen_weights) == 0:
         return {
+            "sourceExperimentId": None,
             "weightDate": None,
             "weightValue": None,
             "weightParameterID": None,
@@ -539,6 +558,7 @@ def _get_closest_weight(
     experiment_date = datetime.strptime(experiment_date, "%Y-%m-%d")
     nearest_weight = None
     nearest_diff = None
+    errors = []
     for candidate_weight in specimen_weights:
         if (
             candidate_weight["weightValue"] == "null"
@@ -555,8 +575,14 @@ def _get_closest_weight(
             nearest_weight = candidate_weight
             nearest_diff = candidate_diff
             continue
-        candidate_weight_value = float(candidate_weight["weightValue"])
+        try:
+            candidate_weight_value = float(candidate_weight["weightValue"])
+        except ValueError:
+            errors.append("[PARSING] Failed to parse: " + str(candidate_weight))
+            continue
+
         nearest_weight_value = float(nearest_weight["weightValue"])
+
         if candidate_diff < nearest_diff:
             nearest_weight = candidate_weight
             nearest_diff = candidate_diff
@@ -579,13 +605,15 @@ def _get_closest_weight(
     days_diff = nearest_diff / 86400000 if nearest_diff is not None else 6
 
     if nearest_weight is not None and days_diff < 5:
-        return nearest_weight
+        return {**nearest_weight.asDict(), "error": errors}
     else:
         return {
+            "sourceExperimentId": None,
             "weightDate": None,
             "weightValue": None,
             "weightParameterID": None,
             "weightDaysOld": None,
+            "error": errors,
         }
 
 

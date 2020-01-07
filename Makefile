@@ -3,13 +3,13 @@ all: default
 default: clean devDeps build
 
 submit: clean devDeps build
-	LUIGI_CONFIG_PATH=luigi-prod.cfg  PYTHONPATH='.' YARN_CONF_DIR=/Applications/spark-2.4.4-bin-hadoop2.7/yarn-conf/ luigi --module impc_etl.workflow.main ImpcEtl --workers 3
+	LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' YARN_CONF_DIR=/Applications/spark-2.4.4-bin-hadoop2.7/yarn-conf/ luigi --module impc_etl.workflow.main ImpcEtl --workers 3
 
 submit-dev:
-	LUIGI_CONFIG_PATH=luigi-dev.cfg  PYTHONPATH='.' YARN_CONF_DIR='' luigi --module impc_etl.workflow.main ImpcEtl --workers 2
+	LUIGI_CONFIG_PATH='luigi-dev.cfg'  PYTHONPATH='.' YARN_CONF_DIR='' luigi --module impc_etl.workflow.main ImpcEtl --workers 2
 
 .venv:          ##@environment Create a venv
-	if [ ! -e ".venv/bin/activate" ] ; then python3 -m venv --clear .venv ; fi
+	if [ ! -e ".venv/bin/activate" ] ; then python -m venv --clear .venv ; fi
 
 lint:           ##@best_practices Run pylint against the main script and the shared, jobs and test folders
 	source .venv/bin/activate && pylint -r n impc_etl/main.py impc_etl/shared/ impc_etl/jobs/ tests/
@@ -19,6 +19,7 @@ build: clean        ##@deploy Build to the dist package
 #	cp ./impc_etl/main.py ./dist/
 	zip -x main.py -r ./dist/impc_etl.zip impc_etl
 	cd ./dist && mkdir libs
+	source .venv/bin/activate && pip install --upgrade pip
 	source .venv/bin/activate && pip install -U -r requirements/common.txt -t ./dist/libs
 	source .venv/bin/activate && pip install -U -r requirements/prod.txt -t ./dist/libs
 	cd ./dist/libs && zip -r ../libs.zip .
@@ -54,14 +55,14 @@ devEnv: .venv devDeps
 
 
 download:            ##@download Download test data
-	scp ${TEST_DATA_HOST}:${TEST_DATA_PATH}/imits/imits-report.tsv ./tests/data/imits/
-	scp ${TEST_DATA_HOST}:${TEST_DATA_PATH}/imits/allele2Entries.tsv ./tests/data/imits/
-	scp -r ${TEST_DATA_HOST}:${TEST_DATA_PATH}/3i/latest/ ./tests/data/3i/
-	scp -r ${TEST_DATA_HOST}:${TEST_DATA_PATH}/europhenome/2013-10-31/ ./tests/data/europhenome/
-	scp  ${TEST_DATA_HOST}:${TEST_DATA_PATH}/impc/latest/*/*.xml ./tests/data/dcc/
-	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output ./tests/data/mgi/MGI_Strain.rpt
-	curl http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt --output ./tests/data/mgi/MGI_GenePheno.rpt
-	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output ./tests/data/mgi/MRK_List1.rpt
+	scp ${TEST_DATA_HOST}:${TEST_DATA_PATH}/imits/imits-report.tsv ./data/imits/
+#	scp ${TEST_DATA_HOST}:${TEST_DATA_PATH}/imits/allele2Entries.tsv ./data/imits/
+	scp -r ${TEST_DATA_HOST}:${TEST_DATA_PATH}/3i/latest/*.xml ./data/xml/3i/
+	scp -r ${TEST_DATA_HOST}:${TEST_DATA_PATH}/europhenome/2013-10-31/*.xml ./data/xml/europhenome/
+	scp  ${TEST_DATA_HOST}:${TEST_DATA_PATH}/impc/dr10.0/*/*.xml ./data/xml/impc/
+	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output ./data/mgi/MGI_Strain.rpt
+	curl http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt --output ./data/mgi/MGI_GenePheno.rpt
+	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output ./data/mgi/MRK_List1.rpt
 
 
 test:       ##@best_practices Run pystest against the test folder

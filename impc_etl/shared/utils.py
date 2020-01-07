@@ -4,8 +4,9 @@ Utils package
 from typing import List, Dict
 from collections import OrderedDict
 from pyspark.sql import DataFrame, SparkSession, Row
-from pyspark.sql.types import StructType, SparkContext
+from pyspark.sql.types import StructType
 from pyspark.sql.functions import col
+from pyspark import SparkContext
 import re
 from datetime import datetime
 from impc_etl.config import Constants

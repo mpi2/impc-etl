@@ -10,7 +10,6 @@ from pyspark.sql.functions import lit
 import requests
 from impc_etl import logger
 import sys
-import vcr
 
 
 def extract_impress(impress_api_url: str, start_type: str) -> DataFrame:
@@ -28,7 +27,7 @@ def extract_impress(impress_api_url: str, start_type: str) -> DataFrame:
         "{}/{}/list".format(impress_api_url, start_type), timeout=(5, 14)
     ).json()
     root_ids = [key for key in root_index.keys()]
-    return get_entities(impress_api_url, start_type, root_ids)
+    return get_entities(impress_api_url, start_type, [2])
 
 
 def get_entities(
@@ -61,16 +60,20 @@ def process_collection(impress_api_url, entities):
     :return:
     """
     for entity in entities:
+        collections = []
         for field in entity.keys():
             if "Collection" in field:
                 impress_subtype = field.replace("Collection", "")
-                process_collection(
+                collections.append(impress_subtype)
+        for impress_subtype in collections:
+            entity[impress_subtype] = process_collection(
+                impress_api_url,
+                get_impress_entity_by_ids(
                     impress_api_url,
-                    get_impress_entity_by_ids(
-                        impress_api_url, impress_subtype, entity[field]
-                    ),
-                )
-
+                    impress_subtype,
+                    entity[impress_subtype + "Collection"],
+                ),
+            )
     return entities
 
 
@@ -130,7 +133,7 @@ def get_impress_entity_by_ids(
     :return:
     """
     api_call_url = "{}/{}/multiple".format(impress_api_url, impress_type)
-    logger.info("parsing :" + api_call_url)
+    logger.info("parsing :" + api_call_url + " " + str(impress_ids))
     if impress_ids is None or len(impress_ids) == 0:
         return []
     try:
@@ -194,7 +197,9 @@ def main(argv):
                     [3]: File type (experiment or specimen)
                     [4]: Entity type (experiment, line, mouse or embryo)
     """
-    extract_impress("https://api.mousephenotype.org/impress/", "pipeline")
+    impress = extract_impress("https://api.mousephenotype.org/impress/", "pipeline")
+    with open("impress.json", "w") as fout:
+        json.dump(impress, fout)
 
 
 if __name__ == "__main__":

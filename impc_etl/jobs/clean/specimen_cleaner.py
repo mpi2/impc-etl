@@ -20,6 +20,7 @@ def clean_specimens(specimen_df: DataFrame) -> DataFrame:
     :return: a clean specimen parquet file
     :rtype: DataFrame
     """
+    # TODO add an unique_id to specimens
     specimen_df = (
         specimen_df.transform(map_centre_ids)
         .transform(map_project_ids)
@@ -73,7 +74,7 @@ def truncate_europhenome_specimen_ids(dcc_df: DataFrame) -> DataFrame:
     dcc_df = dcc_df.withColumn(
         "_specimenID",
         when(
-            dcc_df["_dataSource"].isin(["EuroPhenome", "MGP"]),
+            dcc_df["_dataSource"].isin(["europhenome", "MGP"]),
             udf(utils.truncate_specimen_id, StringType())(dcc_df["_specimenID"]),
         ).otherwise(dcc_df["_specimenID"]),
     )
@@ -84,7 +85,7 @@ def truncate_europhenome_colony_ids(dcc_df: DataFrame) -> DataFrame:
     dcc_df = dcc_df.withColumn(
         "_colonyID",
         when(
-            dcc_df["_dataSource"] == "EuroPhenome",
+            dcc_df["_dataSource"] == "europhenome",
             udf(utils.truncate_colony_id, StringType())(dcc_df["_colonyID"]),
         ).otherwise(dcc_df["_colonyID"]),
     )

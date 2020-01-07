@@ -21,6 +21,32 @@ from impc_etl import logger
 import py4j
 
 
+def main(argv):
+    """
+    DCC Extractor job runner
+    :param list argv: the list elements should be:
+                    [1]: Input Path
+                    [2]: Output Path
+                    [3]: File type (experiment or specimen)
+                    [4]: Entity type (experiment, line, mouse or embryo)
+    """
+    input_path = argv[1]
+    output_path = argv[2]
+    file_type = argv[3]
+    entity_type = argv[4]
+    spark = SparkSession.builder.getOrCreate()
+    dcc_df = extract_dcc_xml_files(spark, input_path, file_type)
+
+    entities_df = None
+
+    if file_type == "experiment":
+        entities_df = get_experiments_by_type(dcc_df, entity_type)
+    if file_type == "specimen":
+        entities_df = get_specimens_by_type(dcc_df, entity_type)
+
+    entities_df.write.mode("overwrite").parquet(output_path)
+
+
 def extract_dcc_xml_files(
     spark_session: SparkSession, dcc_xml_path: str, file_type: str
 ) -> DataFrame:
@@ -133,32 +159,6 @@ def _get_entity_by_type(
         .drop(entity_type)
     )
     return entity_df
-
-
-def main(argv):
-    """
-    DCC Extractor job runner
-    :param list argv: the list elements should be:
-                    [1]: Input Path
-                    [2]: Output Path
-                    [3]: File type (experiment or specimen)
-                    [4]: Entity type (experiment, line, mouse or embryo)
-    """
-    input_path = argv[1]
-    output_path = argv[2]
-    file_type = argv[3]
-    entity_type = argv[4]
-    spark = SparkSession.builder.getOrCreate()
-    dcc_df = extract_dcc_xml_files(spark, input_path, file_type)
-
-    entities_df = None
-
-    if file_type == "experiment":
-        entities_df = get_experiments_by_type(dcc_df, entity_type)
-    if file_type == "specimen":
-        entities_df = get_specimens_by_type(dcc_df, entity_type)
-
-    entities_df.write.mode("overwrite").parquet(output_path)
 
 
 if __name__ == "__main__":

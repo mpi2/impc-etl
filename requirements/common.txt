@@ -6,3 +6,4 @@ luigi
 pysolr
 hdfs
 webhdfs
+wheel

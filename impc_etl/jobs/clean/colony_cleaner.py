@@ -5,6 +5,15 @@ from pyspark.sql.types import StringType
 from impc_etl.shared import utils
 
 
+def main(argv):
+    imits_colonies_parquet_path = argv[1]
+    output_path = argv[2]
+    spark = SparkSession.builder.getOrCreate()
+    colonies_df = spark.read.parquet(imits_colonies_parquet_path)
+    specimen_clean_df = clean_colonies(colonies_df)
+    specimen_clean_df.write.mode("overwrite").parquet(output_path)
+
+
 def clean_colonies(colonies_df: DataFrame) -> DataFrame:
     """
     DCC colonies cleaner
@@ -17,30 +26,6 @@ def clean_colonies(colonies_df: DataFrame) -> DataFrame:
     colonies_df = colonies_df.transform(map_colonies_df_ids)
     colonies_df = map_strain_names(colonies_df)
     colonies_df = colonies_df.transform(generate_genetic_background)
-    return colonies_df
-
-
-def main(argv):
-    imits_colonies_parquet_path = argv[1]
-    output_path = argv[2]
-    spark = SparkSession.builder.getOrCreate()
-    colonies_df = spark.read.parquet(imits_colonies_parquet_path)
-    specimen_clean_df = clean_colonies(colonies_df)
-    specimen_clean_df.write.mode("overwrite").parquet(output_path)
-
-
-def map_strain_names(colonies_df: DataFrame) -> DataFrame:
-    map_strain_name_udf = udf(_map_strain_name, StringType())
-    colonies_df = colonies_df.withColumn(
-        "colony_background_strain", map_strain_name_udf("colony_background_strain")
-    )
-    return colonies_df
-
-
-def generate_genetic_background(colonies_df: DataFrame) -> DataFrame:
-    colonies_df = colonies_df.withColumn(
-        "genetic_background", concat(lit("involves: "), col("colony_background_strain"))
-    )
     return colonies_df
 
 
@@ -63,7 +48,22 @@ def map_colonies_df_ids(colonies_df: DataFrame) -> DataFrame:
     return colonies_df
 
 
-def _map_strain_name(strain_name: str) -> str:
+def map_strain_names(colonies_df: DataFrame) -> DataFrame:
+    map_strain_name_udf = udf(map_strain_name, StringType())
+    colonies_df = colonies_df.withColumn(
+        "colony_background_strain", map_strain_name_udf("colony_background_strain")
+    )
+    return colonies_df
+
+
+def generate_genetic_background(colonies_df: DataFrame) -> DataFrame:
+    colonies_df = colonies_df.withColumn(
+        "genetic_background", concat(lit("involves: "), col("colony_background_strain"))
+    )
+    return colonies_df
+
+
+def map_strain_name(strain_name: str) -> str:
     if strain_name is None:
         return None
 
