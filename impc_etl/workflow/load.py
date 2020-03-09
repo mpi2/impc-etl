@@ -20,6 +20,12 @@ class ObservationsMapper(SparkSubmitTask):
                 entity_type="experiment",
                 output_path=self.output_path,
             ),
+            LineExperimentNormalizer(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                entity_type="line",
+                output_path=self.output_path,
+            ),
             MouseNormalizer(
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 dcc_xml_path=self.dcc_xml_path,
@@ -65,5 +71,6 @@ class ObservationsMapper(SparkSubmitTask):
             self.input()[5].path,
             self.input()[6].path,
             self.input()[7].path,
+            self.input()[8].path,
             self.output().path,
         ]

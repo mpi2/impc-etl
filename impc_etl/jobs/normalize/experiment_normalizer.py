@@ -33,7 +33,6 @@ from pyspark.sql.types import (
 )
 from impc_etl.config import Constants
 from impc_etl.shared.utils import unix_time_millis, extract_parameters_from_derivation
-import re
 
 
 def main(argv):
@@ -85,6 +84,28 @@ def normalize_experiments(
         "_phenotypingCentre",
         "phenotyping_consortium",
     ]
+
+    ## THIS IS NOT OK
+    experiment_df = experiment_df.withColumn(
+        "_pipeline",
+        when(
+            (col("_dataSource") == "3i")
+            & (col("_procedureID") == "MGP_PBI_001")
+            & (col("_pipeline") == "SLM_001"),
+            lit("MGP_001"),
+        ).otherwise(col("_pipeline")),
+    )
+
+    experiment_df = experiment_df.withColumn(
+        "_pipeline",
+        when(
+            (lower(col("_dataSource")).isin(["europhenome", "mgp"]))
+            & (col("_procedureID") == "ESLIM_019_001")
+            & (col("_pipeline") == "ESLIM_001"),
+            lit("ESLIM_002"),
+        ).otherwise(col("_pipeline")),
+    )
+    ## THIS IS NOT OK
 
     mouse_specimen_df = mouse_df.select(*specimen_cols)
     embryo_specimen_df = embryo_df.select(*specimen_cols)
@@ -161,7 +182,7 @@ def override_europhenome_datasource(dcc_df: DataFrame) -> DataFrame:
 
 
 def generate_metadata_group(
-    experiment_specimen_df: DataFrame, impress_df: DataFrame
+    experiment_specimen_df: DataFrame, impress_df: DataFrame, type="experiment"
 ) -> DataFrame:
     experiment_metadata = experiment_specimen_df.withColumn(
         "procedureMetadata", explode("procedureMetadata")
@@ -182,14 +203,20 @@ def generate_metadata_group(
             concat(col("parameter.name"), lit(" = "), col("procedureMetadata.value")),
         ).otherwise(concat(col("parameter.name"), lit(" = "), lit("null"))),
     )
+    if type == "experiment":
+        production_centre_col = "_productionCentre"
+        phenotyping_centre_col = "_phenotypingCentre"
+    else:
+        production_centre_col = "production_centre"
+        phenotyping_centre_col = "phenotyping_centre"
     window = Window.partitionBy(
-        "unique_id", "_productionCentre", "_phenotypingCentre"
+        "unique_id", production_centre_col, phenotyping_centre_col
     ).orderBy("parameter.name")
     experiment_metadata_input = experiment_metadata.withColumn(
         "metadataItems", collect_set(col("metadataItem")).over(window)
     )
     experiment_metadata = experiment_metadata_input.groupBy(
-        "unique_id", "_productionCentre", "_phenotypingCentre"
+        "unique_id", production_centre_col, phenotyping_centre_col
     ).agg(
         concat_ws("::", sort_array(max(col("metadataItems")))).alias(
             "metadataGroupList"
@@ -198,12 +225,12 @@ def generate_metadata_group(
     experiment_metadata = experiment_metadata.withColumn(
         "metadataGroupList",
         when(
-            (col("_productionCentre").isNotNull())
-            & (col("_productionCentre") != col("_phenotypingCentre")),
+            (col(production_centre_col).isNotNull())
+            & (col(production_centre_col) != col(phenotyping_centre_col)),
             concat(
                 col("metadataGroupList"),
                 lit("::ProductionCenter = "),
-                col("_productionCentre"),
+                col(production_centre_col),
             ),
         ).otherwise(col("metadataGroupList")),
     )
@@ -213,7 +240,7 @@ def generate_metadata_group(
     experiment_metadata = experiment_metadata.drop("metadataGroupList")
     experiment_specimen_df = experiment_specimen_df.join(
         experiment_metadata,
-        ["unique_id", "_productionCentre", "_phenotypingCentre"],
+        ["unique_id", production_centre_col, phenotyping_centre_col],
         "left_outer",
     )
     experiment_specimen_df = experiment_specimen_df.withColumn(
@@ -226,7 +253,7 @@ def generate_metadata_group(
 
 
 def generate_metadata(
-    experiment_specimen_df: DataFrame, impress_df: DataFrame
+    experiment_specimen_df: DataFrame, impress_df: DataFrame, type="experiment"
 ) -> DataFrame:
     experiment_metadata = experiment_specimen_df.withColumn(
         "procedureMetadata", explode("procedureMetadata")
@@ -239,13 +266,23 @@ def generate_metadata(
         experiment_metadata["procedureMetadata._parameterID"]
         == impress_df_required["parameter.parameterKey"],
     )
-    output_metadata = StructType(
-        [
-            StructField("_parameterID", StringType(), True),
-            StructField("parameterStatus", StringType(), True),
-            StructField("value", StringType(), True),
-        ]
-    )
+    if type == "experiment":
+        output_metadata = StructType(
+            [
+                StructField("_VALUE", StringType(), True),
+                StructField("_parameterID", StringType(), True),
+                StructField("parameterStatus", StringType(), True),
+                StructField("value", StringType(), True),
+            ]
+        )
+    else:
+        output_metadata = StructType(
+            [
+                StructField("_parameterID", StringType(), True),
+                StructField("parameterStatus", StringType(), True),
+                StructField("value", StringType(), True),
+            ]
+        )
     process_experimenter_id_udf = udf(_process_experimenter_id, output_metadata)
     experiment_metadata = experiment_metadata.withColumn(
         "procedureMetadata",
@@ -265,16 +302,22 @@ def generate_metadata(
             ).otherwise(lit("null")),
         ),
     )
+    if type == "experiment":
+        production_centre_col = "_productionCentre"
+        phenotyping_centre_col = "_phenotypingCentre"
+    else:
+        production_centre_col = "production_centre"
+        phenotyping_centre_col = "phenotyping_centre"
     experiment_metadata = experiment_metadata.groupBy(
-        "unique_id", "_productionCentre", "_phenotypingCentre"
+        "unique_id", production_centre_col, phenotyping_centre_col
     ).agg(sort_array(collect_set(col("metadataItem"))).alias("metadata"))
     experiment_metadata = experiment_metadata.withColumn(
         "metadata",
         when(
-            (col("_productionCentre").isNotNull())
-            & (col("_productionCentre") != col("_phenotypingCentre")),
+            (col(production_centre_col).isNotNull())
+            & (col(production_centre_col) != col(phenotyping_centre_col)),
             udf(_append_phenotyping_centre_to_metadata, ArrayType(StringType()))(
-                col("metadata"), col("_productionCentre")
+                col("metadata"), col(production_centre_col)
             ),
         ).otherwise(col("metadata")),
     )
@@ -285,7 +328,10 @@ def generate_metadata(
 
 
 def get_derived_parameters(
-    spark: SparkSession, dcc_experiment_df: DataFrame, impress_df: DataFrame
+    spark: SparkSession,
+    dcc_experiment_df: DataFrame,
+    impress_df: DataFrame,
+    type="experiment",
 ) -> DataFrame:
     derived_parameters: DataFrame = impress_df.where(
         (impress_df["parameter.isDerived"] == True)
@@ -319,12 +365,13 @@ def get_derived_parameters(
     experiments_metadata = _get_inputs_by_parameter_type(
         dcc_experiment_df, derived_parameters_ex, "procedureMetadata"
     )
+    experiments_vs_derivations = experiments_simple.union(experiments_metadata)
+
+    ## if type == "experiment":
     experiments_series = _get_inputs_by_parameter_type(
         dcc_experiment_df, derived_parameters_ex, "seriesParameter"
     )
-    experiments_vs_derivations = experiments_simple.union(experiments_metadata).union(
-        experiments_series
-    )
+    experiments_vs_derivations = experiments_vs_derivations.union(experiments_series)
 
     experiments_vs_derivations = experiments_vs_derivations.groupby(
         "unique_id", "parameterKey", "derivation"
@@ -394,6 +441,11 @@ def get_derived_parameters(
 
     results_df = results_df.join(
         derived_parameters, ["parameterKey", "procedureKey"], "left"
+    )
+
+    # Filtering not valid numeric values
+    results_df = results_df.where(
+        (col("result") != "NaN") & (col("result") != "Infinity")
     )
 
     results_df = results_df.groupBy("unique_id", "procedureKey").agg(

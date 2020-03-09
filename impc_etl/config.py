@@ -287,6 +287,8 @@ class Constants:
         "crl": "Crl",
         "riken brc": "RBRC",
         "ccp-img": "CCP-IMG",
+        "ccpcz": "CCP-IMG",
+        "ccp": "CCP-IMG",
         "monterotondo": "Monterotondo",
         "narlabs": "NARLabs",
     }
@@ -318,6 +320,8 @@ class Constants:
         "infrafrontier-i3": "Infrafrontier-I3",
         "komp": "KOMP",
         "narlabs": "NARLabs",
+        "ccpcz": "CCP-IMG",
+        "ccp": "CCP-IMG",
         "tobeloadedfromimits": "tobeloadedfromimits",
     }
 
@@ -376,13 +380,47 @@ class Constants:
         "phenotyping_cons": "colony.phenotyping_consortium",
         "litter_id": "specimen._litterId",
         "date_of_birth": "specimen._DOB",
+        "strain_accession_id": "strain.mgiStrainID",  ## Fallback to Imits
+    }
+
+    LINE_TO_OBSERVATION_MAP = {
+        "project_name": "_project",
+        "age_in_days": None,
+        "age_in_weeks": None,
+        "developmental_stage_name": None,
+        "developmental_stage_acc": None,
+        "date_of_experiment": None,
+        "metadata_group": "metadataGroup",
+        "sequence_id": None,
+        "experiment_source_id": "_experimentID",
+        "external_sample_id": None,
+        "sex": None,
+        "allelic_composition": "allelicComposition",
+        "production_center": None,
+        "phenotyping_center": "colony.phenotyping_centre",
+        "phenotyping_cons": "colony.phenotyping_consortium",
+        "litter_id": None,
+        "date_of_birth": None,
+        "specimen_source_file": None,
         "strain_accession_id": "strain.mgiStrainID",
+        "strain_name": "colony.colony_background_strain",
+        "allele_symbol": "colony.allele_symbol",
+        "allele_accession_id": "allele.mgiAlleleID",
+        "gene_symbol": "colony.marker_symbol",
+        "gene_accession_id": "colony.mgi_accession_id",
+        "genetic_background": "colony.genetic_background",
+        "colony_id": "_colonyID",
+        "weight": None,
+        "weight_date": None,
+        "weight_days_old": None,
+        "weight_parameter_stable_id": None,
     }
 
     OBSERVATION_COLUMNS = [
         "experiment_source_file",
         "specimen_source_file",
         "experiment_id",
+        "specimen_id",
         "observation_id",
         "allele_accession_id",
         "gene_accession_id",
@@ -469,4 +507,20 @@ class Constants:
         "yyyy-MM-dd'T'HH:mm:ss",
         "yyyy-MM-dd' 'HH:mm:ss",
         "yyyy-MM-dd' 'HH:mm",
+    ]
+
+    FEMALE_LINE_PARAMETERS = [
+        "IMPC_FER_019_001",
+        "IMPC_FER_011_001",
+        "IMPC_FER_010_001",
+        "IMPC_FER_012_001",
+        "IMPC_FER_013_001",
+    ]
+
+    MALE_LINE_PARAMETERS = [
+        "IMPC_FER_001_001",
+        "IMPC_FER_007_001",
+        "IMPC_FER_006_001",
+        "IMPC_FER_008_001",
+        "IMPC_FER_009_001",
     ]

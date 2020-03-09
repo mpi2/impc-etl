@@ -101,3 +101,43 @@ class ExperimentNormalizer(SparkSubmitTask):
             self.input()[3].path,
             self.output().path,
         ]
+
+
+class LineExperimentNormalizer(SparkSubmitTask):
+    name = "IMPC_Line_Experiment_Normalizer"
+    app = "impc_etl/jobs/normalize/line_normalizer.py"
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    entity_type = luigi.Parameter()
+    output_path = luigi.Parameter()
+    resources = {"overwrite_resource": 1}
+
+    def requires(self):
+        return [
+            LineExperimentCleaner(
+                dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
+            ),
+            ColonyCleaner(
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+            ),
+            ImpressExtractor(output_path=self.output_path),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(
+            f"{self.output_path}{self.entity_type}_normalized_parquet"
+        )
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.output().path,
+        ]

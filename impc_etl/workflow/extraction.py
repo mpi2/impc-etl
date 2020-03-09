@@ -41,7 +41,7 @@ class ExperimentExtractor(DCCExtractor):
     entity_type = "experiment"
 
 
-class LineExtractor(DCCExtractor):
+class LineExperimentExtractor(DCCExtractor):
     file_type = "experiment"
     entity_type = "line"
 

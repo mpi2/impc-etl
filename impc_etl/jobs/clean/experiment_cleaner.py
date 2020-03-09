@@ -40,6 +40,7 @@ def clean_experiments(experiment_df: DataFrame) -> DataFrame:
         .transform(drop_skipped_experiments)
         .transform(drop_skipped_procedures)
         .transform(map_3i_project_ids)
+        .transform(prefix_3i_experiment_ids)
         .transform(drop_null_centre_id)
         .transform(drop_null_data_source)
         .transform(drop_null_date_of_experiment)
@@ -60,14 +61,24 @@ def clean_lines(line_df: DataFrame):
     :rtype: DataFrame
     """
     line_df = (
-        line_df.transform(map_centre_ids)
+        line_df.transform(generate_line_experiment_id)
+        .transform(map_centre_ids)
         .transform(map_project_ids)
         .transform(drop_skipped_procedures)
         .transform(map_3i_project_ids)
+        .transform(prefix_3i_experiment_ids)
         .transform(drop_null_centre_id)
         .transform(drop_null_data_source)
         .transform(drop_null_pipeline)
         .transform(drop_null_project)
+        .transform(generate_unique_id)
+    )
+    return line_df
+
+
+def generate_line_experiment_id(line_df: DataFrame):
+    line_df = line_df.withColumn(
+        "_experimentID", concat(col("_procedureID"), lit("-"), col("_colonyID"))
     )
     return line_df
 
@@ -163,6 +174,15 @@ def map_3i_project_ids(dcc_df: DataFrame) -> DataFrame:
             & (~dcc_df["_project"].isin(Constants.VALID_PROJECT_IDS)),
             lit("MGP"),
         ).otherwise(dcc_df["_project"]),
+    )
+
+
+def prefix_3i_experiment_ids(dcc_df: DataFrame) -> DataFrame:
+    return dcc_df.withColumn(
+        "_experimentID",
+        when(
+            (dcc_df["_dataSource"] == "3i"), concat(lit("3i_"), dcc_df["_experimentID"])
+        ).otherwise(dcc_df["_experimentID"]),
     )
 
 

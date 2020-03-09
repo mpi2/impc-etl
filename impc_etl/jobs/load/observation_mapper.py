@@ -16,6 +16,7 @@ from pyspark.sql.functions import (
     from_unixtime,
     udf,
     array,
+    struct,
 )
 from pyspark.sql.types import StringType, IntegerType, LongType, ArrayType
 from impc_etl.config import Constants
@@ -24,16 +25,18 @@ import datetime
 
 def main(argv):
     experiment_parquet_path = argv[1]
-    mouse_parquet_path = argv[2]
-    embryo_parquet_path = argv[3]
-    allele_parquet_path = argv[4]
-    colony_parquet_path = argv[5]
-    pipeline_parquet_path = argv[6]
-    strain_parquet_path = argv[7]
-    ontology_parquet_path = argv[8]
-    output_path = argv[9]
+    line_experiment_parquet_path = argv[2]
+    mouse_parquet_path = argv[3]
+    embryo_parquet_path = argv[4]
+    allele_parquet_path = argv[5]
+    colony_parquet_path = argv[6]
+    pipeline_parquet_path = argv[7]
+    strain_parquet_path = argv[8]
+    ontology_parquet_path = argv[9]
+    output_path = argv[10]
     spark = SparkSession.builder.getOrCreate()
     experiment_df = spark.read.parquet(experiment_parquet_path)
+    line_experiment_df = spark.read.parquet(line_experiment_parquet_path)
     mouse_df = spark.read.parquet(mouse_parquet_path)
     embryo_df = spark.read.parquet(embryo_parquet_path)
     allele_df = spark.read.parquet(allele_parquet_path)
@@ -44,6 +47,7 @@ def main(argv):
 
     observations_df = map_experiments_to_observations(
         experiment_df,
+        line_experiment_df,
         mouse_df,
         embryo_df,
         allele_df,
@@ -55,7 +59,26 @@ def main(argv):
     observations_df.write.mode("overwrite").parquet(output_path)
 
 
-def map_columns(exp_df: DataFrame):
+def map_line_columns(line_df: DataFrame):
+    for field, value in Constants.LINE_TO_OBSERVATION_MAP.items():
+        if value is not None:
+            line_df = line_df.withColumn(field, col(value))
+        else:
+            line_df = line_df.withColumn(field, lit(None))
+    line_df = line_df.withColumn("biological_sample_group", lit("experimental"))
+    line_df = line_df.withColumn("zygosity", lit("homozygous"))
+    line_df = line_df.withColumn(
+        "datasource_name",
+        when(col("_dataSource") == "impc", lit("IMPC")).otherwise(
+            when(col("_dataSource") == "europhenome", lit("EuroPhenome")).otherwise(
+                col("_dataSource")
+            )
+        ),
+    )
+    return line_df
+
+
+def map_experiment_columns(exp_df: DataFrame):
     for field in Constants.EXPERIMENT_TO_OBSERVATION_MAP:
         exp_df = exp_df.withColumn(
             field, col(Constants.EXPERIMENT_TO_OBSERVATION_MAP[field])
@@ -92,13 +115,6 @@ def map_columns(exp_df: DataFrame):
         when(col("biological_sample_group") == "control", lit(None)).otherwise(
             col("mgiMarkerAccessionID")
         ),
-    )
-
-    exp_df = exp_df.withColumn(
-        "allele.markerSymbol",
-        when(
-            col("allele.markerSymbol").isNull(), col("colony.marker_symbol")
-        ).otherwise(col("allele.alleleSymbol")),
     )
 
     exp_df = exp_df.withColumn(
@@ -193,7 +209,9 @@ def unify_schema(obs_df: DataFrame):
     return obs_df
 
 
-def add_impress_info(experiments_df, pipeline_df, parameter_type):
+def add_impress_info(
+    experiments_df, pipeline_df, parameter_type, exp_type="experiment"
+):
     pipeline_columns = [
         "pipeline.parameter",
         "pipeline.procedure",
@@ -237,6 +255,26 @@ def add_impress_info(experiments_df, pipeline_df, parameter_type):
     experiments_df = experiments_df.withColumn(
         "parameter_stable_id", col("pipeline.parameter.parameterKey")
     )
+    if exp_type == "experiment":
+        experiments_df = experiments_df.withColumn(
+            "sex", when(col("sex").isNull(), lit("no_data")).otherwise(col("sex"))
+        )
+    else:
+        experiments_df = experiments_df.withColumn(
+            "sex",
+            when(
+                col("sex").isNull(),
+                when(
+                    col("parameter_stable_id").isin(Constants.FEMALE_LINE_PARAMETERS),
+                    lit("female"),
+                )
+                .when(
+                    col("parameter_stable_id").isin(Constants.MALE_LINE_PARAMETERS),
+                    lit("male"),
+                )
+                .otherwise(lit("both")),
+            ).otherwise(col("sex")),
+        )
     return experiments_df
 
 
@@ -477,6 +515,8 @@ def _resolve_lights_out(metadata_values, date_of_experiment_seconds):
                 if date_str.count(":") > 2:
                     date_str = date_str.rsplit(":", 1)
                     date_str = "".join(date_str)
+                if date_str.count(":") == 1:
+                    pattern_str = "%Y-%m-%dT%H:%M"
                 if date_str.endswith("Z"):
                     pattern_str = "%Y-%m-%dT%H:%M:%SZ"
                 lights_out = datetime.datetime.strptime(
@@ -628,7 +668,9 @@ def format_columns(experiments_df):
     return experiments_df
 
 
-def process_parameter_values(exp_df, pipeline_df, parameter_column):
+def process_parameter_values(
+    exp_df, pipeline_df, parameter_column, exp_type="experiment"
+):
     parameter_cols = [
         "simpleParameter",
         "mediaParameter",
@@ -652,9 +694,6 @@ def process_parameter_values(exp_df, pipeline_df, parameter_column):
         .withColumn(parameter_column, col(parameter_column + "Exploded"))
         .drop(parameter_column + "Exploded")
     )
-    parameter_observation_df = parameter_observation_df.withColumnRenamed(
-        "unique_id", "experiment_id"
-    )
     parameter_observation_df = parameter_observation_df.withColumn(
         "observation_id",
         md5(
@@ -665,9 +704,13 @@ def process_parameter_values(exp_df, pipeline_df, parameter_column):
             )
         ),
     )
-    parameter_observation_df = map_columns(parameter_observation_df)
+    if exp_type == "experiment":
+        parameter_observation_df = map_experiment_columns(parameter_observation_df)
+    else:
+        parameter_observation_df = map_line_columns(parameter_observation_df)
+
     parameter_observation_df = add_impress_info(
-        parameter_observation_df, pipeline_df, parameter_column
+        parameter_observation_df, pipeline_df, parameter_column, exp_type=exp_type
     )
     parameter_observation_df = parameter_observation_df.withColumn(
         "parameter_status", col(parameter_column + ".parameterStatus")
@@ -735,6 +778,7 @@ def get_body_weight_curve_observations(unidimensional_observations_df: DataFrame
 
 def map_experiments_to_observations(
     experiment_df: DataFrame,
+    line_df: DataFrame,
     mouse_df: DataFrame,
     embryo_df,
     allele_df: DataFrame,
@@ -743,47 +787,26 @@ def map_experiments_to_observations(
     strain_df: DataFrame,
     ontology_df: DataFrame,
 ):
-    ## THIS IS NOT OK
-    experiment_df = experiment_df.withColumn(
-        "_pipeline",
-        when(
-            (col("_dataSource") == "3i")
-            & (col("_procedureID") == "MGP_PBI_001")
-            & (col("_pipeline") == "SLM_001"),
-            lit("MGP_001"),
-        ).otherwise(col("_pipeline")),
-    )
-
-    experiment_df = experiment_df.withColumn(
-        "_pipeline",
-        when(
-            (col("_dataSource").isin(["EuroPhenome", "MGP"]))
-            & (col("_procedureID") == "ESLIM_019_001")
-            & (col("_pipeline") == "ESLIM_001"),
-            lit("ESLIM_002"),
-        ).otherwise(col("_pipeline")),
-    )
-    ## THIS IS NOT OK
     experiment_df = experiment_df.withColumnRenamed(
         "_sourceFile", "experiment_source_file"
-    ).alias("experiment")
+    )
+    experiment_df = experiment_df.withColumnRenamed("unique_id", "experiment_id")
+    experiment_df = experiment_df.alias("experiment")
+
     colony_df = colony_df.alias("colony")
     embryo_df = embryo_df.withColumn("_DOB", lit(None).cast(StringType()))
     embryo_df = embryo_df.withColumn("_VALUE", lit(None).cast(StringType()))
     mouse_df = mouse_df.withColumn("_stage", lit(None).cast(StringType()))
     mouse_df = mouse_df.withColumn("_stageUnit", lit(None).cast(StringType()))
-    specimen_df = mouse_df.unionAll(embryo_df.select(mouse_df.columns))
-    specimen_df = specimen_df.withColumnRenamed(
-        "_sourceFile", "specimen_source_file"
-    ).alias("specimen")
+    specimen_df = mouse_df.union(embryo_df.select(mouse_df.columns))
+
+    specimen_df = specimen_df.withColumnRenamed("_sourceFile", "specimen_source_file")
+    specimen_df = specimen_df.withColumnRenamed("unique_id", "specimen_id")
+    specimen_df = specimen_df.alias("specimen")
+
     allele_df = allele_df.alias("allele")
     strain_df = strain_df.alias("strain")
 
-    specimen_df = specimen_df.join(
-        colony_df,
-        specimen_df["specimen._colonyID"] == colony_df["colony.colony_name"],
-        "left_outer",
-    )
     observation_df: DataFrame = experiment_df.join(
         specimen_df,
         (experiment_df["experiment._centreID"] == specimen_df["specimen._centreID"])
@@ -791,6 +814,11 @@ def map_experiments_to_observations(
             experiment_df["experiment.specimenID"]
             == specimen_df["specimen._specimenID"]
         ),
+        "left_outer",
+    )
+    observation_df = observation_df.join(
+        colony_df,
+        (observation_df["specimen._colonyID"] == colony_df["colony.colony_name"]),
         "left_outer",
     )
     observation_df = observation_df.join(
@@ -820,6 +848,8 @@ def map_experiments_to_observations(
         "left_outer",
     )
 
+    ## TODO fallback to imits when its missing and do the join again
+
     observation_df = baseline_observation_df.union(experimental_observation_df)
 
     simple_observation_df = process_parameter_values(
@@ -830,6 +860,42 @@ def map_experiments_to_observations(
     simple_observation_df = unify_schema(simple_observation_df).select(
         Constants.OBSERVATION_COLUMNS
     )
+
+    line_df = (
+        line_df.withColumnRenamed("_sourceFile", "experiment_source_file")
+        .withColumnRenamed("unique_id", "experiment_id")
+        .withColumn("specimen_source_file", lit(None))
+        .alias("experiment")
+    )
+
+    line_observation_df = line_df.join(
+        colony_df, line_df["_colonyID"] == colony_df["colony.colony_name"]
+    )
+
+    line_observation_df = line_observation_df.join(
+        strain_df, col("colony.colony_background_strain") == col("strain.strainName")
+    )
+
+    line_observation_df = line_observation_df.join(
+        allele_df,
+        observation_df["colony.allele_symbol"] == allele_df["allele.alleleSymbol"],
+        "left_outer",
+    )
+    line_simple_observation_df = process_parameter_values(
+        line_observation_df, pipeline_df, "simpleParameter", exp_type="line"
+    )
+    line_simple_observation_df = add_observation_type(line_simple_observation_df)
+    line_simple_observation_df = resolve_simple_value(
+        line_simple_observation_df, pipeline_df
+    )
+    line_simple_observation_df = line_simple_observation_df.withColumn(
+        "specimen_id", lit(None)
+    )
+    line_simple_observation_df = unify_schema(line_simple_observation_df).select(
+        Constants.OBSERVATION_COLUMNS
+    )
+
+    simple_observation_df = simple_observation_df.union(line_simple_observation_df)
 
     body_weight_curve_observation_df = get_body_weight_curve_observations(
         simple_observation_df.where(col("observation_type") == "unidimensional")
@@ -883,7 +949,15 @@ def map_experiments_to_observations(
         .union(time_series_observation_df)
         .union(body_weight_curve_observation_df)
     ).where(col("parameter_status").isNull())
-    observation_df = format_columns(observation_df)
+    observation_df = format_columns(observation_df).drop_duplicates()
+    observation_df = observation_df.withColumn(
+        "experiment_source_file",
+        regexp_extract(col("experiment_source_file"), "(.*\/)(.*\/.*\.xml)", idx=2),
+    )
+    observation_df = observation_df.withColumn(
+        "specimen_source_file",
+        regexp_extract(col("specimen_source_file"), "(.*\/)(.*\/.*\.xml)", idx=2),
+    )
     return observation_df
 
 

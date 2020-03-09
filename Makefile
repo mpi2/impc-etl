@@ -61,7 +61,7 @@ download:            ##@download Download test data
 	scp -r ${TEST_DATA_HOST}:${TEST_DATA_PATH}/europhenome/2013-10-31/*.xml ./data/xml/europhenome/
 	scp  ${TEST_DATA_HOST}:${TEST_DATA_PATH}/impc/dr10.0/*/*.xml ./data/xml/impc/
 	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output ./data/mgi/MGI_Strain.rpt
-	curl http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt --output ./data/mgi/MGI_GenePheno.rpt
+	curl http://www.informatics.jax.org/downloads/reports/MGI_PhenotypicAllele.rpt --output ./data/mgi/MGI_PhenotypicAllele.rpt
 	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output ./data/mgi/MRK_List1.rpt
 
 
