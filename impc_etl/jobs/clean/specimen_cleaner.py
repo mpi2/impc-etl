@@ -1,7 +1,7 @@
 import sys
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import StringType
-from pyspark.sql.functions import udf, when, regexp_replace, col, lit
+from pyspark.sql.functions import udf, when, regexp_replace, col, lit, md5, concat
 from impc_etl.shared import utils
 
 
@@ -20,7 +20,7 @@ def clean_specimens(specimen_df: DataFrame) -> DataFrame:
     :return: a clean specimen parquet file
     :rtype: DataFrame
     """
-    specimen_df = (
+    specimen_df: DataFrame = (
         specimen_df.transform(map_centre_ids)
         .transform(map_project_ids)
         .transform(map_production_centre_ids)
@@ -29,8 +29,11 @@ def clean_specimens(specimen_df: DataFrame) -> DataFrame:
         .transform(truncate_europhenome_colony_ids)
         .transform(standardize_strain_ids)
         .transform(override_3i_specimen_data)
+        .transform(generate_unique_id)
     )
-    return specimen_df
+    return specimen_df.drop_duplicates(
+        [col_name for col_name in specimen_df.columns if col_name != "_sourceFile"]
+    )
 
 
 def map_centre_ids(dcc_df: DataFrame) -> DataFrame:
@@ -73,7 +76,7 @@ def truncate_europhenome_specimen_ids(dcc_df: DataFrame) -> DataFrame:
     dcc_df = dcc_df.withColumn(
         "_specimenID",
         when(
-            dcc_df["_dataSource"].isin(["EuroPhenome", "MGP"]),
+            dcc_df["_dataSource"].isin(["europhenome", "MGP"]),
             udf(utils.truncate_specimen_id, StringType())(dcc_df["_specimenID"]),
         ).otherwise(dcc_df["_specimenID"]),
     )
@@ -84,7 +87,7 @@ def truncate_europhenome_colony_ids(dcc_df: DataFrame) -> DataFrame:
     dcc_df = dcc_df.withColumn(
         "_colonyID",
         when(
-            dcc_df["_dataSource"] == "EuroPhenome",
+            dcc_df["_dataSource"] == "europhenome",
             udf(utils.truncate_colony_id, StringType())(dcc_df["_colonyID"]),
         ).otherwise(dcc_df["_colonyID"]),
     )
@@ -98,7 +101,7 @@ def standardize_strain_ids(dcc_df: DataFrame) -> DataFrame:
     return dcc_df
 
 
-def override_3i_specimen_data(dcc_specimen_df: DataFrame):
+def override_3i_specimen_data(dcc_specimen_df: DataFrame) -> DataFrame:
     dcc_specimen_df_a = dcc_specimen_df.alias("a")
     dcc_specimen_df_b = dcc_specimen_df.alias("b")
     dcc_specimen_df = dcc_specimen_df_a.join(
@@ -113,6 +116,17 @@ def override_3i_specimen_data(dcc_specimen_df: DataFrame):
         | ((col("b._specimenID").isNotNull()) & (col("a._dataSource") != "3i"))
     )
     return dcc_specimen_df.select("a.*")
+
+
+def generate_unique_id(dcc_specimen_df: DataFrame) -> DataFrame:
+    unique_columns = ["_productionCentre", "_specimenID"]
+    unique_columns = [
+        col_name for col_name in dcc_specimen_df.columns if col_name in unique_columns
+    ]
+    dcc_specimen_df = dcc_specimen_df.withColumn(
+        "unique_id", md5(concat(*unique_columns))
+    )
+    return dcc_specimen_df
 
 
 if __name__ == "__main__":

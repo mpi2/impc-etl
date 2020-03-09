@@ -6,6 +6,7 @@ from impc_etl.workflow.config import ImpcConfig
 class DCCExtractor(SparkSubmitTask):
     name = "IMPC_DCC_Extractor"
     app = "impc_etl/jobs/extract/dcc_extractor.py"
+    resources = {"overwrite_resource": 1}
     file_type = luigi.Parameter()
     dcc_xml_path = luigi.Parameter()
     entity_type = luigi.Parameter()
@@ -40,7 +41,7 @@ class ExperimentExtractor(DCCExtractor):
     entity_type = "experiment"
 
 
-class LineExtractor(DCCExtractor):
+class LineExperimentExtractor(DCCExtractor):
     file_type = "experiment"
     entity_type = "line"
 
@@ -130,3 +131,22 @@ class MGIAlleleExtractor(MGIExtractor):
 
 class MGIStrainExtractor(MGIExtractor):
     entity_type = "strain"
+
+
+class OntologyExtractor(SparkSubmitTask):
+    name = "IMPC_Ontology_Extractor"
+    app = "impc_etl/jobs/extract/ontology_extractor.py"
+
+    ontology_input_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f"{self.output_path}ontology_parquet")
+
+    def app_options(self):
+        return [self.ontology_input_path, self.output().path]

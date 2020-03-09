@@ -8,6 +8,7 @@ class ExperimentCleaner(SparkSubmitTask):
     output_path = luigi.Parameter()
     entity_type = "experiment"
     dcc_xml_path = luigi.Parameter()
+    resources = {"overwrite_resource": 1}
 
     def requires(self):
         return ExperimentExtractor(
@@ -22,20 +23,25 @@ class ExperimentCleaner(SparkSubmitTask):
         return [self.input().path, self.entity_type, self.output().path]
 
 
-class LineCleaner(SparkSubmitTask):
-    name = "Experiment_Cleaner"
-    app = "impc_etl/jobs/clean/line_cleaner.py"
+class LineExperimentCleaner(SparkSubmitTask):
+    name = "Line_Experiment_Cleaner"
+    app = "impc_etl/jobs/clean/experiment_cleaner.py"
     output_path = luigi.Parameter()
     entity_type = "line"
     dcc_xml_path = luigi.Parameter()
+    resources = {"overwrite_resource": 1}
 
     def requires(self):
-        return LineExtractor(
+        return LineExperimentExtractor(
             dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
         )
 
     def output(self):
-        output_path = self.input().path.replace("_raw", "")
+        output_path = (
+            self.input()
+            .path.replace("_raw", "")
+            .replace("experiment", "line_experiment")
+        )
         return ImpcConfig().get_target(output_path)
 
     def app_options(self):
@@ -47,6 +53,7 @@ class MouseCleaner(SparkSubmitTask):
     app = "impc_etl/jobs/clean/specimen_cleaner.py"
     output_path = luigi.Parameter()
     dcc_xml_path = luigi.Parameter()
+    resources = {"overwrite_resource": 1}
 
     def requires(self):
         return MouseExtractor(
@@ -66,6 +73,7 @@ class EmbryoCleaner(SparkSubmitTask):
     app = "impc_etl/jobs/clean/specimen_cleaner.py"
     output_path = luigi.Parameter()
     dcc_xml_path = luigi.Parameter()
+    resources = {"overwrite_resource": 1}
 
     def requires(self):
         return EmbryoExtractor(
@@ -85,6 +93,7 @@ class ColonyCleaner(SparkSubmitTask):
     app = "impc_etl/jobs/clean/colony_cleaner.py"
     imits_colonies_tsv_path = luigi.Parameter()
     output_path = luigi.Parameter()
+    resources = {"overwrite_resource": 1}
 
     def requires(self):
         return ColonyExtractor(

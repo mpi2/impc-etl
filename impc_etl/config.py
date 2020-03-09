@@ -1,10 +1,11 @@
 """
 Config file
 """
+from pyspark.sql.types import StringType, ArrayType
 
 
 class SparkConfig:
-    SPARK_JAR_PACKAGES = "com.databricks:spark-xml_2.11:0.6.0"
+    SPARK_JAR_PACKAGES = "com.databricks:spark-xml_2.11:0.7.0"
 
 
 class OntologySchema:
@@ -162,6 +163,105 @@ class Constants:
         "GMC_914_001_001",
     ]
 
+    BODY_WEIGHT_CURVE_PARAMETERS = {
+        "IMPC_BWT_008_001": {
+            "parameters": [
+                "IMPC_GRS_003_001",
+                "IMPC_CAL_001_001",
+                "IMPC_DXA_001_001",
+                "IMPC_HWT_007_001",
+                "IMPC_PAT_049_001",
+                "IMPC_BWT_001_001",
+                "IMPC_ABR_001_001",
+                "IMPC_CHL_001_001",
+                "TCP_CHL_001_001",
+                "HMGU_ROT_004_001",
+            ],
+            "procedure_stable_id": "IMPC_BWT_001",
+            "procedure_group": "IMPC_BWT",
+            "procedure_name": "Body Weight",
+            "parameter_name": "Body weight curve",
+        },
+        "ESLIM_022_001_701": {
+            # "parameters": [
+            #     "ESLIM_022_001_703",
+            #     "ESLIM_022_001_704",
+            #     "ESLIM_022_001_705",
+            #     "ESLIM_022_001_706",
+            #     "ESLIM_022_001_707",
+            #     "ESLIM_022_001_708",
+            # ],
+            "parameters": [
+                "ESLIM_001_001_001",
+                "ESLIM_002_001_001",
+                "ESLIM_003_001_001",
+                "ESLIM_004_001_001",
+                "ESLIM_005_001_001",
+                "ESLIM_020_001_001",
+            ],
+            "procedure_stable_id": "ESLIM_022_001",
+            "procedure_group": "ESLIM_022",
+            "procedure_name": "Body Weight",
+            "parameter_name": "Body Weight Curve Pipeline One",
+        },
+        "ESLIM_022_001_702": {
+            # "parameters": [
+            #     "ESLIM_022_001_709",
+            #     "ESLIM_022_001_710",
+            #     "ESLIM_022_001_711",
+            #     "ESLIM_022_001_712",
+            #     "ESLIM_022_001_713",
+            #     "ESLIM_022_001_001",
+            # ],
+            "parameters": [
+                "ESLIM_009_001_003",
+                "ESLIM_010_001_003",
+                "ESLIM_011_001_011",
+                "ESLIM_012_001_005",
+                "ESLIM_013_001_018",
+                "ESLIM_022_001_001",
+            ],
+            "procedure_stable_id": "ESLIM_022_001",
+            "procedure_group": "ESLIM_022",
+            "procedure_name": "Body Weight",
+            "parameter_name": "Body Weight Curve Pipeline Two",
+        },
+    }
+
+    # IMPC_BWT_008_001
+    IMPC_BWT_BODY_WEIGHT_CURVE_PARAMETERS = [
+        "IMPC_GRS_003_001",
+        "IMPC_CAL_001_001",
+        "IMPC_DXA_001_001",
+        "IMPC_HWT_007_001",
+        "IMPC_PAT_049_001",
+        "IMPC_BWT_001_001",
+        "IMPC_ABR_001_001",
+        "IMPC_CHL_001_001",
+        "TCP_CHL_001_001",
+        "HMGU_ROT_004_001",
+    ]
+
+    # ESLIM_022_001_701
+    ESLIM_701_BODY_WEIGHT_CURVE_PARAMETERS = [
+        "ESLIM_001_001_001",
+        "ESLIM_002_001_001",
+        "ESLIM_003_001_001",
+        "ESLIM_004_001_001",
+        "ESLIM_005_001_001",
+        "ESLIM_020_001_001",
+    ]
+
+    # ESLIM_022_001_702
+    ESLIM_702_BODY_WEIGHT_CURVE_PARAMETERS = [
+        "ESLIM_009_001_003",
+        "ESLIM_010_001_003",
+        "ESLIM_011_001_011",
+        "ESLIM_012_001_005",
+        "ESLIM_013_001_018",
+        "ESLIM_022_001_001",
+    ]
+
     CENTRE_ID_MAP = {
         "bcm": "BCM",
         "gmc": "HMGU",
@@ -187,6 +287,8 @@ class Constants:
         "crl": "Crl",
         "riken brc": "RBRC",
         "ccp-img": "CCP-IMG",
+        "ccpcz": "CCP-IMG",
+        "ccp": "CCP-IMG",
         "monterotondo": "Monterotondo",
         "narlabs": "NARLabs",
     }
@@ -218,6 +320,8 @@ class Constants:
         "infrafrontier-i3": "Infrafrontier-I3",
         "komp": "KOMP",
         "narlabs": "NARLabs",
+        "ccpcz": "CCP-IMG",
+        "ccp": "CCP-IMG",
         "tobeloadedfromimits": "tobeloadedfromimits",
     }
 
@@ -241,7 +345,9 @@ class Constants:
     }
 
     EFO_EMBRYONIC_STAGES = {
+        "0": "EFO:0XXXXXX",
         "8.25": "EFO:0002561",
+        "8.5": "EFO:85XXXXXX",
         "9": "EFO:0002561",
         "9.5": "EFO:0007641",
         "10.5": "EFO:0007643",
@@ -257,3 +363,164 @@ class Constants:
         "18": "EFO:0002569",
         "18.5": "EFO:0002570",
     }
+
+    EXPERIMENT_TO_OBSERVATION_MAP = {
+        "project_name": "experiment._project",
+        "age_in_days": "experiment.ageInDays",
+        "age_in_weeks": "experiment.ageInWeeks",
+        "date_of_experiment": "experiment._dateOfExperiment",
+        "metadata_group": "experiment.metadataGroup",
+        "sequence_id": "experiment._sequenceID",
+        "experiment_source_id": "experiment._experimentID",
+        "external_sample_id": "specimen._specimenID",
+        "sex": "specimen._gender",
+        "allelic_composition": "specimen.allelicComposition",
+        "production_center": "specimen._productionCentre",
+        "phenotyping_center": "specimen._phenotypingCentre",
+        "phenotyping_cons": "colony.phenotyping_consortium",
+        "litter_id": "specimen._litterId",
+        "date_of_birth": "specimen._DOB",
+        "strain_accession_id": "strain.mgiStrainID",  ## Fallback to Imits
+    }
+
+    LINE_TO_OBSERVATION_MAP = {
+        "project_name": "_project",
+        "age_in_days": None,
+        "age_in_weeks": None,
+        "developmental_stage_name": None,
+        "developmental_stage_acc": None,
+        "date_of_experiment": None,
+        "metadata_group": "metadataGroup",
+        "sequence_id": None,
+        "experiment_source_id": "_experimentID",
+        "external_sample_id": None,
+        "sex": None,
+        "allelic_composition": "allelicComposition",
+        "production_center": None,
+        "phenotyping_center": "colony.phenotyping_centre",
+        "phenotyping_cons": "colony.phenotyping_consortium",
+        "litter_id": None,
+        "date_of_birth": None,
+        "specimen_source_file": None,
+        "strain_accession_id": "strain.mgiStrainID",
+        "strain_name": "colony.colony_background_strain",
+        "allele_symbol": "colony.allele_symbol",
+        "allele_accession_id": "allele.mgiAlleleID",
+        "gene_symbol": "colony.marker_symbol",
+        "gene_accession_id": "colony.mgi_accession_id",
+        "genetic_background": "colony.genetic_background",
+        "colony_id": "_colonyID",
+        "weight": None,
+        "weight_date": None,
+        "weight_days_old": None,
+        "weight_parameter_stable_id": None,
+    }
+
+    OBSERVATION_COLUMNS = [
+        "experiment_source_file",
+        "specimen_source_file",
+        "experiment_id",
+        "specimen_id",
+        "observation_id",
+        "allele_accession_id",
+        "gene_accession_id",
+        "project_name",
+        "strain_accession_id",
+        "litter_id",
+        "phenotyping_center",
+        "phenotyping_cons",
+        "external_sample_id",
+        "developmental_stage_name",
+        "developmental_stage_acc",
+        "datasource_name",
+        "age_in_days",
+        "date_of_birth",
+        "metadata",
+        "metadata_group",
+        "sequence_id",
+        "experiment_source_id",
+        "gene_symbol",
+        "biological_sample_group",
+        "sex",
+        "allele_symbol",
+        "production_center",
+        "age_in_weeks",
+        "weight",
+        "weight_date",
+        "weight_days_old",
+        "weight_parameter_stable_id",
+        "colony_id",
+        "zygosity",
+        "allelic_composition",
+        "pipeline_name",
+        "pipeline_stable_id",
+        "procedure_name",
+        "procedure_stable_id",
+        "procedure_group",
+        "parameter_name",
+        "parameter_stable_id",
+        "parameter_status",
+        "observation_type",
+        "data_point",
+        "text_value",
+        "category",
+        "strain_name",
+        "genetic_background",
+        "date_of_experiment",
+        "sub_term_name",
+        "sub_term_id",
+        "sub_term_description",
+        "discrete_point",
+        "time_point",
+        "download_file_path",
+        "file_type",
+        "parameter_association_stable_id",
+        "parameter_association_sequence_id",
+        "parameter_association_name",
+        "parameter_association_value",
+    ]
+
+    PARAMETER_SPECIFIC_FIELDS = {
+        "data_point": StringType(),
+        "text_value": StringType(),
+        "category": StringType(),
+        "sub_term_name": ArrayType(StringType()),
+        "sub_term_id": ArrayType(StringType()),
+        "sub_term_description": ArrayType(StringType()),
+        "discrete_point": StringType(),
+        "time_point": StringType(),
+        "download_file_path": StringType(),
+        "file_type": StringType(),
+        "parameter_association_stable_id": ArrayType(StringType()),
+        "parameter_association_sequence_id": ArrayType(StringType()),
+        "parameter_association_name": ArrayType(StringType()),
+        "parameter_association_value": ArrayType(StringType()),
+    }
+
+    DATE_FORMATS = [
+        "yyyy-MM-dd'T'HH:mm:ssXXX",
+        "yyyy-MM-dd'T'HH:mm:ssX",
+        "yyyy-MM-dd'T'HH:mm:ssZ",
+        "yyyy-MM-dd' 'HH:mm:ssZ",
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        "yyyy-MM-dd' 'HH:mm:ss'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd' 'HH:mm:ss",
+        "yyyy-MM-dd' 'HH:mm",
+    ]
+
+    FEMALE_LINE_PARAMETERS = [
+        "IMPC_FER_019_001",
+        "IMPC_FER_011_001",
+        "IMPC_FER_010_001",
+        "IMPC_FER_012_001",
+        "IMPC_FER_013_001",
+    ]
+
+    MALE_LINE_PARAMETERS = [
+        "IMPC_FER_001_001",
+        "IMPC_FER_007_001",
+        "IMPC_FER_006_001",
+        "IMPC_FER_008_001",
+        "IMPC_FER_009_001",
+    ]

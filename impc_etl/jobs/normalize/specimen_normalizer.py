@@ -8,6 +8,18 @@ from impc_etl.jobs.normalize.experiment_normalizer import (
 )
 
 
+def main(argv):
+    specimen_parquet_path = argv[1]
+    colonies_parquet_path = argv[2]
+    entity_type = argv[3]
+    output_path = argv[4]
+    spark = SparkSession.builder.getOrCreate()
+    specimen_df = spark.read.parquet(specimen_parquet_path)
+    colonies_df = spark.read.parquet(colonies_parquet_path)
+    specimen_normalized_df = normalize_specimens(specimen_df, colonies_df, entity_type)
+    specimen_normalized_df.write.mode("overwrite").parquet(output_path)
+
+
 def normalize_specimens(
     specimen_df: DataFrame, colonies_df: DataFrame, entity_type: str
 ) -> DataFrame:
@@ -43,19 +55,6 @@ def normalize_specimens(
     if entity_type == "mouse":
         specimen_df = specimen_df.transform(add_mouse_life_stage_acc)
     return specimen_df
-
-
-def main(argv):
-    specimen_parquet_path = argv[1]
-    colonies_parquet_path = argv[2]
-    entity_type = argv[3]
-    output_path = argv[4]
-    spark = SparkSession.builder.getOrCreate()
-    specimen_df = spark.read.parquet(specimen_parquet_path)
-    colonies_df = spark.read.parquet(colonies_parquet_path)
-
-    specimen_normalized_df = normalize_specimens(specimen_df, colonies_df, entity_type)
-    specimen_normalized_df.write.mode("overwrite").parquet(output_path)
 
 
 def generate_allelic_composition(dcc_specimen_df: DataFrame) -> DataFrame:
@@ -140,9 +139,7 @@ def add_mouse_life_stage_acc(dcc_specimen_df: DataFrame):
 
 
 def add_embryo_life_stage_acc(dcc_specimen_df: DataFrame):
-    efo_acc_udf = udf(
-        lambda x: Constants.EFO_EMBRYONIC_STAGES[str(x).replace("E", "")], StringType()
-    )
+    efo_acc_udf = udf(resolve_embryo_life_stage, StringType())
     dcc_specimen_df = dcc_specimen_df.withColumn(
         "developmental_stage_acc", efo_acc_udf("_stage")
     )
@@ -150,6 +147,15 @@ def add_embryo_life_stage_acc(dcc_specimen_df: DataFrame):
         "developmental_stage_name", concat(lit("embryonic day "), col("_stage"))
     )
     return dcc_specimen_df
+
+
+def resolve_embryo_life_stage(embryo_stage):
+    embryo_stage = str(embryo_stage).replace("E", "")
+    return (
+        Constants.EFO_EMBRYONIC_STAGES[embryo_stage]
+        if embryo_stage in Constants.EFO_EMBRYONIC_STAGES
+        else "EFO:" + embryo_stage + "NOT_FOUND"
+    )
 
 
 if __name__ == "__main__":

@@ -40,6 +40,7 @@ def clean_experiments(experiment_df: DataFrame) -> DataFrame:
         .transform(drop_skipped_experiments)
         .transform(drop_skipped_procedures)
         .transform(map_3i_project_ids)
+        .transform(prefix_3i_experiment_ids)
         .transform(drop_null_centre_id)
         .transform(drop_null_data_source)
         .transform(drop_null_date_of_experiment)
@@ -60,14 +61,24 @@ def clean_lines(line_df: DataFrame):
     :rtype: DataFrame
     """
     line_df = (
-        line_df.transform(map_centre_ids)
+        line_df.transform(generate_line_experiment_id)
+        .transform(map_centre_ids)
         .transform(map_project_ids)
         .transform(drop_skipped_procedures)
         .transform(map_3i_project_ids)
+        .transform(prefix_3i_experiment_ids)
         .transform(drop_null_centre_id)
         .transform(drop_null_data_source)
         .transform(drop_null_pipeline)
         .transform(drop_null_project)
+        .transform(generate_unique_id)
+    )
+    return line_df
+
+
+def generate_line_experiment_id(line_df: DataFrame):
+    line_df = line_df.withColumn(
+        "_experimentID", concat(col("_procedureID"), lit("-"), col("_colonyID"))
     )
     return line_df
 
@@ -109,7 +120,7 @@ def truncate_europhenome_specimen_ids(dcc_df: DataFrame) -> DataFrame:
     dcc_df = dcc_df.withColumn(
         "specimenID",
         when(
-            (dcc_df["_dataSource"] == "EuroPhenome"),
+            (dcc_df["_dataSource"] == "europhenome"),
             udf(utils.truncate_specimen_id, StringType())(dcc_df["specimenID"]),
         ).otherwise(dcc_df["specimenID"]),
     )
@@ -140,12 +151,14 @@ def drop_skipped_procedures(dcc_df: DataFrame) -> DataFrame:
     :param dcc_df:
     :return:
     """
-    skip_procedure = (
+    dont_skip_procedure = (
         lambda procedure_name: procedure_name[: procedure_name.rfind("_")]
         not in Constants.SKIPPED_PROCEDURES
     )
-    skip_procedure_udf = udf(skip_procedure, BooleanType())(dcc_df["_procedureID"])
-    return dcc_df.where(skip_procedure_udf | (dcc_df["_dataSource"] == "3i"))
+    dont_skip_procedure_udf = udf(dont_skip_procedure, BooleanType())(
+        dcc_df["_procedureID"]
+    )
+    return dcc_df.where(dont_skip_procedure_udf | (dcc_df["_dataSource"] == "3i"))
 
 
 def map_3i_project_ids(dcc_df: DataFrame) -> DataFrame:
@@ -161,6 +174,15 @@ def map_3i_project_ids(dcc_df: DataFrame) -> DataFrame:
             & (~dcc_df["_project"].isin(Constants.VALID_PROJECT_IDS)),
             lit("MGP"),
         ).otherwise(dcc_df["_project"]),
+    )
+
+
+def prefix_3i_experiment_ids(dcc_df: DataFrame) -> DataFrame:
+    return dcc_df.withColumn(
+        "_experimentID",
+        when(
+            (dcc_df["_dataSource"] == "3i"), concat(lit("3i_"), dcc_df["_experimentID"])
+        ).otherwise(dcc_df["_experimentID"]),
     )
 
 
@@ -238,6 +260,17 @@ def drop_if_null(dcc_df: DataFrame, column: str) -> DataFrame:
 
 
 def generate_unique_id(dcc_experiment_df: DataFrame):
+    """
+    Generates an unique_id column using as an input every column
+    except from those that have non unique values and
+    the ones that correspond to parameter values.
+    Given that _sequenceID could be null, the function transforms it the to the string NA
+    when its null to avoid the nullifying the concat.
+    It concatenates the unique set of values and then applies
+    an MD5 hash function to the resulting string.
+    :param dcc_experiment_df:
+    :return: DataFrame
+    """
     non_unique_columns = [
         "_type",
         "_sourceFile",

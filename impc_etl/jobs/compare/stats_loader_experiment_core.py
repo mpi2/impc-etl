@@ -75,14 +75,14 @@ def get_solr_core(solr_url: str, solr_query: str) -> List[Dict]:
 
 def export_to_json(experiments: List[Dict], offset: int, output_path: str):
     i = 0
-    for chunk in chunks(experiments, 1000):
+    for chunk in chunks(experiments, 25000):
         with open(
-            f"{output_path}/experiment_core_{offset + i}_{offset + i + 1000}.json",
+            f"{output_path}/experiment_core_{offset + i}_{offset + i + 25000}.json",
             "w",
             encoding="utf-8",
         ) as f:
             json.dump(chunk, f)
-        i += 1000
+        i += 25000
 
 
 def generate_parquet(json_path, output_path: str):
@@ -189,30 +189,21 @@ def chunks(l, n):
 
 
 if __name__ == "__main__":
-    # rbrc_qry = " AND ".join(
-    #     [
-    #         'phenotyping_center:"RBRC"',
-    #         'production_center:"RBRC"',
-    #         'observation_type:("unidimensional" OR "text" OR "categorical")',
-    #         'datasource_name:"IMPC"',
-    #     ]
-    # )
-    # europhenome_qry = " AND ".join(
-    #     [
-    #         'observation_type:("unidimensional" OR "text" OR "categorical")',
-    #         'datasource_name:("EuroPhenome" OR "MGP")',
-    #     ]
-    # )
-    # print("(" + rbrc_qry + ") OR (" + europhenome_qry + ")")
-    # rbrc_experiments = get_solr_core(
-    #     "http://ves-ebi-d0.ebi.ac.uk:8986/solr/experiment",
-    #     "(" + rbrc_qry + ") OR (" + europhenome_qry + ")",
-    # )
-
-    # parquet_path = "tests/data/parquet/experiment_core"
-    # json_path = "tests/data/json/experiment_core"
-    # generate_parquet(json_path, parquet_path)
-    compare(
-        "tests/data/parquet/experiment_core",
-        "tests/data/parquet/impc_stats_input_parquet",
+    europhenome_qry = " AND ".join(
+        [
+            'datasource_name:("EuroPhenome" OR "MGP")',
+            'procedure_stable_id:"M-G-P_016_001"',
+        ]
     )
+    print(europhenome_qry)
+    rbrc_experiments = get_solr_core(
+        "https://www.ebi.ac.uk/mi/impc/solr/experiment/", europhenome_qry
+    )
+
+    parquet_path = "tests/data/parquet/experiment_core"
+    json_path = "tests/data/json/experiment_core"
+    generate_parquet(json_path, parquet_path)
+    # compare(
+    #     "tests/data/parquet/experiment_core",
+    #     "tests/data/parquet/impc_stats_input_parquet",
+    # )

@@ -1,6 +1,6 @@
 from impc_etl.jobs.clean.experiment_cleaner import *
 from impc_etl.shared import utils
-from impc_etl import config
+import hashlib
 import pytest
 
 
@@ -8,12 +8,15 @@ class TestExperimentCleaner:
     """
     After mapping centre id, all the rows should contain the mapped ID using predefined CENTRE ID MAP
     After mapping project id, all the rows should contain the mapped ID using predefined PROJECT ID MAP
-    After standardize EuroPhenome experiments, all the EuroPhenome experiments
+    After truncate EuroPhenome experiments, all the EuroPhenome experiments
           should have the specimen id truncated
     After drop skipped experiments, there should not be not
           3i experiments with the predefined experiment ids
-    After standardize_3i_experiments, all the 3i experiments that don't have
+    After map_3i_experiments, all the 3i experiments that don't have
           a valid project id should have MGP instead
+    After dropping if null, the DataFrame should not contain any row with a null value in the specified column
+    After generate unique id, the DataFrame should contain a new column with an MD5 hash of the concatenation
+          of the unique columns values
     """
 
     NOT_NULL_COLUMNS = [
@@ -75,12 +78,12 @@ class TestExperimentCleaner:
             {
                 "specimenID": "30173140_HMGU",
                 "_experimentID": "0",
-                "_dataSource": "EuroPhenome",
+                "_dataSource": "europhenome",
             },
             {
                 "specimenID": "RUSSET/16.2b_4615141_MRC_Harwell",
                 "_experimentID": "1",
-                "_dataSource": "EuroPhenome",
+                "_dataSource": "europhenome",
             },
             {
                 "specimenID": "848974_1687897",
@@ -176,3 +179,40 @@ class TestExperimentCleaner:
         experiment_df = utils.convert_to_dataframe(spark_session, experiments)
         experiment_df = drop_if_null(experiment_df, column_name)
         assert experiment_df.where(experiment_df[column_name].isNull()).count() == 0
+
+    def test_generate_unique_id(self, spark_session):
+        experiments = [
+            {
+                "_type": "type0",
+                "_sourceFile": "file0.xml",
+                "_VALUE": "NULL",
+                "procedureMetadata": "some value",
+                "statusCode": "FAILED",
+                "_sequenceID": None,
+                "_project": "CHMD",
+                "simpleParameter": "dskfdsap",
+                "uniqueField0": "A",
+                "uniqueField1": "B",
+                "uniqueField2": "C",
+            },
+            {
+                "_type": "type0",
+                "_sourceFile": "file0.xml",
+                "_VALUE": "NULL",
+                "procedureMetadata": "some value",
+                "statusCode": "FAILED",
+                "_sequenceID": "1",
+                "_project": "CHMD",
+                "simpleParameter": "dsdasda",
+                "uniqueField0": "D",
+                "uniqueField1": "E",
+                "uniqueField2": "F",
+            },
+        ]
+        experiment_df = utils.convert_to_dataframe(spark_session, experiments)
+        experiment_df = experiment_df.transform(generate_unique_id)
+        processed_experiments = experiment_df.collect()
+        assert (
+            processed_experiments[0]["unique_id"] == hashlib.md5(b"ABCNA").hexdigest()
+        )
+        assert processed_experiments[1]["unique_id"] == hashlib.md5(b"DEF1").hexdigest()
