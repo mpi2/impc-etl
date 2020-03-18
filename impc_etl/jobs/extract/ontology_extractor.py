@@ -50,7 +50,7 @@ def extract_ontology_terms(
     """
     ontology_terms = []
 
-    if ImpcConfig().deploy_mode == "local":
+    if ImpcConfig().deploy_mode in ["local", "client"]:
         for file in os.listdir(ontology_path):
             filename = os.fsdecode(file)
             if filename.endswith(".owl"):

@@ -16,7 +16,7 @@ from pyspark.sql.functions import (
     from_unixtime,
     udf,
     array,
-    struct,
+    substring,
 )
 from pyspark.sql.types import StringType, IntegerType, LongType, ArrayType
 from impc_etl.config import Constants
@@ -75,6 +75,18 @@ def map_line_columns(line_df: DataFrame):
             )
         ),
     )
+    line_df = line_df.withColumn(
+        "allele_accession_id",
+        when(col("biological_sample_group") == "control", lit(None)).otherwise(
+            when(
+                col("allele.mgiAlleleID").isNull(),
+                concat(
+                    lit("NOT-RELEASED-"),
+                    substring(md5(line_df["allele_symbol"]), 0, 10),
+                ),
+            ).otherwise(col("allele.mgiAlleleID"))
+        ),
+    )
     return line_df
 
 
@@ -97,9 +109,23 @@ def map_experiment_columns(exp_df: DataFrame):
     )
 
     exp_df = exp_df.withColumn(
+        "allele_symbol",
+        when(col("biological_sample_group") == "control", lit(None)).otherwise(
+            when(
+                exp_df["allele.alleleSymbol"].isNull(), exp_df["colony.allele_symbol"]
+            ).otherwise(exp_df["allele.alleleSymbol"])
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
         "allele_accession_id",
         when(col("biological_sample_group") == "control", lit(None)).otherwise(
-            col("allele.mgiAlleleID")
+            when(
+                col("allele.mgiAlleleID").isNull(),
+                concat(
+                    lit("NOT-RELEASED-"), substring(md5(exp_df["allele_symbol"]), 0, 10)
+                ),
+            ).otherwise(col("allele.mgiAlleleID"))
         ),
     )
 
@@ -123,15 +149,6 @@ def map_experiment_columns(exp_df: DataFrame):
             when(
                 col("allele.markerSymbol").isNull(), exp_df["colony.marker_symbol"]
             ).otherwise(col("allele.markerSymbol"))
-        ),
-    )
-
-    exp_df = exp_df.withColumn(
-        "allele_symbol",
-        when(col("biological_sample_group") == "control", lit(None)).otherwise(
-            when(
-                exp_df["allele.alleleSymbol"].isNull(), exp_df["colony.allele_symbol"]
-            ).otherwise(exp_df["allele.alleleSymbol"])
         ),
     )
 

@@ -32,7 +32,11 @@ from pyspark.sql.types import (
     Row,
 )
 from impc_etl.config import Constants
-from impc_etl.shared.utils import unix_time_millis, extract_parameters_from_derivation
+from impc_etl.shared.utils import (
+    unix_time_millis,
+    extract_parameters_from_derivation,
+    has_column,
+)
 
 
 def main(argv):
@@ -367,11 +371,13 @@ def get_derived_parameters(
     )
     experiments_vs_derivations = experiments_simple.union(experiments_metadata)
 
-    ## if type == "experiment":
-    experiments_series = _get_inputs_by_parameter_type(
-        dcc_experiment_df, derived_parameters_ex, "seriesParameter"
-    )
-    experiments_vs_derivations = experiments_vs_derivations.union(experiments_series)
+    if has_column(dcc_experiment_df, "seriesParameter"):
+        experiments_series = _get_inputs_by_parameter_type(
+            dcc_experiment_df, derived_parameters_ex, "seriesParameter"
+        )
+        experiments_vs_derivations = experiments_vs_derivations.union(
+            experiments_series
+        )
 
     experiments_vs_derivations = experiments_vs_derivations.groupby(
         "unique_id", "parameterKey", "derivation"

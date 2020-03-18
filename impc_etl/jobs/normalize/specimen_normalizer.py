@@ -38,7 +38,7 @@ def normalize_specimens(
     specimen_df = specimen_df.join(
         colonies_df,
         (specimen_df["_colonyID"] == colonies_df["colony_name"]),
-        "left_outer",
+        ##        "left_outer", only specimen with colonies in imits should appear in the normalized output
     )
 
     specimen_df = (

@@ -405,7 +405,6 @@ class Constants:
         "strain_accession_id": "strain.mgiStrainID",
         "strain_name": "colony.colony_background_strain",
         "allele_symbol": "colony.allele_symbol",
-        "allele_accession_id": "allele.mgiAlleleID",
         "gene_symbol": "colony.marker_symbol",
         "gene_accession_id": "colony.mgi_accession_id",
         "genetic_background": "colony.genetic_background",
