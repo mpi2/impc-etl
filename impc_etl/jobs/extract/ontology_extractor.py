@@ -49,7 +49,6 @@ def extract_ontology_terms(
     :return:
     """
     ontology_terms = []
-    print(ImpcConfig().deploy_mode)
     if ImpcConfig().deploy_mode in ["local", "client"]:
         for file in os.listdir(ontology_path):
             filename = os.fsdecode(file)
