@@ -367,11 +367,11 @@ def get_derived_parameters(
     )
     experiments_vs_derivations = experiments_simple.union(experiments_metadata)
 
-    ## if type == "experiment":
-    experiments_series = _get_inputs_by_parameter_type(
-        dcc_experiment_df, derived_parameters_ex, "seriesParameter"
-    )
-    experiments_vs_derivations = experiments_vs_derivations.union(experiments_series)
+    if type == "experiment":
+        experiments_series = _get_inputs_by_parameter_type(
+            dcc_experiment_df, derived_parameters_ex, "seriesParameter"
+        )
+        experiments_vs_derivations = experiments_vs_derivations.union(experiments_series)
 
     experiments_vs_derivations = experiments_vs_derivations.groupby(
         "unique_id", "parameterKey", "derivation"

@@ -2,14 +2,17 @@ all: default
 
 default: clean devDeps build
 
-submit: clean devDeps build
+submit-h:
 	LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' YARN_CONF_DIR=/Applications/spark-2.4.4-bin-hadoop2.7/yarn-conf/ luigi --module impc_etl.workflow.main ImpcEtl --workers 3
+
+submit-lsf: clean devDeps build
+	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-lsf.cfg'  PYTHONPATH='.' luigi --module impc_etl.workflow.main ImpcEtl --workers 3
 
 submit-dev:
 	LUIGI_CONFIG_PATH='luigi-dev.cfg'  PYTHONPATH='.' YARN_CONF_DIR='' luigi --module impc_etl.workflow.main ImpcEtl --workers 2
 
 .venv:          ##@environment Create a venv
-	if [ ! -e ".venv/bin/activate" ] ; then python -m venv --clear .venv ; fi
+	if [ ! -e "venv/bin/activate" ] ; then python -m venv --clear venv ; fi
 
 lint:           ##@best_practices Run pylint against the main script and the shared, jobs and test folders
 	source .venv/bin/activate && pylint -r n impc_etl/main.py impc_etl/shared/ impc_etl/jobs/ tests/
@@ -19,9 +22,9 @@ build: clean        ##@deploy Build to the dist package
 #	cp ./impc_etl/main.py ./dist/
 	zip -x main.py -r ./dist/impc_etl.zip impc_etl
 	cd ./dist && mkdir libs
-	source .venv/bin/activate && pip install --upgrade pip
-	source .venv/bin/activate && pip install -U -r requirements/common.txt -t ./dist/libs
-	source .venv/bin/activate && pip install -U -r requirements/prod.txt -t ./dist/libs
+	source venv/bin/activate && pip install --upgrade pip
+	source venv/bin/activate && pip install -U -r requirements/common.txt -t ./dist/libs
+	source venv/bin/activate && pip install -U -r requirements/prod.txt -t ./dist/libs
 	cd ./dist/libs && zip -r ../libs.zip .
 	cd ./dist && rm -rf libs
 
@@ -41,12 +44,12 @@ clean-test:           ##@clean Clean the pytest cache
 	rm -fr .pytest_cache
 
 devDeps: .venv      ##@deps Create a venv and install common and dev dependencies
-	source .venv/bin/activate && pip install -U -r requirements/common.txt
-	source .venv/bin/activate && pip install -U -r requirements/dev.txt
+	source venv/bin/activate && pip install -U -r requirements/common.txt
+	source venv/bin/activate && pip install -U -r requirements/dev.txt
 
 prodDeps: .venv      ##@deps Create a venv and install common and prod dependencies
-	source .venv/bin/activate && pip install -U -r requirements/common.txt
-	source .venv/bin/activate && pip install -U -r requirements/prod.txt
+	source venv/bin/activate && pip install -U -r requirements/common.txt
+	source venv/bin/activate && pip install -U -r requirements/prod.txt
 
 
 devEnv: .venv devDeps
@@ -54,19 +57,24 @@ devEnv: .venv devDeps
 ##	source .venv/bin/activate && pre-commit install --install-hooks
 
 
-download:            ##@download Download test data
-	scp ${TEST_DATA_HOST}:${TEST_DATA_PATH}/imits/imits-report.tsv ./data/imits/
-#	scp ${TEST_DATA_HOST}:${TEST_DATA_PATH}/imits/allele2Entries.tsv ./data/imits/
-	scp -r ${TEST_DATA_HOST}:${TEST_DATA_PATH}/3i/latest/*.xml ./data/xml/3i/
-	scp -r ${TEST_DATA_HOST}:${TEST_DATA_PATH}/europhenome/2013-10-31/*.xml ./data/xml/europhenome/
-	scp  ${TEST_DATA_HOST}:${TEST_DATA_PATH}/impc/dr10.0/*/*.xml ./data/xml/impc/
-	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output ./data/mgi/MGI_Strain.rpt
-	curl http://www.informatics.jax.org/downloads/reports/MGI_PhenotypicAllele.rpt --output ./data/mgi/MGI_PhenotypicAllele.rpt
-	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output ./data/mgi/MRK_List1.rpt
+data:            ##@data Download test data
+	cd ${DATA_PATH} && mkdir imits mgi owl xml parquet
+	cd ${DATA_PATH}/xml && mkdir impc 3i europhenome
+	cp ${TEST_DATA_PATH}/imits/imits-report.tsv ${DATA_PATH}/imits/
+#	cp ${TEST_DATA_PATH}/imits/allele2Entries.tsv ./data/imits/
+	cp -r ${TEST_DATA_PATH}/3i/latest/*.xml ${DATA_PATH}/xml/3i/
+	cp -r ${TEST_DATA_PATH}/europhenome/2013-10-31/*.xml ${DATA_PATH}/xml/europhenome/
+	cp -r ${TEST_DATA_PATH}/europhenome/2013-10-31/*.xml ${DATA_PATH}/xml/europhenome/
+	cp -r ${TEST_DATA_PATH}/impc/latest/*/* ${DATA_PATH}/xml/impc/
+	cd ${DATA_PATH}/xml/impc/ && find "$PWD" -type f -name "*.xml" -exec bash -c ' DIR=$( dirname "{}"  ); mv "{}" "$DIR"_$(basename "{}")  ' \;
+	cd ${DATA_PATH}/xml/impc/ && rm -R -- */
+	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output ${DATA_PATH}/mgi/MGI_Strain.rpt
+	curl http://www.informatics.jax.org/downloads/reports/MGI_PhenotypicAllele.rpt --output ${DATA_PATH}/mgi/MGI_PhenotypicAllele.rpt
+	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output ${DATA_PATH}/mgi/MRK_List1.rpt
 
 
 test:       ##@best_practices Run pystest against the test folder
-	source .venv/bin/activate && pytest
+	source venv/bin/activate && pytest
 
 
  HELP_FUN = \

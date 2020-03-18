@@ -30,6 +30,7 @@ environment.env
 spark-logs/
 metastore_db/
 luigi-prod.cfg
+luigi-lsf.cfg
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

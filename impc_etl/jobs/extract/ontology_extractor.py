@@ -1,7 +1,10 @@
 from zipfile import ZipFile
+import os
+import sys
 
-with ZipFile("libs.zip", "r") as zip_file:
-    zip_file.extractall()
+with ZipFile("dist/libs.zip", "r") as zip_file:
+    zip_file.extractall("dist/libs/")
+    sys.path.insert(0,'dist/libs/')
 from io import BytesIO
 from pyspark.sql import DataFrame, SparkSession
 from owlready2 import (
@@ -14,8 +17,6 @@ from owlready2 import (
     IRIS,
 )
 from impc_etl.config import OntologySchema
-import sys
-import os
 from typing import List
 from impc_etl.shared.utils import convert_to_row
 from impc_etl.workflow.config import ImpcConfig
@@ -34,7 +35,6 @@ def main(argv):
     output_path = argv[2]
 
     spark = SparkSession.builder.getOrCreate()
-    spark.sparkContext.addPyFile("libs.zip")
     ontology_df = extract_ontology_terms(spark, ontology_path)
     ontology_df.write.mode("overwrite").parquet(output_path)
 
@@ -49,8 +49,8 @@ def extract_ontology_terms(
     :return:
     """
     ontology_terms = []
-
-    if ImpcConfig().deploy_mode == "local":
+    print(ImpcConfig().deploy_mode)
+    if ImpcConfig().deploy_mode in ["local", "client"]:
         for file in os.listdir(ontology_path):
             filename = os.fsdecode(file)
             if filename.endswith(".owl"):
@@ -58,7 +58,6 @@ def extract_ontology_terms(
                 ontology = get_ontology(os.path.join(ontology_path, filename)).load()
                 ontology_terms.extend(parse_ontology(ontology))
     else:
-        print("Here")
         hdfs_client = HdfsClient()
         for file in hdfs_client.listdir(ontology_path):
             # for file in files:
