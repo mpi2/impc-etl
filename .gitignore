@@ -117,3 +117,7 @@ venv.bak/
 *comparison.py
 
 docs/build
+env.zip
+spark-env.zip
+spark-env/
+

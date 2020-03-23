@@ -9,5 +9,7 @@ class ImpcConfig(luigi.Config):
 
     def get_target(self, path):
         return (
-            luigi.LocalTarget(path) if self.deploy_mode in ["local", "client"] else HdfsTarget(path)
+            luigi.LocalTarget(path)
+            if self.deploy_mode in ["local", "client"]
+            else HdfsTarget(path)
         )

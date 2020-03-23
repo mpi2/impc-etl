@@ -1,10 +1,15 @@
 from zipfile import ZipFile
 import os
 import sys
+from impc_etl.workflow.config import ImpcConfig
 
-with ZipFile("dist/libs.zip", "r") as zip_file:
-    zip_file.extractall("dist/libs/")
-    sys.path.insert(0,'dist/libs/')
+if ImpcConfig().deploy_mode == "cluster":
+    with ZipFile("dist/libs.zip", "r") as zip_file:
+        zip_file.extractall()
+else:
+    with ZipFile("dist/libs.zip", "r") as zip_file:
+        zip_file.extractall("dist/libs/")
+        sys.path.insert(0, "dist/libs/")
 from io import BytesIO
 from pyspark.sql import DataFrame, SparkSession
 from owlready2 import (
@@ -19,7 +24,7 @@ from owlready2 import (
 from impc_etl.config import OntologySchema
 from typing import List
 from impc_etl.shared.utils import convert_to_row
-from impc_etl.workflow.config import ImpcConfig
+
 from luigi.contrib.hdfs.hadoopcli_clients import HdfsClient
 from luigi.contrib.hdfs.target import HdfsTarget
 
@@ -59,7 +64,6 @@ def extract_ontology_terms(
     else:
         hdfs_client = HdfsClient()
         for file in hdfs_client.listdir(ontology_path):
-            # for file in files:
             hdfs_target = HdfsTarget(file)
             print(ontology_path + file)
             with hdfs_target.open() as reader:
