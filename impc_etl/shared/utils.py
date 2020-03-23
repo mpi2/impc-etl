@@ -76,7 +76,8 @@ def unix_time_millis(dt):
 
 
 def truncate_specimen_id(specimen_id: str) -> str:
-    if specimen_id.endswith("_MRC_Harwell"):
+    specimen_id = str(specimen_id)
+    if str(specimen_id).endswith("_MRC_Harwell"):
         return specimen_id[: specimen_id.rfind("_MRC_Harwell")]
     else:
         return specimen_id[: specimen_id.rfind("_")]
