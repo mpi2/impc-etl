@@ -192,7 +192,7 @@ def generate_metadata_group(
         "procedureMetadata", explode("procedureMetadata")
     )
     impress_df_required = impress_df.where(
-        (col("parameter.isRequired") == True)
+        (col("parameter.isImportant") == True)
         & (col("parameter.type") == "procedureMetadata")
     )
     experiment_metadata = experiment_metadata.join(
