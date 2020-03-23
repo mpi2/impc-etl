@@ -46,10 +46,19 @@ def normalize_specimens(
         .transform(override_europhenome_datasource)
         .transform(override_3i_specimen_project)
     )
-
-    specimen_df = specimen_df.select(
-        "specimen.*", "allelicComposition", "colony.phenotyping_consortium"
+    specimen_df = specimen_df.withColumn(
+        "_productionCentre",
+        when(
+            col("_productionCentre").isNull(), col("colony.production_centre")
+        ).otherwise(col("_productionCentre")),
     )
+    specimen_df = specimen_df.select(
+        "specimen.*",
+        "_productionCentre",
+        "allelicComposition",
+        "colony.phenotyping_consortium",
+    )
+
     if entity_type == "embryo":
         specimen_df = specimen_df.transform(add_embryo_life_stage_acc)
     if entity_type == "mouse":
