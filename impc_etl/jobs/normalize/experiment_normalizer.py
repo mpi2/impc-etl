@@ -3,6 +3,7 @@ import hashlib
 import math
 from datetime import datetime
 from typing import List, Dict
+from pyspark.sql.utils import AnalysisException
 from pyspark.sql import SparkSession, Window, DataFrame, Column
 from pyspark.sql.functions import (
     explode_outer,
@@ -21,6 +22,8 @@ from pyspark.sql.functions import (
     struct,
     max,
     udf,
+    array_union,
+    array,
 )
 from pyspark.sql.types import (
     BooleanType,
@@ -77,7 +80,10 @@ def normalize_experiments(
     experiment_df = spark_session.read.parquet(experiment_parquet_path)
     experiment_df = experiment_df.where(col("statusCode").isNull())
     mouse_df = spark_session.read.parquet(mouse_parquet_path)
-    embryo_df = spark_session.read.parquet(embryo_parquet_path)
+    try:
+        embryo_df = spark_session.read.parquet(embryo_parquet_path)
+    except AnalysisException:
+        embryo_df = None
     pipeline_df = spark_session.read.parquet(pipeline_parquet_path)
 
     specimen_cols = [
@@ -113,8 +119,11 @@ def normalize_experiments(
     ## THIS IS NOT OK
 
     mouse_specimen_df = mouse_df.select(*specimen_cols)
-    embryo_specimen_df = embryo_df.select(*specimen_cols)
-    specimen_df = mouse_specimen_df.union(embryo_specimen_df)
+    if embryo_df is not None:
+        embryo_specimen_df = embryo_df.select(*specimen_cols)
+        specimen_df = mouse_specimen_df.union(embryo_specimen_df)
+    else:
+        specimen_df = mouse_specimen_df
     experiment_df = experiment_df.alias("experiment")
     specimen_df = specimen_df.alias("specimen")
     experiment_specimen_df = experiment_df.join(
@@ -217,9 +226,23 @@ def generate_metadata_group(
     window = Window.partitionBy(
         "unique_id", production_centre_col, phenotyping_centre_col
     ).orderBy("parameter.name")
+
     experiment_metadata_input = experiment_metadata.withColumn(
         "metadataItems", collect_set(col("metadataItem")).over(window)
     )
+
+    experiment_metadata_input = experiment_metadata_input.withColumn(
+        "metadataItems",
+        when(
+            (col(production_centre_col).isNotNull())
+            & (col(production_centre_col) != col(phenotyping_centre_col)),
+            array_union(
+                col("metadataItems"),
+                array(concat(lit("ProductionCenter ="), col(production_centre_col))),
+            ),
+        ).otherwise(col("metadataItems")),
+    )
+
     experiment_metadata = experiment_metadata_input.groupBy(
         "unique_id", production_centre_col, phenotyping_centre_col
     ).agg(
@@ -227,18 +250,18 @@ def generate_metadata_group(
             "metadataGroupList"
         )
     )
-    experiment_metadata = experiment_metadata.withColumn(
-        "metadataGroupList",
-        when(
-            (col(production_centre_col).isNotNull())
-            & (col(production_centre_col) != col(phenotyping_centre_col)),
-            concat(
-                col("metadataGroupList"),
-                lit("::ProductionCenter = "),
-                col(production_centre_col),
-            ),
-        ).otherwise(col("metadataGroupList")),
-    )
+    # experiment_metadata = experiment_metadata.withColumn(
+    #     "metadataGroupList",
+    #     when(
+    #         (col(production_centre_col).isNotNull())
+    #         & (col(production_centre_col) != col(phenotyping_centre_col)),
+    #         concat(
+    #             col("metadataGroupList"),
+    #             lit("::ProductionCenter = "),
+    #             col(production_centre_col),
+    #         ),
+    #     ).otherwise(col("metadataGroupList")),
+    # )
     experiment_metadata = experiment_metadata.withColumn(
         "metadataGroup", md5(col("metadataGroupList"))
     )
@@ -274,7 +297,7 @@ def generate_metadata(
     if type == "experiment":
         output_metadata = StructType(
             [
-                StructField("_VALUE", StringType(), True),
+                # StructField("_VALUE", StringType(), True),
                 StructField("_parameterID", StringType(), True),
                 StructField("parameterStatus", StringType(), True),
                 StructField("value", StringType(), True),
