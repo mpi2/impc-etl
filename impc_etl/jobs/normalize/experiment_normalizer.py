@@ -238,7 +238,7 @@ def generate_metadata_group(
             & (col(production_centre_col) != col(phenotyping_centre_col)),
             array_union(
                 col("metadataItems"),
-                array(concat(lit("ProductionCenter ="), col(production_centre_col))),
+                array(concat(lit("ProductionCenter = "), col(production_centre_col))),
             ),
         ).otherwise(col("metadataItems")),
     )
@@ -250,18 +250,7 @@ def generate_metadata_group(
             "metadataGroupList"
         )
     )
-    # experiment_metadata = experiment_metadata.withColumn(
-    #     "metadataGroupList",
-    #     when(
-    #         (col(production_centre_col).isNotNull())
-    #         & (col(production_centre_col) != col(phenotyping_centre_col)),
-    #         concat(
-    #             col("metadataGroupList"),
-    #             lit("::ProductionCenter = "),
-    #             col(production_centre_col),
-    #         ),
-    #     ).otherwise(col("metadataGroupList")),
-    # )
+
     experiment_metadata = experiment_metadata.withColumn(
         "metadataGroup", md5(col("metadataGroupList"))
     )
@@ -297,7 +286,7 @@ def generate_metadata(
     if type == "experiment":
         output_metadata = StructType(
             [
-                # StructField("_VALUE", StringType(), True),
+                StructField("_VALUE", StringType(), True),
                 StructField("_parameterID", StringType(), True),
                 StructField("parameterStatus", StringType(), True),
                 StructField("value", StringType(), True),
