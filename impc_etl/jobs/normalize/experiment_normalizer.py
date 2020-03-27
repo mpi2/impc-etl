@@ -258,7 +258,9 @@ def generate_metadata_group(
     )
     experiment_metadata = experiment_metadata.drop("metadataGroupList")
     experiment_specimen_df = experiment_specimen_df.join(
-        experiment_metadata, "unique_id", "left_outer"
+        experiment_metadata,
+        ["unique_id", production_centre_col, phenotyping_centre_col],
+        "left_outer",
     )
     experiment_specimen_df = experiment_specimen_df.withColumn(
         "metadataGroup",
