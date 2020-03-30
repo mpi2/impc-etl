@@ -78,9 +78,6 @@ def normalize_experiments(
     :rtype: DataFrame
     """
     experiment_df = spark_session.read.parquet(experiment_parquet_path)
-    experiment_df = experiment_df.where(
-        ~((col("statusCode").isNotNull()) & (col("_dataSource") == "impc"))
-    )
     mouse_df = spark_session.read.parquet(mouse_parquet_path)
     try:
         embryo_df = spark_session.read.parquet(embryo_parquet_path)
