@@ -4,8 +4,10 @@ from impc_etl.workflow.load import *
 class ImpcEtl(luigi.Task):
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
     mgi_allele_input_path = luigi.Parameter()
     mgi_strain_input_path = luigi.Parameter()
+    komp2_jdbc_connection = luigi.Parameter()
     ontology_input_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
@@ -18,5 +20,11 @@ class ImpcEtl(luigi.Task):
                 mgi_strain_input_path=self.mgi_strain_input_path,
                 mgi_allele_input_path=self.mgi_allele_input_path,
                 ontology_input_path=self.ontology_input_path,
-            )
+            ),
+            Komp2AlleleLoader(
+                jdbc_connection=self.komp2_jdbc_connection,
+                imits_allele2_tsv_file=self.imits_alleles_tsv_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                output_path=self.output_path,
+            ),
         ]

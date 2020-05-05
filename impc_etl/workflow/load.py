@@ -74,3 +74,38 @@ class ObservationsMapper(SparkSubmitTask):
             self.input()[8].path,
             self.output().path,
         ]
+
+
+class Komp2Loader(SparkSubmitTask):
+    name = "IMPC_KOMP2_Loader"
+    komp2_table = luigi.Parameter()
+    jdbc_connection = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(
+            f"{self.output_path}komp2_{self.komp2_table}_parquet"
+        )
+
+
+class Komp2AlleleLoader(Komp2Loader):
+    app = "impc_etl/jobs/load/komp2/allele_loader.py"
+    komp2_table = "allele"
+    imits_allele2_tsv_file = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            AlleleExtractor(imits_tsv_path=self.imits_allele2_tsv_file),
+            MGIAlleleExtractor(
+                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
+            ),
+        ]
+
+    def app_options(self):
+        return [self.input()[0].path, self.input()[1].path, self.output().path]

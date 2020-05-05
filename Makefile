@@ -3,7 +3,7 @@ all: default
 default: clean devDeps build
 
 submit-h:
-	LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' YARN_CONF_DIR=/Applications/spark-2.4.4-bin-hadoop2.7/yarn-conf/ luigi --module impc_etl.workflow.main ImpcEtl --workers 3
+	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' YARN_CONF_DIR=/homes/federico/impc-etl/spark-2.4.5-bin-hadoop2.7/yarn-conf/ luigi --module impc_etl.workflow.main ImpcEtl --workers 3
 
 submit-lsf: clean devDeps build
 	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-lsf.cfg'  PYTHONPATH='.' luigi --module impc_etl.workflow.main ImpcEtl --workers 3
@@ -61,10 +61,12 @@ data:            ##@data Download test data
 	cd ${DATA_PATH} && mkdir imits mgi owl xml parquet
 	cd ${DATA_PATH}/xml && mkdir impc 3i europhenome
 	cp ${TEST_DATA_PATH}/imits/imits-report.tsv ${DATA_PATH}/imits/
-#	cp ${TEST_DATA_PATH}/imits/allele2Entries.tsv ./data/imits/
+	cp ${TEST_DATA_PATH}/imits/allele2Entries.tsv .${DATA_PATH}/imits/allele2Entries.tsv
 	cp -r ${TEST_DATA_PATH}/3i/latest/*.xml ${DATA_PATH}/xml/3i/
 	cp -r ${TEST_DATA_PATH}/europhenome/2013-10-31/*.xml ${DATA_PATH}/xml/europhenome/
-	cp -r ${TEST_DATA_PATH}/europhenome/2013-10-31/*.xml ${DATA_PATH}/xml/europhenome/
+	cp -r ${TEST_DATA_PATH}/europhenome/2013-05-20/*.xml ${DATA_PATH}/xml/europhenome/
+	cd ${DATA_PATH}/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
+	cd ${DATA_PATH}/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<\/ns2:/<\//g' {} \;
 	cp -r ${TEST_DATA_PATH}/impc/latest/*/* ${DATA_PATH}/xml/impc/
 	cd ${DATA_PATH}/xml/impc/ && find "$PWD" -type f -name "*.xml" -exec bash -c ' DIR=$( dirname "{}"  ); mv "{}" "$DIR"_$(basename "{}")  ' \;
 	cd ${DATA_PATH}/xml/impc/ && rm -R -- */

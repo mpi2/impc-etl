@@ -771,7 +771,7 @@ def get_body_weight_curve_observations(unidimensional_observations_df: DataFrame
             "experiment_source_id",
             concat(lit(parameter_stable_id + "_"), col("experiment_source_id")),
         )
-        bwt_observations = bwt_observations.withColumn("metadata_group", lit(None))
+        bwt_observations = bwt_observations.withColumn("metadata_group", md5(lit("")))
         bwt_observations = bwt_observations.withColumn(
             "metadata",
             array(concat(lit("Source experiment id: "), col("experiment_id"))),

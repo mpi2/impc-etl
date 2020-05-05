@@ -49,7 +49,7 @@ class LineExperimentExtractor(DCCExtractor):
 class ImitsExtractor(SparkSubmitTask):
     name = "IMPC_IMITS_Extractor"
     app = "impc_etl/jobs/extract/imits_extractor.py"
-    imits_colonies_tsv_path = luigi.Parameter()
+    imits_tsv_path = luigi.Parameter()
     entity_type = luigi.Parameter()
     output_path = luigi.Parameter()
 
@@ -64,7 +64,7 @@ class ImitsExtractor(SparkSubmitTask):
         )
 
     def app_options(self):
-        return [self.imits_colonies_tsv_path, self.output().path, self.entity_type]
+        return [self.imits_tsv_path, self.output().path, self.entity_type]
 
 
 class AlleleExtractor(ImitsExtractor):
