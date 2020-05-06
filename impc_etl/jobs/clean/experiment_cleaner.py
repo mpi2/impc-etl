@@ -280,10 +280,11 @@ def generate_unique_id(dcc_experiment_df: DataFrame):
         "_sequenceID",
         "_project",
     ]
-    dcc_experiment_df = dcc_experiment_df.withColumn(
-        "_sequenceIDStr",
-        when(col("_sequenceID").isNull(), lit("NA")).otherwise(col("_sequenceID")),
-    )
+    if "_sequenceID" in dcc_experiment_df.columns:
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            "_sequenceIDStr",
+            when(col("_sequenceID").isNull(), lit("NA")).otherwise(col("_sequenceID")),
+        )
     unique_columns = [
         col_name
         for col_name in dcc_experiment_df.columns

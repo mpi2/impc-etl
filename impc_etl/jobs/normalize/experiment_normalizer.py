@@ -282,23 +282,19 @@ def generate_metadata(
         experiment_metadata["procedureMetadata._parameterID"]
         == impress_df_required["parameter.parameterKey"],
     )
-    if type == "experiment":
-        output_metadata = StructType(
-            [
-                StructField("_VALUE", StringType(), True),
-                StructField("_parameterID", StringType(), True),
-                StructField("parameterStatus", StringType(), True),
-                StructField("value", StringType(), True),
-            ]
+    output_metadata_fields = [
+        StructField("_parameterID", StringType(), True),
+        StructField("value", StringType(), True),
+    ]
+
+    if has_column(experiment_metadata, "procedureMetadata._VALUE"):
+        output_metadata_fields.append(StructField("_VALUE", StringType(), True))
+
+    if has_column(experiment_metadata, "procedureMetadata.parameterStatus"):
+        output_metadata_fields.append(
+            StructField("parameterStatus", StringType(), True)
         )
-    else:
-        output_metadata = StructType(
-            [
-                StructField("_parameterID", StringType(), True),
-                StructField("parameterStatus", StringType(), True),
-                StructField("value", StringType(), True),
-            ]
-        )
+    output_metadata = StructType(output_metadata_fields)
     process_experimenter_id_udf = udf(_process_experimenter_id, output_metadata)
     experiment_metadata = experiment_metadata.withColumn(
         "procedureMetadata",
