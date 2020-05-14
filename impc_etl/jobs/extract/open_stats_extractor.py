@@ -38,7 +38,9 @@ def main(argv):
     json_df = spark.read.json(
         stats_df.rdd.map(
             lambda row: json.dumps(
-                json.loads(row.json, object_pairs_hook=object_pairs_hook)
+                normalized_phenstat_fields(
+                    json.loads(row.json, object_pairs_hook=object_pairs_hook)
+                )
             )
         )
     )
@@ -51,10 +53,24 @@ def main(argv):
 def object_pairs_hook(lit):
     return dict(
         [
-            (re.sub(r"\{|\}|\(|\)", "|", re.sub(r"\s|,|;|\n\|\t\=", "_", key)), value)
+            (re.sub(r"\{|\}|\(|\)", "|", re.sub(r"\s|,|;|\n\|\t|=", "_", key)), value)
             for (key, value) in lit
         ]
     )
+
+
+def normalized_phenstat_fields(statpacket):
+    if "phenlist_data_summary_statistics" in statpacket:
+        statpacket["phenlist_data_summary_statistics"] = [
+            {"key": key, "value": value}
+            for key, value in statpacket["phenlist_data_summary_statistics"].items()
+        ]
+    if "raw_data_summary_statistics" in statpacket:
+        statpacket["raw_data_summary_statistics"] = [
+            {"key": key, "value": value}
+            for key, value in statpacket["raw_data_summary_statistics"].items()
+        ]
+    return statpacket
 
 
 if __name__ == "__main__":
