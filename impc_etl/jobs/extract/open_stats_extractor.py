@@ -27,14 +27,15 @@ def main(argv):
         jdbc_connection_str,
         table=f'"{data_release_version}"',
         properties=properties,
-        numPartitions=1000,
+        numPartitions=10000,
         column="id",
         lowerBound=1,
         upperBound=2460170,
     )
     stats_df = stats_df.withColumnRenamed("statpacket", "json")
-    json_schema = spark.read.json(stats_df.rdd.map(lambda row: row.json)).schema
-    stats_df = stats_df.withColumn("statpacket", from_json(col("json"), json_schema))
+    json_df = spark.read.json(stats_df.rdd.map(lambda row: row.json))
+    json_df.write.mode("overwrite").parquet("data/json_parquet_test")
+    stats_df = stats_df.withColumn("statpacket", from_json(col("json"), json_df.schema))
     stats_df.printSchema()
     stats_df.write.mode("overwrite").parquet(output_path)
 
