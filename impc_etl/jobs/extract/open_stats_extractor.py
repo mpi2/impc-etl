@@ -23,15 +23,20 @@ def main(argv):
     }
 
     spark = SparkSession.builder.getOrCreate()
-    stats_db_df = spark.read.jdbc(
-        jdbc_connection_str, table=f'"{data_release_version}"', properties=properties
+    stats_df = spark.read.jdbc(
+        jdbc_connection_str,
+        table=f'"{data_release_version}"',
+        properties=properties,
+        numPartitions=1000,
+        column="id",
+        lowerBound=1,
+        upperBound=2460170,
     )
-    stats_db_df = stats_db_df.withColumnRenamed("statpacket", "json")
-    stats_db_df.write.mode("overwrite").parquet(output_path)
-
-    stats_df = spark.read.parquet(output_path)
-    json_schema = spark.read.json(stats_df.rdd.map(lambda row: row.json)).schema
+    stats_df = stats_df.withColumnRenamed("statpacket", "json")
+    json_schema = spark.read.json(stats_df.rdd.map(lambda row: row.statpacket)).schema
     stats_df = stats_df.withColumn("statpacket", from_json(col("json"), json_schema))
+    stats_df.printSchema()
+    stats_df.write.mode("overwrite").parquet(output_path)
 
 
 if __name__ == "__main__":
