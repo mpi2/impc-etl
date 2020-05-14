@@ -1,6 +1,7 @@
 import sys
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import from_json, col
+import json
 
 
 def main(argv):
@@ -33,11 +34,21 @@ def main(argv):
         upperBound=2460170,
     )
     stats_df = stats_df.withColumnRenamed("statpacket", "json")
-    json_df = spark.read.json(stats_df.rdd.map(lambda row: row.json))
+    json_df = spark.read.json(
+        stats_df.rdd.map(
+            lambda row: json.dumps(
+                json.loads(row.json, object_pairs_hook=object_pairs_hook)
+            )
+        )
+    )
     json_df.write.mode("overwrite").parquet("data/json_parquet_test")
     stats_df = stats_df.withColumn("statpacket", from_json(col("json"), json_df.schema))
     stats_df.printSchema()
     stats_df.write.mode("overwrite").parquet(output_path)
+
+
+def object_pairs_hook(lit):
+    return dict([(key.replace(" ", "_"), value) for (key, value) in lit])
 
 
 if __name__ == "__main__":
