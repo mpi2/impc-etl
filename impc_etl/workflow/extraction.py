@@ -153,7 +153,7 @@ class OntologyExtractor(SparkSubmitTask):
 
 
 class OpenStatsExtractor(SparkSubmitTask):
-    name = "IMPC_Ontology_Extractor"
+    name = "IMPC_OpenStats_Extractor"
     app = "impc_etl/jobs/extract/open_stats_extractor.py"
 
     openstats_jdbc_connection = luigi.Parameter()
