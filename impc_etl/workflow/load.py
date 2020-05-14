@@ -80,6 +80,8 @@ class Komp2Loader(SparkSubmitTask):
     name = "IMPC_KOMP2_Loader"
     komp2_table = luigi.Parameter()
     jdbc_connection = luigi.Parameter()
+    db_user = luigi.Parameter()
+    db_password = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def output(self):
@@ -94,18 +96,22 @@ class Komp2Loader(SparkSubmitTask):
 
 
 class Komp2AlleleLoader(Komp2Loader):
-    app = "impc_etl/jobs/load/komp2/allele_loader.py"
+    app = "impc_etl/jobs/load/komp2/loader.py"
     komp2_table = "allele"
     imits_allele2_tsv_file = luigi.Parameter()
-    mgi_allele_input_path = luigi.Parameter()
 
     def requires(self):
         return [
-            AlleleExtractor(imits_tsv_path=self.imits_allele2_tsv_file),
-            MGIAlleleExtractor(
-                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
-            ),
+            AlleleExtractor(
+                imits_tsv_path=self.imits_allele2_tsv_file, output_path=self.output_path
+            )
         ]
 
     def app_options(self):
-        return [self.input()[0].path, self.input()[1].path, self.output().path]
+        return [
+            self.komp2_table,
+            self.jdbc_connection,
+            self.db_user,
+            self.db_password,
+            self.input()[0].path,
+        ]

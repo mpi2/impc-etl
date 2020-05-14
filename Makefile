@@ -3,13 +3,14 @@ all: default
 default: clean devDeps build
 
 submit-h:
-	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' YARN_CONF_DIR=/homes/federico/impc-etl/spark-2.4.5-bin-hadoop2.7/yarn-conf/ luigi --module impc_etl.workflow.main ImpcEtl --workers 3
+	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' YARN_CONF_DIR=/homes/federico/impc-etl/spark-2.4.5-bin-hadoop2.7/yarn-conf/ luigi --module impc_etl.workflow.main $(task) --workers 3
 
 submit-lsf: clean devDeps build
-	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-lsf.cfg'  PYTHONPATH='.' luigi --module impc_etl.workflow.main ImpcEtl --workers 3
+	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-lsf.cfg'  PYTHONPATH='.' luigi --module impc_etl.workflow.main $(task) --workers 3
 
 submit-dev:
-	LUIGI_CONFIG_PATH='luigi-dev.cfg'  PYTHONPATH='.' YARN_CONF_DIR='' luigi --module impc_etl.workflow.main ImpcEtl --workers 2
+	LUIGI_CONFIG_PATH='luigi-dev.cfg'  PYTHONPATH='.' YARN_CONF_DIR='' luigi --module impc_etl.workflow.main $(task) --workers 2
+
 
 .venv:          ##@environment Create a venv
 	if [ ! -e "venv/bin/activate" ] ; then python -m venv --clear venv ; fi

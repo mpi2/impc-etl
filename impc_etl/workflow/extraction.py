@@ -150,3 +150,31 @@ class OntologyExtractor(SparkSubmitTask):
 
     def app_options(self):
         return [self.ontology_input_path, self.output().path]
+
+
+class OpenStatsExtractor(SparkSubmitTask):
+    name = "IMPC_Ontology_Extractor"
+    app = "impc_etl/jobs/extract/open_stats_extractor.py"
+
+    openstats_jdbc_connection = luigi.Parameter()
+    openstats_db_user = luigi.Parameter()
+    openstats_db_password = luigi.Parameter()
+    data_release_version = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f"{self.output_path}open_stats_parquet")
+
+    def app_options(self):
+        return [
+            self.openstats_jdbc_connection,
+            self.openstats_db_user,
+            self.openstats_db_password,
+            self.data_release_version,
+            self.output().path,
+        ]
