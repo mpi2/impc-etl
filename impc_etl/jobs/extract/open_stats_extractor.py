@@ -2,6 +2,7 @@ import sys
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import from_json, col
 import json
+import re
 
 
 def main(argv):
@@ -48,7 +49,12 @@ def main(argv):
 
 
 def object_pairs_hook(lit):
-    return dict([(key.replace(" ", "_"), value) for (key, value) in lit])
+    return dict(
+        [
+            (re.sub(r"\{|\}|\(|\)", "|", re.sub(r"\s|,|;|\n\|\t\=", "_", key)), value)
+            for (key, value) in lit
+        ]
+    )
 
 
 if __name__ == "__main__":
