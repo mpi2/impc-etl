@@ -29,7 +29,7 @@ def main(argv):
         jdbc_connection_str,
         table=f'"{data_release_version}"',
         properties=properties,
-        numPartitions=10000,
+        numPartitions=5000,
         column="id",
         lowerBound=1,
         upperBound=2460170,
@@ -38,16 +38,14 @@ def main(argv):
     json_df = spark.read.json(
         stats_df.rdd.map(
             lambda row: json.dumps(
-                normalized_phenstat_fields(
-                    json.loads(row.json, object_pairs_hook=object_pairs_hook)
-                )
+                json.loads(row.json, object_pairs_hook=object_pairs_hook)
+                # normalized_phenstat_fields(
+                #     json.loads(row.json, object_pairs_hook=object_pairs_hook)
+                # )
             )
         )
     )
-    json_df.write.mode("overwrite").parquet("data/json_parquet_test")
-    stats_df = stats_df.withColumn("statpacket", from_json(col("json"), json_df.schema))
-    stats_df.printSchema()
-    stats_df.write.mode("overwrite").parquet(output_path)
+    json_df.write.mode("overwrite").parquet(output_path)
 
 
 def object_pairs_hook(lit):
@@ -59,18 +57,18 @@ def object_pairs_hook(lit):
     )
 
 
-def normalized_phenstat_fields(statpacket):
-    if "phenlist_data_summary_statistics" in statpacket:
-        statpacket["phenlist_data_summary_statistics"] = [
-            {"key": key, "value": value}
-            for key, value in statpacket["phenlist_data_summary_statistics"].items()
-        ]
-    if "raw_data_summary_statistics" in statpacket:
-        statpacket["raw_data_summary_statistics"] = [
-            {"key": key, "value": value}
-            for key, value in statpacket["raw_data_summary_statistics"].items()
-        ]
-    return statpacket
+# def normalized_phenstat_fields(statpacket):
+#     if "phenlist_data_summary_statistics" in statpacket:
+#         statpacket["phenlist_data_summary_statistics"] = [
+#             {"key": key, "value": value}
+#             for key, value in statpacket["phenlist_data_summary_statistics"].items()
+#         ]
+#     if "raw_data_summary_statistics" in statpacket:
+#         statpacket["raw_data_summary_statistics"] = [
+#             {"key": key, "value": value}
+#             for key, value in statpacket["raw_data_summary_statistics"].items()
+#         ]
+#     return statpacket
 
 
 if __name__ == "__main__":
