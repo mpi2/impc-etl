@@ -7,9 +7,6 @@ class ImpcEtl(luigi.Task):
     imits_alleles_tsv_path = luigi.Parameter()
     mgi_allele_input_path = luigi.Parameter()
     mgi_strain_input_path = luigi.Parameter()
-    komp2_jdbc_connection = luigi.Parameter()
-    komp2_db_user = luigi.Parameter()
-    komp2_db_password = luigi.Parameter()
     ontology_input_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
@@ -22,14 +19,7 @@ class ImpcEtl(luigi.Task):
                 mgi_strain_input_path=self.mgi_strain_input_path,
                 mgi_allele_input_path=self.mgi_allele_input_path,
                 ontology_input_path=self.ontology_input_path,
-            ),
-            Komp2AlleleLoader(
-                jdbc_connection=self.komp2_jdbc_connection,
-                db_user=self.komp2_db_user,
-                db_password=self.komp2_db_password,
-                imits_allele2_tsv_file=self.imits_alleles_tsv_path,
-                output_path=self.output_path,
-            ),
+            )
         ]
 
 
