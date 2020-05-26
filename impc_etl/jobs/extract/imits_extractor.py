@@ -7,7 +7,16 @@ IMITS extractor module
 """
 import sys
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import when, col, concat, lit, substring, md5
+from pyspark.sql.functions import (
+    when,
+    col,
+    concat,
+    lit,
+    substring,
+    md5,
+    monotonically_increasing_id,
+)
+from pyspark.sql.types import StringType
 
 from impc_etl.shared import utils
 from impc_etl.shared.exceptions import UnsupportedEntityError
@@ -72,6 +81,9 @@ def extract_imits_tsv_by_entity_type(
                     lit("NOT-RELEASED-"), substring(md5(col("allele_symbol")), 0, 10)
                 ),
             ).otherwise(col("allele_mgi_accession_id")),
+        )
+        imtis_entity_df = imtis_entity_df.withColumn(
+            "allele2_id", monotonically_increasing_id().astype(StringType())
         )
     return imtis_entity_df
 

@@ -42,6 +42,12 @@ def test_parse_ontology():
         class HawaiianPizza(Pizza):
             pass
 
+        class HawaiianBBQPizza(HawaiianPizza):
+            pass
+
+        class HawaiianChickenBBQPizza(HawaiianBBQPizza):
+            pass
+
     with obo:
 
         class IAO_0000115(AnnotationProperty):
@@ -54,6 +60,8 @@ def test_parse_ontology():
 
     Pizza.label = "Pizza"
     HawaiianPizza.label = "Hawaiian Pizza"
+    HawaiianBBQPizza.label = "Hawaiian BBQ Pizza"
+    HawaiianChickenBBQPizza.label = "Hawaiian BBQ Pizza with Chicken"
     Pizza.IAO_0000115.append("Italian dish")
     HawaiianPizza.IAO_0000115.append("Controversial Italian dish with pineapple")
     HawaiianPizza.hasExactSynonym.append("Ham and pineapple pizza")
@@ -75,6 +83,24 @@ def test_parse_ontology():
             "description": ["Controversial Italian dish with pineapple"],
             "synonyms": ["Ham and pineapple pizza"],
             "parents": ["Pizza"],
+            "children": ["HawaiianBBQPizza"],
+        },
+        {
+            "children": ["HawaiianChickenBBQPizza"],
+            "description": [],
+            "label": ["Hawaiian BBQ Pizza"],
+            "ontologyId": "pizza",
+            "ontologyTermId": "HawaiianBBQPizza",
+            "parents": ["HawaiianPizza"],
+            "synonyms": [],
+        },
+        {
             "children": [],
+            "description": [],
+            "label": ["Hawaiian BBQ Pizza with Chicken"],
+            "ontologyId": "pizza",
+            "ontologyTermId": "HawaiianChickenBBQPizza",
+            "parents": ["HawaiianBBQPizza"],
+            "synonyms": [],
         },
     ]
