@@ -29,7 +29,7 @@ def main(argv):
     spark = SparkSession.builder.getOrCreate()
     impress_df = extract_impress(spark, impress_api_url, impress_root_type)
 
-    ontology_terms = get_ontology_terms(spark, impress_api_url)
+    ontology_terms = get_ontology_terms(impress_api_url, spark)
     impress_df = impress_df.join(
         ontology_terms,
         impress_df["parammpterm.ontologyTermId"] == ontology_terms.termId,
