@@ -1,2 +1,2 @@
 #!/bin/sh
-bsub -Is -P bigmem -R "span[ptile=4]" -M 256000 -R "rusage[mem=32000]" -n 32 /homes/federico/impc-etl/bin/lsf-spark-submit.sh "$@"
+bsub -Is -R "span[ptile=4]" -M 48000 -R "rusage[mem=12000]" -n 16 /homes/federico/impc-etl/bin/lsf-spark-submit.sh "$@"

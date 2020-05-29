@@ -386,14 +386,13 @@ def resolve_ontology_value(ontological_observation_df, ontology_df):
         ontology_df,
         (
             regexp_extract(col("temp.term"), "(.+:.+):.+", 1)
-            == regexp_replace("onto.ontologyTermId", "_", ":")
-        )
-        & (regexp_extract(col("temp.term"), "(.+):.+:.+", 1) == col("onto.ontologyId")),
+            == col("onto.curie")
+        ),
     )
     id_vs_terms_df = id_vs_terms_df.withColumn(
-        "sub_term_id", col("onto.ontologyTermId")
+        "sub_term_id", col("onto.curie")
     )
-    id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_name", col("onto.label"))
+    id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_name", col("onto.name"))
     id_vs_terms_df = id_vs_terms_df.withColumn(
         "sub_term_description", col("onto.description")
     ).dropDuplicates()
@@ -404,13 +403,13 @@ def resolve_ontology_value(ontological_observation_df, ontology_df):
         collect_list("sub_term_name").alias("sub_term_name"),
         collect_list("sub_term_description").alias("sub_term_description"),
     )
-    id_vs_terms_df = id_vs_terms_df.withColumn(
-        "sub_term_description",
-        udf(
-            lambda l: [item for sublist in l for item in sublist],
-            ArrayType(StringType()),
-        )("sub_term_description"),
-    )
+    # id_vs_terms_df = id_vs_terms_df.withColumn(
+    #     "sub_term_description",
+    #     udf(
+    #         lambda l: [item for sublist in l for item in sublist],
+    #         ArrayType(StringType()),
+    #     )("sub_term_description"),
+    # )
     ontological_observation_df = ontological_observation_df.join(
         id_vs_terms_df, "observation_id", "left_outer"
     )
