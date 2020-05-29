@@ -282,26 +282,20 @@ def generate_metadata(
         experiment_metadata["procedureMetadata._parameterID"]
         == impress_df_required["parameter.parameterKey"],
     )
-    output_metadata_fields = [
-        StructField("_parameterID", StringType(), True),
-        StructField("value", StringType(), True),
-    ]
 
-    if has_column(experiment_metadata, "procedureMetadata._VALUE"):
-        output_metadata_fields.append(StructField("_VALUE", StringType(), True))
-
-    if has_column(experiment_metadata, "procedureMetadata.parameterStatus"):
-        output_metadata_fields.append(
-            StructField("parameterStatus", StringType(), True)
-        )
-    output_metadata = StructType(output_metadata_fields)
-    process_experimenter_id_udf = udf(_process_experimenter_id, output_metadata)
+    process_experimenter_id_udf = udf(_process_experimenter_id, StringType())
     experiment_metadata = experiment_metadata.withColumn(
-        "procedureMetadata",
+        "experimenterIdMetadata",
         when(
             lower(col("parameter.name")).contains("experimenter"),
             process_experimenter_id_udf("procedureMetadata"),
-        ).otherwise(col("procedureMetadata").cast(output_metadata)),
+        ).otherwise(lit(None)),
+    )
+    experiment_metadata = experiment_metadata.withColumn(
+        "procedureMetadata.value",
+        when(
+            col("experimenterIdMetadata").isNotNull(), col("experimenterIdMetadata")
+        ).otherwise("procedureMetadata.value"),
     )
     experiment_metadata = experiment_metadata.withColumn(
         "metadataItem",
@@ -699,7 +693,7 @@ def _process_experimenter_id(experimenter_metadata: Row):
         experimenter_metadata["value"] = (
             hashlib.md5(experimenter_metadata["value"].encode()).hexdigest()[:5].upper()
         )
-    return experimenter_metadata
+    return experimenter_metadata["value"]
 
 
 def _get_inputs_by_parameter_type(
