@@ -422,7 +422,7 @@ def get_derived_parameters(
     provided_derivations = provided_derivations.join(
         derived_parameters_ex,
         (
-            (col("pipelineKey") == col("pipeline"))
+            (col("pipelineKey") == col("_pipeline"))
             & (col("procedureKey") == col("_procedureID"))
             & (col("simpleParameter._parameterID") == col("parameterKey"))
         ),
@@ -482,20 +482,6 @@ def get_derived_parameters(
         (col("result") != "NaN") & (col("result") != "Infinity")
     )
 
-    results_df = results_df.groupBy("unique_id", "procedureKey").agg(
-        collect_list(
-            create_map(
-                lit("parameter"),
-                results_df["parameterKey"],
-                lit("value"),
-                results_df["result"],
-                lit("unit"),
-                results_df["unitName"],
-            )
-        ).alias("results")
-    )
-    results_df = results_df.withColumnRenamed("unique_id", "unique_id_result")
-
     simple_parameter_type = None
 
     for c_type in dcc_experiment_df.dtypes:
@@ -503,20 +489,30 @@ def get_derived_parameters(
             simple_parameter_type = c_type[1]
             break
 
+    results_df = results_df.groupBy("unique_id", "pipelineKey", "procedureKey").agg(
+        collect_list(
+            struct(
+                results_df["parameterKey"].alias("_parameterID"),
+                results_df["result"].alias("value"),
+                lit(None).alias("_sequenceID"),
+                results_df["unitName"].alias("_unit"),
+                lit(None).alias("parameterStatus"),
+            )
+        )
+        .cast(simple_parameter_type)
+        .alias("results")
+    )
+    results_df = results_df.withColumnRenamed("unique_id", "unique_id_result")
+
     dcc_experiment_df = dcc_experiment_df.join(
         results_df,
         (dcc_experiment_df["unique_id"] == results_df["unique_id_result"])
-        & (dcc_experiment_df["_procedureID"] == results_df["procedureKey"]),
+        & (dcc_experiment_df["_procedureID"] == results_df["procedureKey"])
+        & (dcc_experiment_df["_pipeline"] == results_df["pipelineKey"]),
         "left_outer",
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
-        "simpleParameter",
-        when(
-            results_df["results"].isNotNull(),
-            udf(_append_simple_parameter, simple_parameter_type)(
-                "results", "simpleParameter"
-            ),
-        ).otherwise(col("simpleParameter").cast(simple_parameter_type)),
+        "simpleParameter", array_union(col("simpleParameter"), col("results"))
     )
     dcc_experiment_df = (
         dcc_experiment_df.drop("complete_derivations.unique_id")
