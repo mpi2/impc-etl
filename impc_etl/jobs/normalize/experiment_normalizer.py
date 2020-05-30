@@ -206,8 +206,17 @@ def generate_metadata_group(
     )
     experiment_metadata = experiment_metadata.join(
         impress_df_required,
-        experiment_metadata["procedureMetadata._parameterID"]
-        == impress_df_required["parameter.parameterKey"],
+        (
+            (experiment_metadata["_pipeline"] == impress_df_required["pipelineKey"])
+            & (
+                experiment_metadata["_procedureID"]
+                == impress_df_required["procedure.procedureKey"]
+            )
+            & (
+                experiment_metadata["procedureMetadata._parameterID"]
+                == impress_df_required["parameter.parameterKey"]
+            )
+        ),
     )
     experiment_metadata = experiment_metadata.withColumn(
         "metadataItem",
@@ -279,8 +288,17 @@ def generate_metadata(
     )
     experiment_metadata = experiment_metadata.join(
         impress_df_required,
-        experiment_metadata["procedureMetadata._parameterID"]
-        == impress_df_required["parameter.parameterKey"],
+        (
+            (experiment_metadata["_pipeline"] == impress_df_required["pipelineKey"])
+            & (
+                experiment_metadata["_procedureID"]
+                == impress_df_required["procedure.procedureKey"]
+            )
+            & (
+                experiment_metadata["procedureMetadata._parameterID"]
+                == impress_df_required["parameter.parameterKey"]
+            )
+        ),
     )
 
     process_experimenter_id_udf = udf(_process_experimenter_id, StringType())
@@ -344,6 +362,7 @@ def get_derived_parameters(
         & (impress_df["parameter.isDeprecated"] == False)
         & (~impress_df["parameter.derivation"].contains("archived"))
     ).select(
+        "pipelineKey",
         "procedure.procedureKey",
         "parameter.parameterKey",
         "parameter.derivation",
@@ -360,7 +379,9 @@ def get_derived_parameters(
 
     derived_parameters_ex = derived_parameters.withColumn(
         "derivationInput", explode("derivationInputs")
-    ).select("procedureKey", "parameterKey", "derivation", "derivationInput")
+    ).select(
+        "pipelineKey", "procedureKey", "parameterKey", "derivation", "derivationInput"
+    )
     derived_parameters_ex = derived_parameters_ex.where(
         ~col("derivation").contains("unimplemented")
     )
@@ -400,9 +421,14 @@ def get_derived_parameters(
     )
     provided_derivations = provided_derivations.join(
         derived_parameters_ex,
-        col("simpleParameter._parameterID") == col("parameterKey"),
+        (
+            (col("pipelineKey") == col("pipeline"))
+            & (col("procedureKey") == col("_procedureID"))
+            & (col("simpleParameter._parameterID") == col("parameterKey"))
+        ),
         "left_outer",
     )
+
     provided_derivations = (
         provided_derivations.where(col("parameterKey").isNotNull())
         .select("unique_id", "parameterKey")
@@ -441,14 +467,14 @@ def get_derived_parameters(
     )
     results_df = spark.sql(
         """
-           SELECT unique_id, procedureKey, parameterKey,
+           SELECT unique_id, pipelineKey, procedureKey, parameterKey,
                   derivationInputStr, phenodcc_derivator(derivationInputStr) as result
            FROM complete_derivations
         """
     )
 
     results_df = results_df.join(
-        derived_parameters, ["parameterKey", "procedureKey"], "left"
+        derived_parameters, ["parameterKey", "procedureKey", "pipelineKey"], "left"
     )
 
     # Filtering not valid numeric values
