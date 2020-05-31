@@ -511,7 +511,11 @@ def get_derived_parameters(
         "left_outer",
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
-        "simpleParameter", array_union(col("simpleParameter"), col("results"))
+        "simpleParameter",
+        when(
+            col("results").isNotNull(),
+            array_union(col("simpleParameter"), col("results")),
+        ).otherwise(col("simpleParameter")),
     )
     dcc_experiment_df = (
         dcc_experiment_df.drop("complete_derivations.unique_id")
