@@ -493,14 +493,12 @@ def get_derived_parameters(
         collect_list(
             struct(
                 results_df["parameterKey"].alias("_parameterID"),
-                results_df["result"].alias("value"),
                 lit(None).alias("_sequenceID"),
                 results_df["unitName"].alias("_unit"),
-                lit(None).alias("parameterStatus"),
+                lit(None).cast(StringType()).alias("parameterStatus"),
+                results_df["result"].alias("value"),
             )
-        )
-        .cast(simple_parameter_type)
-        .alias("results")
+        ).alias("results")
     )
     results_df = results_df.withColumnRenamed("unique_id", "unique_id_result")
 
