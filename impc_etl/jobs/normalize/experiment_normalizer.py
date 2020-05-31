@@ -33,6 +33,7 @@ from pyspark.sql.types import (
     IntegerType,
     StringType,
     Row,
+    LongType,
 )
 from impc_etl.config import Constants
 from impc_etl.shared.utils import (
@@ -493,7 +494,7 @@ def get_derived_parameters(
         collect_list(
             struct(
                 results_df["parameterKey"].alias("_parameterID"),
-                lit(None).cast(IntegerType()).alias("_sequenceID"),
+                lit(None).cast(LongType()).alias("_sequenceID"),
                 results_df["unitName"].alias("_unit"),
                 lit(None).cast(StringType()).alias("parameterStatus"),
                 results_df["result"].alias("value"),
