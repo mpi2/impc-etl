@@ -721,11 +721,15 @@ def _get_inputs_by_parameter_type(
     dcc_experiment_df, derived_parameters_ex, parameter_type
 ):
     experiments_by_type = dcc_experiment_df.select(
-        "unique_id", "_procedureID", explode(parameter_type).alias(parameter_type)
+        "unique_id",
+        "_pipeline",
+        "_procedureID",
+        explode(parameter_type).alias(parameter_type),
     )
     if parameter_type == "seriesParameter":
         experiments_by_type = experiments_by_type.select(
             "unique_id",
+            "_pipeline",
             "_procedureID",
             col(parameter_type + "._parameterID").alias("_parameterID"),
             explode(parameter_type + ".value").alias("value"),
@@ -734,8 +738,8 @@ def _get_inputs_by_parameter_type(
             "value", concat(col("value._incrementValue"), lit("|"), col("value._VALUE"))
         )
         experiments_by_type = experiments_by_type.groupBy(
-            "unique_id", "_parameterID", "_procedureID"
-        ).agg(concat_ws("$", collect_list("value")).alias("value"))
+            "unique_id", "_pipeline", "_parameterID", "_procedureID"
+        ).agg(concat_ws("$", collect_set("value")).alias("value"))
 
     parameter_id_column = (
         parameter_type + "._parameterID"
@@ -756,6 +760,7 @@ def _get_inputs_by_parameter_type(
                 experiments_by_type["_procedureID"]
                 == derived_parameters_ex.procedureKey
             )
+            & (experiments_by_type["_pipeline"] == derived_parameters_ex.pipelineKey)
         ),
     )
     experiments_vs_derivations: DataFrame = experiments_vs_derivations.withColumn(
