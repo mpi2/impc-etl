@@ -416,8 +416,10 @@ def get_derived_parameters(
         ).alias("derivationInputStr")
     )
 
-    provided_derivations = dcc_experiment_df.withColumn(
-        "simpleParameter", explode("simpleParameter")
+    provided_derivations = (
+        dcc_experiment_df.withColumn("simpleParameter", explode("simpleParameter"))
+        .withColumn("procedureMetadata", explode("procedureMetadata"))
+        .withColumn("seriesParameter", explode("seriesParameter"))
     )
     provided_derivations = provided_derivations.join(
         derived_parameters_ex,
