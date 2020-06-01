@@ -16,7 +16,6 @@ from pyspark.sql.functions import (
     explode,
     concat_ws,
     collect_list,
-    create_map,
     sort_array,
     collect_set,
     struct,
@@ -404,7 +403,7 @@ def get_derived_parameters(
         )
 
     experiments_vs_derivations = experiments_vs_derivations.groupby(
-        "unique_id", "parameterKey", "derivation"
+        "unique_id", "pipelineKey", "procedureKey", "parameterKey", "derivation"
     ).agg(
         concat_ws(
             ",",
@@ -425,7 +424,11 @@ def get_derived_parameters(
         (
             (col("pipelineKey") == col("_pipeline"))
             & (col("procedureKey") == col("_procedureID"))
-            & (col("simpleParameter._parameterID") == col("parameterKey"))
+            & (
+                (col("simpleParameter._parameterID") == col("parameterKey"))
+                | (col("procedureMetadata._parameterID") == col("parameterKey"))
+                | (col("seriesParameter._parameterID") == col("parameterKey"))
+            )
         ),
         "left_outer",
     )
@@ -772,9 +775,11 @@ def _get_inputs_by_parameter_type(
         concat(col("derivationInput"), lit("$"), col(parameter_value_column)),
     )
     return (
-        experiments_vs_derivations.drop(parameter_type, "_procedureID")
+        experiments_vs_derivations.drop(parameter_type, "_procedureID", "_pipeline")
         if parameter_type != "seriesParameter"
-        else experiments_vs_derivations.drop("value", "_parameterID", "_procedureID")
+        else experiments_vs_derivations.drop(
+            "value", "_parameterID", "_procedureID", "_pipeline"
+        )
     )
 
 
