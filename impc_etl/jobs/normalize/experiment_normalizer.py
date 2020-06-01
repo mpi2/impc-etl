@@ -437,7 +437,7 @@ def get_derived_parameters(
 
     provided_derivations = (
         provided_derivations.where(col("parameterKey").isNotNull())
-        .select("unique_id", "parameterKey")
+        .select("unique_id", "pipelineKey", "procedureKey", "parameterKey")
         .dropDuplicates()
     )
 
@@ -453,7 +453,8 @@ def get_derived_parameters(
         .drop("provided.*")
     )
     experiments_vs_derivations = experiments_vs_derivations.join(
-        derived_parameters.drop("derivation"), "parameterKey"
+        derived_parameters.drop("derivation"),
+        ["pipelineKey", "procedureKey", "parameterKey"],
     )
 
     experiments_vs_derivations = experiments_vs_derivations.withColumn(
