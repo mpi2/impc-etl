@@ -445,7 +445,9 @@ def get_derived_parameters(
 
     experiments_vs_derivations = (
         experiments_vs_derivations.join(
-            provided_derivations, ["parameterKey", "unique_id"], "left_outer"
+            provided_derivations,
+            ["pipelineKey", "procedureKey", "parameterKey", "unique_id"],
+            "left_outer",
         )
         .where(col("provided.unique_id").isNull())
         .drop("provided.*")
