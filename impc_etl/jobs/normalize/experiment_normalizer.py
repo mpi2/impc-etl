@@ -23,6 +23,8 @@ from pyspark.sql.functions import (
     udf,
     array_union,
     array,
+    sum,
+    size,
 )
 from pyspark.sql.types import (
     BooleanType,
@@ -416,58 +418,51 @@ def get_derived_parameters(
         ).alias("derivationInputStr")
     )
 
-    provided_derivations = (
-        dcc_experiment_df.withColumn("simpleParameter", explode("simpleParameter"))
-        .withColumn("procedureMetadata", explode("procedureMetadata"))
-        .withColumn("seriesParameter", explode("seriesParameter"))
-    )
-    provided_derivations = provided_derivations.join(
-        derived_parameters_ex,
-        (
-            (col("pipelineKey") == col("_pipeline"))
-            & (col("procedureKey") == col("_procedureID"))
-            & (
-                (col("simpleParameter._parameterID") == col("parameterKey"))
-                | (col("procedureMetadata._parameterID") == col("parameterKey"))
-                | (col("seriesParameter._parameterID") == col("parameterKey"))
-            )
-        ),
-        "left_outer",
-    )
-
-    provided_derivations = (
-        provided_derivations.where(col("parameterKey").isNotNull())
-        .select("unique_id", "pipelineKey", "procedureKey", "parameterKey")
-        .dropDuplicates()
-    )
-
-    provided_derivations = provided_derivations.alias("provided")
-
-    experiments_vs_derivations = (
-        experiments_vs_derivations.join(
-            provided_derivations,
-            ["pipelineKey", "procedureKey", "parameterKey", "unique_id"],
-            "left_outer",
-        )
-        .where(col("provided.unique_id").isNull())
-        .drop("provided.*")
-    )
     experiments_vs_derivations = experiments_vs_derivations.join(
         derived_parameters.drop("derivation"),
         ["pipelineKey", "procedureKey", "parameterKey"],
     )
 
+    check_complete = experiments_vs_derivations.withColumn(
+        "derivationInput", explode("derivationInputs")
+    )
+    check_complete = check_complete.withColumn(
+        "isPresent",
+        when(col("derivationInputStr").contains(col("derivationInput")), 1).otherwise(
+            0
+        ),
+    )
+    check_complete = check_complete.groupBy(
+        [
+            "unique_id",
+            "pipelineKey",
+            "procedureKey",
+            "parameterKey",
+            "derivationInputStr",
+        ]
+    ).agg(sum("isPresent").alias("presentColumns"))
+    experiments_vs_derivations = experiments_vs_derivations.join(
+        check_complete,
+        [
+            "unique_id",
+            "pipelineKey",
+            "procedureKey",
+            "parameterKey",
+            "derivationInputStr",
+        ],
+        "left",
+    )
     experiments_vs_derivations = experiments_vs_derivations.withColumn(
         "isComplete",
-        udf(_check_complete_input, BooleanType())(
-            "derivationInputs", "derivationInputStr"
-        ),
+        (size(col("derivationInputs")) == col("presentColumns"))
+        & (~col("derivationInputStr").contains("NOT_FOUND")),
     )
     complete_derivations = experiments_vs_derivations.where(
         col("isComplete") == True
     ).withColumn(
         "derivationInputStr", concat("derivation", lit(";"), "derivationInputStr")
     )
+    complete_derivations = complete_derivations.dropDuplicates()
     complete_derivations.createOrReplaceTempView("complete_derivations")
     spark.udf.registerJavaFunction(
         "phenodcc_derivator",
@@ -487,17 +482,52 @@ def get_derived_parameters(
     )
 
     # Filtering not valid numeric values
-    results_df = results_df.where(
-        (col("result") != "NaN") & (col("result") != "Infinity")
+    results_df = results_df.withColumn(
+        "result",
+        when(
+            (col("result") == "NaN")
+            | (col("result") == "Infinity")
+            | (col("result") == "-Infinity"),
+            lit(None),
+        ).otherwise(col("result")),
     )
 
-    simple_parameter_type = None
+    provided_derivations = dcc_experiment_df.withColumn(
+        "simpleParameter", explode("simpleParameter")
+    )
+    provided_derivations = provided_derivations.join(
+        derived_parameters_ex,
+        (
+            (col("pipelineKey") == col("_pipeline"))
+            & (col("procedureKey") == col("_procedureID"))
+            & (col("simpleParameter._parameterID") == col("parameterKey"))
+        ),
+        "left_outer",
+    )
 
-    for c_type in dcc_experiment_df.dtypes:
-        if c_type[0] == "simpleParameter":
-            simple_parameter_type = c_type[1]
-            break
+    provided_derivations = (
+        provided_derivations.where(col("parameterKey").isNotNull())
+        .select(
+            "unique_id",
+            "pipelineKey",
+            "procedureKey",
+            "parameterKey",
+            "simpleParameter.value",
+        )
+        .dropDuplicates()
+    )
 
+    provided_derivations = provided_derivations.alias("provided")
+
+    results_df = results_df.join(
+        provided_derivations,
+        ["pipelineKey", "procedureKey", "parameterKey", "unique_id"],
+        "left_outer",
+    ).where(col("provided.unique_id").isNotNull())
+    results_df = results_df.withColumn(
+        "result",
+        when(col("result").isNull(), col("provided.value")).otherwise(col("result")),
+    ).drop("provided.*")
     results_df = results_df.groupBy("unique_id", "pipelineKey", "procedureKey").agg(
         collect_list(
             struct(
