@@ -111,7 +111,6 @@ def normalize_experiments(
 
     specimen_cols = [
         "_centreID",
-        "_pipeline",
         "_specimenID",
         "_colonyID",
         "_isBaseline",
@@ -128,14 +127,10 @@ def normalize_experiments(
         specimen_df = mouse_specimen_df
     experiment_df = experiment_df.alias("experiment")
     specimen_df = specimen_df.alias("specimen")
-    specimen_pipeline_renamed = specimen_df.withColumnRenamed(
-        "_pipeline", "specimenPipeline"
-    )
     experiment_specimen_df = experiment_df.join(
-        specimen_pipeline_renamed,
-        (experiment_df["_centreID"] == specimen_pipeline_renamed["_centreID"])
-        & (experiment_df["_pipeline"] == specimen_pipeline_renamed["specimenPipeline"])
-        & (experiment_df["specimenID"] == specimen_pipeline_renamed["_specimenID"]),
+        specimen_df,
+        (experiment_df["_centreID"] == specimen_df["_centreID"])
+        & (experiment_df["specimenID"] == specimen_df["_specimenID"]),
     )
 
     experiment_specimen_df = drop_null_colony_id(experiment_specimen_df)
@@ -583,7 +578,6 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
         )
     )
     weight_observations = weight_observations.select(
-        "_pipeline",
         "specimenID",
         "_centreID",
         col("unique_id").alias("sourceExperimentId"),
@@ -595,8 +589,7 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     weight_observations = weight_observations.join(
         mice_df,
         (weight_observations["specimenID"] == mice_df["_specimenID"])
-        & (weight_observations["_centreID"] == mice_df["_centreID"])
-        & (weight_observations["_pipeline"] == mice_df["_pipeline"]),
+        & (weight_observations["_centreID"] == mice_df["_centreID"]),
     )
     weight_observations = weight_observations.withColumn(
         "weightDaysOld", udf(calculate_age_in_days, StringType())("weightDate", "_DOB")
@@ -656,8 +649,7 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
     dcc_experiment_df = experiment_df_a.join(
         mice_df_a,
         (experiment_df_a["specimenID"] == mice_df["_specimenID"])
-        & (experiment_df_a["_centreID"] == mice_df["_centreID"])
-        & (experiment_df_a["_pipeline"] == mice_df["_pipeline"]),
+        & (experiment_df_a["_centreID"] == mice_df["_centreID"]),
         "left_outer",
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
