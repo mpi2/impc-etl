@@ -60,7 +60,7 @@ class ImpcDataDrivenAnnotationLoader(SparkSubmitTask):
         ]
 
     def app_options(self):
-        return [self.input()[0].path, self.output_path]
+        return [self.input()[0].path, self.output().path]
 
     def output(self):
         self.output_path = (
