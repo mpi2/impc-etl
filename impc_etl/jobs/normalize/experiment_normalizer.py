@@ -128,8 +128,11 @@ def normalize_experiments(
         specimen_df = mouse_specimen_df
     experiment_df = experiment_df.alias("experiment")
     specimen_df = specimen_df.alias("specimen")
+    specimen_pipeline_renamed = specimen_df.withColumnRenamed(
+        "_pipeline", "specimenPipeline"
+    )
     experiment_specimen_df = experiment_df.join(
-        specimen_df.withColumnRenamed("_pipeline", "specimenPipeline"),
+        specimen_pipeline_renamed,
         (experiment_df["_centreID"] == specimen_df["_centreID"])
         & (experiment_df["_pipeline"] == specimen_df["specimenPipeline"])
         & (experiment_df["specimenID"] == specimen_df["_specimenID"]),
