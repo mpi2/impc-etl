@@ -130,6 +130,7 @@ def normalize_experiments(
     experiment_specimen_df = experiment_df.join(
         specimen_df,
         (experiment_df["_centreID"] == specimen_df["_centreID"])
+        & (experiment_df["_pipeline"] == specimen_df["_pipeline"])
         & (experiment_df["specimenID"] == specimen_df["_specimenID"]),
     )
 
@@ -496,26 +497,22 @@ def get_derived_parameters(
         "simpleParameter", explode("simpleParameter")
     )
     provided_derivations = provided_derivations.join(
-        derived_parameters_ex,
+        derived_parameters,
         (
             (col("pipelineKey") == col("_pipeline"))
             & (col("procedureKey") == col("_procedureID"))
             & (col("simpleParameter._parameterID") == col("parameterKey"))
         ),
         "left_outer",
-    )
+    ).where(col("parameterKey").isNotNull())
 
-    provided_derivations = (
-        provided_derivations.where(col("parameterKey").isNotNull())
-        .select(
-            "unique_id",
-            "pipelineKey",
-            "procedureKey",
-            "parameterKey",
-            "simpleParameter.value",
-        )
-        .dropDuplicates()
-    )
+    provided_derivations = provided_derivations.select(
+        "unique_id",
+        "pipelineKey",
+        "procedureKey",
+        "parameterKey",
+        "simpleParameter.value",
+    ).dropDuplicates()
 
     provided_derivations = provided_derivations.alias("provided")
 
@@ -548,11 +545,19 @@ def get_derived_parameters(
         & (dcc_experiment_df["_pipeline"] == results_df["pipelineKey"]),
         "left_outer",
     )
+
+    simple_parameter_type = None
+
+    for c_type in dcc_experiment_df.dtypes:
+        if c_type[0] == "simpleParameter":
+            simple_parameter_type = c_type[1]
+            break
+    merge_simple_parameters = udf(_merge_simple_parameters, simple_parameter_type)
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "simpleParameter",
         when(
             col("results").isNotNull(),
-            array_union(col("simpleParameter"), col("results")),
+            merge_simple_parameters(col("simpleParameter"), col("results")),
         ).otherwise(col("simpleParameter")),
     )
     dcc_experiment_df = (
@@ -832,21 +837,17 @@ def _check_complete_input(input_list: List[str], input_str: str):
     return complete and "NOT_FOUND" not in input_str
 
 
-def _append_simple_parameter(results: List[Dict], simple_parameter: List):
+def _merge_simple_parameters(simple_parameters: List[Dict], results: [Dict]):
+    merged_array = []
     if results is None:
-        return simple_parameter
-    for result in results:
-        if simple_parameter is not None and result is not None:
-            simple_parameter.append(
-                {
-                    "_parameterID": result["parameter"],
-                    "value": result["value"],
-                    "_sequenceID": None,
-                    "_unit": result["unit"],
-                    "parameterStatus": None,
-                }
-            )
-    return simple_parameter
+        return simple_parameters
+    result_parameter_keys = {result["_parameterID"]: result for result in results}
+    for simple_parameter in simple_parameters:
+        if simple_parameter["_parameterID"] in result_parameter_keys:
+            merged_array.append(result_parameter_keys["_parameterID"])
+        else:
+            merged_array.append(simple_parameter)
+    return merged_array
 
 
 if __name__ == "__main__":
