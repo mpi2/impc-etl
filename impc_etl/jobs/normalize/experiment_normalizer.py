@@ -560,7 +560,7 @@ def get_derived_parameters(
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "simpleParameter",
         when(
-            col("results").isNotNull(),
+            (col("results").isNotNull() & col("simpleParameter").isNotNull()),
             merge_simple_parameters(col("simpleParameter"), col("results")),
         ).otherwise(col("simpleParameter")),
     )
@@ -843,7 +843,7 @@ def _check_complete_input(input_list: List[str], input_str: str):
 
 def _merge_simple_parameters(simple_parameters: List[Dict], results: [Dict]):
     merged_array = []
-    if results is None:
+    if results is None or simple_parameters is None:
         return simple_parameters
     result_parameter_keys = {result["_parameterID"]: result for result in results}
     for simple_parameter in simple_parameters:
