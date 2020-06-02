@@ -423,6 +423,7 @@ def get_derived_parameters(
         ).alias("derivationInputStr")
     )
 
+    # Check if the experiment contains all the parameter values to perform the derivation
     check_complete = experiments_vs_derivations.withColumn(
         "derivationInput", explode("derivationInputs")
     )
@@ -488,38 +489,39 @@ def get_derived_parameters(
         ).otherwise(col("result")),
     )
 
-    provided_derivations = dcc_experiment_df.withColumn(
-        "simpleParameter", explode("simpleParameter")
-    )
-    provided_derivations = provided_derivations.join(
-        derived_parameters,
-        (
-            (col("pipelineKey") == col("_pipeline"))
-            & (col("procedureKey") == col("_procedureID"))
-            & (col("simpleParameter._parameterID") == col("parameterKey"))
-        ),
-        "left_outer",
-    ).where(col("parameterKey").isNotNull())
-
-    provided_derivations = provided_derivations.select(
-        "unique_id",
-        "pipelineKey",
-        "procedureKey",
-        "parameterKey",
-        "simpleParameter.value",
-    ).dropDuplicates()
-
-    provided_derivations = provided_derivations.alias("provided")
-
-    results_df = results_df.join(
-        provided_derivations,
-        ["pipelineKey", "procedureKey", "parameterKey", "unique_id"],
-        "left_outer",
-    )
-    results_df = results_df.withColumn(
-        "result",
-        when(col("result").isNull(), col("provided.value")).otherwise(col("result")),
-    ).drop("provided.*")
+    # Override null results with provided values
+    # provided_derivations = dcc_experiment_df.withColumn(
+    #     "simpleParameter", explode("simpleParameter")
+    # )
+    # provided_derivations = provided_derivations.join(
+    #     derived_parameters,
+    #     (
+    #         (col("pipelineKey") == col("_pipeline"))
+    #         & (col("procedureKey") == col("_procedureID"))
+    #         & (col("simpleParameter._parameterID") == col("parameterKey"))
+    #     ),
+    #     "left_outer",
+    # ).where(col("parameterKey").isNotNull())
+    #
+    # provided_derivations = provided_derivations.select(
+    #     "unique_id",
+    #     "pipelineKey",
+    #     "procedureKey",
+    #     "parameterKey",
+    #     "simpleParameter.value",
+    # ).dropDuplicates()
+    #
+    # provided_derivations = provided_derivations.alias("provided")
+    #
+    # results_df = results_df.join(
+    #     provided_derivations,
+    #     ["pipelineKey", "procedureKey", "parameterKey", "unique_id"],
+    #     "left_outer",
+    # )
+    # results_df = results_df.withColumn(
+    #     "result",
+    #     when(col("result").isNull(), col("provided.value")).otherwise(col("result")),
+    # ).drop("provided.*")
     results_df = results_df.groupBy("unique_id", "pipelineKey", "procedureKey").agg(
         collect_list(
             struct(
