@@ -89,6 +89,7 @@ def normalize_experiments(
 
     specimen_cols = [
         "_centreID",
+        "_pipeline",
         "_specimenID",
         "_colonyID",
         "_isBaseline",
