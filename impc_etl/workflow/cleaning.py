@@ -97,8 +97,7 @@ class ColonyCleaner(SparkSubmitTask):
 
     def requires(self):
         return ColonyExtractor(
-            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-            output_path=self.output_path,
+            imits_tsv_path=self.imits_colonies_tsv_path, output_path=self.output_path
         )
 
     def output(self):

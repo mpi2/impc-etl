@@ -28,6 +28,13 @@ def main(argv):
 
     spark = SparkSession.builder.getOrCreate()
     impress_df = extract_impress(spark, impress_api_url, impress_root_type)
+
+    ontology_terms = get_ontology_terms(impress_api_url, spark)
+    impress_df = impress_df.join(
+        ontology_terms,
+        impress_df["parammpterm.ontologyTermId"] == ontology_terms.termId,
+        "left_outer",
+    )
     impress_df.write.mode("overwrite").parquet(output_path)
 
 
@@ -237,6 +244,15 @@ def get_impress_units(impress_api_url, spark_session):
         requests.get("{}/{}".format(impress_api_url, "unit/list")).text
     )
     unit_index = [{"unitID": key, "unitName": value} for key, value in json_obj.items()]
+    entity_rdd = spark_session.sparkContext.parallelize(unit_index)
+    return spark_session.read.json(entity_rdd)
+
+
+def get_ontology_terms(impress_api_url, spark_session):
+    json_obj: Dict = json.loads(
+        requests.get("{}/{}".format(impress_api_url, "ontologyterm/list")).text
+    )
+    unit_index = [{"termId": key, "termAcc": value} for key, value in json_obj.items()]
     entity_rdd = spark_session.sparkContext.parallelize(unit_index)
     return spark_session.read.json(entity_rdd)
 

@@ -10,6 +10,7 @@ from pyspark import SparkContext
 import re
 from datetime import datetime
 from impc_etl.config import Constants
+from pyspark.sql.utils import AnalysisException
 
 
 EPOCH = datetime.utcfromtimestamp(0)
@@ -75,7 +76,8 @@ def unix_time_millis(dt):
 
 
 def truncate_specimen_id(specimen_id: str) -> str:
-    if specimen_id.endswith("_MRC_Harwell"):
+    specimen_id = str(specimen_id)
+    if str(specimen_id).endswith("_MRC_Harwell"):
         return specimen_id[: specimen_id.rfind("_MRC_Harwell")]
     else:
         return specimen_id[: specimen_id.rfind("_")]
@@ -96,3 +98,11 @@ def map_project_id(centre_id: str):
     return (
         Constants.PROJECT_ID_MAP[centre_id.lower()] if centre_id is not None else None
     )
+
+
+def has_column(df, col):
+    try:
+        df[col]
+        return True
+    except AnalysisException:
+        return False

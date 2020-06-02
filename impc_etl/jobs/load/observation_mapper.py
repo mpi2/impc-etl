@@ -16,11 +16,13 @@ from pyspark.sql.functions import (
     from_unixtime,
     udf,
     array,
-    struct,
+    substring,
 )
 from pyspark.sql.types import StringType, IntegerType, LongType, ArrayType
 from impc_etl.config import Constants
 import datetime
+
+from impc_etl.shared.utils import has_column
 
 
 def main(argv):
@@ -75,6 +77,18 @@ def map_line_columns(line_df: DataFrame):
             )
         ),
     )
+    line_df = line_df.withColumn(
+        "allele_accession_id",
+        when(col("biological_sample_group") == "control", lit(None)).otherwise(
+            when(
+                col("allele.mgiAlleleID").isNull(),
+                concat(
+                    lit("NOT-RELEASED-"),
+                    substring(md5(line_df["allele_symbol"]), 0, 10),
+                ),
+            ).otherwise(col("allele.mgiAlleleID"))
+        ),
+    )
     return line_df
 
 
@@ -97,9 +111,23 @@ def map_experiment_columns(exp_df: DataFrame):
     )
 
     exp_df = exp_df.withColumn(
+        "allele_symbol",
+        when(col("biological_sample_group") == "control", lit(None)).otherwise(
+            when(
+                exp_df["allele.alleleSymbol"].isNull(), exp_df["colony.allele_symbol"]
+            ).otherwise(exp_df["allele.alleleSymbol"])
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
         "allele_accession_id",
         when(col("biological_sample_group") == "control", lit(None)).otherwise(
-            col("allele.mgiAlleleID")
+            when(
+                col("allele.mgiAlleleID").isNull(),
+                concat(
+                    lit("NOT-RELEASED-"), substring(md5(exp_df["allele_symbol"]), 0, 10)
+                ),
+            ).otherwise(col("allele.mgiAlleleID"))
         ),
     )
 
@@ -123,15 +151,6 @@ def map_experiment_columns(exp_df: DataFrame):
             when(
                 col("allele.markerSymbol").isNull(), exp_df["colony.marker_symbol"]
             ).otherwise(col("allele.markerSymbol"))
-        ),
-    )
-
-    exp_df = exp_df.withColumn(
-        "allele_symbol",
-        when(col("biological_sample_group") == "control", lit(None)).otherwise(
-            when(
-                exp_df["allele.alleleSymbol"].isNull(), exp_df["colony.allele_symbol"]
-            ).otherwise(exp_df["allele.alleleSymbol"])
         ),
     )
 
@@ -367,14 +386,13 @@ def resolve_ontology_value(ontological_observation_df, ontology_df):
         ontology_df,
         (
             regexp_extract(col("temp.term"), "(.+:.+):.+", 1)
-            == regexp_replace("onto.ontologyTermId", "_", ":")
-        )
-        & (regexp_extract(col("temp.term"), "(.+):.+:.+", 1) == col("onto.ontologyId")),
+            == col("onto.curie")
+        ),
     )
     id_vs_terms_df = id_vs_terms_df.withColumn(
-        "sub_term_id", col("onto.ontologyTermId")
+        "sub_term_id", col("onto.curie")
     )
-    id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_name", col("onto.label"))
+    id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_name", col("onto.name"))
     id_vs_terms_df = id_vs_terms_df.withColumn(
         "sub_term_description", col("onto.description")
     ).dropDuplicates()
@@ -385,13 +403,13 @@ def resolve_ontology_value(ontological_observation_df, ontology_df):
         collect_list("sub_term_name").alias("sub_term_name"),
         collect_list("sub_term_description").alias("sub_term_description"),
     )
-    id_vs_terms_df = id_vs_terms_df.withColumn(
-        "sub_term_description",
-        udf(
-            lambda l: [item for sublist in l for item in sublist],
-            ArrayType(StringType()),
-        )("sub_term_description"),
-    )
+    # id_vs_terms_df = id_vs_terms_df.withColumn(
+    #     "sub_term_description",
+    #     udf(
+    #         lambda l: [item for sublist in l for item in sublist],
+    #         ArrayType(StringType()),
+    #     )("sub_term_description"),
+    # )
     ontological_observation_df = ontological_observation_df.join(
         id_vs_terms_df, "observation_id", "left_outer"
     )
@@ -678,6 +696,8 @@ def process_parameter_values(
         "seriesMediaParameter",
         "seriesParameter",
     ]
+    if parameter_column not in exp_df.columns:
+        return None
     parameter_observation_df = exp_df
     for column in parameter_cols:
         if column is not parameter_column:
@@ -712,9 +732,14 @@ def process_parameter_values(
     parameter_observation_df = add_impress_info(
         parameter_observation_df, pipeline_df, parameter_column, exp_type=exp_type
     )
-    parameter_observation_df = parameter_observation_df.withColumn(
-        "parameter_status", col(parameter_column + ".parameterStatus")
-    )
+    if has_column(parameter_observation_df, parameter_column + ".parameterStatus"):
+        parameter_observation_df = parameter_observation_df.withColumn(
+            "parameter_status", col(parameter_column + ".parameterStatus")
+        )
+    else:
+        parameter_observation_df = parameter_observation_df.withColumn(
+            "parameter_status", lit(None)
+        )
     return parameter_observation_df
 
 
@@ -754,7 +779,7 @@ def get_body_weight_curve_observations(unidimensional_observations_df: DataFrame
             "experiment_source_id",
             concat(lit(parameter_stable_id + "_"), col("experiment_source_id")),
         )
-        bwt_observations = bwt_observations.withColumn("metadata_group", lit(None))
+        bwt_observations = bwt_observations.withColumn("metadata_group", md5(lit("")))
         bwt_observations = bwt_observations.withColumn(
             "metadata",
             array(concat(lit("Source experiment id: "), col("experiment_id"))),
@@ -904,12 +929,13 @@ def map_experiments_to_observations(
     simple_media_observation_df = process_parameter_values(
         observation_df, pipeline_df, "mediaParameter"
     )
-    simple_media_observation_df = resolve_simple_media_value(
-        simple_media_observation_df
-    )
-    simple_media_observation_df = unify_schema(simple_media_observation_df).select(
-        Constants.OBSERVATION_COLUMNS
-    )
+    if simple_media_observation_df is not None:
+        simple_media_observation_df = resolve_simple_media_value(
+            simple_media_observation_df
+        )
+        simple_media_observation_df = unify_schema(simple_media_observation_df).select(
+            Constants.OBSERVATION_COLUMNS
+        )
 
     ontological_observation_df = process_parameter_values(
         observation_df, pipeline_df, "ontologyParameter"
@@ -944,11 +970,13 @@ def map_experiments_to_observations(
 
     observation_df = (
         simple_observation_df.union(ontological_observation_df)
-        .union(simple_media_observation_df)
         .union(image_record_observation_df)
         .union(time_series_observation_df)
         .union(body_weight_curve_observation_df)
-    ).where(col("parameter_status").isNull())
+    )
+    if simple_media_observation_df is not None:
+        observation_df = observation_df.union(simple_media_observation_df)
+    observation_df = observation_df.where(col("parameter_status").isNull())
     observation_df = format_columns(observation_df).drop_duplicates()
     observation_df = observation_df.withColumn(
         "experiment_source_file",

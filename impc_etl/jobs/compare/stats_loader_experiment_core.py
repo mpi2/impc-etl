@@ -52,18 +52,17 @@ CSV_FIELDS = [
 ]
 
 
-def get_solr_core(solr_url: str, solr_query: str) -> List[Dict]:
+def get_solr_core(solr_url: str, solr_query: str, solr_core_name: str, json_path: str) -> List[Dict]:
     solr = Solr(solr_url)
     results = []
     cursor_mark = "*"
     logger.debug("start")
     done = False
-    json_path = "tests/data/json/experiment_core"
     result_count = 0
 
     while not done:
         current_results = solr.search(
-            solr_query, sort="id asc", rows=25000, cursorMark=cursor_mark
+            solr_query, sort="anatomy_id asc", rows=25000, cursorMark=cursor_mark
         )
         next_cursor_mark = current_results.nextCursorMark
         done = cursor_mark == next_cursor_mark
@@ -77,7 +76,7 @@ def export_to_json(experiments: List[Dict], offset: int, output_path: str):
     i = 0
     for chunk in chunks(experiments, 25000):
         with open(
-            f"{output_path}/experiment_core_{offset + i}_{offset + i + 25000}.json",
+            f"{output_path}/{offset + i}_{offset + i + 25000}.json",
             "w",
             encoding="utf-8",
         ) as f:
@@ -93,7 +92,7 @@ def generate_parquet(json_path, output_path: str):
         ]
     )
     spark = (
-        SparkSession.builder.appName("IMPC_COMPARE_STATS_LOADER_EXP_CORE")
+        SparkSession.builder.appName("IMPC_CORE_DUMP")
         .config(conf=conf)
         .getOrCreate()
     )
@@ -189,19 +188,12 @@ def chunks(l, n):
 
 
 if __name__ == "__main__":
-    europhenome_qry = " AND ".join(
-        [
-            'datasource_name:("EuroPhenome" OR "MGP")',
-            'procedure_stable_id:"M-G-P_016_001"',
-        ]
+    solr_query = "*:*"
+    parquet_path = "/nfs/nobackup/spot/mouseinformatics/federico/snapshot/anatomy_core_parquet"
+    json_path = "/nfs/nobackup/spot/mouseinformatics/federico/snapshot/anatomy_core_json"
+    get_solr_core(
+        "http://ves-ebi-d0.ebi.ac.uk:8986/solr/anatomy/", solr_query, "anatomy", json_path
     )
-    print(europhenome_qry)
-    rbrc_experiments = get_solr_core(
-        "https://www.ebi.ac.uk/mi/impc/solr/experiment/", europhenome_qry
-    )
-
-    parquet_path = "tests/data/parquet/experiment_core"
-    json_path = "tests/data/json/experiment_core"
     generate_parquet(json_path, parquet_path)
     # compare(
     #     "tests/data/parquet/experiment_core",

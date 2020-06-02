@@ -3,6 +3,7 @@ import hashlib
 import math
 from datetime import datetime
 from typing import List, Dict
+from pyspark.sql.utils import AnalysisException
 from pyspark.sql import SparkSession, Window, DataFrame, Column
 from pyspark.sql.functions import (
     explode_outer,
@@ -15,12 +16,15 @@ from pyspark.sql.functions import (
     explode,
     concat_ws,
     collect_list,
-    create_map,
     sort_array,
     collect_set,
     struct,
     max,
     udf,
+    array_union,
+    array,
+    sum,
+    size,
 )
 from pyspark.sql.types import (
     BooleanType,
@@ -30,9 +34,14 @@ from pyspark.sql.types import (
     IntegerType,
     StringType,
     Row,
+    LongType,
 )
 from impc_etl.config import Constants
-from impc_etl.shared.utils import unix_time_millis, extract_parameters_from_derivation
+from impc_etl.shared.utils import (
+    unix_time_millis,
+    extract_parameters_from_derivation,
+    has_column,
+)
 
 
 def main(argv):
@@ -72,18 +81,11 @@ def normalize_experiments(
     """
     experiment_df = spark_session.read.parquet(experiment_parquet_path)
     mouse_df = spark_session.read.parquet(mouse_parquet_path)
-    embryo_df = spark_session.read.parquet(embryo_parquet_path)
+    try:
+        embryo_df = spark_session.read.parquet(embryo_parquet_path)
+    except AnalysisException:
+        embryo_df = None
     pipeline_df = spark_session.read.parquet(pipeline_parquet_path)
-
-    specimen_cols = [
-        "_centreID",
-        "_specimenID",
-        "_colonyID",
-        "_isBaseline",
-        "_productionCentre",
-        "_phenotypingCentre",
-        "phenotyping_consortium",
-    ]
 
     ## THIS IS NOT OK
     experiment_df = experiment_df.withColumn(
@@ -107,9 +109,22 @@ def normalize_experiments(
     )
     ## THIS IS NOT OK
 
+    specimen_cols = [
+        "_centreID",
+        "_specimenID",
+        "_colonyID",
+        "_isBaseline",
+        "_productionCentre",
+        "_phenotypingCentre",
+        "phenotyping_consortium",
+    ]
+
     mouse_specimen_df = mouse_df.select(*specimen_cols)
-    embryo_specimen_df = embryo_df.select(*specimen_cols)
-    specimen_df = mouse_specimen_df.union(embryo_specimen_df)
+    if embryo_df is not None:
+        embryo_specimen_df = embryo_df.select(*specimen_cols)
+        specimen_df = mouse_specimen_df.union(embryo_specimen_df)
+    else:
+        specimen_df = mouse_specimen_df
     experiment_df = experiment_df.alias("experiment")
     specimen_df = specimen_df.alias("specimen")
     experiment_specimen_df = experiment_df.join(
@@ -193,8 +208,17 @@ def generate_metadata_group(
     )
     experiment_metadata = experiment_metadata.join(
         impress_df_required,
-        experiment_metadata["procedureMetadata._parameterID"]
-        == impress_df_required["parameter.parameterKey"],
+        (
+            (experiment_metadata["_pipeline"] == impress_df_required["pipelineKey"])
+            & (
+                experiment_metadata["_procedureID"]
+                == impress_df_required["procedure.procedureKey"]
+            )
+            & (
+                experiment_metadata["procedureMetadata._parameterID"]
+                == impress_df_required["parameter.parameterKey"]
+            )
+        ),
     )
     experiment_metadata = experiment_metadata.withColumn(
         "metadataItem",
@@ -212,9 +236,23 @@ def generate_metadata_group(
     window = Window.partitionBy(
         "unique_id", production_centre_col, phenotyping_centre_col
     ).orderBy("parameter.name")
+
     experiment_metadata_input = experiment_metadata.withColumn(
         "metadataItems", collect_set(col("metadataItem")).over(window)
     )
+
+    experiment_metadata_input = experiment_metadata_input.withColumn(
+        "metadataItems",
+        when(
+            (col(production_centre_col).isNotNull())
+            & (col(production_centre_col) != col(phenotyping_centre_col)),
+            array_union(
+                col("metadataItems"),
+                array(concat(lit("ProductionCenter = "), col(production_centre_col))),
+            ),
+        ).otherwise(col("metadataItems")),
+    )
+
     experiment_metadata = experiment_metadata_input.groupBy(
         "unique_id", production_centre_col, phenotyping_centre_col
     ).agg(
@@ -222,18 +260,7 @@ def generate_metadata_group(
             "metadataGroupList"
         )
     )
-    experiment_metadata = experiment_metadata.withColumn(
-        "metadataGroupList",
-        when(
-            (col(production_centre_col).isNotNull())
-            & (col(production_centre_col) != col(phenotyping_centre_col)),
-            concat(
-                col("metadataGroupList"),
-                lit("::ProductionCenter = "),
-                col(production_centre_col),
-            ),
-        ).otherwise(col("metadataGroupList")),
-    )
+
     experiment_metadata = experiment_metadata.withColumn(
         "metadataGroup", md5(col("metadataGroupList"))
     )
@@ -263,33 +290,32 @@ def generate_metadata(
     )
     experiment_metadata = experiment_metadata.join(
         impress_df_required,
-        experiment_metadata["procedureMetadata._parameterID"]
-        == impress_df_required["parameter.parameterKey"],
+        (
+            (experiment_metadata["_pipeline"] == impress_df_required["pipelineKey"])
+            & (
+                experiment_metadata["_procedureID"]
+                == impress_df_required["procedure.procedureKey"]
+            )
+            & (
+                experiment_metadata["procedureMetadata._parameterID"]
+                == impress_df_required["parameter.parameterKey"]
+            )
+        ),
     )
-    if type == "experiment":
-        output_metadata = StructType(
-            [
-                StructField("_VALUE", StringType(), True),
-                StructField("_parameterID", StringType(), True),
-                StructField("parameterStatus", StringType(), True),
-                StructField("value", StringType(), True),
-            ]
-        )
-    else:
-        output_metadata = StructType(
-            [
-                StructField("_parameterID", StringType(), True),
-                StructField("parameterStatus", StringType(), True),
-                StructField("value", StringType(), True),
-            ]
-        )
-    process_experimenter_id_udf = udf(_process_experimenter_id, output_metadata)
+
+    process_experimenter_id_udf = udf(_process_experimenter_id, StringType())
     experiment_metadata = experiment_metadata.withColumn(
-        "procedureMetadata",
+        "experimenterIdMetadata",
         when(
             lower(col("parameter.name")).contains("experimenter"),
             process_experimenter_id_udf("procedureMetadata"),
-        ).otherwise(col("procedureMetadata").cast(output_metadata)),
+        ).otherwise(lit(None)),
+    )
+    experiment_metadata = experiment_metadata.withColumn(
+        "procedureMetadata.value",
+        when(
+            col("experimenterIdMetadata").isNotNull(), col("experimenterIdMetadata")
+        ).otherwise("procedureMetadata.value"),
     )
     experiment_metadata = experiment_metadata.withColumn(
         "metadataItem",
@@ -338,6 +364,7 @@ def get_derived_parameters(
         & (impress_df["parameter.isDeprecated"] == False)
         & (~impress_df["parameter.derivation"].contains("archived"))
     ).select(
+        "pipelineKey",
         "procedure.procedureKey",
         "parameter.parameterKey",
         "parameter.derivation",
@@ -354,7 +381,9 @@ def get_derived_parameters(
 
     derived_parameters_ex = derived_parameters.withColumn(
         "derivationInput", explode("derivationInputs")
-    ).select("procedureKey", "parameterKey", "derivation", "derivationInput")
+    ).select(
+        "pipelineKey", "procedureKey", "parameterKey", "derivation", "derivationInput"
+    )
     derived_parameters_ex = derived_parameters_ex.where(
         ~col("derivation").contains("unimplemented")
     )
@@ -367,14 +396,16 @@ def get_derived_parameters(
     )
     experiments_vs_derivations = experiments_simple.union(experiments_metadata)
 
-    ## if type == "experiment":
-    experiments_series = _get_inputs_by_parameter_type(
-        dcc_experiment_df, derived_parameters_ex, "seriesParameter"
-    )
-    experiments_vs_derivations = experiments_vs_derivations.union(experiments_series)
+    if has_column(dcc_experiment_df, "seriesParameter"):
+        experiments_series = _get_inputs_by_parameter_type(
+            dcc_experiment_df, derived_parameters_ex, "seriesParameter"
+        )
+        experiments_vs_derivations = experiments_vs_derivations.union(
+            experiments_series
+        )
 
     experiments_vs_derivations = experiments_vs_derivations.groupby(
-        "unique_id", "parameterKey", "derivation"
+        "unique_id", "pipelineKey", "procedureKey", "parameterKey", "derivation"
     ).agg(
         concat_ws(
             ",",
@@ -387,44 +418,51 @@ def get_derived_parameters(
         ).alias("derivationInputStr")
     )
 
-    provided_derivations = dcc_experiment_df.withColumn(
-        "simpleParameter", explode("simpleParameter")
-    )
-    provided_derivations = provided_derivations.join(
-        derived_parameters_ex,
-        col("simpleParameter._parameterID") == col("parameterKey"),
-        "left_outer",
-    )
-    provided_derivations = (
-        provided_derivations.where(col("parameterKey").isNotNull())
-        .select("unique_id", "parameterKey")
-        .dropDuplicates()
-    )
-
-    provided_derivations = provided_derivations.alias("provided")
-
-    experiments_vs_derivations = (
-        experiments_vs_derivations.join(
-            provided_derivations, ["parameterKey", "unique_id"], "left_outer"
-        )
-        .where(col("provided.unique_id").isNull())
-        .drop("provided.*")
-    )
     experiments_vs_derivations = experiments_vs_derivations.join(
-        derived_parameters.drop("derivation"), "parameterKey"
+        derived_parameters.drop("derivation"),
+        ["pipelineKey", "procedureKey", "parameterKey"],
     )
 
+    check_complete = experiments_vs_derivations.withColumn(
+        "derivationInput", explode("derivationInputs")
+    )
+    check_complete = check_complete.withColumn(
+        "isPresent",
+        when(col("derivationInputStr").contains(col("derivationInput")), 1).otherwise(
+            0
+        ),
+    )
+    check_complete = check_complete.groupBy(
+        [
+            "unique_id",
+            "pipelineKey",
+            "procedureKey",
+            "parameterKey",
+            "derivationInputStr",
+        ]
+    ).agg(sum("isPresent").alias("presentColumns"))
+    experiments_vs_derivations = experiments_vs_derivations.join(
+        check_complete,
+        [
+            "unique_id",
+            "pipelineKey",
+            "procedureKey",
+            "parameterKey",
+            "derivationInputStr",
+        ],
+        "left",
+    )
     experiments_vs_derivations = experiments_vs_derivations.withColumn(
         "isComplete",
-        udf(_check_complete_input, BooleanType())(
-            "derivationInputs", "derivationInputStr"
-        ),
+        (size(col("derivationInputs")) == col("presentColumns"))
+        & (~col("derivationInputStr").contains("NOT_FOUND")),
     )
     complete_derivations = experiments_vs_derivations.where(
         col("isComplete") == True
     ).withColumn(
         "derivationInputStr", concat("derivation", lit(";"), "derivationInputStr")
     )
+    complete_derivations = complete_derivations.dropDuplicates()
     complete_derivations.createOrReplaceTempView("complete_derivations")
     spark.udf.registerJavaFunction(
         "phenodcc_derivator",
@@ -433,34 +471,79 @@ def get_derived_parameters(
     )
     results_df = spark.sql(
         """
-           SELECT unique_id, procedureKey, parameterKey,
+           SELECT unique_id, pipelineKey, procedureKey, parameterKey,
                   derivationInputStr, phenodcc_derivator(derivationInputStr) as result
            FROM complete_derivations
         """
     )
 
     results_df = results_df.join(
-        derived_parameters, ["parameterKey", "procedureKey"], "left"
+        derived_parameters, ["parameterKey", "procedureKey", "pipelineKey"], "left"
     )
 
     # Filtering not valid numeric values
-    results_df = results_df.where(
-        (col("result") != "NaN") & (col("result") != "Infinity")
+    results_df = results_df.withColumn(
+        "result",
+        when(
+            (col("result") == "NaN")
+            | (col("result") == "Infinity")
+            | (col("result") == "-Infinity"),
+            lit(None),
+        ).otherwise(col("result")),
     )
 
-    results_df = results_df.groupBy("unique_id", "procedureKey").agg(
+    provided_derivations = dcc_experiment_df.withColumn(
+        "simpleParameter", explode("simpleParameter")
+    )
+    provided_derivations = provided_derivations.join(
+        derived_parameters,
+        (
+            (col("pipelineKey") == col("_pipeline"))
+            & (col("procedureKey") == col("_procedureID"))
+            & (col("simpleParameter._parameterID") == col("parameterKey"))
+        ),
+        "left_outer",
+    ).where(col("parameterKey").isNotNull())
+
+    provided_derivations = provided_derivations.select(
+        "unique_id",
+        "pipelineKey",
+        "procedureKey",
+        "parameterKey",
+        "simpleParameter.value",
+    ).dropDuplicates()
+
+    provided_derivations = provided_derivations.alias("provided")
+
+    results_df = results_df.join(
+        provided_derivations,
+        ["pipelineKey", "procedureKey", "parameterKey", "unique_id"],
+        "left_outer",
+    )
+    results_df = results_df.withColumn(
+        "result",
+        when(col("result").isNull(), col("provided.value")).otherwise(col("result")),
+    ).drop("provided.*")
+    results_df = results_df.groupBy("unique_id", "pipelineKey", "procedureKey").agg(
         collect_list(
-            create_map(
-                lit("parameter"),
-                results_df["parameterKey"],
-                lit("value"),
-                results_df["result"],
-                lit("unit"),
-                results_df["unitName"],
+            struct(
+                results_df["parameterKey"].alias("_parameterID"),
+                lit(None).cast(LongType()).alias("_sequenceID"),
+                results_df["unitName"].alias("_unit"),
+                lit(None).cast(StringType()).alias("parameterStatus"),
+                results_df["result"].alias("value"),
             )
         ).alias("results")
     )
     results_df = results_df.withColumnRenamed("unique_id", "unique_id_result")
+
+    dcc_experiment_df = dcc_experiment_df.join(
+        results_df,
+        (dcc_experiment_df["unique_id"] == results_df["unique_id_result"])
+        & (dcc_experiment_df["_procedureID"] == results_df["procedureKey"])
+        & (dcc_experiment_df["_pipeline"] == results_df["pipelineKey"]),
+        "left_outer",
+    )
 
     simple_parameter_type = None
 
@@ -468,21 +551,13 @@ def get_derived_parameters(
         if c_type[0] == "simpleParameter":
             simple_parameter_type = c_type[1]
             break
-
-    dcc_experiment_df = dcc_experiment_df.join(
-        results_df,
-        (dcc_experiment_df["unique_id"] == results_df["unique_id_result"])
-        & (dcc_experiment_df["_procedureID"] == results_df["procedureKey"]),
-        "left_outer",
-    )
+    merge_simple_parameters = udf(_merge_simple_parameters, simple_parameter_type)
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "simpleParameter",
         when(
-            results_df["results"].isNotNull(),
-            udf(_append_simple_parameter, simple_parameter_type)(
-                "results", "simpleParameter"
-            ),
-        ).otherwise(col("simpleParameter").cast(simple_parameter_type)),
+            (col("results").isNotNull() & col("simpleParameter").isNotNull()),
+            merge_simple_parameters(col("simpleParameter"), col("results")),
+        ).otherwise(col("simpleParameter")),
     )
     dcc_experiment_df = (
         dcc_experiment_df.drop("complete_derivations.unique_id")
@@ -504,6 +579,7 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     )
     weight_observations = weight_observations.select(
         "specimenID",
+        "_centreID",
         col("unique_id").alias("sourceExperimentId"),
         col("_dateOfExperiment").alias("weightDate"),
         col("simpleParameter._parameterID").alias("weightParameterID"),
@@ -511,7 +587,9 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     )
     weight_observations = weight_observations.where(col("weightValue").isNotNull())
     weight_observations = weight_observations.join(
-        mice_df, weight_observations["specimenID"] == mice_df["_specimenID"]
+        mice_df,
+        (weight_observations["specimenID"] == mice_df["_specimenID"])
+        & (weight_observations["_centreID"] == mice_df["_centreID"]),
     )
     weight_observations = weight_observations.withColumn(
         "weightDaysOld", udf(calculate_age_in_days, StringType())("weightDate", "_DOB")
@@ -570,7 +648,8 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
     mice_df_a = mice_df.alias("mice")
     dcc_experiment_df = experiment_df_a.join(
         mice_df_a,
-        experiment_df_a["specimenID"] == mice_df_a["_specimenID"],
+        (experiment_df_a["specimenID"] == mice_df["_specimenID"])
+        & (experiment_df_a["_centreID"] == mice_df["_centreID"]),
         "left_outer",
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
@@ -685,18 +764,22 @@ def _process_experimenter_id(experimenter_metadata: Row):
         experimenter_metadata["value"] = (
             hashlib.md5(experimenter_metadata["value"].encode()).hexdigest()[:5].upper()
         )
-    return experimenter_metadata
+    return experimenter_metadata["value"]
 
 
 def _get_inputs_by_parameter_type(
     dcc_experiment_df, derived_parameters_ex, parameter_type
 ):
     experiments_by_type = dcc_experiment_df.select(
-        "unique_id", "_procedureID", explode(parameter_type).alias(parameter_type)
+        "unique_id",
+        "_pipeline",
+        "_procedureID",
+        explode(parameter_type).alias(parameter_type),
     )
     if parameter_type == "seriesParameter":
         experiments_by_type = experiments_by_type.select(
             "unique_id",
+            "_pipeline",
             "_procedureID",
             col(parameter_type + "._parameterID").alias("_parameterID"),
             explode(parameter_type + ".value").alias("value"),
@@ -705,8 +788,8 @@ def _get_inputs_by_parameter_type(
             "value", concat(col("value._incrementValue"), lit("|"), col("value._VALUE"))
         )
         experiments_by_type = experiments_by_type.groupBy(
-            "unique_id", "_parameterID", "_procedureID"
-        ).agg(concat_ws("$", collect_list("value")).alias("value"))
+            "unique_id", "_pipeline", "_parameterID", "_procedureID"
+        ).agg(concat_ws("$", collect_set("value")).alias("value"))
 
     parameter_id_column = (
         parameter_type + "._parameterID"
@@ -727,6 +810,7 @@ def _get_inputs_by_parameter_type(
                 experiments_by_type["_procedureID"]
                 == derived_parameters_ex.procedureKey
             )
+            & (experiments_by_type["_pipeline"] == derived_parameters_ex.pipelineKey)
         ),
     )
     experiments_vs_derivations: DataFrame = experiments_vs_derivations.withColumn(
@@ -734,9 +818,11 @@ def _get_inputs_by_parameter_type(
         concat(col("derivationInput"), lit("$"), col(parameter_value_column)),
     )
     return (
-        experiments_vs_derivations.drop(parameter_type, "_procedureID")
+        experiments_vs_derivations.drop(parameter_type, "_procedureID", "_pipeline")
         if parameter_type != "seriesParameter"
-        else experiments_vs_derivations.drop("value", "_parameterID", "_procedureID")
+        else experiments_vs_derivations.drop(
+            "value", "_parameterID", "_procedureID", "_pipeline"
+        )
     )
 
 
@@ -747,21 +833,18 @@ def _check_complete_input(input_list: List[str], input_str: str):
     return complete and "NOT_FOUND" not in input_str
 
 
-def _append_simple_parameter(results: List[Dict], simple_parameter: List):
-    if results is None:
-        return simple_parameter
-    for result in results:
-        if simple_parameter is not None and result is not None:
-            simple_parameter.append(
-                {
-                    "_parameterID": result["parameter"],
-                    "value": result["value"],
-                    "_sequenceID": None,
-                    "_unit": result["unit"],
-                    "parameterStatus": None,
-                }
-            )
-    return simple_parameter
+def _merge_simple_parameters(simple_parameters: List[Dict], results: [Dict]):
+    merged_array = []
+    if results is None or simple_parameters is None:
+        return simple_parameters
+    result_parameter_keys = {result["_parameterID"]: result for result in results}
+    for simple_parameter in simple_parameters:
+        parameter_id = simple_parameter["_parameterID"]
+        if parameter_id in result_parameter_keys:
+            merged_array.append(result_parameter_keys[parameter_id])
+        else:
+            merged_array.append(simple_parameter)
+    return merged_array
 
 
 if __name__ == "__main__":

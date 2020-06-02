@@ -1,5 +1,4 @@
 click
-owlready2
 requests
 findspark
 luigi
@@ -7,3 +6,4 @@ pysolr
 hdfs
 webhdfs
 wheel
+# pronto
