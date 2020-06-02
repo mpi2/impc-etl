@@ -151,10 +151,26 @@ def normalize_experiments(
     experiment_df = experiment_specimen_df.select(experiment_columns)
 
     experiment_df = get_derived_parameters(spark_session, experiment_df, pipeline_df)
+    count_derivation = experiment_df.where(
+        (experiment_df._experimentID == "IMPC_DXA_001_2017-08-31")
+        & (experiment_df.specimenID == "IM0082_f0040M")
+    ).count()
 
     experiment_df = get_associated_body_weight(experiment_df, mouse_df)
+    count_bw = experiment_df.where(
+        (experiment_df._experimentID == "IMPC_DXA_001_2017-08-31")
+        & (experiment_df.specimenID == "IM0082_f0040M")
+    ).count()
 
     experiment_df = generate_age_information(experiment_df, mouse_df)
+    count_age = experiment_df.where(
+        (experiment_df._experimentID == "IMPC_DXA_001_2017-08-31")
+        & (experiment_df.specimenID == "IM0082_f0040M")
+    ).count()
+    print(f"AFTER DERIVATION {count_derivation}")
+    print(f"AFTER BW {count_bw}")
+    print(f"AFTER AGE {count_age}")
+    raise ValueError
     return experiment_df
 
 
@@ -523,7 +539,7 @@ def get_derived_parameters(
         provided_derivations,
         ["pipelineKey", "procedureKey", "parameterKey", "unique_id"],
         "left_outer",
-    ).where(col("provided.unique_id").isNotNull())
+    )
     results_df = results_df.withColumn(
         "result",
         when(col("result").isNull(), col("provided.value")).otherwise(col("result")),
@@ -574,7 +590,9 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
         )
     )
     weight_observations = weight_observations.select(
+        "_pipeline",
         "specimenID",
+        "_centreID",
         col("unique_id").alias("sourceExperimentId"),
         col("_dateOfExperiment").alias("weightDate"),
         col("simpleParameter._parameterID").alias("weightParameterID"),
@@ -582,7 +600,10 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     )
     weight_observations = weight_observations.where(col("weightValue").isNotNull())
     weight_observations = weight_observations.join(
-        mice_df, weight_observations["specimenID"] == mice_df["_specimenID"]
+        mice_df,
+        (weight_observations["specimenID"] == mice_df["_specimenID"])
+        & (weight_observations["_centreID"] == mice_df["_centreID"])
+        & (weight_observations["_pipeline"] == mice_df["_pipeline"]),
     )
     weight_observations = weight_observations.withColumn(
         "weightDaysOld", udf(calculate_age_in_days, StringType())("weightDate", "_DOB")
@@ -641,7 +662,9 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
     mice_df_a = mice_df.alias("mice")
     dcc_experiment_df = experiment_df_a.join(
         mice_df_a,
-        experiment_df_a["specimenID"] == mice_df_a["_specimenID"],
+        (experiment_df_a["specimenID"] == mice_df["_specimenID"])
+        & (experiment_df_a["_centreID"] == mice_df["_centreID"])
+        & (experiment_df_a["_pipeline"] == mice_df["_pipeline"]),
         "left_outer",
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
