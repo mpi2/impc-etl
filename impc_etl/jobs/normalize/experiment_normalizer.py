@@ -151,26 +151,10 @@ def normalize_experiments(
     experiment_df = experiment_specimen_df.select(experiment_columns)
 
     experiment_df = get_derived_parameters(spark_session, experiment_df, pipeline_df)
-    count_derivation = experiment_df.where(
-        (experiment_df._experimentID == "IMPC_DXA_001_2017-08-31")
-        & (experiment_df.specimenID == "IM0082_f0040M")
-    ).count()
 
     experiment_df = get_associated_body_weight(experiment_df, mouse_df)
-    count_bw = experiment_df.where(
-        (experiment_df._experimentID == "IMPC_DXA_001_2017-08-31")
-        & (experiment_df.specimenID == "IM0082_f0040M")
-    ).count()
 
     experiment_df = generate_age_information(experiment_df, mouse_df)
-    count_age = experiment_df.where(
-        (experiment_df._experimentID == "IMPC_DXA_001_2017-08-31")
-        & (experiment_df.specimenID == "IM0082_f0040M")
-    ).count()
-    print(f"AFTER DERIVATION {count_derivation}")
-    print(f"AFTER BW {count_bw}")
-    print(f"AFTER AGE {count_age}")
-    raise ValueError
     return experiment_df
 
 
