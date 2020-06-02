@@ -133,9 +133,9 @@ def normalize_experiments(
     )
     experiment_specimen_df = experiment_df.join(
         specimen_pipeline_renamed,
-        (experiment_df["_centreID"] == specimen_df["_centreID"])
-        & (experiment_df["_pipeline"] == specimen_df["specimenPipeline"])
-        & (experiment_df["specimenID"] == specimen_df["_specimenID"]),
+        (experiment_df["_centreID"] == specimen_pipeline_renamed["_centreID"])
+        & (experiment_df["_pipeline"] == specimen_pipeline_renamed["specimenPipeline"])
+        & (experiment_df["specimenID"] == specimen_pipeline_renamed["_specimenID"]),
     )
 
     experiment_specimen_df = drop_null_colony_id(experiment_specimen_df)
