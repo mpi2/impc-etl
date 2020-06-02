@@ -847,8 +847,9 @@ def _merge_simple_parameters(simple_parameters: List[Dict], results: [Dict]):
         return simple_parameters
     result_parameter_keys = {result["_parameterID"]: result for result in results}
     for simple_parameter in simple_parameters:
-        if simple_parameter["_parameterID"] in result_parameter_keys:
-            merged_array.append(result_parameter_keys["_parameterID"])
+        parameter_id = simple_parameter["_parameterID"]
+        if parameter_id in result_parameter_keys:
+            merged_array.append(parameter_id)
         else:
             merged_array.append(simple_parameter)
     return merged_array
