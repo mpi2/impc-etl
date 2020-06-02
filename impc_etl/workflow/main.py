@@ -43,6 +43,7 @@ class ImpcOpenStats(luigi.Task):
 
 
 class ImpcDataDrivenAnnotationLoader(SparkSubmitTask):
+    app = "impc_etl/jobs/load/data_driven_annotation.py"
     name = "IMPC_Data_Driven_Annotation_Loader"
     output_path = luigi.Parameter()
 
