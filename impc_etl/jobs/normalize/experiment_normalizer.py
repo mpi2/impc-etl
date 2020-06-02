@@ -359,10 +359,12 @@ def get_derived_parameters(
     impress_df: DataFrame,
     type="experiment",
 ) -> DataFrame:
+    # Filter impress DataFrame to get only the derived parameters, filtering out archive and unimplemented
     derived_parameters: DataFrame = impress_df.where(
         (impress_df["parameter.isDerived"] == True)
         & (impress_df["parameter.isDeprecated"] == False)
         & (~impress_df["parameter.derivation"].contains("archived"))
+        & (~impress_df["parameter.derivation"].contains("unimplemented"))
     ).select(
         "pipelineKey",
         "procedure.procedureKey",
@@ -372,6 +374,7 @@ def get_derived_parameters(
         "unitName",
     ).dropDuplicates()
 
+    # Use a Python UDF to extract the keys of the parameters involved in the derivations as a list
     extract_parameters_from_derivation_udf = udf(
         extract_parameters_from_derivation, ArrayType(StringType())
     )
@@ -379,15 +382,17 @@ def get_derived_parameters(
         "derivationInputs", extract_parameters_from_derivation_udf("derivation")
     )
 
+    # Explode the derivation inputs
     derived_parameters_ex = derived_parameters.withColumn(
         "derivationInput", explode("derivationInputs")
     ).select(
         "pipelineKey", "procedureKey", "parameterKey", "derivation", "derivationInput"
     )
-    derived_parameters_ex = derived_parameters_ex.where(
-        ~col("derivation").contains("unimplemented")
-    )
 
+    # Compute the derivation inputs for simple, procedure and series parameters
+    # Each input is has the form <PARAMETER_KEY>$<PARAMETER_VALUE>
+    # If the parameter has increments the inputs will have the form
+    # <PARAMETER_KEY>$INCREMENT_1$<PARAMETER_VALUE>|INCREMENT_1$<PARAMETER_VALUE>
     experiments_simple = _get_inputs_by_parameter_type(
         dcc_experiment_df, derived_parameters_ex, "simpleParameter"
     )
@@ -403,7 +408,7 @@ def get_derived_parameters(
         experiments_vs_derivations = experiments_vs_derivations.union(
             experiments_series
         )
-
+    # Collect the derivation inputs in a comma separated list
     experiments_vs_derivations = experiments_vs_derivations.groupby(
         "unique_id", "pipelineKey", "procedureKey", "parameterKey", "derivation"
     ).agg(
@@ -416,11 +421,6 @@ def get_derived_parameters(
                 ).otherwise(experiments_vs_derivations["derivationInput"])
             ),
         ).alias("derivationInputStr")
-    )
-
-    experiments_vs_derivations = experiments_vs_derivations.join(
-        derived_parameters.drop("derivation"),
-        ["pipelineKey", "procedureKey", "parameterKey"],
     )
 
     check_complete = experiments_vs_derivations.withColumn(
@@ -450,7 +450,7 @@ def get_derived_parameters(
             "parameterKey",
             "derivationInputStr",
         ],
-        "left",
+        "left_outer",
     )
     experiments_vs_derivations = experiments_vs_derivations.withColumn(
         "isComplete",
@@ -475,10 +475,6 @@ def get_derived_parameters(
                   derivationInputStr, phenodcc_derivator(derivationInputStr) as result
            FROM complete_derivations
         """
-    )
-
-    results_df = results_df.join(
-        derived_parameters, ["parameterKey", "procedureKey", "pipelineKey"], "left"
     )
 
     # Filtering not valid numeric values
