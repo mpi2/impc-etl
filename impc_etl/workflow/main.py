@@ -61,3 +61,13 @@ class ImpcDataDrivenAnnotationLoader(SparkSubmitTask):
 
     def app_options(self):
         return [self.input()[0].path, self.output_path]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(
+            f"{self.output_path}annotated_observations_parquet"
+        )
