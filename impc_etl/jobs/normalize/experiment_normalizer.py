@@ -133,7 +133,7 @@ def normalize_experiments(
         (experiment_df["_centreID"] == specimen_df["_centreID"])
         & (experiment_df["_pipeline"] == specimen_df["_pipeline"])
         & (experiment_df["specimenID"] == specimen_df["_specimenID"]),
-    )
+    ).drop("specimen._pipeline")
 
     experiment_specimen_df = drop_null_colony_id(experiment_specimen_df)
 
