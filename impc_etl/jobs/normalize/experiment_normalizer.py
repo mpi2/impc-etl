@@ -87,17 +87,6 @@ def normalize_experiments(
         embryo_df = None
     pipeline_df = spark_session.read.parquet(pipeline_parquet_path)
 
-    specimen_cols = [
-        "_centreID",
-        "_pipeline",
-        "_specimenID",
-        "_colonyID",
-        "_isBaseline",
-        "_productionCentre",
-        "_phenotypingCentre",
-        "phenotyping_consortium",
-    ]
-
     ## THIS IS NOT OK
     experiment_df = experiment_df.withColumn(
         "_pipeline",
@@ -119,6 +108,17 @@ def normalize_experiments(
         ).otherwise(col("_pipeline")),
     )
     ## THIS IS NOT OK
+
+    specimen_cols = [
+        "_centreID",
+        "_pipeline",
+        "_specimenID",
+        "_colonyID",
+        "_isBaseline",
+        "_productionCentre",
+        "_phenotypingCentre",
+        "phenotyping_consortium",
+    ]
 
     mouse_specimen_df = mouse_df.select(*specimen_cols)
     if embryo_df is not None:
