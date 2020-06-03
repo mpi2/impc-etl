@@ -1,6 +1,6 @@
 import sys
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import udf, when, lit, md5, concat, col
+from pyspark.sql.functions import udf, when, lit, md5, concat, col, regexp_replace
 from pyspark.sql.types import BooleanType, StringType
 from impc_etl.config import Constants
 from impc_etl.shared import utils
@@ -65,6 +65,8 @@ def clean_lines(line_df: DataFrame):
         .transform(map_centre_ids)
         .transform(map_project_ids)
         .transform(drop_skipped_procedures)
+        .transform(truncate_europhenome_colony_ids)
+        .transform(parse_europhenome_colony_xml_entities)
         .transform(map_3i_project_ids)
         .transform(prefix_3i_experiment_ids)
         .transform(drop_null_centre_id)
@@ -123,6 +125,46 @@ def truncate_europhenome_specimen_ids(dcc_df: DataFrame) -> DataFrame:
             (dcc_df["_dataSource"] == "europhenome"),
             udf(utils.truncate_specimen_id, StringType())(dcc_df["specimenID"]),
         ).otherwise(dcc_df["specimenID"]),
+    )
+    return dcc_df
+
+
+def truncate_europhenome_colony_ids(dcc_df: DataFrame) -> DataFrame:
+    """
+    Some EuroPhenome Colony Ids have a suffix that should be truncated
+    :param dcc_df:
+    :return:
+    """
+    dcc_df = dcc_df.withColumn(
+        "_colonyID",
+        when(
+            (dcc_df["_dataSource"] == "europhenome"),
+            udf(utils.truncate_colony_id, StringType())(dcc_df["_colonyID"]),
+        ).otherwise(dcc_df["_colonyID"]),
+    )
+    return dcc_df
+
+
+def parse_europhenome_colony_xml_entities(dcc_df: DataFrame) -> DataFrame:
+    """
+    Some EuroPhenome Colony Ids have &lt; &gt; values that have to be replaced
+    :param dcc_df:
+    :return:
+    """
+    dcc_df = dcc_df.withColumn(
+        "_colonyID",
+        when(
+            (dcc_df["_dataSource"] == "europhenome"),
+            regexp_replace("_colonyID", "&lt;", "<"),
+        ).otherwise(dcc_df["_colonyID"]),
+    )
+
+    dcc_df = dcc_df.withColumn(
+        "_colonyID",
+        when(
+            (dcc_df["_dataSource"] == "europhenome"),
+            regexp_replace("_colonyID", "&gt;", ">"),
+        ).otherwise(dcc_df["_colonyID"]),
     )
     return dcc_df
 
