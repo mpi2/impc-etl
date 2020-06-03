@@ -384,14 +384,9 @@ def resolve_ontology_value(ontological_observation_df, ontology_df):
     )
     id_vs_terms_df = id_vs_terms_df.join(
         ontology_df,
-        (
-            regexp_extract(col("temp.term"), "(.+:.+):.+", 1)
-            == col("onto.curie")
-        ),
+        (regexp_extract(col("temp.term"), "(.+:.+):.+", 1) == col("onto.curie")),
     )
-    id_vs_terms_df = id_vs_terms_df.withColumn(
-        "sub_term_id", col("onto.curie")
-    )
+    id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_id", col("onto.curie"))
     id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_name", col("onto.name"))
     id_vs_terms_df = id_vs_terms_df.withColumn(
         "sub_term_description", col("onto.description")
@@ -985,6 +980,44 @@ def map_experiments_to_observations(
     observation_df = observation_df.withColumn(
         "specimen_source_file",
         regexp_extract(col("specimen_source_file"), "(.*\/)(.*\/.*\.xml)", idx=2),
+    )
+    for life_stage in Constants.PROCEDURE_LIFE_STAGE_MAPPER:
+        life_stage_name = life_stage["lifeStage"]
+        observation_df = observation_df.withColumn(
+            "life_stage_name",
+            when(
+                (
+                    col("procedure_stable_id").rlike(
+                        "|".join([f"({ proc })" for proc in life_stage["procedures"]])
+                    )
+                    | (col("developmental_stage_name") == life_stage_name)
+                ),
+                lit(life_stage_name),
+            ).otherwise(lit(None)),
+        )
+        observation_df = observation_df.withColumn(
+            "life_stage_acc",
+            when(
+                (
+                    col("procedure_stable_id").rlike(
+                        "|".join([f"({ proc })" for proc in life_stage["procedures"]])
+                    )
+                    | (col("developmental_stage_name") == life_stage_name)
+                ),
+                lit(life_stage["lifeStageAcc"]),
+            ).otherwise(lit(None)),
+        )
+    observation_df = observation_df.withColumn(
+        "life_stage_name",
+        when((col("life_stage_name").isNull()), lit("Early adult")).otherwise(
+            col("life_stage_name")
+        ),
+    )
+    observation_df = observation_df.withColumn(
+        "life_stage_acc",
+        when((col("life_stage_acc").isNull()), lit("IMPCLS:0005")).otherwise(
+            col("life_stage_acc")
+        ),
     )
     return observation_df
 

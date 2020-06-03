@@ -431,6 +431,8 @@ class Constants:
         "external_sample_id",
         "developmental_stage_name",
         "developmental_stage_acc",
+        "life_stage_name",
+        "life_stage_acc",
         "datasource_name",
         "age_in_days",
         "date_of_birth",
@@ -584,5 +586,38 @@ class Constants:
         {
             "europhenomeParameter": "ESLIM_004_001_701",
             "europhenomeDerivation": "areaUnderCurve('ESLIM_004_001_002')",
+        },
+    ]
+
+    PROCEDURE_LIFE_STAGE_MAPPER = [
+        {
+            "lifeStage": "E9.5",
+            "lifeStageAcc": "IMPCLS:0001",
+            "procedures": ["GEL_", "EVL_", "HPL_", "EOL_", "EML_", "HEL_", "GPL_"],
+        },
+        {
+            "lifeStage": "E12.5",
+            "lifeStageAcc": "IMPCLS:0002",
+            "procedures": ["GEM_", "ELZ_", "GPM_", "EVM_"],
+        },
+        {
+            "lifeStage": "E15.5",
+            "lifeStageAcc": "IMPCLS:0003",
+            "procedures": ["EVO", "GPO", "MAA_", "EMO_", "GEO_"],
+        },
+        {
+            "lifeStage": "E18.5",
+            "lifeStageAcc": "IMPCLS:0004",
+            "procedures": ["EVO", "GPO", "MAA_", "EMO_", "GEO_"],
+        },
+        {
+            "lifeStage": "Middle aged adult",
+            "lifeStageAcc": "IMPCLS:0006",
+            "procedures": ["IP_"],
+        },
+        {
+            "lifeStage": "Late adult",
+            "lifeStageAcc": "IMPCLS:0007",
+            "procedures": ["LA_"],
         },
     ]

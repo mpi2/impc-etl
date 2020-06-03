@@ -529,7 +529,6 @@ def get_derived_parameters(
         ).alias("results")
     )
     results_df = results_df.withColumnRenamed("unique_id", "unique_id_result")
-    results_df = results_df.alias("resultsDF")
 
     dcc_experiment_df = dcc_experiment_df.join(
         results_df,
@@ -553,8 +552,13 @@ def get_derived_parameters(
             merge_simple_parameters(col("simpleParameter"), col("results")),
         ).otherwise(col("simpleParameter")),
     )
-    dcc_experiment_df = dcc_experiment_df.drop("complete_derivations.unique_id").drop(
-        "resultsDF.*"
+    dcc_experiment_df = dcc_experiment_df.drop(
+        "complete_derivations.unique_id",
+        "unique_id_result",
+        "pipelineKey",
+        "procedureKey",
+        "parameterKey",
+        "results",
     )
 
     return dcc_experiment_df
@@ -826,25 +830,14 @@ def _check_complete_input(input_list: List[str], input_str: str):
 
 
 def _merge_simple_parameters(simple_parameters: List[Dict], results: [Dict]):
-    merged_array = []
     if results is None or simple_parameters is None:
         return simple_parameters
     result_parameter_keys = {result["_parameterID"]: result for result in results}
     for simple_parameter in simple_parameters:
         parameter_id = simple_parameter["_parameterID"]
-        if parameter_id in result_parameter_keys:
-            merged_array.append(result_parameter_keys[parameter_id])
-        else:
-            merged_array.append(simple_parameter)
-    simple_parameter_keys = {
-        simple_parameter["_parameterID"]: simple_parameter
-        for simple_parameter in simple_parameters
-    }
-    for result in results:
-        parameter_id = result["_parameterID"]
-        if parameter_id not in simple_parameter_keys:
-            merged_array.append(result)
-    return merged_array
+        if parameter_id not in result_parameter_keys:
+            results.append(simple_parameter)
+    return results
 
 
 if __name__ == "__main__":
