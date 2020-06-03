@@ -431,8 +431,6 @@ class Constants:
         "external_sample_id",
         "developmental_stage_name",
         "developmental_stage_acc",
-        "life_stage_name",
-        "life_stage_acc",
         "datasource_name",
         "age_in_days",
         "date_of_birth",

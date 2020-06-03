@@ -379,12 +379,20 @@ def get_derived_parameters(
     )
     impress_df = impress_df.drop("europhenome.*")
 
+    europhenome_parameters = [
+        derivation["europhenomeParameter"]
+        for derivation in Constants.EUROPHENOME_DERIVATIONS
+    ]
+
     # Filter impress DataFrame to get only the derived parameters, filtering out archive and unimplemented
     derived_parameters: DataFrame = impress_df.where(
-        (impress_df["parameter.isDerived"] == True)
-        & (impress_df["parameter.isDeprecated"] == False)
-        & (~impress_df["parameter.derivation"].contains("archived"))
-        & (~impress_df["parameter.derivation"].contains("unimplemented"))
+        (
+            (impress_df["parameter.isDerived"] == True)
+            & (impress_df["parameter.isDeprecated"] == False)
+            & (~impress_df["parameter.derivation"].contains("archived"))
+            & (~impress_df["parameter.derivation"].contains("unimplemented"))
+        )
+        | (impress_df["parameter.parameterKey"].isin(europhenome_parameters))
     ).select(
         "pipelineKey",
         "procedure.procedureKey",
