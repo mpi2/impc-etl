@@ -524,23 +524,65 @@ class Constants:
         "IMPC_FER_009_001",
     ]
 
-    EUROPHENOME_DERIVATIONS = {
+    EUROPHENOME_DERIVATIONS = [
         # ESLIM_011 derivations
-        "ESLIM_011_001_701": "mul(div(sub('ESLIM_011_001_006', 'ESLIM_011_001_007'), 'ESLIM_011_001_006'), 100)",
-        "ESLIM_011_001_702": "mul(div(sub('ESLIM_011_001_006', 'ESLIM_011_001_008'), 'ESLIM_011_001_006'), 100)",
-        "ESLIM_011_001_703": "mul(div(sub('ESLIM_011_001_006', 'ESLIM_011_001_009'), 'ESLIM_011_001_006'), 100)",
-        "ESLIM_011_001_704": "mul(div(sub('ESLIM_011_001_006', 'ESLIM_011_001_010'), 'ESLIM_011_001_006'), 100)",
-        "ESLIM_011_001_705": "mul(div(sub('ESLIM_011_001_006', div(sum('ESLIM_011_001_007','ESLIM_011_001_008','ESLIM_011_001_009','ESLIM_011_001_010'),4)),'ESLIM_011_001_006'),100)",
+        {
+            "europhenomeParameter": "ESLIM_011_001_701",
+            "europhenomeDerivation": "mul(div(sub('ESLIM_011_001_006', 'ESLIM_011_001_007'), 'ESLIM_011_001_006'), 100)",
+        },
+        {
+            "europhenomeParameter": "ESLIM_011_001_702",
+            "europhenomeDerivation": "mul(div(sub('ESLIM_011_001_006', 'ESLIM_011_001_008'), 'ESLIM_011_001_006'), 100)",
+        },
+        {
+            "europhenomeParameter": "ESLIM_011_001_703",
+            "europhenomeDerivation": "mul(div(sub('ESLIM_011_001_006', 'ESLIM_011_001_009'), 'ESLIM_011_001_006'), 100)",
+        },
+        {
+            "europhenomeParameter": "ESLIM_011_001_704",
+            "europhenomeDerivation": "mul(div(sub('ESLIM_011_001_006', 'ESLIM_011_001_010'), 'ESLIM_011_001_006'), 100)",
+        },
+        {
+            "europhenomeParameter": "ESLIM_011_001_705",
+            "europhenomeDerivation": "mul(div(sub('ESLIM_011_001_006', div(sum('ESLIM_011_001_007','ESLIM_011_001_008','ESLIM_011_001_009','ESLIM_011_001_010'),4)),'ESLIM_011_001_006'),100)",
+        },
         # ESLIM_009 derivations
-        "ESLIM_009_001_701": "meanOfIncrements('ESLIM_009_001_001')",
-        "ESLIM_009_001_702": "meanOfIncrements('ESLIM_009_001_002')",
-        "ESLIM_009_001_703": " div(meanOfIncrements('ESLIM_009_001_001'), 'ESLIM_009_001_003')",
-        "ESLIM_009_001_704": " div(meanOfIncrements('ESLIM_009_001_002'), 'ESLIM_009_001_003')",
+        {
+            "europhenomeParameter": "ESLIM_009_001_701",
+            "europhenomeDerivation": "meanOfIncrements('ESLIM_009_001_001')",
+        },
+        {
+            "europhenomeParameter": "ESLIM_009_001_702",
+            "europhenomeDerivation": "meanOfIncrements('ESLIM_009_001_002')",
+        },
+        {
+            "europhenomeParameter": "ESLIM_009_001_703",
+            "europhenomeDerivation": "div(meanOfIncrements('ESLIM_009_001_001'), 'ESLIM_009_001_003')",
+        },
+        {
+            "europhenomeParameter": "ESLIM_009_001_704",
+            "europhenomeDerivation": "div(meanOfIncrements('ESLIM_009_001_002'), 'ESLIM_009_001_003')",
+        },
         # ESLIM_005 derivations
-        "ESLIM_005_001_701": "div('ESLIM_005_001_005', 'ESLIM_005_001_001')",
-        "ESLIM_005_001_702": "div('ESLIM_005_001_003', 'ESLIM_005_001_001')",
-        "ESLIM_005_001_703": "div('ESLIM_005_001_002', 'ESLIM_005_001_001')",
-        "ESLIM_005_001_704": "div('ESLIM_005_001_005', 'ESLIM_005_001_004')",
+        {
+            "europhenomeParameter": "ESLIM_005_001_701",
+            "europhenomeDerivation": "div('ESLIM_005_001_005', 'ESLIM_005_001_001')",
+        },
+        {
+            "europhenomeParameter": "ESLIM_005_001_702",
+            "europhenomeDerivation": "div('ESLIM_005_001_003', 'ESLIM_005_001_001')",
+        },
+        {
+            "europhenomeParameter": "ESLIM_005_001_703",
+            "europhenomeDerivation": "div('ESLIM_005_001_002', 'ESLIM_005_001_001')",
+        },
+        {
+            "europhenomeParameter": "ESLIM_005_001_704",
+            "europhenomeDerivation": "div('ESLIM_005_001_005', 'ESLIM_005_001_004')",
+        },
         # ESLIM_004 derivations
-        "ESLIM_004_001_701": "areaUnderCurve('ESLIM_004_001_002')",
-    }
+        {
+            "europhenomeParameter": "ESLIM_004_001_701",
+            "europhenomeDerivation": "areaUnderCurve('ESLIM_004_001_002')",
+        },
+    ]

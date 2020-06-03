@@ -359,6 +359,26 @@ def get_derived_parameters(
     impress_df: DataFrame,
     type="experiment",
 ) -> DataFrame:
+    # Add missing europhenome derivations
+    europhenome_derivations_json = spark.sparkContext.parallelize(
+        Constants.EUROPHENOME_DERIVATIONS
+    )
+    europhenome_derivations_df = spark.read.json(europhenome_derivations_json)
+    europhenome_derivations_df = europhenome_derivations_df.alias("europhenome")
+    impress_df = impress_df.join(
+        europhenome_derivations_df,
+        impress_df["parameter.parameterKey"]
+        == europhenome_derivations_df["europhenomeParameter"],
+        "left_outer",
+    )
+    impress_df = impress_df.withColumn(
+        "parameter.derivation",
+        when(
+            col("europhenomeDerivation").isNotNull(), col("europhenomeDerivation")
+        ).otherwise(col("parameter.derivation")),
+    )
+    impress_df = impress_df.drop("europhenome.*")
+
     # Filter impress DataFrame to get only the derived parameters, filtering out archive and unimplemented
     derived_parameters: DataFrame = impress_df.where(
         (impress_df["parameter.isDerived"] == True)
@@ -421,6 +441,11 @@ def get_derived_parameters(
                 ).otherwise(experiments_vs_derivations["derivationInput"])
             ),
         ).alias("derivationInputStr")
+    )
+
+    experiments_vs_derivations = experiments_vs_derivations.join(
+        derived_parameters.drop("derivation"),
+        ["pipelineKey", "procedureKey", "parameterKey"],
     )
 
     # Check if the experiment contains all the parameter values to perform the derivation
@@ -488,40 +513,10 @@ def get_derived_parameters(
             lit(None),
         ).otherwise(col("result")),
     )
-
-    # Override null results with provided values
-    # provided_derivations = dcc_experiment_df.withColumn(
-    #     "simpleParameter", explode("simpleParameter")
-    # )
-    # provided_derivations = provided_derivations.join(
-    #     derived_parameters,
-    #     (
-    #         (col("pipelineKey") == col("_pipeline"))
-    #         & (col("procedureKey") == col("_procedureID"))
-    #         & (col("simpleParameter._parameterID") == col("parameterKey"))
-    #     ),
-    #     "left_outer",
-    # ).where(col("parameterKey").isNotNull())
-    #
-    # provided_derivations = provided_derivations.select(
-    #     "unique_id",
-    #     "pipelineKey",
-    #     "procedureKey",
-    #     "parameterKey",
-    #     "simpleParameter.value",
-    # ).dropDuplicates()
-    #
-    # provided_derivations = provided_derivations.alias("provided")
-    #
-    # results_df = results_df.join(
-    #     provided_derivations,
-    #     ["pipelineKey", "procedureKey", "parameterKey", "unique_id"],
-    #     "left_outer",
-    # )
-    # results_df = results_df.withColumn(
-    #     "result",
-    #     when(col("result").isNull(), col("provided.value")).otherwise(col("result")),
-    # ).drop("provided.*")
+    results_df = results_df.where(col("result").isNotNull())
+    results_df = results_df.join(
+        derived_parameters, ["pipelineKey", "procedureKey", "parameterKey"]
+    )
     results_df = results_df.groupBy("unique_id", "pipelineKey", "procedureKey").agg(
         collect_list(
             struct(
@@ -534,6 +529,7 @@ def get_derived_parameters(
         ).alias("results")
     )
     results_df = results_df.withColumnRenamed("unique_id", "unique_id_result")
+    results_df = results_df.alias("resultsDF")
 
     dcc_experiment_df = dcc_experiment_df.join(
         results_df,
@@ -557,10 +553,8 @@ def get_derived_parameters(
             merge_simple_parameters(col("simpleParameter"), col("results")),
         ).otherwise(col("simpleParameter")),
     )
-    dcc_experiment_df = (
-        dcc_experiment_df.drop("complete_derivations.unique_id")
-        .drop("unique_id_result")
-        .drop("results")
+    dcc_experiment_df = dcc_experiment_df.drop("complete_derivations.unique_id").drop(
+        "resultsDF.*"
     )
 
     return dcc_experiment_df
@@ -842,6 +836,14 @@ def _merge_simple_parameters(simple_parameters: List[Dict], results: [Dict]):
             merged_array.append(result_parameter_keys[parameter_id])
         else:
             merged_array.append(simple_parameter)
+    simple_parameter_keys = {
+        simple_parameter["_parameterID"]: simple_parameter
+        for simple_parameter in simple_parameters
+    }
+    for result in results:
+        parameter_id = result["_parameterID"]
+        if parameter_id not in simple_parameter_keys:
+            merged_array.append(result)
     return merged_array
 
 
