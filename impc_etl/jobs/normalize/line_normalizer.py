@@ -41,10 +41,12 @@ def normalize_lines(
         "_project", line_colony_df["phenotyping_consortium"]
     )
     line_colony_df = re_map_europhenome_experiments(line_colony_df)
-    line_colony_df = generate_metadata_group(line_colony_df, pipeline_df, type="line")
-    line_colony_df = generate_metadata(line_colony_df, pipeline_df, type="line")
+    line_colony_df = generate_metadata_group(
+        line_colony_df, pipeline_df, exp_type="line"
+    )
+    line_colony_df = generate_metadata(line_colony_df, pipeline_df, exp_type="line")
     line_colony_df = get_derived_parameters(
-        spark_session, line_colony_df, pipeline_df, type="line"
+        spark_session, line_colony_df, pipeline_df, exp_type="line"
     )
     line_colony_df = generate_allelic_composition(line_colony_df)
 

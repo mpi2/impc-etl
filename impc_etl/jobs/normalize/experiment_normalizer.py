@@ -197,7 +197,7 @@ def override_europhenome_datasource(dcc_df: DataFrame) -> DataFrame:
 
 
 def generate_metadata_group(
-    experiment_specimen_df: DataFrame, impress_df: DataFrame, type="experiment"
+    experiment_specimen_df: DataFrame, impress_df: DataFrame, exp_type="experiment"
 ) -> DataFrame:
     experiment_metadata = experiment_specimen_df.withColumn(
         "procedureMetadata", explode("procedureMetadata")
@@ -227,7 +227,7 @@ def generate_metadata_group(
             concat(col("parameter.name"), lit(" = "), col("procedureMetadata.value")),
         ).otherwise(concat(col("parameter.name"), lit(" = "), lit("null"))),
     )
-    if type == "experiment":
+    if exp_type == "experiment":
         production_centre_col = "_productionCentre"
         phenotyping_centre_col = "_phenotypingCentre"
     else:
@@ -280,7 +280,7 @@ def generate_metadata_group(
 
 
 def generate_metadata(
-    experiment_specimen_df: DataFrame, impress_df: DataFrame, type="experiment"
+    experiment_specimen_df: DataFrame, impress_df: DataFrame, exp_type="experiment"
 ) -> DataFrame:
     experiment_metadata = experiment_specimen_df.withColumn(
         "procedureMetadata", explode("procedureMetadata")
@@ -328,7 +328,7 @@ def generate_metadata(
             ).otherwise(lit("null")),
         ),
     )
-    if type == "experiment":
+    if exp_type == "experiment":
         production_centre_col = "_productionCentre"
         phenotyping_centre_col = "_phenotypingCentre"
     else:
