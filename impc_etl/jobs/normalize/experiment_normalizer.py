@@ -365,19 +365,6 @@ def get_derived_parameters(
     )
     europhenome_derivations_df = spark.read.json(europhenome_derivations_json)
     europhenome_derivations_df = europhenome_derivations_df.alias("europhenome")
-    impress_df = impress_df.join(
-        europhenome_derivations_df,
-        impress_df["parameter.parameterKey"]
-        == europhenome_derivations_df["europhenomeParameter"],
-        "left_outer",
-    )
-    impress_df = impress_df.withColumn(
-        "parameter.derivation",
-        when(
-            col("europhenomeDerivation").isNotNull(), col("europhenomeDerivation")
-        ).otherwise(col("parameter.derivation")),
-    )
-    impress_df = impress_df.drop("europhenome.*")
 
     europhenome_parameters = [
         derivation["europhenomeParameter"]
@@ -402,10 +389,24 @@ def get_derived_parameters(
         "unitName",
     ).dropDuplicates()
 
+    derived_parameters = derived_parameters.join(
+        europhenome_derivations_df,
+        col("parameterKey") == europhenome_derivations_df["europhenomeParameter"],
+        "left_outer",
+    )
+    derived_parameters = derived_parameters.withColumn(
+        "derivation",
+        when(
+            col("europhenomeDerivation").isNotNull(), col("europhenomeDerivation")
+        ).otherwise(col("derivation")),
+    )
+    derived_parameters = derived_parameters.drop("europhenome.*")
+
     # Use a Python UDF to extract the keys of the parameters involved in the derivations as a list
     extract_parameters_from_derivation_udf = udf(
         extract_parameters_from_derivation, ArrayType(StringType())
     )
+
     derived_parameters = derived_parameters.withColumn(
         "derivationInputs", extract_parameters_from_derivation_udf("derivation")
     )
@@ -644,7 +645,8 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     mice_df_a = mice_df.alias("mice")
     dcc_experiment_df = experiment_df_a.join(
         mice_df_a,
-        dcc_experiment_df["specimenID"] == mice_df["_specimenID"],
+        (dcc_experiment_df["specimenID"] == mice_df["_specimenID"])
+        & (dcc_experiment_df["_centreID"] == mice_df["_centreID"]),
         "left_outer",
     )
     get_associated_body_weight_udf = udf(_get_closest_weight, output_weight_schema)

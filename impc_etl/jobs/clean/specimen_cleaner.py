@@ -11,6 +11,7 @@ def main(argv):
     spark_session = SparkSession.builder.getOrCreate()
     specimen_df = spark_session.read.parquet(input_path)
     specimen_clean_df = clean_specimens(specimen_df)
+    specimen_clean_df = specimen_clean_df.dropDuplicates(["_specimenID", "_centreID"])
     specimen_clean_df.write.mode("overwrite").parquet(output_path)
 
 
