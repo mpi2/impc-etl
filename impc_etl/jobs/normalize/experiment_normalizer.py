@@ -536,11 +536,13 @@ def get_derived_parameters(
         )
     else:
         result_return = struct(
-            lit(None).cast(StringType()).alias("_VALUE"),
-            results_df["parameterKey"].alias("_parameterID"),
-            results_df["unitName"].alias("_unit"),
-            lit(None).cast(StringType()).alias("parameterStatus"),
-            results_df["result"].alias("value"),
+            *[
+                lit(None).cast(StringType()).alias("_VALUE"),
+                results_df["parameterKey"].alias("_parameterID"),
+                results_df["unitName"].alias("_unit"),
+                lit(None).cast(StringType()).alias("parameterStatus"),
+                results_df["result"].alias("value"),
+            ]
         )
     results_df = results_df.groupBy("unique_id", "pipelineKey", "procedureKey").agg(
         collect_list(result_return).alias("results")
@@ -847,14 +849,25 @@ def _check_complete_input(input_list: List[str], input_str: str):
 
 
 def _merge_simple_parameters(simple_parameters: List[Dict], results: [Dict]):
+    merged_array = []
     if results is None or simple_parameters is None:
         return simple_parameters
     result_parameter_keys = {result["_parameterID"]: result for result in results}
     for simple_parameter in simple_parameters:
         parameter_id = simple_parameter["_parameterID"]
-        if parameter_id not in result_parameter_keys:
-            results.append(simple_parameter)
-    return results
+        if parameter_id in result_parameter_keys:
+            merged_array.append(result_parameter_keys[parameter_id])
+        else:
+            merged_array.append(simple_parameter)
+    simple_parameter_keys = {
+        simple_parameter["_parameterID"]: simple_parameter
+        for simple_parameter in simple_parameters
+    }
+    for result in results:
+        parameter_id = result["_parameterID"]
+        if parameter_id not in simple_parameter_keys:
+            merged_array.append(result)
+    return merged_array
 
 
 if __name__ == "__main__":
