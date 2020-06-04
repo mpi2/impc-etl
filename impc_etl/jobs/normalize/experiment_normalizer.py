@@ -357,7 +357,7 @@ def get_derived_parameters(
     spark: SparkSession,
     dcc_experiment_df: DataFrame,
     impress_df: DataFrame,
-    type="experiment",
+    exp_type="experiment",
 ) -> DataFrame:
     # Add missing europhenome derivations
     europhenome_derivations_json = spark.sparkContext.parallelize(
@@ -525,16 +525,26 @@ def get_derived_parameters(
     results_df = results_df.join(
         derived_parameters, ["pipelineKey", "procedureKey", "parameterKey"]
     )
+
+    if exp_type == "experiment":
+        result_return = struct(
+            results_df["parameterKey"].alias("_parameterID"),
+            lit(None).cast(LongType()).alias("_sequenceID"),
+            results_df["unitName"].alias("_unit"),
+            lit(None).cast(StringType()).alias("parameterStatus"),
+            results_df["result"].alias("value"),
+        )
+    else:
+        result_return = struct(
+            lit(None).cast(StringType()).alias("_VALUE"),
+            results_df["parameterKey"].alias("_parameterID"),
+            lit(None).cast(LongType()).alias("_sequenceID"),
+            results_df["unitName"].alias("_unit"),
+            lit(None).cast(StringType()).alias("parameterStatus"),
+            results_df["result"].alias("value"),
+        )
     results_df = results_df.groupBy("unique_id", "pipelineKey", "procedureKey").agg(
-        collect_list(
-            struct(
-                results_df["parameterKey"].alias("_parameterID"),
-                lit(None).cast(LongType()).alias("_sequenceID"),
-                results_df["unitName"].alias("_unit"),
-                lit(None).cast(StringType()).alias("parameterStatus"),
-                results_df["result"].alias("value"),
-            )
-        ).alias("results")
+        collect_list(result_return).alias("results")
     )
     results_df = results_df.withColumnRenamed("unique_id", "unique_id_result")
 
