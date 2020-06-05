@@ -2,7 +2,7 @@ all: default
 
 default: clean devDeps build
 
-submit-h:
+submit-h: clean devDeps build
 	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' YARN_CONF_DIR=/homes/federico/impc-etl/spark-2.4.5-bin-hadoop2.7/yarn-conf-hh/ luigi --module impc_etl.workflow.main $(task) --workers 3
 
 submit-lsf: clean devDeps build

@@ -25,6 +25,7 @@ from pyspark.sql.functions import (
     array,
     sum,
     size,
+    expr,
 )
 from pyspark.sql.types import (
     BooleanType,
@@ -458,58 +459,50 @@ def get_derived_parameters(
     )
 
     # Check if the experiment contains all the parameter values to perform the derivation
-    check_complete = experiments_vs_derivations.withColumn(
+    experiments_vs_derivations = experiments_vs_derivations.withColumn(
         "derivationInput", explode("derivationInputs")
     )
-    check_complete = check_complete.withColumn(
+    experiments_vs_derivations = experiments_vs_derivations.withColumn(
         "isPresent",
         when(col("derivationInputStr").contains(col("derivationInput")), 1).otherwise(
             0
         ),
     )
-    check_complete = check_complete.groupBy(
+    experiments_vs_derivations = experiments_vs_derivations.groupBy(
         [
             "unique_id",
             "pipelineKey",
             "procedureKey",
             "parameterKey",
             "derivationInputStr",
+            "derivationInputs",
+            "derivation",
         ]
     ).agg(sum("isPresent").alias("presentColumns"))
-    experiments_vs_derivations = experiments_vs_derivations.join(
-        check_complete,
-        [
-            "unique_id",
-            "pipelineKey",
-            "procedureKey",
-            "parameterKey",
-            "derivationInputStr",
-        ],
-        "left_outer",
-    )
+
     experiments_vs_derivations = experiments_vs_derivations.withColumn(
         "isComplete",
-        (size(col("derivationInputs")) == col("presentColumns"))
-        & (~col("derivationInputStr").contains("NOT_FOUND")),
+        when(
+            (size(col("derivationInputs")) == col("presentColumns"))
+            & (~col("derivationInputStr").contains("NOT_FOUND")),
+            lit(True),
+        ).otherwise(lit(False)),
     )
-    complete_derivations = experiments_vs_derivations.where(
-        col("isComplete") == True
-    ).withColumn(
+    complete_derivations = experiments_vs_derivations.where(col("isComplete") == True)
+    complete_derivations = complete_derivations.withColumn(
         "derivationInputStr", concat("derivation", lit(";"), "derivationInputStr")
     )
-    complete_derivations = complete_derivations.dropDuplicates()
-    complete_derivations.createOrReplaceTempView("complete_derivations")
     spark.udf.registerJavaFunction(
         "phenodcc_derivator",
         "org.mousephenotype.dcc.derived.parameters.SparkDerivator",
         StringType(),
     )
-    results_df = spark.sql(
-        """
-           SELECT unique_id, pipelineKey, procedureKey, parameterKey,
-                  derivationInputStr, phenodcc_derivator(derivationInputStr) as result
-           FROM complete_derivations
-        """
+
+    results_df = complete_derivations.select(
+        "unique_id", "pipelineKey", "procedureKey", "parameterKey", "derivationInputStr"
+    ).dropDuplicates()
+    results_df = results_df.withColumn(
+        "result", expr("phenodcc_derivator(derivationInputStr)")
     )
 
     # Filtering not valid numeric values
