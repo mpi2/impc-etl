@@ -16,6 +16,7 @@ from pyspark.sql.functions import (
     explode,
     concat_ws,
     collect_list,
+    collect_list,
     sort_array,
     collect_set,
     struct,
@@ -484,7 +485,7 @@ def get_derived_parameters(
         "isComplete",
         when(
             (size(col("derivationInputs")) == col("presentColumns"))
-            & (~col("derivationInputStr").contains("NOT_FOUND")),
+            & (~(col("derivationInputStr").contains("NOT_FOUND"))),
             lit(True),
         ).otherwise(lit(False)),
     )
@@ -499,10 +500,21 @@ def get_derived_parameters(
     )
 
     results_df = complete_derivations.select(
-        "unique_id", "pipelineKey", "procedureKey", "parameterKey", "derivationInputStr"
+        "unique_id",
+        "pipelineKey",
+        "procedureKey",
+        "parameterKey",
+        "presentColumns",
+        "isComplete",
+        "derivationInputStr",
     ).dropDuplicates()
     results_df = results_df.withColumn(
-        "result", expr("phenodcc_derivator(derivationInputStr)")
+        "result",
+        when(
+            (col("isComplete") == True)
+            & (~(col("derivationInputStr").contains("NOT_FOUND"))),
+            expr("phenodcc_derivator(derivationInputStr)"),
+        ).otherwise(lit(None)),
     )
 
     # Filtering not valid numeric values

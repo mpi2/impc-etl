@@ -65,6 +65,8 @@ data:            ##@data Download test data
 	cp ${INPUT_DATA_PATH}/imits/allele2Entries.tsv ${DATA_PATH}/imits/
 	cp ${INPUT_DATA_PATH}/imits/productEntries.tsv ${DATA_PATH}/imits/
 	cp -r ${INPUT_DATA_PATH}/3i/latest/*.xml ${DATA_PATH}/xml/3i/
+	cd ${DATA_PATH}/xml/3i/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
+	cd ${DATA_PATH}/xml/3i/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<\/ns2:/<\//g' {} \;
 	cp -r ${INPUT_DATA_PATH}/europhenome/2013-10-31/*.xml ${DATA_PATH}/xml/europhenome/
 	cp -r ${INPUT_DATA_PATH}/europhenome/2013-05-20/*.xml ${DATA_PATH}/xml/europhenome/
 	cd ${DATA_PATH}/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;

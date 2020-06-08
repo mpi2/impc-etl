@@ -325,6 +325,7 @@ def add_observation_type(experiments_df):
 
 def resolve_simple_value(exp_df, pipeline_df):
     options_df = pipeline_df.select("option.*").distinct().alias("options")
+    exp_df = exp_df.withColumn("sequence_id", "simpleParameter._sequenceID")
     exp_df = exp_df.join(
         options_df,
         (
@@ -986,26 +987,36 @@ def map_experiments_to_observations(
         observation_df = observation_df.withColumn(
             "life_stage_name",
             when(
-                (
-                    col("procedure_stable_id").rlike(
-                        "|".join([f"({ proc })" for proc in life_stage["procedures"]])
-                    )
-                    | (col("developmental_stage_name") == life_stage_name)
-                ),
-                lit(life_stage_name),
-            ).otherwise(lit(None)),
+                col("life_stage_name").isNull(),
+                when(
+                    (
+                        col("procedure_stable_id").rlike(
+                            "|".join(
+                                [f"({ proc })" for proc in life_stage["procedures"]]
+                            )
+                        )
+                        | (col("developmental_stage_name") == life_stage_name)
+                    ),
+                    lit(life_stage_name),
+                ).otherwise(lit(None)),
+            ).otherwise(col("life_stage_name")),
         )
         observation_df = observation_df.withColumn(
             "life_stage_acc",
             when(
-                (
-                    col("procedure_stable_id").rlike(
-                        "|".join([f"({ proc })" for proc in life_stage["procedures"]])
-                    )
-                    | (col("developmental_stage_name") == life_stage_name)
-                ),
-                lit(life_stage["lifeStageAcc"]),
-            ).otherwise(lit(None)),
+                col("life_stage_acc").isNull(),
+                when(
+                    (
+                        col("procedure_stable_id").rlike(
+                            "|".join(
+                                [f"({ proc })" for proc in life_stage["procedures"]]
+                            )
+                        )
+                        | (col("developmental_stage_name") == life_stage_name)
+                    ),
+                    lit(life_stage["lifeStageAcc"]),
+                ).otherwise(lit(None)),
+            ).otherwise(col("life_stage_acc")),
         )
     observation_df = observation_df.withColumn(
         "life_stage_name",
