@@ -511,8 +511,12 @@ def get_derived_parameters(
     results_df = results_df.withColumn(
         "result",
         when(
-            (col("isComplete") == True)
-            & (~(col("derivationInputStr").contains("NOT_FOUND"))),
+            (
+                (col("isComplete") == True)
+                & (~(col("derivationInputStr").contains("NOT_FOUND")))
+            )
+            | (col("derivationInputStr").contains("retinaCombined"))
+            | (col("derivationInputStr").contains("ifElse")),
             expr("phenodcc_derivator(derivationInputStr)"),
         ).otherwise(lit(None)),
     )

@@ -37,16 +37,16 @@ def main(argv):
         upperBound=2646323,
     )
     stats_df = stats_df.withColumnRenamed("statpacket", "json")
-    # json_df = spark.read.json(
-    #     stats_df.rdd.map(
-    #         lambda row: json.dumps(
-    #             json.loads(row.json, object_pairs_hook=object_pairs_hook)
-    #             # normalized_phenstat_fields(
-    #             #     json.loads(row.json, object_pairs_hook=object_pairs_hook)
-    #             # )
-    #         )
-    #     )
-    # )
+    json_df = spark.read.json(
+        stats_df.rdd.map(
+            lambda row: json.dumps(
+                json.loads(row.json, object_pairs_hook=object_pairs_hook)
+                # normalized_phenstat_fields(
+                #     json.loads(row.json, object_pairs_hook=object_pairs_hook)
+                # )
+            )
+        )
+    )
     stats_df.write.mode("overwrite").parquet(output_path)
 
 
