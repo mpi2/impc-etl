@@ -302,7 +302,7 @@ def add_observation_type(experiments_df):
         "observation_type",
         when(
             (col("pipeline.parameter.isOption") == True)
-            | (col("pipeline.parameter.parameterKey") == "IMPC_EYE_092_001"),
+            | (col("pipeline.parameter.parameterKey").contains("EYE_092_001")),
             lit("categorical"),
         ).otherwise(
             when(
@@ -325,7 +325,8 @@ def add_observation_type(experiments_df):
 
 def resolve_simple_value(exp_df, pipeline_df):
     options_df = pipeline_df.select("option.*").distinct().alias("options")
-    exp_df = exp_df.withColumn("sequence_id", "simpleParameter._sequenceID")
+    if has_column(exp_df, "simpleParameter._sequenceID"):
+        exp_df = exp_df.withColumn("sequence_id", col("simpleParameter._sequenceID"))
     exp_df = exp_df.join(
         options_df,
         (
@@ -982,6 +983,8 @@ def map_experiments_to_observations(
         "specimen_source_file",
         regexp_extract(col("specimen_source_file"), "(.*\/)(.*\/.*\.xml)", idx=2),
     )
+    observation_df = observation_df.withColumn("life_stage_name", lit(None))
+    observation_df = observation_df.withColumn("life_stage_acc", lit(None))
     for life_stage in Constants.PROCEDURE_LIFE_STAGE_MAPPER:
         life_stage_name = life_stage["lifeStage"]
         observation_df = observation_df.withColumn(

@@ -27,25 +27,27 @@ def main(argv):
     spark = SparkSession.builder.getOrCreate()
     stats_df = spark.read.jdbc(
         jdbc_connection_str,
-        table=f'"{data_release_version}"',
+        table=f"""(
+                    SELECT *, row_number() OVER () as rnum
+                    FROM public."DR11WithMPTERMsV2") AS tmp""",
         properties=properties,
         numPartitions=5000,
-        column="id",
+        column="rnum",
         lowerBound=1,
-        upperBound=2460170,
+        upperBound=2646323,
     )
     stats_df = stats_df.withColumnRenamed("statpacket", "json")
-    json_df = spark.read.json(
-        stats_df.rdd.map(
-            lambda row: json.dumps(
-                json.loads(row.json, object_pairs_hook=object_pairs_hook)
-                # normalized_phenstat_fields(
-                #     json.loads(row.json, object_pairs_hook=object_pairs_hook)
-                # )
-            )
-        )
-    )
-    json_df.write.mode("overwrite").parquet(output_path)
+    # json_df = spark.read.json(
+    #     stats_df.rdd.map(
+    #         lambda row: json.dumps(
+    #             json.loads(row.json, object_pairs_hook=object_pairs_hook)
+    #             # normalized_phenstat_fields(
+    #             #     json.loads(row.json, object_pairs_hook=object_pairs_hook)
+    #             # )
+    #         )
+    #     )
+    # )
+    stats_df.write.mode("overwrite").parquet(output_path)
 
 
 def object_pairs_hook(lit):
