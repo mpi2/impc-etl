@@ -983,8 +983,10 @@ def map_experiments_to_observations(
         "specimen_source_file",
         regexp_extract(col("specimen_source_file"), "(.*\/)(.*\/.*\.xml)", idx=2),
     )
-    observation_df = observation_df.withColumn("life_stage_name", lit(None))
-    observation_df = observation_df.withColumn("life_stage_acc", lit(None))
+    observation_df = observation_df.withColumn(
+            "life_stage_name", lit(None));
+    observation_df = observation_df.withColumn(
+            "life_stage_acc", lit(None));
     for life_stage in Constants.PROCEDURE_LIFE_STAGE_MAPPER:
         life_stage_name = life_stage["lifeStage"]
         observation_df = observation_df.withColumn(

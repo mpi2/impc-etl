@@ -484,6 +484,7 @@ class Constants:
         "data_point": StringType(),
         "text_value": StringType(),
         "category": StringType(),
+        "sequence_id": StringType(),
         "sub_term_name": ArrayType(StringType()),
         "sub_term_id": ArrayType(StringType()),
         "sub_term_description": ArrayType(StringType()),
