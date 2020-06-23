@@ -51,7 +51,7 @@ def main(argv):
                     [1]: Pipeline parquet path
                     [2]: Observations parquet
                     [3]: Ontology parquet
-                    [4]: EMAP-EMAPA csv
+                    [4]: EMAP-EMAPA tsv
                     [5]: EMAPA metadata csv
                     [6]: MA metadata csv
                     [7]: Output Path
@@ -59,7 +59,7 @@ def main(argv):
     pipeline_parquet_path = argv[1]
     observations_parquet_path = argv[2]
     ontology_parquet_path = argv[3]
-    emap_emapa_csv_path = argv[4]
+    emap_emapa_tsv_path = argv[4]
     emapa_metadata_csv_path = argv[5]
     ma_metadata_csv_path = argv[6]
     output_path = argv[7]
@@ -68,7 +68,11 @@ def main(argv):
     pipeline_df = spark.read.parquet(pipeline_parquet_path)
     observations_df = spark.read.parquet(observations_parquet_path)
     ontology_df = spark.read.parquet(ontology_parquet_path)
-    emap_emapa_df = spark.read.csv(emap_emapa_csv_path, header=True)
+    emap_emapa_df = spark.read.csv(emap_emapa_tsv_path, header=True, sep="\t")
+    for col_name in emap_emapa_df.columns:
+        emap_emapa_df = emap_emapa_df.withColumn(
+            col_name.lower().replace(" ", "_"), col(col_name)
+        )
     emapa_metadata_df = spark.read.csv(emapa_metadata_csv_path, header=True)
     ma_metadata_df = spark.read.csv(ma_metadata_csv_path, header=True)
 

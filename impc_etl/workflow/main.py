@@ -29,8 +29,15 @@ class ImpcOpenStats(luigi.Task):
     openstats_db_password = luigi.Parameter()
     data_release_version = luigi.Parameter()
     use_cache = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
     ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -41,8 +48,15 @@ class ImpcOpenStats(luigi.Task):
                 openstats_db_password=self.openstats_db_password,
                 data_release_version=self.data_release_version,
                 use_cache=self.use_cache,
+                dcc_xml_path=self.dcc_xml_path,
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
                 ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
                 output_path=self.output_path,
             )
         ]
