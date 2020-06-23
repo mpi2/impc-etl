@@ -97,7 +97,7 @@ def main(argv):
                     [1]: Input Path
                     [2]: Output Path
     """
-    output_path = argv[1]
+    output_path = argv[2]
 
     spark = SparkSession.builder.getOrCreate()
     ontology_df = extract_ontology_terms(spark)

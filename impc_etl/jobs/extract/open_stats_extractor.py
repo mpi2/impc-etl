@@ -1,4 +1,6 @@
 import sys
+from typing import Dict
+
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import from_json, col
 import json
@@ -9,14 +11,13 @@ def main(argv):
     """
     DCC Extractor job runner
     :param list argv: the list elements should be:
-                    [1]: Input Path
-                    [2]: Output Path
     """
     jdbc_connection_str = argv[1]
     db_user = argv[2]
     db_password = argv[3]
     data_release_version = argv[4]
-    output_path = argv[5]
+    use_cache = argv[5]
+    output_path = argv[6]
 
     properties = {
         "user": db_user,
@@ -25,52 +26,439 @@ def main(argv):
     }
 
     spark = SparkSession.builder.getOrCreate()
-    stats_df = spark.read.jdbc(
-        jdbc_connection_str,
-        table=f"""(
+    if use_cache != "true":
+        stats_df = spark.read.jdbc(
+            jdbc_connection_str,
+            table=f"""(
                     SELECT *, row_number() OVER () as rnum
-                    FROM public."DR11WithMPTERMsV2") AS tmp""",
-        properties=properties,
-        numPartitions=5000,
-        column="rnum",
-        lowerBound=1,
-        upperBound=2646323,
-    )
-    stats_df = stats_df.withColumnRenamed("statpacket", "json")
-    json_df = spark.read.json(
-        stats_df.rdd.map(
-            lambda row: json.dumps(
-                json.loads(row.json, object_pairs_hook=object_pairs_hook)
-                # normalized_phenstat_fields(
-                #     json.loads(row.json, object_pairs_hook=object_pairs_hook)
-                # )
-            )
+                    FROM public."dr12withmptermsv2") AS tmp""",
+            properties=properties,
+            numPartitions=5000,
+            column="rnum",
+            lowerBound=1,
+            upperBound=2744750,
         )
-    )
-    stats_df.write.mode("overwrite").parquet(output_path)
+        stats_df = stats_df.withColumnRenamed("statpacket", "json")
+        stats_df.write.mode("overwrite").parquet(output_path + "_temp")
+    stats_df = spark.read.parquet(output_path + "_temp").repartition(10000)
+    # stats_df = (
+    #     stats_df.where(col("status") == "NotProcessed")
+    #     .limit(1)
+    #     .union(stats_df.where(col("json").contains("Mixed Model")).limit(10))
+    #     .union(
+    #         stats_df.where(
+    #             col("json").contains("MPTERM") & col("json").contains("Mixed Model")
+    #         ).limit(10)
+    #     )
+    #     .union(stats_df.where(col("json").contains("Reference Range")).limit(10))
+    #     .union(
+    #         stats_df.where(
+    #             col("json").contains("MPTERM") & col("json").contains("Reference Range")
+    #         ).limit(10)
+    #     )
+    #     .union(stats_df.where(col("json").contains("Fisher Exact")).limit(10))
+    #     .union(
+    #         stats_df.where(
+    #             col("json").contains("MPTERM") & col("json").contains("Fisher Exact")
+    #         ).limit(10)
+    #     )
+    #     .union(stats_df.where(col("json").contains("MPTERM")).limit(1))
+    # )
+    # stats_df.limit(100).rdd.map(dump_json).saveAsTextFile(output_path + "_json_temp")
+    stats_df.rdd.map(dump_json).saveAsTextFile(output_path + "_json_temp")
+    json_df = spark.read.json(output_path + "_json_temp")
+    json_df.write.mode("overwrite").parquet(output_path)
+
+
+def partition_to_json(list_of_rows):
+    json_str_list = []
+    for row in list_of_rows:
+        json_str_list.append(
+            json.dumps(json.loads(row.json, object_pairs_hook=object_pairs_hook))
+        )
+    return f"[{','.join(json_str_list)}]"
 
 
 def object_pairs_hook(lit):
     return dict(
         [
-            (re.sub(r"\{|\}|\(|\)", "|", re.sub(r"\s|,|;|\n\|\t|=", "_", key)), value)
+            (
+                re.sub(
+                    r"\{|\}|\(|\)|\\", "|", re.sub(r"\.|\s|,|;|\n|\||\t|=", "_", key)
+                ),
+                value
+                if "Original" not in key
+                and "othercolumns" not in key
+                and "OpenStatsList" not in key
+                else None,
+            )
             for (key, value) in lit
+            if re
         ]
     )
 
 
-# def normalized_phenstat_fields(statpacket):
-#     if "phenlist_data_summary_statistics" in statpacket:
-#         statpacket["phenlist_data_summary_statistics"] = [
-#             {"key": key, "value": value}
-#             for key, value in statpacket["phenlist_data_summary_statistics"].items()
-#         ]
-#     if "raw_data_summary_statistics" in statpacket:
-#         statpacket["raw_data_summary_statistics"] = [
-#             {"key": key, "value": value}
-#             for key, value in statpacket["raw_data_summary_statistics"].items()
-#         ]
-#     return statpacket
+def dump_json(row):
+    packet_result_map = {
+        "gene_accession_id": "marker_accession_id",
+        "gene_symbol": "marker_symbol",
+    }
+    stats_packet = json.loads(row.json)
+    stats_packet_detail = stats_packet["Result"]["Details"]
+    experiment_detail = stats_packet_detail["Experiment detail"]
+    stats_result = {
+        key if key not in packet_result_map else packet_result_map[key]: value
+        for key, value in experiment_detail.items()
+    }
+    stats_result["data_type"] = stats_packet_detail["Observation type"]
+    stats_result.update(get_raw_data_details(stats_packet_detail))
+
+    if stats_result["status"] == "Successful":
+        try:
+            normal_result = stats_packet["Result"]["Vector output"]["Normal result"]
+            stats_result["statistical_method"] = (
+                normal_result["Applied method"]
+                if "Applied method" in normal_result
+                else stats_packet_detail["Applied method"]
+            )
+        except Exception as e:
+            raise type(e)(str(e) + " happens at %s" % str(stats_packet)).with_traceback(
+                sys.exc_info()[2]
+            )
+        stats_result.update(
+            get_calculation_details(normal_result, stats_result["statistical_method"])
+        )
+        stats_result["mp_term"] = (
+            stats_packet_detail["MPTERM"] if "MPTERM" in stats_packet_detail else None
+        )
+    json_str = json.dumps(stats_result)
+    return json_str
+
+
+def get_raw_data_details(stats_packet_detail) -> Dict:
+    try:
+        packet_result_map = {
+            "male_control": "male_control",
+            "female_control": "female_control",
+            "male_experimental": "male_mutant",
+            "female_experimental": "female_mutant",
+            "no data_control": "no_data_control",
+            "no data_experimental": "no_data_mutant",
+            "both_control": "both_control",
+            "both_experimental": "both_mutant",
+        }
+        raw_data_details = {}
+        if "Raw data summary statistics" not in stats_packet_detail:
+            return {}
+        stats_packet_raw_summary: Dict = stats_packet_detail[
+            "Raw data summary statistics"
+        ]["Collapsed"]
+        for sample_group, collapsed_stats in stats_packet_raw_summary.items():
+            if sample_group in packet_result_map:
+                mapped_sample_group = packet_result_map[sample_group]
+                for stats in collapsed_stats.values():
+                    for stat, value in stats.items():
+                        if type(value) == dict:
+                            continue
+                        stat = re.sub(
+                            r"\{|\}|\(|\)|\\|\"",
+                            "|",
+                            re.sub(r"\.|\s|,|;|\n|\||\t|=", "_", stat),
+                        ).lower()
+                        if stat == "count":
+                            stat = f"{mapped_sample_group}_{stat.lower()}"
+                            if stat not in raw_data_details:
+                                raw_data_details[stat] = value
+                            else:
+                                raw_data_details[stat] += value
+                        else:
+                            raw_data_details[
+                                f"{mapped_sample_group}_{stat.lower()}"
+                            ] = value
+        return raw_data_details
+    except Exception as e:
+        raise type(e)(
+            str(e) + " happens at %s" % str(stats_packet_detail)
+        ).with_traceback(sys.exc_info()[2])
+
+
+def get_calculation_details(normal_result, applied_method):
+    try:
+        calculation_details = {"additional_information": None}
+
+        lm_mm_regex = re.compile(r".*Mixed Model.*")
+        if lm_mm_regex.search(applied_method) or applied_method == "MM":
+            calculation_details["p_value"] = (
+                normal_result["Genotype p-value"]
+                if "Genotype p-value" in normal_result
+                else None
+            )
+            calculation_details["effect_size"] = (
+                normal_result["Genotype effect size"]["Value"]
+                if "Genotype effect size" in normal_result
+                else None
+            )
+
+            calculation_details["batch_significant"] = (
+                normal_result["Batch included"]
+                if "Batch included" in normal_result
+                else None
+            )
+            calculation_details["variance_significant"] = (
+                normal_result["Residual variances homogeneity"]
+                if "Residual variances homogeneity" in normal_result
+                else None
+            )
+            calculation_details["genotype_effect_p_value"] = (
+                normal_result["Genotype p-value"]
+                if "Genotype p-value" in normal_result
+                else None
+            )
+            calculation_details["genotype_effect_stderr_estimate"] = (
+                normal_result["Genotype standard error"]
+                if "Genotype standard error" in normal_result
+                else None
+            )
+            calculation_details["genotype_effect_parameter_estimate"] = (
+                normal_result["Genotype estimate"]["Value"]
+                if "Genotype estimate" in normal_result
+                else None
+            )
+
+            if "Genotype percentage change" in normal_result:
+                genotype_percentage_change = normal_result["Genotype percentage change"]
+
+                calculation_details["male_percentage_change"] = (
+                    genotype_percentage_change["SexMale:Genotypeexperimental"]
+                    if "SexMale:Genotypeexperimental" in genotype_percentage_change
+                    else None
+                )
+                calculation_details["female_percentage_change"] = (
+                    genotype_percentage_change["Sexfemale:Genotypeexperimental"]
+                    if "Sexfemale:Genotypeexperimental" in genotype_percentage_change
+                    else None
+                )
+            calculation_details["sex_effect_p_value"] = (
+                normal_result["Sex p-value"] if "Sex p-value" in normal_result else None
+            )
+            calculation_details["sex_effect_stderr_estimate"] = (
+                normal_result["Sex standard error"]
+                if "Sex standard error" in normal_result
+                else None
+            )
+            calculation_details["sex_effect_parameter_estimate"] = (
+                normal_result["Sex estimate"]["Value"]
+                if "Sex estimate" in normal_result
+                else None
+            )
+
+            calculation_details["group_1_genotype"] = (
+                normal_result["Gp1 genotype"]
+                if "Gp1 genotype" in normal_result
+                else None
+            )
+            calculation_details["group_1_residuals_normality_test"] = (
+                normal_result["Gp1 Residuals normality test"]["P-value"]
+                if "Gp1 Residuals normality test" in normal_result
+                and "P-value" in normal_result["Gp1 Residuals normality test"]
+                else None
+            )
+            calculation_details["group_2_genotype"] = (
+                normal_result["Gp2 genotype"]
+                if "Gp2 genotype" in normal_result
+                else None
+            )
+            calculation_details["group_2_residuals_normality_test"] = (
+                normal_result["Gp2 Residuals normality test"]["P-value"]
+                if "Gp2 Residuals normality test" in normal_result
+                and "P-value" in normal_result["Gp2 Residuals normality test"]
+                else None
+            )
+
+            calculation_details["intercept_estimate"] = (
+                normal_result["Intercept estimate"]["Value"]
+                if "Intercept estimate" in normal_result
+                else None
+            )
+            calculation_details["intercept_estimate_stderr_estimate"] = (
+                normal_result["Intercept standard error"]
+                if "Intercept standard error" in normal_result
+                else None
+            )
+
+            calculation_details["interaction_significant"] = (
+                normal_result["Interactions included"]["Genotype Sex"]
+                if "Interactions included" in normal_result
+                else None
+            )
+            calculation_details["interaction_effect_p_value"] = (
+                normal_result["Interactions p-value"]["Genotype Sex"]
+                if "Interactions p-value" in normal_result
+                else None
+            )
+
+            calculation_details["female_ko_effect_p_value"] = (
+                normal_result["Sex FvKO p-value"]
+                if "Sex FvKO p-value" in normal_result
+                else None
+            )
+            calculation_details["female_ko_effect_stderr_estimate"] = (
+                normal_result["Sex FvKO standard error"]
+                if "Sex FvKO standard error" in normal_result
+                else None
+            )
+            calculation_details["female_ko_parameter_estimate"] = (
+                normal_result["Sex FvKO estimate"]["Value"]
+                if "Sex FvKO estimate" in normal_result
+                else None
+            )
+
+            calculation_details["male_ko_effect_p_value"] = (
+                normal_result["Sex MvKO p-value"]
+                if "Sex MvKO p-value" in normal_result
+                else None
+            )
+            calculation_details["male_ko_effect_stderr_estimate"] = (
+                normal_result["Sex MvKO standard error"]
+                if "Sex MvKO standard error" in normal_result
+                else None
+            )
+            calculation_details["male_ko_parameter_estimate"] = (
+                normal_result["Sex MvKO estimate"]["Value"]
+                if "Sex MvKO estimate" in normal_result
+                else None
+            )
+
+        rr_regex = re.compile(r".*Reference Range.*")
+        if rr_regex.search(applied_method):
+            genotype_p_value = normal_result["Genotype p-value"]
+            calculation_details["genotype_pvalue_low_vs_normal_high"] = (
+                genotype_p_value["Low"]["p.value"]
+                if "Low" in genotype_p_value
+                else None
+            )
+            calculation_details["genotype_pvalue_low_normal_vs_high"] = (
+                genotype_p_value["High"]["p.value"]
+                if "High" in genotype_p_value
+                else None
+            )
+
+            genotype_effect_size = normal_result["Genotype effect size"]
+            calculation_details["genotype_effect_size_low_vs_normal_high"] = (
+                genotype_effect_size["Low"]["effect"]["value"]
+                if "Low" in genotype_effect_size
+                else None
+            )
+            genotype_effect_size = normal_result["Genotype effect size"]
+            calculation_details["genotype_effect_size_low_normal_vs_high"] = (
+                genotype_effect_size["High"]["effect"]["value"]
+                if "High" in genotype_effect_size
+                else None
+            )
+
+            if "Sex FvKO p-value" in normal_result:
+                female_vs_ko_p_value = normal_result["Sex FvKO p-value"]
+                calculation_details["female_pvalue_low_vs_normal_high"] = (
+                    female_vs_ko_p_value["Low"]["p.value"]
+                    if "Low" in female_vs_ko_p_value
+                    else None
+                )
+                calculation_details["female_pvalue_low_normal_vs_high"] = (
+                    female_vs_ko_p_value["High"]["p.value"]
+                    if "High" in female_vs_ko_p_value
+                    else None
+                )
+
+                female_vs_ko_effect = normal_result["Sex FvKO effect size"]
+                calculation_details["female_pvalue_low_vs_normal_high"] = (
+                    female_vs_ko_effect["Low"]["effect"]["value"]
+                    if "Low" in female_vs_ko_effect
+                    else None
+                )
+                calculation_details["female_pvalue_low_normal_vs_high"] = (
+                    female_vs_ko_effect["High"]["effect"]["value"]
+                    if "High" in female_vs_ko_effect
+                    else None
+                )
+
+            if "Sex MvKO p-value" in normal_result:
+                male_vs_ko_p_value = normal_result["Sex MvKO p-value"]
+                calculation_details["male_pvalue_low_vs_normal_high"] = (
+                    male_vs_ko_p_value["Low"]["p.value"]
+                    if "Low" in male_vs_ko_p_value
+                    else None
+                )
+                calculation_details["male_pvalue_low_normal_vs_high"] = (
+                    male_vs_ko_p_value["High"]["p.value"]
+                    if "High" in male_vs_ko_p_value
+                    else None
+                )
+
+                male_vs_ko_effect = normal_result["Sex MvKO effect size"]
+                calculation_details["male_pvalue_low_vs_normal_high"] = (
+                    male_vs_ko_effect["Low"]["effect"]["value"]
+                    if "Low" in male_vs_ko_effect
+                    else None
+                )
+                calculation_details["male_pvalue_low_normal_vs_high"] = (
+                    male_vs_ko_effect["High"]["effect"]["value"]
+                    if "High" in male_vs_ko_effect
+                    else None
+                )
+        fisher_regex = re.compile(r".*Fisher Exact.*")
+        if fisher_regex.search(applied_method):
+            calculation_details["p_value"] = (
+                normal_result["Genotype p-value"]["Complete table"]["p.value"]
+                if "Genotype p-value" in normal_result
+                else None
+            )
+            calculation_details["effect_size"] = (
+                normal_result["Genotype effect size"]["Complete table"]["effect"][
+                    "value"
+                ]
+                if "Genotype effect size" in normal_result
+                else None
+            )
+            calculation_details["female_ko_effect_p_value"] = (
+                normal_result["Sex FvKO p-value"]["Complete table"]["p.value"]
+                if "Sex FvKO p-value" in normal_result
+                and "Complete table" in normal_result["Sex FvKO p-value"]
+                else None
+            )
+            calculation_details["female_ko_parameter_estimate"] = (
+                normal_result["Sex FvKO estimate"]["Complete table"]["Value"]
+                if "Sex FvKO estimate" in normal_result
+                else None
+            )
+            calculation_details["male_ko_effect_p_value"] = (
+                normal_result["Sex MvKO p-value"]["Complete table"]["p.value"]
+                if "Sex MvKO p-value" in normal_result
+                and "Complete table" in normal_result["Sex MvKO p-value"]
+                else None
+            )
+            calculation_details["male_ko_parameter_estimate"] = (
+                normal_result["Sex MvKO estimate"]["Complete table"]["Value"]
+                if "Sex MvKO estimate" in normal_result
+                else None
+            )
+        calculation_details["classification_tag"] = (
+            normal_result["Classification tag"]["Classification tag"]
+            if "Classification tag" in normal_result
+            and "Classification tag" in normal_result["Classification tag"]
+            else None
+        )
+        calculation_details["phenotype_sex"] = (
+            normal_result["Additional information"]["Analysis"][
+                "Gender included in analysis"
+            ]
+            if "Additional information" in normal_result
+            else None
+        )
+        return calculation_details
+    except KeyError as e:
+        raise type(e)(str(e) + " happens at %s" % str(normal_result)).with_traceback(
+            sys.exc_info()[2]
+        )
 
 
 if __name__ == "__main__":

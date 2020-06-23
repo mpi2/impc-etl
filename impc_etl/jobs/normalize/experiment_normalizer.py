@@ -444,13 +444,7 @@ def get_derived_parameters(
         "unique_id", "pipelineKey", "procedureKey", "parameterKey", "derivation"
     ).agg(
         concat_ws(
-            ",",
-            collect_list(
-                when(
-                    experiments_vs_derivations["derivationInput"].isNull(),
-                    lit("NOT_FOUND"),
-                ).otherwise(experiments_vs_derivations["derivationInput"])
-            ),
+            ",", collect_list(experiments_vs_derivations["derivationInput"])
         ).alias("derivationInputStr")
     )
 
@@ -484,13 +478,10 @@ def get_derived_parameters(
     experiments_vs_derivations = experiments_vs_derivations.withColumn(
         "isComplete",
         when(
-            (size(col("derivationInputs")) == col("presentColumns"))
-            & (~(col("derivationInputStr").contains("NOT_FOUND"))),
-            lit(True),
+            (size(col("derivationInputs")) == col("presentColumns")), lit(True)
         ).otherwise(lit(False)),
     )
-    complete_derivations = experiments_vs_derivations.where(col("isComplete") == True)
-    complete_derivations = complete_derivations.withColumn(
+    experiments_vs_derivations = experiments_vs_derivations.withColumn(
         "derivationInputStr", concat("derivation", lit(";"), "derivationInputStr")
     )
     spark.udf.registerJavaFunction(
@@ -499,7 +490,7 @@ def get_derived_parameters(
         StringType(),
     )
 
-    results_df = complete_derivations.select(
+    results_df = experiments_vs_derivations.select(
         "unique_id",
         "pipelineKey",
         "procedureKey",
@@ -511,10 +502,7 @@ def get_derived_parameters(
     results_df = results_df.withColumn(
         "result",
         when(
-            (
-                (col("isComplete") == True)
-                & (~(col("derivationInputStr").contains("NOT_FOUND")))
-            )
+            (col("isComplete") == True)
             | (col("derivationInputStr").contains("retinaCombined"))
             | (col("derivationInputStr").contains("ifElse")),
             expr("phenodcc_derivator(derivationInputStr)"),

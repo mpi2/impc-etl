@@ -28,15 +28,21 @@ class ImpcOpenStats(luigi.Task):
     openstats_db_user = luigi.Parameter()
     openstats_db_password = luigi.Parameter()
     data_release_version = luigi.Parameter()
+    use_cache = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
         return [
-            OpenStatsExtractor(
+            StatsResultsCoreLoader(
                 openstats_jdbc_connection=self.openstats_jdbc_connection,
                 openstats_db_user=self.openstats_db_user,
                 openstats_db_password=self.openstats_db_password,
                 data_release_version=self.data_release_version,
+                use_cache=self.use_cache,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
             )
         ]

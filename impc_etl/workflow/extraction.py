@@ -135,7 +135,7 @@ class MGIStrainExtractor(MGIExtractor):
 
 class OntologyExtractor(SparkSubmitTask):
     name = "IMPC_Ontology_Extractor"
-    app = "impc_etl/jobs/extract/ontology_metadata_extractor.py"
+    app = "impc_etl/jobs/extract/ontology_extractor.py"
 
     ontology_input_path = luigi.Parameter()
     output_path = luigi.Parameter()
@@ -152,6 +152,25 @@ class OntologyExtractor(SparkSubmitTask):
         return [self.ontology_input_path, self.output().path]
 
 
+class OntologyMetadataExtractor(SparkSubmitTask):
+    name = "IMPC_Ontology_Metadata_Extractor"
+    app = "impc_etl/jobs/extract/ontology_metadata_extractor.py"
+
+    ontology_input_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f"{self.output_path}ontology_metadata_parquet")
+
+    def app_options(self):
+        return [self.ontology_input_path, self.output().path]
+
+
 class OpenStatsExtractor(SparkSubmitTask):
     name = "IMPC_OpenStats_Extractor"
     app = "impc_etl/jobs/extract/open_stats_extractor.py"
@@ -160,6 +179,7 @@ class OpenStatsExtractor(SparkSubmitTask):
     openstats_db_user = luigi.Parameter()
     openstats_db_password = luigi.Parameter()
     data_release_version = luigi.Parameter()
+    use_cache = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def output(self):
@@ -176,5 +196,6 @@ class OpenStatsExtractor(SparkSubmitTask):
             self.openstats_db_user,
             self.openstats_db_password,
             self.data_release_version,
+            self.use_cache,
             self.output().path,
         ]
