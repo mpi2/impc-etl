@@ -454,6 +454,22 @@ def get_calculation_details(normal_result, applied_method):
             if "Additional information" in normal_result
             else None
         )
+        calculation_details["weight_effect_p_value"] = (
+            normal_result["Weight p-value"]
+            if "Weight p-value" in normal_result
+            else None
+        )
+        calculation_details["weight_effect_stderr_estimate"] = (
+            normal_result["Weight standard error"]
+            if "Weight standard error" in normal_result
+            else None
+        )
+        calculation_details["weight_effect_parameter_estimate"] = (
+            normal_result["Weight estimate"]["Value"]
+            if "Weight estimate" in normal_result
+            and "Value" in normal_result["Weight estimate"]
+            else None
+        )
         return calculation_details
     except KeyError as e:
         raise type(e)(str(e) + " happens at %s" % str(normal_result)).with_traceback(

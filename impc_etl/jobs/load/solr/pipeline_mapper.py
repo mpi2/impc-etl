@@ -70,8 +70,8 @@ def main(argv):
     ontology_df = spark.read.parquet(ontology_parquet_path)
     emap_emapa_df = spark.read.csv(emap_emapa_tsv_path, header=True, sep="\t")
     for col_name in emap_emapa_df.columns:
-        emap_emapa_df = emap_emapa_df.withColumn(
-            col_name.lower().replace(" ", "_"), col(col_name)
+        emap_emapa_df = emap_emapa_df.withColumnRenamed(
+            col_name, col_name.lower().replace(" ", "_")
         )
     emapa_metadata_df = spark.read.csv(emapa_metadata_csv_path, header=True)
     ma_metadata_df = spark.read.csv(ma_metadata_csv_path, header=True)
@@ -179,16 +179,13 @@ def main(argv):
     pipeline_df = pipeline_df.join(
         pipeline_mp_terms_df, "fully_qualified_name", "left_outer"
     )
-    pipeline_df = pipeline_df.withColumn(
-        "emap_id",
-        when(col("termAcc").startswith("EMAP:"), col("termAcc")).otherwise(lit(None)),
-    )
+
     pipeline_df = pipeline_df.join(
         emap_emapa_df.alias("emap_emapa"),
-        col("emap_id") == col("curie_x"),
+        col("emap_id") == col("termAcc"),
         "left_outer",
     )
-    pipeline_df = pipeline_df.withColumn("anatomy_id", col("curie_y"))
+    pipeline_df = pipeline_df.withColumn("anatomy_id", col("emapa_id"))
     pipeline_df = pipeline_df.drop(*emap_emapa_df.columns)
 
     emapa_metadata_df = emapa_metadata_df.withColumnRenamed("name", "emapaName")
