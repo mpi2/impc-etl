@@ -119,6 +119,7 @@ STATS_RESULTS_COLUMNS = [
     "marker_accession_id",
     "marker_symbol",
     "metadata_group",
+    "percentage_change",
     "no_data_control_count",
     "no_data_control_diversity_in_response",
     "no_data_control_unique_n",
