@@ -42,7 +42,7 @@ class ImpcOpenStats(luigi.Task):
 
     def requires(self):
         return [
-            StatsResultsCoreLoader(
+            GenotypePhenotypeCoreLoader(
                 openstats_jdbc_connection=self.openstats_jdbc_connection,
                 openstats_db_user=self.openstats_db_user,
                 openstats_db_password=self.openstats_db_password,

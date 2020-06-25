@@ -32,7 +32,9 @@ PIPELINE_STATS_MAP = {
     "parameter_stable_key": "parameter_stable_key",
     "pipeline_stable_key": "pipeline_stable_key",
     "procedure_stable_id": "procedure_stable_id",
+    "procedure_stable_key": "procedure_stable_key",
 }
+
 
 OBSERVATIONS_STATS_MAP = {
     "genetic_background": "genetic_background",
@@ -45,6 +47,7 @@ OBSERVATIONS_STATS_MAP = {
     "resource_fullname": "datasource_name",
     "life_stage_acc": "life_stage_acc",
 }
+
 
 ALLELE_STATS_MAP = {"allele_name": "allele_name"}
 
@@ -116,7 +119,6 @@ STATS_RESULTS_COLUMNS = [
     "marker_accession_id",
     "marker_symbol",
     "metadata_group",
-    "mp_term_struct",
     "no_data_control_count",
     "no_data_control_diversity_in_response",
     "no_data_control_unique_n",
@@ -133,6 +135,7 @@ STATS_RESULTS_COLUMNS = [
     "procedure_group",
     "procedure_name",
     "procedure_stable_id",
+    "procedure_stable_key",
     "sex_effect_p_value",
     "sex_effect_parameter_estimate",
     "sex_effect_stderr_estimate",
@@ -156,11 +159,15 @@ STATS_RESULTS_COLUMNS = [
     "genetic_background",
     "production_center",
     "project_name",
+    "project_fullname",
+    "resource_name",
+    "resource_fullname",
     "strain_name",
     "life_stage_name",
     "life_stage_acc",
     "sex",
     "significant",
+    "full_mp_term",
 ]
 
 
@@ -176,7 +183,6 @@ def main(argv):
                     [6]: Allele parquet
                     [7]: Output Path
     """
-    # print(argv)
     open_stats_parquet_path = argv[1]
     observations_parquet_path = argv[2]
     ontology_parquet_path = argv[3]
@@ -184,12 +190,8 @@ def main(argv):
     pipeline_core_parquet_path = argv[5]
     allele_parquet_path = argv[6]
     output_path = argv[7]
-
-    counts = {}
     spark = SparkSession.builder.getOrCreate()
     open_stats_df = spark.read.parquet(open_stats_parquet_path)
-    # counts["Initial reading"] = open_stats_df.count()
-    observations_df = spark.read.parquet(observations_parquet_path)
     ontology_df = spark.read.parquet(ontology_parquet_path)
     ontology_df = ontology_df.alias("ontology")
     allele_df = spark.read.parquet(allele_parquet_path)
@@ -231,7 +233,6 @@ def main(argv):
         "mp_term_sex", col("collapsed_mp_term.sex")
     )
     open_stats_df = open_stats_df.withColumnRenamed("mp_term", "full_mp_term")
-    # counts["After explode on mp_term"] = open_stats_df.count()
 
     open_stats_df = open_stats_df.withColumnRenamed(
         "procedure_stable_id", "procedure_stable_id_str"
@@ -247,7 +248,7 @@ def main(argv):
     open_stats_df = open_stats_df.join(
         ontology_df, col("mp_term_id") == col("id"), "left_outer"
     )
-    # counts["After join with ontology"] = open_stats_df.count()
+
     for column_name, ontology_column in ONTOLOGY_STATS_MAP.items():
         open_stats_df = open_stats_df.withColumn(f"{column_name}", col(ontology_column))
     pipeline_core_join = ["parameter_stable_id", "pipeline_stable_id", "procedure_name"]
@@ -257,12 +258,23 @@ def main(argv):
                 col_name
                 for col_name in pipeline_core_df.columns
                 if col_name in pipeline_core_join
-                or col_name
-                in [
-                    impress_name.replace("impress.", "")
-                    for impress_name in PIPELINE_STATS_MAP.values()
-                ]
+                or col_name in PIPELINE_STATS_MAP.values()
             ]
+        )
+        .groupBy(
+            [
+                "parameter_stable_key",
+                "pipeline_stable_key",
+                "parameter_stable_id",
+                "pipeline_stable_id",
+                "procedure_name",
+                "mp_id",
+                "mp_term",
+            ]
+        )
+        .agg(
+            collect_set("procedure_stable_id").alias("procedure_stable_id"),
+            collect_set("procedure_stable_key").alias("procedure_stable_key"),
         )
         .dropDuplicates()
         .alias("impress")
@@ -275,17 +287,12 @@ def main(argv):
     open_stats_df = open_stats_df.join(
         pipeline_core_df, pipeline_core_join, "left_outer"
     )
-    # counts["After join with pipeline"] = open_stats_df.count()
 
     for column_name, impress_column in PIPELINE_STATS_MAP.items():
         open_stats_df = open_stats_df.withColumn(
             column_name, col(f"impress_{impress_column}")
         )
         open_stats_df = open_stats_df.drop(f"impress_{impress_column}")
-    # counts["finale count: "] = (
-    #     open_stats_df.select(*STATS_RESULTS_COLUMNS).dropDuplicates().count()
-    # )
-    # print(counts)
 
     for col_name in observations_metadata_df.columns:
         if col_name not in stats_observations_join:
@@ -322,7 +329,6 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "significant", col("mp_term_id").isNotNull()
     )
-    open_stats_df.printSchema()
     open_stats_df.select(*STATS_RESULTS_COLUMNS).distinct().write.parquet(output_path)
 
 

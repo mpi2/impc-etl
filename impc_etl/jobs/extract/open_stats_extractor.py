@@ -234,8 +234,8 @@ def get_calculation_details(normal_result, applied_method):
                     else None
                 )
                 calculation_details["female_percentage_change"] = (
-                    genotype_percentage_change["Sexfemale:Genotypeexperimental"]
-                    if "Sexfemale:Genotypeexperimental" in genotype_percentage_change
+                    genotype_percentage_change["SexFemale:Genotypeexperimental"]
+                    if "SexFemale:Genotypeexperimental" in genotype_percentage_change
                     else None
                 )
             calculation_details["sex_effect_p_value"] = (
@@ -417,6 +417,16 @@ def get_calculation_details(normal_result, applied_method):
                     "value"
                 ]
                 if "Genotype effect size" in normal_result
+                else None
+            )
+            calculation_details["interaction_significant"] = (
+                normal_result["Interactions included"]["Genotype Sex"]
+                if "Interactions included" in normal_result
+                else None
+            )
+            calculation_details["interaction_effect_p_value"] = (
+                normal_result["Interactions p-value"]["Genotype Sex"]
+                if "Interactions p-value" in normal_result
                 else None
             )
             calculation_details["female_ko_effect_p_value"] = (
