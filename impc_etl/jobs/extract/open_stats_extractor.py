@@ -238,9 +238,13 @@ def get_calculation_details(normal_result, applied_method):
                     if "SexFemale:Genotypeexperimental" in genotype_percentage_change
                     else None
                 )
+            if "Genotype effect size" in normal_result:
+                genotype_effect_size = normal_result["Genotype effect size"]
                 calculation_details["percentage_change"] = (
-                    genotype_percentage_change["experimental Genotype"]
-                    if "experimental Genotype" in genotype_percentage_change
+                    genotype_effect_size["Percentage change"]["experimental Genotype"]
+                    if "Percentage change" in genotype_effect_size
+                    and "experimental Genotype"
+                    in genotype_effect_size["Percentage change"]
                     else None
                 )
             calculation_details["sex_effect_p_value"] = (

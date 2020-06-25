@@ -39,6 +39,7 @@ GENOTYPE_PHENOTYPE_COLUMNS = [
     "statistical_method",
     "male_percentage_change",
     "female_percentage_change",
+    "percentage_change",
 ]
 
 
@@ -94,7 +95,7 @@ def main(argv):
         "percentage_change",
         when(col("sex") == "male", col("male_percentage_change"))
         .when(col("sex") == "female", col("female_percentage_change"))
-        .otherwise(lit(None)),
+        .otherwise(col("percentage_change")),
     )
     genotype_phenotype_df.where(col("female_percentage_change").isNotNull()).show(
         vertical=True, truncate=False
