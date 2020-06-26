@@ -247,7 +247,11 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
                 emapa_metadata_csv_path=self.emapa_metadata_csv_path,
                 ma_metadata_csv_path=self.ma_metadata_csv_path,
                 output_path=self.output_path,
-            )
+            ),
+            OntologyExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
         ]
 
     def output(self):
@@ -259,4 +263,4 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
         return ImpcConfig().get_target(f"{self.output_path}genotype_phenotype_parquet")
 
     def app_options(self):
-        return [self.input()[0].path, self.output().path]
+        return [self.input()[0].path, self.input()[1].path, self.output().path]

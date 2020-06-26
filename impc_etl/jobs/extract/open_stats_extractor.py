@@ -199,6 +199,18 @@ def get_calculation_details(normal_result, applied_method):
                 else None
             )
 
+            calculation_details["male_effect_size"] = (
+                normal_result["Sex MvKO effect size"]["Value"]
+                if "Sex MvKO effect size" in normal_result
+                else None
+            )
+
+            calculation_details["female_effect_size"] = (
+                normal_result["Sex FvKO effect size"]["Value"]
+                if "Sex FvKO effect size" in normal_result
+                else None
+            )
+
             calculation_details["batch_significant"] = (
                 normal_result["Batch included"]
                 if "Batch included" in normal_result
@@ -398,16 +410,28 @@ def get_calculation_details(normal_result, applied_method):
                     if "High" in male_vs_ko_p_value
                     else None
                 )
-
+            if "Sex MvKO effect size" in normal_result:
                 male_vs_ko_effect = normal_result["Sex MvKO effect size"]
-                calculation_details["male_pvalue_low_vs_normal_high"] = (
+                calculation_details["male_effect_size_low_vs_normal_high"] = (
                     male_vs_ko_effect["Low"]["effect"]["value"]
                     if "Low" in male_vs_ko_effect
                     else None
                 )
-                calculation_details["male_pvalue_low_normal_vs_high"] = (
+                calculation_details["male_effect_size_low_vs_normal_high"] = (
                     male_vs_ko_effect["High"]["effect"]["value"]
                     if "High" in male_vs_ko_effect
+                    else None
+                )
+            if "Sex FvKO effect size" in normal_result:
+                female_vs_ko_effect = normal_result["Sex FvKO effect size"]
+                calculation_details["female_effect_size_low_vs_normal_high"] = (
+                    female_vs_ko_effect["Low"]["effect"]["value"]
+                    if "Low" in female_vs_ko_effect
+                    else None
+                )
+                calculation_details["female_effect_size_low_normal_vs_high"] = (
+                    female_vs_ko_effect["High"]["effect"]["value"]
+                    if "High" in female_vs_ko_effect
                     else None
                 )
         fisher_regex = re.compile(r".*Fisher Exact.*")

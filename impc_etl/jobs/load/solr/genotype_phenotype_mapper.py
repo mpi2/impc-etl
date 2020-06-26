@@ -3,6 +3,14 @@ import sys
 
 from pyspark.sql.functions import col, explode_outer, when, lit, least
 
+ONTOLOGY_STATS_MAP = {
+    "mp_term_name": "term",
+    "top_level_mp_term_id": "top_level_ids",
+    "top_level_mp_term_name": "top_level_terms",
+    "intermediate_mp_term_id": "intermediate_ids",
+    "intermediate_mp_term_name": "intermediate_terms",
+}
+
 GENOTYPE_PHENOTYPE_COLUMNS = [
     "marker_symbol",
     "marker_accession_id",
@@ -25,10 +33,15 @@ GENOTYPE_PHENOTYPE_COLUMNS = [
     "parameter_name",
     "parameter_stable_id",
     "parameter_stable_key",
-    "statistical_method",
+    "percentage_change",
+    "effect_size",
     "life_stage_acc",
     "life_stage_name",
+]
+
+STATS_RESULTS_COLUMNS = [
     "full_mp_term",
+    "statistical_method",
     "genotype_effect_p_value",
     "female_pvalue_low_vs_normal_high",
     "female_pvalue_low_normal_vs_high",
@@ -36,10 +49,8 @@ GENOTYPE_PHENOTYPE_COLUMNS = [
     "male_pvalue_low_normal_vs_high",
     "female_ko_effect_p_value",
     "male_ko_effect_p_value",
-    "statistical_method",
     "male_percentage_change",
     "female_percentage_change",
-    "percentage_change",
 ]
 
 
@@ -51,13 +62,15 @@ def main(argv):
                     [2]: Output Path
     """
     stats_results_parquet_path = argv[1]
-    output_path = argv[2]
+    ontology_parquet_path = argv[2]
+    output_path = argv[3]
 
     spark = SparkSession.builder.getOrCreate()
     stats_results_df = spark.read.parquet(stats_results_parquet_path)
+    ontology_df = spark.read.parquet(ontology_parquet_path)
 
     genotype_phenotype_df = stats_results_df.where(col("significant")).select(
-        GENOTYPE_PHENOTYPE_COLUMNS
+        GENOTYPE_PHENOTYPE_COLUMNS + STATS_RESULTS_COLUMNS
     )
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
         "mp_term", explode_outer("full_mp_term")
@@ -66,6 +79,16 @@ def main(argv):
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
         "mp_term_id", col("mp_term.term_id")
     )
+
+    genotype_phenotype_df = genotype_phenotype_df.join(
+        ontology_df, col("mp_term_id") == col("id"), "left_outer"
+    )
+
+    for column_name, ontology_column in ONTOLOGY_STATS_MAP.items():
+        genotype_phenotype_df = genotype_phenotype_df.withColumn(
+            f"{column_name}", col(ontology_column)
+        )
+
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
         "p_value",
         when(
@@ -91,16 +114,64 @@ def main(argv):
             .otherwise(col("genotype_effect_p_value"))
         ),
     )
+
+    genotype_phenotype_df = genotype_phenotype_df.withColumn(
+        "effect_size",
+        when(
+            ~col("statistical_method").contains("Reference Range Plus"),
+            when(col("sex") == "male", col("male_effect_size"))
+            .when(col("sex") == "female", col("female_effect_size"))
+            .otherwise(col("effect_size")),
+        ).otherwise(
+            when(
+                col("sex") == "male",
+                when(
+                    col("male_pvalue_low_vs_normal_high")
+                    <= col("male_pvalue_low_normal_vs_high"),
+                    col("genotype_effect_size_low_vs_normal_high"),
+                ).otherwise(col("genotype_effect_size_low_normal_vs_high")),
+            )
+            .when(
+                col("sex") == "female",
+                when(
+                    col("female_pvalue_low_vs_normal_high")
+                    <= col("female_pvalue_low_normal_vs_high"),
+                    col("genotype_effect_size_low_vs_normal_high"),
+                ).otherwise(col("genotype_effect_size_low_normal_vs_high")),
+            )
+            .otherwise(col("effect_size"))
+        ),
+    )
+
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
         "percentage_change",
         when(col("sex") == "male", col("male_percentage_change"))
         .when(col("sex") == "female", col("female_percentage_change"))
         .otherwise(col("percentage_change")),
     )
-    genotype_phenotype_df.where(col("female_percentage_change").isNotNull()).show(
-        vertical=True, truncate=False
+
+    genotype_phenotype_df = genotype_phenotype_df.withColumn(
+        "assertion_type_id",
+        when(
+            col("statistical_method").isin(["Manual", "Supplied as data"]),
+            lit("ECO:0000218"),
+        ).otherwise(lit("ECO:0000203")),
     )
-    raise ValueError
+
+    genotype_phenotype_df = genotype_phenotype_df.withColumn(
+        "assertion_type",
+        when(
+            col("statistical_method").isin(["Manual", "Supplied as data"]),
+            lit("manual"),
+        ).otherwise(lit("automatic")),
+    )
+
+    genotype_phenotype_df = genotype_phenotype_df.select(
+        GENOTYPE_PHENOTYPE_COLUMNS
+        + list(ONTOLOGY_STATS_MAP.keys())
+        + ["assertion_type_id", "assertion_type"]
+    )
+    genotype_phenotype_df.distinct().write.parquet(output_path)
 
 
 if __name__ == "__main__":

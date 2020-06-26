@@ -16,6 +16,7 @@ from luigi.contrib.hdfs.target import HdfsTarget
 ONTOLOGIES = [
     {
         "id": "mp",
+        "format": "obo",
         "top_level_terms": [
             "MP:0010768",
             "MP:0002873",
@@ -46,28 +47,30 @@ ONTOLOGIES = [
             "MP:0010771",
         ],
     },
-    # {
-    #     "id": "ma",
-    #     "top_level_terms": [
-    #         "MA:0000004",
-    #         "MA:0000007",
-    #         "MA:0000009",
-    #         "MA:0000010",
-    #         "MA:0000012",
-    #         "MA:0000014",
-    #         "MA:0000016",
-    #         "MA:0000017",
-    #         "MA:0000325",
-    #         "MA:0000326",
-    #         "MA:0000327",
-    #         "MA:0002411",
-    #         "MA:0002418",
-    #         "MA:0002431",
-    #         "MA:0002711",
-    #         "MA:0002887",
-    #         "MA:0002405",
-    #     ],
-    # },
+    {
+        "id": "ma",
+        "format": "owl",
+        "top_level_terms": [
+            "MA:0000004",
+            "MA:0000007",
+            "MA:0000009",
+            "MA:0000010",
+            "MA:0000012",
+            "MA:0000014",
+            "MA:0000016",
+            "MA:0000017",
+            "MA:0000325",
+            "MA:0000326",
+            "MA:0000327",
+            "MA:0002411",
+            "MA:0002418",
+            "MA:0002431",
+            "MA:0002711",
+            "MA:0002887",
+            "MA:0002405",
+        ],
+    },
+    {"id": "mpath", "format": "owl", "top_level_terms": []},
     # {
     #     "id": "emapa",
     #     "top_level_terms": [
@@ -85,7 +88,6 @@ ONTOLOGIES = [
     # },
     # {"id": "efo", "top_level_terms": []},
     # {"id": "emap", "top_level_terms": []},
-    # {"id": "mpath", "top_level_terms": []},
     # {"id": "pato", "top_level_terms": []},
 ]
 
@@ -114,7 +116,9 @@ def extract_ontology_terms(spark_session: SparkSession) -> DataFrame:
     ontology_terms = []
     if ImpcConfig().deploy_mode in ["local", "client"]:
         for ontology_desc in ONTOLOGIES:
-            ontology = pronto.Ontology.from_obo_library(f"{ontology_desc['id']}.obo")
+            ontology = pronto.Ontology.from_obo_library(
+                f"{ontology_desc['id']}.{ontology_desc['format']}"
+            )
             top_level_terms = [
                 ontology[term] for term in ontology_desc["top_level_terms"]
             ]
