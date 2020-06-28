@@ -417,7 +417,7 @@ def get_calculation_details(normal_result, applied_method):
                     if "Low" in male_vs_ko_effect
                     else None
                 )
-                calculation_details["male_effect_size_low_vs_normal_high"] = (
+                calculation_details["male_effect_size_low_normal_vs_high"] = (
                     male_vs_ko_effect["High"]["effect"]["value"]
                     if "High" in male_vs_ko_effect
                     else None

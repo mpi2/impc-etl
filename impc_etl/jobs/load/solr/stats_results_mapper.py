@@ -336,6 +336,7 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "significant", col("mp_term_id").isNotNull()
     )
+    open_stats_df.printSchema()
     open_stats_df.select(*STATS_RESULTS_COLUMNS).distinct().write.parquet(output_path)
 
 
