@@ -51,6 +51,8 @@ STATS_RESULTS_COLUMNS = [
     "male_ko_effect_p_value",
     "male_percentage_change",
     "female_percentage_change",
+    "male_effect_size",
+    "female_effect_size",
 ]
 
 
@@ -126,16 +128,16 @@ def main(argv):
             when(
                 col("sex") == "male",
                 when(
-                    col("male_pvalue_low_vs_normal_high")
-                    <= col("male_pvalue_low_normal_vs_high"),
+                    col("male_effect_size_low_vs_normal_high")
+                    <= col("male_effect_size_low_normal_vs_high"),
                     col("genotype_effect_size_low_vs_normal_high"),
                 ).otherwise(col("genotype_effect_size_low_normal_vs_high")),
             )
             .when(
                 col("sex") == "female",
                 when(
-                    col("female_pvalue_low_vs_normal_high")
-                    <= col("female_pvalue_low_normal_vs_high"),
+                    col("female_effect_size_low_vs_normal_high")
+                    <= col("female_effect_size_low_normal_vs_high"),
                     col("genotype_effect_size_low_vs_normal_high"),
                 ).otherwise(col("genotype_effect_size_low_normal_vs_high")),
             )

@@ -82,6 +82,8 @@ STATS_RESULTS_COLUMNS = [
     "female_percentage_change",
     "female_pvalue_low_normal_vs_high",
     "female_pvalue_low_vs_normal_high",
+    "female_effect_size_low_normal_vs_high",
+    "female_effect_size_low_vs_normal_high",
     "genotype_effect_p_value",
     "genotype_effect_parameter_estimate",
     "genotype_effect_size_low_normal_vs_high",
@@ -116,6 +118,8 @@ STATS_RESULTS_COLUMNS = [
     "male_percentage_change",
     "male_pvalue_low_normal_vs_high",
     "male_pvalue_low_vs_normal_high",
+    "male_effect_size_low_normal_vs_high",
+    "male_effect_size_low_vs_normal_high",
     "marker_accession_id",
     "marker_symbol",
     "metadata_group",
@@ -169,6 +173,8 @@ STATS_RESULTS_COLUMNS = [
     "sex",
     "significant",
     "full_mp_term",
+    "male_effect_size",
+    "female_effect_size",
 ]
 
 
