@@ -6,4 +6,4 @@ pysolr
 hdfs
 webhdfs
 wheel
-# pronto
+pronto

@@ -11,6 +11,7 @@ def main(argv):
     spark_session = SparkSession.builder.getOrCreate()
     specimen_df = spark_session.read.parquet(input_path)
     specimen_clean_df = clean_specimens(specimen_df)
+    specimen_clean_df = specimen_clean_df.dropDuplicates(["_specimenID", "_centreID"])
     specimen_clean_df.write.mode("overwrite").parquet(output_path)
 
 
@@ -27,6 +28,7 @@ def clean_specimens(specimen_df: DataFrame) -> DataFrame:
         .transform(map_phenotyping_centre_ids)
         .transform(truncate_europhenome_specimen_ids)
         .transform(truncate_europhenome_colony_ids)
+        .transform(parse_europhenome_colony_xml_entities)
         .transform(standardize_strain_ids)
         .transform(override_3i_specimen_data)
         .transform(generate_unique_id)
@@ -89,6 +91,30 @@ def truncate_europhenome_colony_ids(dcc_df: DataFrame) -> DataFrame:
         when(
             dcc_df["_dataSource"] == "europhenome",
             udf(utils.truncate_colony_id, StringType())(dcc_df["_colonyID"]),
+        ).otherwise(dcc_df["_colonyID"]),
+    )
+    return dcc_df
+
+
+def parse_europhenome_colony_xml_entities(dcc_df: DataFrame) -> DataFrame:
+    """
+    Some EuroPhenome Colony Ids have &lt; &gt; values that have to be replaced
+    :param dcc_df:
+    :return:
+    """
+    dcc_df = dcc_df.withColumn(
+        "_colonyID",
+        when(
+            (dcc_df["_dataSource"] == "europhenome"),
+            regexp_replace("_colonyID", "&lt;", "<"),
+        ).otherwise(dcc_df["_colonyID"]),
+    )
+
+    dcc_df = dcc_df.withColumn(
+        "_colonyID",
+        when(
+            (dcc_df["_dataSource"] == "europhenome"),
+            regexp_replace("_colonyID", "&gt;", ">"),
         ).otherwise(dcc_df["_colonyID"]),
     )
     return dcc_df

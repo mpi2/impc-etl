@@ -2,7 +2,7 @@ all: default
 
 default: clean devDeps build
 
-submit-h:
+submit-h: clean devDeps build
 	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' YARN_CONF_DIR=/homes/federico/impc-etl/spark-2.4.5-bin-hadoop2.7/yarn-conf-hh/ luigi --module impc_etl.workflow.main $(task) --workers 3
 
 submit-lsf: clean devDeps build
@@ -59,12 +59,14 @@ devEnv: .venv devDeps
 
 
 data:            ##@data Download test data
-	cd ${DATA_PATH} && mkdir imits mgi owl xml parquet solr
+	cd ${DATA_PATH} && mkdir imits mgi owl xml parquet solr misc
 	cd ${DATA_PATH}/xml && mkdir impc 3i europhenome
 	cp ${INPUT_DATA_PATH}/imits/imits-report.tsv ${DATA_PATH}/imits/
 	cp ${INPUT_DATA_PATH}/imits/allele2Entries.tsv ${DATA_PATH}/imits/
 	cp ${INPUT_DATA_PATH}/imits/productEntries.tsv ${DATA_PATH}/imits/
 	cp -r ${INPUT_DATA_PATH}/3i/latest/*.xml ${DATA_PATH}/xml/3i/
+	cd ${DATA_PATH}/xml/3i/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
+	cd ${DATA_PATH}/xml/3i/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<\/ns2:/<\//g' {} \;
 	cp -r ${INPUT_DATA_PATH}/europhenome/2013-10-31/*.xml ${DATA_PATH}/xml/europhenome/
 	cp -r ${INPUT_DATA_PATH}/europhenome/2013-05-20/*.xml ${DATA_PATH}/xml/europhenome/
 	cd ${DATA_PATH}/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
@@ -75,6 +77,8 @@ data:            ##@data Download test data
 	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output ${DATA_PATH}/mgi/MGI_Strain.rpt
 	curl http://www.informatics.jax.org/downloads/reports/MGI_PhenotypicAllele.rpt --output ${DATA_PATH}/mgi/MGI_PhenotypicAllele.rpt
 	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output ${DATA_PATH}/mgi/MRK_List1.rpt
+	curl http://www.informatics.jax.org/downloads/reports/HGNC_homologene.rpt --output ${DATA_PATH}/mgi/HGNC_homologene.rpt
+	curl https://www.mousephenotype.org/embryoviewer/rest/ready --output ${DATA_PATH}/misc/embryo_data.json
 
 
 test:       ##@best_practices Run pystest against the test folder

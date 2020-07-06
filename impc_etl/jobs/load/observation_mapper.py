@@ -302,7 +302,7 @@ def add_observation_type(experiments_df):
         "observation_type",
         when(
             (col("pipeline.parameter.isOption") == True)
-            | (col("pipeline.parameter.parameterKey") == "IMPC_EYE_092_001"),
+            | (col("pipeline.parameter.parameterKey").contains("EYE_092_001")),
             lit("categorical"),
         ).otherwise(
             when(
@@ -325,6 +325,8 @@ def add_observation_type(experiments_df):
 
 def resolve_simple_value(exp_df, pipeline_df):
     options_df = pipeline_df.select("option.*").distinct().alias("options")
+    if has_column(exp_df, "simpleParameter._sequenceID"):
+        exp_df = exp_df.withColumn("sequence_id", col("simpleParameter._sequenceID"))
     exp_df = exp_df.join(
         options_df,
         (
@@ -384,14 +386,9 @@ def resolve_ontology_value(ontological_observation_df, ontology_df):
     )
     id_vs_terms_df = id_vs_terms_df.join(
         ontology_df,
-        (
-            regexp_extract(col("temp.term"), "(.+:.+):.+", 1)
-            == col("onto.curie")
-        ),
+        (regexp_extract(col("temp.term"), "(.+:.+):.+", 1) == col("onto.curie")),
     )
-    id_vs_terms_df = id_vs_terms_df.withColumn(
-        "sub_term_id", col("onto.curie")
-    )
+    id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_id", col("onto.curie"))
     id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_name", col("onto.name"))
     id_vs_terms_df = id_vs_terms_df.withColumn(
         "sub_term_description", col("onto.description")
@@ -985,6 +982,56 @@ def map_experiments_to_observations(
     observation_df = observation_df.withColumn(
         "specimen_source_file",
         regexp_extract(col("specimen_source_file"), "(.*\/)(.*\/.*\.xml)", idx=2),
+    )
+    observation_df = observation_df.withColumn("life_stage_name", lit(None))
+    observation_df = observation_df.withColumn("life_stage_acc", lit(None))
+    for life_stage in Constants.PROCEDURE_LIFE_STAGE_MAPPER:
+        life_stage_name = life_stage["lifeStage"]
+        observation_df = observation_df.withColumn(
+            "life_stage_name",
+            when(
+                col("life_stage_name").isNull(),
+                when(
+                    (
+                        col("procedure_stable_id").rlike(
+                            "|".join(
+                                [f"({ proc })" for proc in life_stage["procedures"]]
+                            )
+                        )
+                        | (col("developmental_stage_name") == life_stage_name)
+                    ),
+                    lit(life_stage_name),
+                ).otherwise(lit(None)),
+            ).otherwise(col("life_stage_name")),
+        )
+        observation_df = observation_df.withColumn(
+            "life_stage_acc",
+            when(
+                col("life_stage_acc").isNull(),
+                when(
+                    (
+                        col("procedure_stable_id").rlike(
+                            "|".join(
+                                [f"({ proc })" for proc in life_stage["procedures"]]
+                            )
+                        )
+                        | (col("developmental_stage_name") == life_stage_name)
+                    ),
+                    lit(life_stage["lifeStageAcc"]),
+                ).otherwise(lit(None)),
+            ).otherwise(col("life_stage_acc")),
+        )
+    observation_df = observation_df.withColumn(
+        "life_stage_name",
+        when((col("life_stage_name").isNull()), lit("Early adult")).otherwise(
+            col("life_stage_name")
+        ),
+    )
+    observation_df = observation_df.withColumn(
+        "life_stage_acc",
+        when((col("life_stage_acc").isNull()), lit("IMPCLS:0005")).otherwise(
+            col("life_stage_acc")
+        ),
     )
     return observation_df
 

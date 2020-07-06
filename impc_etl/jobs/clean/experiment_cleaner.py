@@ -1,6 +1,15 @@
 import sys
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import udf, when, lit, md5, concat, col
+from pyspark.sql.functions import (
+    udf,
+    when,
+    lit,
+    md5,
+    concat,
+    col,
+    regexp_replace,
+    regexp_extract,
+)
 from pyspark.sql.types import BooleanType, StringType
 from impc_etl.config import Constants
 from impc_etl.shared import utils
@@ -65,6 +74,8 @@ def clean_lines(line_df: DataFrame):
         .transform(map_centre_ids)
         .transform(map_project_ids)
         .transform(drop_skipped_procedures)
+        .transform(truncate_europhenome_colony_ids)
+        .transform(parse_europhenome_colony_xml_entities)
         .transform(map_3i_project_ids)
         .transform(prefix_3i_experiment_ids)
         .transform(drop_null_centre_id)
@@ -127,6 +138,46 @@ def truncate_europhenome_specimen_ids(dcc_df: DataFrame) -> DataFrame:
     return dcc_df
 
 
+def truncate_europhenome_colony_ids(dcc_df: DataFrame) -> DataFrame:
+    """
+    Some EuroPhenome Colony Ids have a suffix that should be truncated
+    :param dcc_df:
+    :return:
+    """
+    dcc_df = dcc_df.withColumn(
+        "_colonyID",
+        when(
+            (dcc_df["_dataSource"] == "europhenome"),
+            udf(utils.truncate_colony_id, StringType())(dcc_df["_colonyID"]),
+        ).otherwise(dcc_df["_colonyID"]),
+    )
+    return dcc_df
+
+
+def parse_europhenome_colony_xml_entities(dcc_df: DataFrame) -> DataFrame:
+    """
+    Some EuroPhenome Colony Ids have &lt; &gt; values that have to be replaced
+    :param dcc_df:
+    :return:
+    """
+    dcc_df = dcc_df.withColumn(
+        "_colonyID",
+        when(
+            (dcc_df["_dataSource"] == "europhenome"),
+            regexp_replace("_colonyID", "&lt;", "<"),
+        ).otherwise(dcc_df["_colonyID"]),
+    )
+
+    dcc_df = dcc_df.withColumn(
+        "_colonyID",
+        when(
+            (dcc_df["_dataSource"] == "europhenome"),
+            regexp_replace("_colonyID", "&gt;", ">"),
+        ).otherwise(dcc_df["_colonyID"]),
+    )
+    return dcc_df
+
+
 def drop_skipped_experiments(dcc_df: DataFrame) -> DataFrame:
     """
 
@@ -151,14 +202,16 @@ def drop_skipped_procedures(dcc_df: DataFrame) -> DataFrame:
     :param dcc_df:
     :return:
     """
-    dont_skip_procedure = (
-        lambda procedure_name: procedure_name[: procedure_name.rfind("_")]
-        not in Constants.SKIPPED_PROCEDURES
+    return dcc_df.where(
+        (
+            ~(
+                regexp_extract(col("_procedureID"), "(.+_.+)_.+", 1).isin(
+                    Constants.SKIPPED_PROCEDURES
+                )
+            )
+        )
+        | (dcc_df["_dataSource"] == "3i")
     )
-    dont_skip_procedure_udf = udf(dont_skip_procedure, BooleanType())(
-        dcc_df["_procedureID"]
-    )
-    return dcc_df.where(dont_skip_procedure_udf | (dcc_df["_dataSource"] == "3i"))
 
 
 def map_3i_project_ids(dcc_df: DataFrame) -> DataFrame:
