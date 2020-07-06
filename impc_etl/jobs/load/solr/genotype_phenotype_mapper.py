@@ -42,6 +42,7 @@ GENOTYPE_PHENOTYPE_COLUMNS = [
 STATS_RESULTS_COLUMNS = [
     "full_mp_term",
     "statistical_method",
+    "p_value",
     "genotype_effect_p_value",
     "female_pvalue_low_vs_normal_high",
     "female_pvalue_low_normal_vs_high",
@@ -57,6 +58,8 @@ STATS_RESULTS_COLUMNS = [
     "female_percentage_change",
     "male_effect_size",
     "female_effect_size",
+    "genotype_effect_size_low_vs_normal_high",
+    "genotype_effect_size_low_normal_vs_high",
 ]
 
 
@@ -75,7 +78,7 @@ def main(argv):
     stats_results_df = spark.read.parquet(stats_results_parquet_path)
     ontology_df = spark.read.parquet(ontology_parquet_path)
 
-    genotype_phenotype_df = stats_results_df.where(col("significant")).select(
+    genotype_phenotype_df = stats_results_df.where(col("significant") == True).select(
         GENOTYPE_PHENOTYPE_COLUMNS + STATS_RESULTS_COLUMNS
     )
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
@@ -98,11 +101,16 @@ def main(argv):
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
         "p_value",
         when(
+            col("statistical_method").isin(["Manual", "Supplied as data"]),
+            col("p_value"),
+        )
+        .when(
             ~col("statistical_method").contains("Reference Range Plus"),
             when(col("sex") == "male", col("male_ko_effect_p_value"))
             .when(col("sex") == "female", col("female_ko_effect_p_value"))
             .otherwise(col("genotype_effect_p_value")),
-        ).otherwise(
+        )
+        .otherwise(
             when(
                 col("sex") == "male",
                 least(
@@ -123,12 +131,14 @@ def main(argv):
 
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
         "effect_size",
-        when(
+        when(col("statistical_method").isin(["Manual", "Supplied as data"]), lit(1.0))
+        .when(
             ~col("statistical_method").contains("Reference Range Plus"),
             when(col("sex") == "male", col("male_effect_size"))
             .when(col("sex") == "female", col("female_effect_size"))
             .otherwise(col("effect_size")),
-        ).otherwise(
+        )
+        .otherwise(
             when(
                 col("sex") == "male",
                 when(

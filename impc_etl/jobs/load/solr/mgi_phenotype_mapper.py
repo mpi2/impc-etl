@@ -3,7 +3,7 @@ SOLR module
    Generates the required Solr cores
 """
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col, explode_outer, when, lit, least
+from pyspark.sql.functions import col, explode_outer, when, lit, split, concat_ws
 import sys
 
 
@@ -24,11 +24,13 @@ def main(argv):
                     [2]: Output Path
     """
     mgi_phenotype_parquet_path = argv[1]
-    ontology_parquet_path = argv[2]
-    output_path = argv[2]
+    mgi_allele_parquet_path = argv[2]
+    ontology_parquet_path = argv[3]
+    output_path = argv[4]
 
     spark = SparkSession.builder.getOrCreate()
     mgi_phenotype_df = spark.read.parquet(mgi_phenotype_parquet_path)
+    mgi_allele_df = spark.read.parquet(mgi_allele_parquet_path)
     ontology_df = spark.read.parquet(ontology_parquet_path)
 
     mgi_phenotype_df = mgi_phenotype_df.join(
@@ -46,8 +48,33 @@ def main(argv):
     )
     mgi_phenotype_df = mgi_phenotype_df.withColumn("life_stage_acc", lit("EFO:0002948"))
     mgi_phenotype_df = mgi_phenotype_df.withColumn("life_stage_name", lit("postnatal"))
-    mgi_phenotype_df.show()
-    raise ValueError
+    mgi_phenotype_df = mgi_phenotype_df.withColumn("ontology_db_id", lit(5))
+
+    mgi_phenotype_df = mgi_phenotype_df.withColumnRenamed(
+        "mammalianPhenotypeID", "mp_term_id"
+    )
+    mgi_phenotype_df = mgi_phenotype_df.join(
+        mgi_allele_df,
+        ["mgiAlleleID", "mgiMarkerAccessionID", "alleleSymbol"],
+        "left_outer",
+    )
+    mgi_phenotype_df = mgi_phenotype_df.withColumnRenamed(
+        "mgiAlleleID", "allele_accession_id"
+    )
+    mgi_phenotype_df = mgi_phenotype_df.withColumnRenamed(
+        "alleleSymbol", "allele_symbol"
+    )
+    mgi_phenotype_df = mgi_phenotype_df.withColumnRenamed("alleleName", "allele_name")
+    mgi_phenotype_df = mgi_phenotype_df.withColumnRenamed(
+        "markerSymbol", "marker_symbol"
+    )
+    mgi_phenotype_df = mgi_phenotype_df.withColumnRenamed(
+        "mgiMarkerAccessionID", "marker_accession_id"
+    )
+    mgi_phenotype_df = mgi_phenotype_df.withColumn(
+        "external_id", concat_ws("-", "pubMedID", "marker_accession_id", "mp_term_id")
+    )
+    mgi_phenotype_df.write.parquet(output_path)
 
 
 if __name__ == "__main__":

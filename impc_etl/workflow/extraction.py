@@ -60,7 +60,7 @@ class ImitsExtractor(SparkSubmitTask):
             else self.output_path
         )
         return ImpcConfig().get_target(
-            f"{self.output_path}{self.entity_type.lower()}_raw_parquet"
+            f"{self.output_path}imits_{self.entity_type.lower()}_raw_parquet"
         )
 
     def app_options(self):
@@ -131,6 +131,18 @@ class MGIAlleleExtractor(MGIExtractor):
 
 class MGIStrainExtractor(MGIExtractor):
     entity_type = "strain"
+
+
+class MGIGenePhenoExtractor(MGIExtractor):
+    entity_type = "gene_pheno"
+
+
+class MGIHomoloGeneExtractor(MGIExtractor):
+    entity_type = "cross_ref"
+
+
+class MGIMrkListExtractor(MGIExtractor):
+    entity_type = "mrk_list"
 
 
 class OntologyExtractor(SparkSubmitTask):

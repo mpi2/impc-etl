@@ -59,7 +59,7 @@ devEnv: .venv devDeps
 
 
 data:            ##@data Download test data
-	cd ${DATA_PATH} && mkdir imits mgi owl xml parquet solr
+	cd ${DATA_PATH} && mkdir imits mgi owl xml parquet solr misc
 	cd ${DATA_PATH}/xml && mkdir impc 3i europhenome
 	cp ${INPUT_DATA_PATH}/imits/imits-report.tsv ${DATA_PATH}/imits/
 	cp ${INPUT_DATA_PATH}/imits/allele2Entries.tsv ${DATA_PATH}/imits/
@@ -77,6 +77,8 @@ data:            ##@data Download test data
 	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output ${DATA_PATH}/mgi/MGI_Strain.rpt
 	curl http://www.informatics.jax.org/downloads/reports/MGI_PhenotypicAllele.rpt --output ${DATA_PATH}/mgi/MGI_PhenotypicAllele.rpt
 	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output ${DATA_PATH}/mgi/MRK_List1.rpt
+	curl http://www.informatics.jax.org/downloads/reports/HGNC_homologene.rpt --output ${DATA_PATH}/mgi/HGNC_homologene.rpt
+	curl https://www.mousephenotype.org/embryoviewer/rest/ready --output ${DATA_PATH}/misc/embryo_data.json
 
 
 test:       ##@best_practices Run pystest against the test folder

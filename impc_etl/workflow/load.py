@@ -145,6 +145,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
     emap_emapa_csv_path = luigi.Parameter()
     emapa_metadata_csv_path = luigi.Parameter()
     ma_metadata_csv_path = luigi.Parameter()
+    threei_stats_results_csv = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -166,10 +167,6 @@ class StatsResultsCoreLoader(SparkSubmitTask):
                 ontology_input_path=self.ontology_input_path,
             ),
             OntologyExtractor(
-                ontology_input_path=self.ontology_input_path,
-                output_path=self.output_path,
-            ),
-            OntologyMetadataExtractor(
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
             ),
@@ -205,7 +202,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             self.input()[2].path,
             self.input()[3].path,
             self.input()[4].path,
-            self.input()[5].path,
+            self.threei_stats_results_csv,
             self.output().path,
         ]
 
@@ -227,6 +224,7 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
     emap_emapa_csv_path = luigi.Parameter()
     emapa_metadata_csv_path = luigi.Parameter()
     ma_metadata_csv_path = luigi.Parameter()
+    threei_stats_results_csv = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -246,6 +244,7 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
                 emap_emapa_csv_path=self.emap_emapa_csv_path,
                 emapa_metadata_csv_path=self.emapa_metadata_csv_path,
                 ma_metadata_csv_path=self.ma_metadata_csv_path,
+                threei_stats_results_csv=self.threei_stats_results_csv,
                 output_path=self.output_path,
             ),
             OntologyExtractor(
@@ -264,3 +263,149 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
 
     def app_options(self):
         return [self.input()[0].path, self.input()[1].path, self.output().path]
+
+
+class MGIPhenotypeCoreLoader(SparkSubmitTask):
+    name = "IMPC_MGI_Phenotype_Loader"
+    app = "impc_etl/jobs/load/solr/mgi_phenotype_mapper.py"
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_gene_pheno_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            MGIGenePhenoExtractor(
+                mgi_input_path=self.mgi_gene_pheno_input_path,
+                output_path=self.output_path,
+            ),
+            MGIAlleleExtractor(
+                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
+            ),
+            OntologyExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f"{self.output_path}mgi_phenotype_parquet")
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.output().path,
+        ]
+
+
+class MPCoreLoader(SparkSubmitTask):
+    name = "IMPC_MGI_Phenotype_Loader"
+    app = "impc_etl/jobs/load/solr/mp_mapper.py"
+
+    ontology_input_path = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    impc_search_index_csv_path = luigi.Parameter()
+    mp_relation_augmented_metadata_table_csv_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            OntologyExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+            OntologyMetadataExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+            PipelineCoreLoader(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f"{self.output_path}mp_parquet")
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.impc_search_index_csv_path,
+            self.mp_relation_augmented_metadata_table_csv_path,
+            self.output().path,
+        ]
+
+
+class GeneCoreLoader(SparkSubmitTask):
+    name = "IMPC_Gene_Core_Loader"
+    app = "impc_etl/jobs/load/solr/gene_mapper.py"
+    imits_tsv_path = luigi.Parameter()
+    mgi_homologene_input_path = luigi.Parameter()
+    mgi_mrk_list_input_path = luigi.Parameter()
+    embryo_data_json_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f"{self.output_path}gene_core_parquet")
+
+    def requires(self):
+        return [
+            GeneExtractor(
+                imits_tsv_path=self.imits_tsv_path, output_path=self.output_path
+            ),
+            AlleleExtractor(
+                imits_tsv_path=self.imits_tsv_path, output_path=self.output_path
+            ),
+            MGIHomoloGeneExtractor(
+                mgi_input_path=self.mgi_homologene_input_path,
+                output_path=self.output_path,
+            ),
+            MGIMrkListExtractor(
+                mgi_input_path=self.mgi_mrk_list_input_path,
+                output_path=self.output_path,
+            ),
+        ]
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.input()[3].path,
+            self.embryo_data_json_path,
+            self.output().path,
+        ]

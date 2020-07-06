@@ -2,6 +2,7 @@ import os
 import sys
 
 from pronto import Ontology, Term
+from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 
 from impc_etl.workflow.config import ImpcConfig
 from io import BytesIO
@@ -12,6 +13,7 @@ from impc_etl.shared.utils import convert_to_row
 import pronto
 from luigi.contrib.hdfs.hadoopcli_clients import HdfsClient
 from luigi.contrib.hdfs.target import HdfsTarget
+import unicodedata
 
 ONTOLOGIES = [
     {
@@ -91,6 +93,32 @@ ONTOLOGIES = [
     # {"id": "pato", "top_level_terms": []},
 ]
 
+ONTOLOGY_SCHEMA = StructType(
+    [
+        StructField("id", StringType(), True),
+        StructField("term", StringType(), True),
+        StructField("definition", StringType(), True),
+        StructField("synonyms", ArrayType(StringType()), True),
+        StructField("alt_ids", ArrayType(StringType()), True),
+        StructField("child_ids", ArrayType(StringType()), True),
+        StructField("child_terms", ArrayType(StringType()), True),
+        StructField("child_definitions", ArrayType(StringType()), True),
+        StructField("child_term_synonyms", ArrayType(StringType()), True),
+        StructField("parent_ids", ArrayType(StringType()), True),
+        StructField("parent_terms", ArrayType(StringType()), True),
+        StructField("parent_definitions", ArrayType(StringType()), True),
+        StructField("parent_term_synonyms", ArrayType(StringType()), True),
+        StructField("intermediate_ids", ArrayType(StringType()), True),
+        StructField("intermediate_terms", ArrayType(StringType()), True),
+        StructField("intermediate_definitions", ArrayType(StringType()), True),
+        StructField("intermediate_term_synonyms", ArrayType(StringType()), True),
+        StructField("top_level_ids", ArrayType(StringType()), True),
+        StructField("top_level_terms", ArrayType(StringType()), True),
+        StructField("top_level_definitions", ArrayType(StringType()), True),
+        StructField("top_level_synonyms", ArrayType(StringType()), True),
+    ]
+)
+
 
 def main(argv):
     """
@@ -129,9 +157,12 @@ def extract_ontology_terms(spark_session: SparkSession) -> DataFrame:
             ontology_terms += [
                 _parse_ontology_term(term, top_level_terms, top_level_ancestors)
                 for term in ontology.terms()
+                if term.name is not None
             ]
     ontology_terms_json = spark_session.sparkContext.parallelize(ontology_terms)
-    ontology_terms_df = spark_session.read.json(ontology_terms_json)
+    ontology_terms_df = spark_session.read.json(
+        ontology_terms_json, schema=ONTOLOGY_SCHEMA, mode="FAILFAST"
+    )
     return ontology_terms_df
 
 
@@ -153,42 +184,56 @@ def _parse_ontology_term(
     )
     return {
         "id": ontology_term.id,
-        "term": ontology_term.name,
-        "definition": str(ontology_term.definition),
+        "term": _parse_text(ontology_term.name),
+        "definition": _parse_text(ontology_term.definition)
+        if ontology_term.definition is not None
+        else "null",
         "synonyms": [
-            synonym.description
+            _parse_text(synonym.description)
             for synonym in ontology_term.synonyms
             if synonym.type is "EXACT"
         ],
         "alt_ids": list(ontology_term.alternate_ids),
         "child_ids": [child_term.id for child_term in children],
-        "child_terms": [child_term.name for child_term in children],
-        "child_definitions": [str(child_term.definition) for child_term in children],
+        "child_terms": [_parse_text(child_term.name) for child_term in children],
+        "child_definitions": [
+            _parse_text(child_term.definition)
+            for child_term in children
+            if child_term.definition is not None
+        ],
         "child_term_synonyms": _get_synonym_list(children),
         "parent_ids": [parent_term.id for parent_term in parents],
-        "parent_terms": [parent_term.name for parent_term in parents],
-        "parent_definitions": [str(parent_term.definition) for parent_term in parents],
+        "parent_terms": [_parse_text(parent_term.name) for parent_term in parents],
+        "parent_definitions": [
+            _parse_text(parent_term.definition)
+            for parent_term in parents
+            if parent_term.definition is not None
+        ],
         "parent_term_synonyms": _get_synonym_list(parents),
         "intermediate_ids": [
             intermediate_term.id for intermediate_term in intermediate_terms
         ],
         "intermediate_terms": [
-            intermediate_term.name for intermediate_term in intermediate_terms
+            _parse_text(intermediate_term.name)
+            for intermediate_term in intermediate_terms
         ],
         "intermediate_definitions": [
-            str(intermediate_term.definition)
+            _parse_text(intermediate_term.definition)
             for intermediate_term in intermediate_terms
+            if intermediate_term.definition is not None
         ],
         "intermediate_term_synonyms": _get_synonym_list(intermediate_terms),
         "top_level_ids": [
             term_top_level_term.id for term_top_level_term in term_top_level_terms
         ],
         "top_level_terms": [
-            term_top_level_term.name for term_top_level_term in term_top_level_terms
+            _parse_text(term_top_level_term.name)
+            for term_top_level_term in term_top_level_terms
         ],
         "top_level_definitions": [
-            str(term_top_level_term.definition)
+            _parse_text(term_top_level_term.definition)
             for term_top_level_term in term_top_level_terms
+            if term_top_level_term.definition is not None
         ],
         "top_level_synonyms": _get_synonym_list(term_top_level_terms),
     }
@@ -198,8 +243,16 @@ def _get_synonym_list(terms: Iterable[Term]):
     flat_list = []
     for term in terms:
         for synonym in term.synonyms:
-            flat_list.append(str(synonym))
+            flat_list.append(_parse_text(synonym.description))
     return flat_list
+
+
+def _parse_text(definition):
+    if definition is None:
+        return None
+    return unicodedata.normalize(
+        "NFKD", definition.encode("iso-8859-1").decode("utf-8")
+    )
 
 
 if __name__ == "__main__":
