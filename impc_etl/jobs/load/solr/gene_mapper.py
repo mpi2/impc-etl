@@ -39,6 +39,7 @@ GENE_CORE_COLUMNS = [
     "imits_phenotype_status",
     "imits_es_cell_status",
     "imits_mouse_status",
+    "status",
     "is_umass_gene",
     "is_idg_gene",
     "embryo_data_available",
@@ -66,6 +67,7 @@ IMITS_GENE_COLUMNS = [
     "latest_phenotyping_centre",
     "latest_phenotype_started",
     "latest_phenotype_complete",
+    "latest_project_status_legacy",
 ]
 
 CELL_MOUSE_STATUS_MAP = {
@@ -89,6 +91,7 @@ IMITS_GENE_MAP = {
     "imits_phenotype_status": "latest_project_status",
     "imits_es_cell_status": "latest_es_cell_status",
     "imits_mouse_status": "latest_mouse_status",
+    "status": "latest_project_status_legacy",
 }
 
 
@@ -214,16 +217,7 @@ def main(argv):
     gene_df = gene_df.groupBy(
         [col_name for col_name in gene_df.columns if col_name not in grouped_columns]
     ).agg(*[collect_set(col_name).alias(col_name) for col_name in grouped_columns])
-
-    gene_df.distinct().where(col("mgi_accession_id") == "MGI:1924076").show(
-        vertical=True, truncate=False
-    )
-    raise ValueError
-    # embryo_data_df.printSchema()
-    # gene_df.distinct().where(col("mgi_accession_id") == "MGI:1924076").show(
-    #     vertical=True, truncate=False
-    # )
-    # print(gene_df.distinct().count())
+    gene_df.distinct().write.parquet(output_path)
 
 
 def map_status(gene_df, status_map_df, status_col):
