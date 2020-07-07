@@ -30,6 +30,7 @@ COLUMN_MAPPER = {
     "procedure_stable_key": "procedure.procedureId",
     "procedure_stable_id": "procedure.procedureKey",
     "procedure_name": "procedure.name",
+    "experiment_level": "procedure.level",
     "parameter_id": "parameter.parameterId",
     "parameter_stable_key": "parameter.parameterId",
     "parameter_stable_id": "parameter.parameterKey",
@@ -205,25 +206,6 @@ def main(argv):
     )
     pipeline_df = pipeline_df.withColumn("ma_term", col("maName"))
     pipeline_df = pipeline_df.drop(*ma_metadata_df.columns)
-    pipeline_df = pipeline_df.withColumn(
-        "experiment_level",
-        when(
-            col("procedure_stable_id").isin(
-                [
-                    "IMPC_VIA_001",
-                    "ESLIM_024_001",
-                    "IMPC_EVP_001",
-                    "IMPC_FER_001",
-                    "IMPC_EVM_001",
-                    "ESLIM_023_001",
-                    "IMPC_EVL_001",
-                    "IMPC_VIA_002",
-                    "IMPC_EVO_001",
-                ]
-            ),
-            lit("line"),
-        ).otherwise("specimen"),
-    )
     pipeline_df.write.parquet(output_path)
 
 

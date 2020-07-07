@@ -15,11 +15,42 @@ from pyspark.sql.functions import (
     substring,
     md5,
     monotonically_increasing_id,
+    split,
 )
 from pyspark.sql.types import StringType
 
 from impc_etl.shared import utils
 from impc_etl.shared.exceptions import UnsupportedEntityError
+
+
+ALLELE2_MULTIVALUED = [
+    "allele_features",
+    "without_allele_features",
+    "production_centres",
+    "phenotyping_centres",
+    "ikmc_project",
+    "pipeline",
+    "latest_production_centre",
+    "latest_phenotyping_centre",
+    "genetic_map_links",
+    "sequence_map_links",
+    "gene_model_ids",
+    "links",
+]
+
+
+PRODUCT_MULTIVALUED = [
+    "genetic_info",
+    "production_info",
+    "qc_data",
+    "order_names",
+    "order_links",
+    "contact_names",
+    "contact_links",
+    "other_links",
+    "loa_assays",
+    "allele_symbol",
+]
 
 
 def main(argv):
@@ -37,15 +68,17 @@ def main(argv):
 
     if entity_type in ["Gene", "Allele"]:
         imits_df = extract_imits_tsv_by_entity_type(spark, input_path, entity_type)
+    elif entity_type == "allele2":
+        imits_df = extract_imits_tsv_allele_2(spark, input_path)
     elif entity_type in ["Product", "Colony"]:
-        imits_df = extract_imits_tsv(spark, input_path)
+        imits_df = extract_imits_tsv(spark, input_path, entity_type)
     else:
         raise UnsupportedEntityError
 
     imits_df.write.mode("overwrite").parquet(output_path)
 
 
-def extract_imits_tsv(spark_session: SparkSession, file_path) -> DataFrame:
+def extract_imits_tsv(spark_session: SparkSession, file_path, entity_type) -> DataFrame:
     """
     Uses a Spark session to generate a DataFrame from a TSV file. Can extract a Colonies file or a Products file.
     :param spark_session: spark SQL session to be used in the extraction
@@ -56,6 +89,9 @@ def extract_imits_tsv(spark_session: SparkSession, file_path) -> DataFrame:
     imits_df = imits_df.toDF(
         *[column_name.replace(" ", "_").lower() for column_name in imits_df.columns]
     )
+    if entity_type == "Product":
+        for col_name in PRODUCT_MULTIVALUED:
+            imits_df = imits_df.withColumn(col_name, split(col_name, r"\|"))
     return imits_df
 
 
@@ -86,6 +122,30 @@ def extract_imits_tsv_by_entity_type(
             "allele2_id", monotonically_increasing_id().astype(StringType())
         )
     return imtis_entity_df
+
+
+def extract_imits_tsv_allele_2(spark_session: SparkSession, file_path):
+    imits_df = utils.extract_tsv(spark_session, file_path)
+    imits_df = imits_df.withColumn(
+        "allele_mgi_accession_id",
+        when(
+            (col("allele_mgi_accession_id").isNull()) & (col("type") == "Allele"),
+            concat(lit("NOT-RELEASED-"), substring(md5(col("allele_symbol")), 0, 10)),
+        ).otherwise(col("allele_mgi_accession_id")),
+    )
+    imits_df = imits_df.withColumn(
+        "marker_mgi_accession_id",
+        when(
+            (col("marker_mgi_accession_id").isNull()) & (col("type") == "Gene"),
+            concat(lit("NOT-RELEASED-"), substring(md5(col("marker_symbol")), 0, 10)),
+        ).otherwise(col("marker_mgi_accession_id")),
+    )
+    imits_df = imits_df.withColumn(
+        "allele2_id", monotonically_increasing_id().astype(StringType())
+    )
+    for col_name in ALLELE2_MULTIVALUED:
+        imits_df = imits_df.withColumn(col_name, split(col_name, r"\|"))
+    return imits_df
 
 
 if __name__ == "__main__":

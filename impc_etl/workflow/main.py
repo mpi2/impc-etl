@@ -32,6 +32,7 @@ class ImpcSolrCores(luigi.Task):
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     imits_alleles_tsv_path = luigi.Parameter()
+    imits_product_tsv_path = luigi.Parameter()
     mgi_allele_input_path = luigi.Parameter()
     mgi_strain_input_path = luigi.Parameter()
     mgi_gene_pheno_input_path = luigi.Parameter()
@@ -49,6 +50,18 @@ class ImpcSolrCores(luigi.Task):
 
     def requires(self):
         return [
+            PipelineCoreLoader(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            ),
             GenotypePhenotypeCoreLoader(
                 openstats_jdbc_connection=self.openstats_jdbc_connection,
                 openstats_db_user=self.openstats_db_user,
@@ -111,6 +124,12 @@ class ImpcSolrCores(luigi.Task):
                 mgi_homologene_input_path=self.mgi_homologene_input_path,
                 mgi_mrk_list_input_path=self.mgi_mrk_list_input_path,
                 output_path=self.output_path,
+            ),
+            Allele2Extractor(
+                imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
+            ),
+            ProductExtractor(
+                imits_tsv_path=self.imits_product_tsv_path, output_path=self.output_path
             ),
         ]
 
