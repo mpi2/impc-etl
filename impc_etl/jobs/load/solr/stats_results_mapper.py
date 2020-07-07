@@ -22,6 +22,7 @@ from pyspark.sql.functions import (
     flatten,
     array_distinct,
     first,
+    monotonically_increasing_id,
 )
 from pyspark.sql.types import StructType, StructField, StringType, Row
 
@@ -78,6 +79,7 @@ OBSERVATIONS_STATS_MAP = {
 ALLELE_STATS_MAP = {"allele_name": "allele_name"}
 
 STATS_RESULTS_COLUMNS = [
+    "doc_id",
     "additional_information",
     "allele_accession_id",
     "allele_name",
@@ -438,6 +440,9 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "significant",
         when(col("mp_term_id").isNotNull(), lit(True)).otherwise(lit(False)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "doc_id", monotonically_increasing_id().astype(StringType())
     )
     open_stats_df.select(*STATS_RESULTS_COLUMNS).distinct().write.parquet(output_path)
 

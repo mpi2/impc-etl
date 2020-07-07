@@ -1,7 +1,15 @@
 from pyspark.sql import DataFrame, SparkSession
 import sys
 
-from pyspark.sql.functions import col, explode_outer, when, lit, least
+from pyspark.sql.functions import (
+    col,
+    explode_outer,
+    when,
+    lit,
+    least,
+    monotonically_increasing_id,
+)
+from pyspark.sql.types import StringType
 
 ONTOLOGY_STATS_MAP = {
     "mp_term_name": "term",
@@ -186,6 +194,9 @@ def main(argv):
         GENOTYPE_PHENOTYPE_COLUMNS
         + list(ONTOLOGY_STATS_MAP.keys())
         + ["assertion_type_id", "assertion_type"]
+    )
+    genotype_phenotype_df = genotype_phenotype_df.withColumn(
+        "doc_id", monotonically_increasing_id().astype(StringType())
     )
     genotype_phenotype_df.distinct().write.parquet(output_path)
 

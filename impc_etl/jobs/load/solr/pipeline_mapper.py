@@ -110,9 +110,7 @@ def main(argv):
         first(col("observation_type")).alias("observation_type")
     )
 
-    pipeline_df = pipeline_df.join(
-        observations_df, "fully_qualified_name", "left_outer"
-    )
+    pipeline_df = pipeline_df.join(observations_df, "fully_qualified_name")
 
     pipeline_categories_df = pipeline_df.select("fully_qualified_name", "option.name")
     pipeline_categories_df = pipeline_categories_df.groupBy("fully_qualified_name").agg(

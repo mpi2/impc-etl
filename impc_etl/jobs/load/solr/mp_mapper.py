@@ -13,9 +13,11 @@ from pyspark.sql.functions import (
     concat,
     concat_ws,
     flatten,
+    monotonically_increasing_id,
 )
 import sys
 
+from pyspark.sql.types import StringType
 
 ONTOLOGY_MP_MAP = {
     "mp_id": "id",
@@ -45,6 +47,7 @@ ONTOLOGY_MA_MAP = {
 
 
 MP_CORE_COLUMNS = [
+    "doc_id",
     "mp_id",
     "mp_term",
     "mp_definition",
@@ -138,6 +141,9 @@ def main(argv):
     mp_df = mp_df.join(mp_ma_df, "mp_id", "left_outer")
     mp_df = mp_df.withColumn(
         "top_level_mp_term_id", concat_ws("___", "top_level_mp_id", "top_level_mp_term")
+    )
+    mp_df = mp_df.withColumn(
+        "doc_id", monotonically_increasing_id().astype(StringType())
     )
     mp_df = mp_df.select(MP_CORE_COLUMNS)
     mp_df.write.parquet(output_path)
