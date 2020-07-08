@@ -47,7 +47,7 @@ class ObservationsMapper(SparkSubmitTask):
             MGIStrainExtractor(
                 mgi_input_path=self.mgi_strain_input_path, output_path=self.output_path
             ),
-            OntologyExtractor(
+            OntologyMetadataExtractor(
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
             ),
