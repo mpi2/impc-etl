@@ -116,6 +116,7 @@ ONTOLOGY_SCHEMA = StructType(
         StructField("top_level_terms", ArrayType(StringType()), True),
         StructField("top_level_definitions", ArrayType(StringType()), True),
         StructField("top_level_synonyms", ArrayType(StringType()), True),
+        StructField("top_level_term_id", ArrayType(StringType()), True),
     ]
 )
 
@@ -236,6 +237,10 @@ def _parse_ontology_term(
             if term_top_level_term.definition is not None
         ],
         "top_level_synonyms": _get_synonym_list(term_top_level_terms),
+        "top_level_term_id": [
+            f"{term_top_level_term.id}___{_parse_text(term_top_level_term.name)}"
+            for term_top_level_term in term_top_level_terms
+        ],
     }
 
 

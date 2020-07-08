@@ -402,12 +402,7 @@ def main(argv):
         open_stats_df, allele_df, ["allele_symbol"], ALLELE_STATS_MAP, "allele"
     )
 
-    open_stats_df = open_stats_df.withColumn(
-        "sex",
-        when(col("mp_term_sex") == "not_considered", lit("both")).otherwise(
-            col("mp_term_sex")
-        ),
-    )
+    open_stats_df = open_stats_df.withColumn("sex", col("mp_term_sex"))
     open_stats_df = open_stats_df.withColumn(
         "phenotype_sex",
         when(col("phenotype_sex").isNull(), lit(None))

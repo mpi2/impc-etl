@@ -33,6 +33,7 @@ ONTOLOGY_MP_MAP = {
     "intermediate_mp_term": "intermediate_terms",
     "top_level_mp_id": "top_level_ids",
     "top_level_mp_term": "top_level_terms",
+    "top_level_mp_term_id": "top_level_term_id",
     "top_level_mp_term_synonym": "top_level_synonyms",
 }
 
@@ -139,9 +140,6 @@ def main(argv):
         ]
     )
     mp_df = mp_df.join(mp_ma_df, "mp_id", "left_outer")
-    mp_df = mp_df.withColumn(
-        "top_level_mp_term_id", concat_ws("___", "top_level_mp_id", "top_level_mp_term")
-    )
     mp_df = mp_df.withColumn(
         "doc_id", monotonically_increasing_id().astype(StringType())
     )
