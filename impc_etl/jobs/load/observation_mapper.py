@@ -58,15 +58,6 @@ def main(argv):
         strain_df,
         ontology_df,
     )
-    eye_92_002_obs = observations_df.where(
-        col("procedure_stable_id").contains("_EYE_002")
-        & col("parameter_stable_id").contains("EYE_092_001")
-    )
-    incomplete_input_category_obs = observations_df.where(
-        col("category") == "INCOMPLETE_INPUT_STR"
-    )
-    observations_df = observations_df.subtract(eye_92_002_obs)
-    observations_df = observations_df.subtract(incomplete_input_category_obs)
     observations_df.write.mode("overwrite").parquet(output_path)
 
 
