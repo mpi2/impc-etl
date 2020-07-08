@@ -214,6 +214,8 @@ def main(argv):
     gene_df = gene_df.withColumn("ccds_id", split(col("ccds_ids"), ","))
     gene_df = gene_df.withColumn("ncbi_id", col("entrezgene_id"))
 
+    gene_df = gene_df.withColumn("marker_synonym", split(col("marker_synonym"), r"\|"))
+
     gene_df = gene_df.select(*GENE_CORE_COLUMNS)
     gene_df = gene_df.groupBy(
         [col_name for col_name in gene_df.columns if col_name not in grouped_columns]

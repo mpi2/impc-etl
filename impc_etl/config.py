@@ -608,7 +608,7 @@ class Constants:
         {
             "lifeStage": "E18.5",
             "lifeStageAcc": "IMPCLS:0004",
-            "procedures": ["EVO", "GPO", "MAA_", "EMO_", "GEO_"],
+            "procedures": ["EVP", "EMA", "GEP_", "GPP_"],
         },
         {
             "lifeStage": "Middle aged adult",

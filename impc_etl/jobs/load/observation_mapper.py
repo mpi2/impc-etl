@@ -68,7 +68,7 @@ def map_line_columns(line_df: DataFrame):
         else:
             line_df = line_df.withColumn(field, lit(None))
     line_df = line_df.withColumn("biological_sample_group", lit("experimental"))
-    line_df = line_df.withColumn("zygosity", lit("homozygous"))
+    line_df = line_df.withColumn("zygosity", lit("homozygote"))
     line_df = line_df.withColumn(
         "datasource_name",
         when(col("_dataSource") == "impc", lit("IMPC")).otherwise(
@@ -1032,6 +1032,16 @@ def map_experiments_to_observations(
         when((col("life_stage_acc").isNull()), lit("IMPCLS:0005")).otherwise(
             col("life_stage_acc")
         ),
+    )
+    eye_92_002_obs = observation_df.where(
+        col("procedure_stable_id").contains("_EYE_002")
+        & col("parameter_stable_id").contains("EYE_092_001")
+    )
+    incomplete_input_category_obs = observation_df.where(
+        col("category") == "INCOMPLETE_INPUT_STR"
+    )
+    observation_df = observation_df.subtract(eye_92_002_obs).subtract(
+        incomplete_input_category_obs
     )
     return observation_df
 

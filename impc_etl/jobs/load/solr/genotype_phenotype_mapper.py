@@ -45,6 +45,7 @@ GENOTYPE_PHENOTYPE_COLUMNS = [
     "effect_size",
     "life_stage_acc",
     "life_stage_name",
+    "sex",
 ]
 
 STATS_RESULTS_COLUMNS = [
