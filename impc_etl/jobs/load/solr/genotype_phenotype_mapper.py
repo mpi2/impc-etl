@@ -93,15 +93,6 @@ def main(argv):
         GENOTYPE_PHENOTYPE_COLUMNS + STATS_RESULTS_COLUMNS
     )
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
-        "full_mp_term",
-        when(
-            expr(
-                "exists(full_mp_term.sex, sex -> sex = 'male') AND exists(full_mp_term.sex, sex -> sex = 'female')"
-            ),
-            expr("filter(full_mp_term, mp -> mp.sex IN ('male', 'female'))"),
-        ).otherwise(col("full_mp_term")),
-    )
-    genotype_phenotype_df = genotype_phenotype_df.withColumn(
         "mp_term", explode_outer("full_mp_term")
     )
     genotype_phenotype_df = genotype_phenotype_df.withColumn("sex", col("mp_term.sex"))
@@ -125,12 +116,7 @@ def main(argv):
             col("genotype_effect_p_value"),
         )
         .when(
-            ~col("statistical_method").contains("Reference Range Plus"),
-            when(col("sex") == "male", col("male_ko_effect_p_value"))
-            .when(col("sex") == "female", col("female_ko_effect_p_value"))
-            .otherwise(col("genotype_effect_p_value")),
-        )
-        .otherwise(
+            col("statistical_method").contains("Reference Range Plus"),
             when(
                 col("sex") == "male",
                 least(
@@ -145,7 +131,17 @@ def main(argv):
                     col("female_pvalue_low_normal_vs_high"),
                 ),
             )
-            .otherwise(col("genotype_effect_p_value"))
+            .otherwise(col("genotype_effect_p_value")),
+        )
+        .otherwise(
+            when(col("sex") == "male", col("male_ko_effect_p_value"))
+            .when(col("sex") == "female", col("female_ko_effect_p_value"))
+            .otherwise(
+                when(
+                    col("statistical_method").contains("Fisher Exact Test framework"),
+                    col("p_value"),
+                ).otherwise(col("genotype_effect_p_value"))
+            )
         ),
     )
 
