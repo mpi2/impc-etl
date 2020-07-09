@@ -439,6 +439,10 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "doc_id", monotonically_increasing_id().astype(StringType())
     )
+    open_stats_df = open_stats_df.withColumn(
+        "zygosity",
+        when(col("") == "homozygous", lit("homozygote")).otherwise(col("zygosity")),
+    )
     open_stats_df.select(*STATS_RESULTS_COLUMNS).distinct().write.parquet(output_path)
 
 
