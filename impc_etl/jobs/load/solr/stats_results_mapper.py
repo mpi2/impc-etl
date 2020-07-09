@@ -441,7 +441,9 @@ def main(argv):
     )
     open_stats_df = open_stats_df.withColumn(
         "zygosity",
-        when(col("") == "homozygous", lit("homozygote")).otherwise(col("zygosity")),
+        when(col("zygosity") == "homozygous", lit("homozygote")).otherwise(
+            col("zygosity")
+        ),
     )
     open_stats_df.select(*STATS_RESULTS_COLUMNS).distinct().write.parquet(output_path)
 
