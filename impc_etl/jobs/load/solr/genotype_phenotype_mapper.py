@@ -12,6 +12,7 @@ from pyspark.sql.functions import (
 from pyspark.sql.types import StringType
 
 ONTOLOGY_STATS_MAP = {
+    "mp_term_id": "id",
     "mp_term_name": "term",
     "top_level_mp_term_id": "top_level_ids",
     "top_level_mp_term_name": "top_level_terms",
@@ -46,12 +47,12 @@ GENOTYPE_PHENOTYPE_COLUMNS = [
     "life_stage_acc",
     "life_stage_name",
     "sex",
+    "p_value",
+    "statistical_method",
 ]
 
 STATS_RESULTS_COLUMNS = [
     "full_mp_term",
-    "statistical_method",
-    "p_value",
     "genotype_effect_p_value",
     "female_pvalue_low_vs_normal_high",
     "female_pvalue_low_normal_vs_high",
