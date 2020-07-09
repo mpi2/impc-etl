@@ -8,6 +8,7 @@ from pyspark.sql.functions import (
     lit,
     least,
     monotonically_increasing_id,
+    expr,
 )
 from pyspark.sql.types import StringType
 
@@ -92,6 +93,15 @@ def main(argv):
         GENOTYPE_PHENOTYPE_COLUMNS + STATS_RESULTS_COLUMNS
     )
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
+        "full_mp_term",
+        when(
+            expr(
+                "exists(full_mp_term.sex, sex -> sex = 'male') AND exists(full_mp_term.sex, sex -> sex = 'female')"
+            ),
+            expr("filter(full_mp_term, mp -> mp.sex IN ('male', 'female'))"),
+        ).otherwise(col("full_mp_term")),
+    )
+    genotype_phenotype_df = genotype_phenotype_df.withColumn(
         "mp_term", explode_outer("full_mp_term")
     )
     genotype_phenotype_df = genotype_phenotype_df.withColumn("sex", col("mp_term.sex"))
@@ -112,7 +122,7 @@ def main(argv):
         "p_value",
         when(
             col("statistical_method").isin(["Manual", "Supplied as data"]),
-            col("p_value"),
+            col("genotype_effect_p_value"),
         )
         .when(
             ~col("statistical_method").contains("Reference Range Plus"),

@@ -310,6 +310,7 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "collapsed_mp_term", expr("collapsed_mp_term[0]")
     )
+    open_stats_df = open_stats_df.withColumn("significant", lit(False))
 
     open_stats_df = open_stats_df.join(
         threei_df,
@@ -323,7 +324,7 @@ def main(argv):
         ],
         "left_outer",
     )
-
+    open_stats_df = map_three_i(open_stats_df)
     open_stats_df = open_stats_df.withColumn(
         "collapsed_mp_term",
         when(
@@ -500,7 +501,7 @@ def standardize_threei_schema(threei_df: DataFrame):
         .when(col("zygosity") == "Hemi", lit("hemizygote"))
         .otherwise(lit("heterozygote")),
     )
-    threei_df = threei_df.withColumn("term_id", regexp_replace("mp_id", "\[", ""))
+    threei_df = threei_df.withColumn("term_id", regexp_replace("mp_id", r"\[", ""))
 
     threei_df = threei_df.withColumn(
         "threei_collapsed_mp_term",
@@ -555,7 +556,7 @@ def standardize_threei_schema(threei_df: DataFrame):
     return threei_df
 
 
-def map_three_i(open_stats_df, threei_df):
+def map_three_i(open_stats_df):
     open_stats_df = open_stats_df.withColumn(
         "genotype_effect_parameter_estimate",
         when(
@@ -580,7 +581,6 @@ def map_three_i(open_stats_df, threei_df):
         ),
     )
     open_stats_df = open_stats_df.drop("threei_status")
-
     open_stats_df = open_stats_df.withColumn(
         "statistical_method",
         when(
