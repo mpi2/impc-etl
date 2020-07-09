@@ -40,6 +40,8 @@ ONTOLOGY_STATS_MAP = {
 PIPELINE_STATS_MAP = {
     "mp_term_id_options": "mp_id",
     "mp_term_name_options": "mp_term",
+    "top_level_mp_id_options": "top_level_mp_id",
+    "top_level_mp_term_options": "top_level_mp_term",
     "parameter_stable_key": "parameter_stable_key",
     "procedure_stable_id": "procedure_stable_id",
     "pipeline_stable_key": "pipeline_stable_key",
@@ -378,7 +380,8 @@ def main(argv):
         .agg(
             *[
                 array_distinct(flatten(collect_set(col_name))).alias(col_name)
-                if col_name in ["mp_id", "mp_term"]
+                if col_name
+                in ["mp_id", "mp_term", "top_level_mp_id", "top_level_mp_term"]
                 else collect_set(col_name).alias(col_name)
                 for col_name in list(set(PIPELINE_STATS_MAP.values()))
                 if col_name != "pipeline_stable_key"
@@ -392,6 +395,19 @@ def main(argv):
         pipeline_core_join,
         PIPELINE_STATS_MAP,
         "impress",
+    )
+
+    open_stats_df = open_stats_df.withColumn(
+        "top_level_mp_term_id",
+        when(
+            col("top_level_mp_term_id").isNull(), col("top_level_mp_id_options")
+        ).otherwise(col("top_level_mp_term_id")),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "top_level_mp_term_name",
+        when(
+            col("top_level_mp_term_name").isNull(), col("top_level_mp_term_options")
+        ).otherwise(col("top_level_mp_term_name")),
     )
 
     allele_df = allele_df.select(
