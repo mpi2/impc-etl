@@ -75,6 +75,10 @@ class GeneExtractor(ImitsExtractor):
     entity_type = "Gene"
 
 
+class Allele2Extractor(ImitsExtractor):
+    entity_type = "allele2"
+
+
 class ColonyExtractor(ImitsExtractor):
     entity_type = "Colony"
 

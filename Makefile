@@ -78,7 +78,9 @@ data:            ##@data Download test data
 	curl http://www.informatics.jax.org/downloads/reports/MGI_PhenotypicAllele.rpt --output ${DATA_PATH}/mgi/MGI_PhenotypicAllele.rpt
 	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output ${DATA_PATH}/mgi/MRK_List1.rpt
 	curl http://www.informatics.jax.org/downloads/reports/HGNC_homologene.rpt --output ${DATA_PATH}/mgi/HGNC_homologene.rpt
+	curl http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt --output ${DATA_PATH}/mgi/MGI_GenePheno.rpt
 	curl https://www.mousephenotype.org/embryoviewer/rest/ready --output ${DATA_PATH}/misc/embryo_data.json
+#TODO Remove \n from embryo_data.json
 
 
 test:       ##@best_practices Run pystest against the test folder

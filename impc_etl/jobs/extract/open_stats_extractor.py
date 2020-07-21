@@ -184,8 +184,13 @@ def get_calculation_details(normal_result, applied_method):
     try:
         calculation_details = {"additional_information": None}
 
-        lm_mm_regex = re.compile(r".*Mixed Model.*")
-        if lm_mm_regex.search(applied_method) or applied_method == "MM":
+        mm_regex = re.compile(r".*Mixed Model.*")
+        lm_regex = re.compile(r".*Linear Model.*")
+        if (
+            mm_regex.search(applied_method)
+            or lm_regex.search(applied_method)
+            or applied_method == "MM"
+        ):
             calculation_details["p_value"] = (
                 normal_result["Genotype p-value"]
                 if "Genotype p-value" in normal_result

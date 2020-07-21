@@ -3,9 +3,18 @@ SOLR module
    Generates the required Solr cores
 """
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col, explode_outer, when, lit, split, concat_ws
+from pyspark.sql.functions import (
+    col,
+    explode_outer,
+    when,
+    lit,
+    split,
+    concat_ws,
+    monotonically_increasing_id,
+)
 import sys
 
+from pyspark.sql.types import StringType
 
 ONTOLOGY_STATS_MAP = {
     "mp_term_name": "term",
@@ -73,6 +82,9 @@ def main(argv):
     )
     mgi_phenotype_df = mgi_phenotype_df.withColumn(
         "external_id", concat_ws("-", "pubMedID", "marker_accession_id", "mp_term_id")
+    )
+    mgi_phenotype_df = mgi_phenotype_df.withColumn(
+        "doc_id", monotonically_increasing_id().astype(StringType())
     )
     mgi_phenotype_df.write.parquet(output_path)
 

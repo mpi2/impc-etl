@@ -47,7 +47,7 @@ class ObservationsMapper(SparkSubmitTask):
             MGIStrainExtractor(
                 mgi_input_path=self.mgi_strain_input_path, output_path=self.output_path
             ),
-            OntologyExtractor(
+            OntologyMetadataExtractor(
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
             ),
@@ -407,5 +407,61 @@ class GeneCoreLoader(SparkSubmitTask):
             self.input()[2].path,
             self.input()[3].path,
             self.embryo_data_json_path,
+            self.output().path,
+        ]
+
+
+class ImpcImagesCoreLoader(SparkSubmitTask):
+    name = "IMPC_Images_Core_Loader"
+    app = "impc_etl/jobs/load/solr/impc_images_mapper.py"
+    omero_ids_csv_path = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f"{self.output_path}images_core_parquet")
+
+    def requires(self):
+        return [
+            ObservationsMapper(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+            ),
+            PipelineCoreLoader(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            ),
+        ]
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.omero_ids_csv_path,
             self.output().path,
         ]

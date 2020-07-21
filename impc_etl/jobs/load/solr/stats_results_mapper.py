@@ -22,6 +22,7 @@ from pyspark.sql.functions import (
     flatten,
     array_distinct,
     first,
+    monotonically_increasing_id,
 )
 from pyspark.sql.types import StructType, StructField, StringType, Row
 
@@ -39,6 +40,8 @@ ONTOLOGY_STATS_MAP = {
 PIPELINE_STATS_MAP = {
     "mp_term_id_options": "mp_id",
     "mp_term_name_options": "mp_term",
+    "top_level_mp_id_options": "top_level_mp_id",
+    "top_level_mp_term_options": "top_level_mp_term",
     "parameter_stable_key": "parameter_stable_key",
     "procedure_stable_id": "procedure_stable_id",
     "pipeline_stable_key": "pipeline_stable_key",
@@ -78,6 +81,7 @@ OBSERVATIONS_STATS_MAP = {
 ALLELE_STATS_MAP = {"allele_name": "allele_name"}
 
 STATS_RESULTS_COLUMNS = [
+    "doc_id",
     "additional_information",
     "allele_accession_id",
     "allele_name",
@@ -306,6 +310,7 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "collapsed_mp_term", expr("collapsed_mp_term[0]")
     )
+    open_stats_df = open_stats_df.withColumn("significant", lit(False))
 
     open_stats_df = open_stats_df.join(
         threei_df,
@@ -319,7 +324,7 @@ def main(argv):
         ],
         "left_outer",
     )
-
+    open_stats_df = map_three_i(open_stats_df)
     open_stats_df = open_stats_df.withColumn(
         "collapsed_mp_term",
         when(
@@ -376,7 +381,8 @@ def main(argv):
         .agg(
             *[
                 array_distinct(flatten(collect_set(col_name))).alias(col_name)
-                if col_name in ["mp_id", "mp_term"]
+                if col_name
+                in ["mp_id", "mp_term", "top_level_mp_id", "top_level_mp_term"]
                 else collect_set(col_name).alias(col_name)
                 for col_name in list(set(PIPELINE_STATS_MAP.values()))
                 if col_name != "pipeline_stable_key"
@@ -392,6 +398,19 @@ def main(argv):
         "impress",
     )
 
+    open_stats_df = open_stats_df.withColumn(
+        "top_level_mp_term_id",
+        when(
+            col("top_level_mp_term_id").isNull(), col("top_level_mp_id_options")
+        ).otherwise(col("top_level_mp_term_id")),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "top_level_mp_term_name",
+        when(
+            col("top_level_mp_term_name").isNull(), col("top_level_mp_term_options")
+        ).otherwise(col("top_level_mp_term_name")),
+    )
+
     allele_df = allele_df.select(
         ["allele_symbol"] + list(ALLELE_STATS_MAP.values())
     ).dropDuplicates()
@@ -400,12 +419,7 @@ def main(argv):
         open_stats_df, allele_df, ["allele_symbol"], ALLELE_STATS_MAP, "allele"
     )
 
-    open_stats_df = open_stats_df.withColumn(
-        "sex",
-        when(col("mp_term_sex") == "not_considered", lit("both")).otherwise(
-            col("mp_term_sex")
-        ),
-    )
+    open_stats_df = open_stats_df.withColumn("sex", col("mp_term_sex"))
     open_stats_df = open_stats_df.withColumn(
         "phenotype_sex",
         when(col("phenotype_sex").isNull(), lit(None))
@@ -438,6 +452,15 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "significant",
         when(col("mp_term_id").isNotNull(), lit(True)).otherwise(lit(False)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "doc_id", monotonically_increasing_id().astype(StringType())
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "zygosity",
+        when(col("zygosity") == "homozygous", lit("homozygote")).otherwise(
+            col("zygosity")
+        ),
     )
     open_stats_df.select(*STATS_RESULTS_COLUMNS).distinct().write.parquet(output_path)
 
@@ -478,7 +501,7 @@ def standardize_threei_schema(threei_df: DataFrame):
         .when(col("zygosity") == "Hemi", lit("hemizygote"))
         .otherwise(lit("heterozygote")),
     )
-    threei_df = threei_df.withColumn("term_id", regexp_replace("mp_id", "\[", ""))
+    threei_df = threei_df.withColumn("term_id", regexp_replace("mp_id", r"\[", ""))
 
     threei_df = threei_df.withColumn(
         "threei_collapsed_mp_term",
@@ -533,7 +556,7 @@ def standardize_threei_schema(threei_df: DataFrame):
     return threei_df
 
 
-def map_three_i(open_stats_df, threei_df):
+def map_three_i(open_stats_df):
     open_stats_df = open_stats_df.withColumn(
         "genotype_effect_parameter_estimate",
         when(
@@ -558,7 +581,6 @@ def map_three_i(open_stats_df, threei_df):
         ),
     )
     open_stats_df = open_stats_df.drop("threei_status")
-
     open_stats_df = open_stats_df.withColumn(
         "statistical_method",
         when(

@@ -201,6 +201,15 @@ def override_europhenome_datasource(dcc_df: DataFrame) -> DataFrame:
 def generate_metadata_group(
     experiment_specimen_df: DataFrame, impress_df: DataFrame, exp_type="experiment"
 ) -> DataFrame:
+    TEST_ID = None
+    TEST_ID_LIST = (
+        experiment_specimen_df.where(col("_experimentID") == "177182_16783")
+        .select("unique_id")
+        .collect()
+    )
+    if len(TEST_ID_LIST) > 0:
+        TEST_ID = TEST_ID_LIST[0]["unique_id"]
+
     experiment_metadata = experiment_specimen_df.withColumn(
         "procedureMetadata", explode("procedureMetadata")
     )
@@ -266,11 +275,9 @@ def generate_metadata_group(
     experiment_metadata = experiment_metadata.withColumn(
         "metadataGroup", md5(col("metadataGroupList"))
     )
-    experiment_metadata = experiment_metadata.drop("metadataGroupList")
+    experiment_metadata = experiment_metadata.select("unique_id", "metadataGroup")
     experiment_specimen_df = experiment_specimen_df.join(
-        experiment_metadata,
-        ["unique_id", production_centre_col, phenotyping_centre_col],
-        "left_outer",
+        experiment_metadata, "unique_id", "left_outer"
     )
     experiment_specimen_df = experiment_specimen_df.withColumn(
         "metadataGroup",
@@ -278,6 +285,18 @@ def generate_metadata_group(
             experiment_specimen_df["metadataGroup"]
         ),
     )
+    if TEST_ID is not None:
+        TEST_METADATA_GROUP = experiment_specimen_df.where(
+            col("unique_id") == TEST_ID
+        ).collect()[0]["metadataGroup"]
+
+        if TEST_METADATA_GROUP != "c0d04946009ff863da92165975d6bed3":
+            raise ValueError
+        else:
+            print("Everything is fine")
+            experiment_specimen_df.where(col("unique_id") == TEST_ID).show(
+                vertical=True, truncate=False
+            )
     return experiment_specimen_df
 
 
@@ -382,6 +401,8 @@ def get_derived_parameters(
             & (~impress_df["parameter.derivation"].contains("unimplemented"))
         )
         | (impress_df["parameter.parameterKey"].isin(europhenome_parameters))
+    ).where(
+        ~impress_df["parameter.parameterKey"].isin(Constants.DERIVED_PARAMETER_BANLIST)
     ).select(
         "pipelineKey",
         "procedure.procedureKey",

@@ -1,9 +1,19 @@
 from pyspark.sql import DataFrame, SparkSession
 import sys
 
-from pyspark.sql.functions import col, explode_outer, when, lit, least
+from pyspark.sql.functions import (
+    col,
+    explode_outer,
+    when,
+    lit,
+    least,
+    monotonically_increasing_id,
+    expr,
+)
+from pyspark.sql.types import StringType
 
 ONTOLOGY_STATS_MAP = {
+    "mp_term_id": "id",
     "mp_term_name": "term",
     "top_level_mp_term_id": "top_level_ids",
     "top_level_mp_term_name": "top_level_terms",
@@ -37,12 +47,13 @@ GENOTYPE_PHENOTYPE_COLUMNS = [
     "effect_size",
     "life_stage_acc",
     "life_stage_name",
+    "sex",
+    "p_value",
+    "statistical_method",
 ]
 
 STATS_RESULTS_COLUMNS = [
     "full_mp_term",
-    "statistical_method",
-    "p_value",
     "genotype_effect_p_value",
     "female_pvalue_low_vs_normal_high",
     "female_pvalue_low_normal_vs_high",
@@ -102,15 +113,10 @@ def main(argv):
         "p_value",
         when(
             col("statistical_method").isin(["Manual", "Supplied as data"]),
-            col("p_value"),
+            col("genotype_effect_p_value"),
         )
         .when(
-            ~col("statistical_method").contains("Reference Range Plus"),
-            when(col("sex") == "male", col("male_ko_effect_p_value"))
-            .when(col("sex") == "female", col("female_ko_effect_p_value"))
-            .otherwise(col("genotype_effect_p_value")),
-        )
-        .otherwise(
+            col("statistical_method").contains("Reference Range Plus"),
             when(
                 col("sex") == "male",
                 least(
@@ -125,7 +131,17 @@ def main(argv):
                     col("female_pvalue_low_normal_vs_high"),
                 ),
             )
-            .otherwise(col("genotype_effect_p_value"))
+            .otherwise(col("genotype_effect_p_value")),
+        )
+        .otherwise(
+            when(col("sex") == "male", col("male_ko_effect_p_value"))
+            .when(col("sex") == "female", col("female_ko_effect_p_value"))
+            .otherwise(
+                when(
+                    col("statistical_method").contains("Fisher Exact Test framework"),
+                    col("p_value"),
+                ).otherwise(col("genotype_effect_p_value"))
+            )
         ),
     )
 
@@ -186,6 +202,9 @@ def main(argv):
         GENOTYPE_PHENOTYPE_COLUMNS
         + list(ONTOLOGY_STATS_MAP.keys())
         + ["assertion_type_id", "assertion_type"]
+    )
+    genotype_phenotype_df = genotype_phenotype_df.withColumn(
+        "doc_id", monotonically_increasing_id().astype(StringType())
     )
     genotype_phenotype_df.distinct().write.parquet(output_path)
 

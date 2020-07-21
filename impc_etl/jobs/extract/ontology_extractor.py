@@ -1,7 +1,7 @@
 import os
 import sys
 
-from pronto import Ontology, Term
+from pronto import Ontology, Term, Relationship
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 
 from impc_etl.workflow.config import ImpcConfig
@@ -51,7 +51,7 @@ ONTOLOGIES = [
     },
     {
         "id": "ma",
-        "format": "owl",
+        "format": "obo",
         "top_level_terms": [
             "MA:0000004",
             "MA:0000007",
@@ -72,22 +72,23 @@ ONTOLOGIES = [
             "MA:0002405",
         ],
     },
-    {"id": "mpath", "format": "owl", "top_level_terms": []},
-    # {
-    #     "id": "emapa",
-    #     "top_level_terms": [
-    #         "EMAPA:16104",
-    #         "EMAPA:16192",
-    #         "EMAPA:16246",
-    #         "EMAPA:16405",
-    #         "EMAPA:16469",
-    #         "EMAPA:16727",
-    #         "EMAPA:16748",
-    #         "EMAPA:16840",
-    #         "EMAPA:17524",
-    #         "EMAPA:31858",
-    #     ],
-    # },
+    # {"id": "mpath", "format": "obo", "top_level_terms": []},
+    {
+        "id": "emapa",
+        "format": "obo",
+        "top_level_terms": [
+            "EMAPA:16104",
+            "EMAPA:16192",
+            "EMAPA:16246",
+            "EMAPA:16405",
+            "EMAPA:16469",
+            "EMAPA:16727",
+            "EMAPA:16748",
+            "EMAPA:16840",
+            "EMAPA:17524",
+            "EMAPA:31858",
+        ],
+    },
     # {"id": "efo", "top_level_terms": []},
     # {"id": "emap", "top_level_terms": []},
     # {"id": "pato", "top_level_terms": []},
@@ -116,6 +117,7 @@ ONTOLOGY_SCHEMA = StructType(
         StructField("top_level_terms", ArrayType(StringType()), True),
         StructField("top_level_definitions", ArrayType(StringType()), True),
         StructField("top_level_synonyms", ArrayType(StringType()), True),
+        StructField("top_level_term_id", ArrayType(StringType()), True),
     ]
 )
 
@@ -144,9 +146,24 @@ def extract_ontology_terms(spark_session: SparkSession) -> DataFrame:
     ontology_terms = []
     if ImpcConfig().deploy_mode in ["local", "client"]:
         for ontology_desc in ONTOLOGIES:
-            ontology = pronto.Ontology.from_obo_library(
+            print(f"Processing {ontology_desc['id']}.{ontology_desc['format']}")
+            ontology: Ontology = pronto.Ontology.from_obo_library(
                 f"{ontology_desc['id']}.{ontology_desc['format']}"
             )
+
+            part_of_rel: Relationship = None
+            for rel in ontology.relationships():
+                if rel.id == "part_of":
+                    part_of_rel = rel
+                    break
+            if part_of_rel is not None:
+                part_of_rel.transitive = False
+                print("Starting to compute super classes from part_of")
+                for term in ontology.terms():
+                    for super_part_term in term.objects(part_of_rel):
+                        if super_part_term.id in ontology.keys():
+                            term.superclasses().add(super_part_term)
+                print("Finished to compute super classes from part_of")
             top_level_terms = [
                 ontology[term] for term in ontology_desc["top_level_terms"]
             ]
@@ -155,10 +172,15 @@ def extract_ontology_terms(spark_session: SparkSession) -> DataFrame:
                 top_level_ancestors.extend(top_level_term.superclasses(with_self=False))
             top_level_ancestors = set(top_level_ancestors)
             ontology_terms += [
-                _parse_ontology_term(term, top_level_terms, top_level_ancestors)
+                _parse_ontology_term(
+                    term, top_level_terms, top_level_ancestors, part_of_rel
+                )
                 for term in ontology.terms()
                 if term.name is not None
             ]
+            print(
+                f"Finished processing {ontology_desc['id']}.{ontology_desc['format']}"
+            )
     ontology_terms_json = spark_session.sparkContext.parallelize(ontology_terms)
     ontology_terms_df = spark_session.read.json(
         ontology_terms_json, schema=ONTOLOGY_SCHEMA, mode="FAILFAST"
@@ -167,7 +189,7 @@ def extract_ontology_terms(spark_session: SparkSession) -> DataFrame:
 
 
 def _parse_ontology_term(
-    ontology_term: Term, top_level_terms, top_level_ancestors
+    ontology_term: Term, top_level_terms, top_level_ancestors, part_of_rel: Relationship
 ) -> Dict:
     children = [
         child_term for child_term in ontology_term.subclasses(1, with_self=False)
@@ -175,9 +197,15 @@ def _parse_ontology_term(
     parents = [
         parent_term for parent_term in ontology_term.superclasses(1, with_self=False)
     ]
+
     ancestors = [
         ancestor_term for ancestor_term in ontology_term.superclasses(with_self=False)
     ]
+
+    if part_of_rel is not None:
+        ancestors.extend(
+            [ancestor_term for ancestor_term in ontology_term.objects(part_of_rel)]
+        )
     term_top_level_terms = set(top_level_terms).intersection(set(ancestors))
     intermediate_terms = (
         set(ancestors).difference(set(top_level_terms)).difference(top_level_ancestors)
@@ -236,6 +264,10 @@ def _parse_ontology_term(
             if term_top_level_term.definition is not None
         ],
         "top_level_synonyms": _get_synonym_list(term_top_level_terms),
+        "top_level_term_id": [
+            f"{term_top_level_term.id}___{_parse_text(term_top_level_term.name)}"
+            for term_top_level_term in term_top_level_terms
+        ],
     }
 
 

@@ -108,7 +108,6 @@ def extract_mgi_homologene(
     spark: SparkSession, homologene_report_path: str
 ) -> DataFrame:
     # TODO fix empty column on rpt
-    # TODO fix empty column on rpt
     homologene_df = extract_tsv(spark, homologene_report_path, header=True)
     for col_name in homologene_df.columns:
         homologene_df = homologene_df.withColumnRenamed(
