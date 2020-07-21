@@ -2,6 +2,8 @@
 SOLR module
    Generates the required Solr cores
 """
+from typing import List
+
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, StringType
 import sys
@@ -235,7 +237,7 @@ def main(argv):
     pipeline_df.write.parquet(output_path)
 
 
-def _uniquify(array: list):
+def _uniquify(array: List):
     return list(set(array))
 
 
