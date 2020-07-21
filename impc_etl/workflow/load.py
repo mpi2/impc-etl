@@ -432,7 +432,7 @@ class ImpcImagesCoreLoader(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return ImpcConfig().get_target(f"{self.output_path}images_core_parquet")
+        return ImpcConfig().get_target(f"{self.output_path}impc_images_core_parquet")
 
     def requires(self):
         return [
