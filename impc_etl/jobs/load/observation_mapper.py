@@ -58,6 +58,24 @@ def main(argv):
         strain_df,
         ontology_df,
     )
+    observations_df = observations_df.where(
+        ~(
+            (col("datasource_name") == "EuroPhenome")
+            & (col("parameter_stable_id") == "ESLIM_001_001_125")
+            & (col("sex") == "male")
+            & (col("category") == "present")
+            & (col("phenotyping_center") == "ICS")
+        )
+    )
+    observations_df = observations_df.where(
+        ~(
+            col("procedure_stable_id").contains("_EYE_002")
+            & col("parameter_stable_id").contains("EYE_092_001")
+        )
+    )
+    observations_df = observations_df.where(
+        col("category").isNull() | (col("category") != "INCOMPLETE_INPUT_STR")
+    )
     observations_df.write.mode("overwrite").parquet(output_path)
 
 

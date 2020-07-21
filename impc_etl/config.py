@@ -797,3 +797,23 @@ class Constants:
         "MGI:2387588",
         "MGI:3580298",
     ]
+
+    DERIVED_PARAMETER_BANLIST = [
+        "ICS_FEA_016_001",
+        "ICSLA_FEA_018_001",
+        "ICS_FEA_017_001",
+        "ICSLA_FEA_013_001",
+        "ICS_FEA_012_001",
+        "ICSLA_FEA_017_001",
+        "ICS_FEA_021_001",
+        "ICSLA_FEA_016_001",
+        "ICS_FEA_013_001",
+        "ICS_FEA_020_001",
+        "ICSLA_FEA_021_001",
+        "MGP_ANA_002_001",
+        "ICS_FEA_018_001",
+        "ICS_FEA_019_001",
+        "ICSLA_FEA_012_001",
+        "ICSLA_FEA_019_001",
+        "ICSLA_FEA_020_001",
+    ]

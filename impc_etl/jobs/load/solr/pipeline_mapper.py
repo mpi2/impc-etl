@@ -16,6 +16,7 @@ from pyspark.sql.functions import (
     flatten,
     collect_list,
     udf,
+    size,
 )
 
 COLUMN_MAPPER = {
@@ -43,6 +44,8 @@ COLUMN_MAPPER = {
     "has_options": "parameter.isOption",
     "increment": "parameter.isIncrement",
 }
+
+COMPUTED_COLUNMS = [""]
 
 
 def main(argv):
@@ -110,7 +113,9 @@ def main(argv):
         first(col("observation_type")).alias("observation_type")
     )
 
-    pipeline_df = pipeline_df.join(observations_df, "fully_qualified_name")
+    pipeline_df = pipeline_df.join(
+        observations_df, "fully_qualified_name", "left_outer"
+    )
 
     pipeline_categories_df = pipeline_df.select("fully_qualified_name", "option.name")
     pipeline_categories_df = pipeline_categories_df.groupBy("fully_qualified_name").agg(
@@ -132,7 +137,7 @@ def main(argv):
     uniquify = udf(_uniquify, ArrayType(StringType()))
 
     pipeline_mp_terms_df = pipeline_mp_terms_df.groupBy("fully_qualified_name").agg(
-        collect_set("termAcc").alias("mp_id"),
+        collect_set("id").alias("mp_id"),
         collect_set("term").alias("mp_term"),
         uniquify(flatten(collect_list("top_level_ids"))).alias("top_level_mp_id"),
         uniquify(flatten(collect_list("top_level_terms"))).alias("top_level_mp_term"),
@@ -184,26 +189,49 @@ def main(argv):
         col("emap_id") == col("termAcc"),
         "left_outer",
     )
-    pipeline_df = pipeline_df.withColumn("anatomy_id", col("emapa_id"))
+    pipeline_df = pipeline_df.withColumn("embryo_anatomy_id", col("emapa_id"))
     pipeline_df = pipeline_df.drop(*emap_emapa_df.columns)
 
-    emapa_metadata_df = emapa_metadata_df.withColumnRenamed("name", "emapaName")
+    emapa_metadata_df = emapa_metadata_df.select("acc", col("name").alias("emapaName"))
     pipeline_df = pipeline_df.join(
-        emapa_metadata_df, col("anatomy_id") == col("curie"), "left_outer"
+        emapa_metadata_df, col("embryo_anatomy_id") == col("acc"), "left_outer"
     )
-    pipeline_df = pipeline_df.withColumn("anatomy_term", col("emapaName"))
+
+    pipeline_df = pipeline_df.withColumn("embryo_anatomy_term", col("emapaName"))
     pipeline_df = pipeline_df.drop(*emapa_metadata_df.columns)
 
+    pipeline_df = pipeline_df.join(
+        ontology_df, col("embryo_anatomy_id") == col("id"), "left_outer"
+    )
     pipeline_df = pipeline_df.withColumn(
-        "ma_id",
+        "top_level_embryo_anatomy_id", col("top_level_ids")
+    )
+    pipeline_df = pipeline_df.withColumn(
+        "top_level_embryo_anatomy_term", col("top_level_terms")
+    )
+    pipeline_df = pipeline_df.drop(*ontology_df.columns)
+
+    pipeline_df = pipeline_df.withColumn(
+        "mouse_anatomy_id",
         when(col("termAcc").startswith("MA:"), col("termAcc")).otherwise(lit(None)),
     )
     ma_metadata_df = ma_metadata_df.withColumnRenamed("name", "maName")
     pipeline_df = pipeline_df.join(
-        ma_metadata_df, col("ma_id") == col("curie"), "left_outer"
+        ma_metadata_df, col("mouse_anatomy_id") == col("curie"), "left_outer"
     )
-    pipeline_df = pipeline_df.withColumn("ma_term", col("maName"))
+    pipeline_df = pipeline_df.withColumn("mouse_anatomy_term", col("maName"))
     pipeline_df = pipeline_df.drop(*ma_metadata_df.columns)
+
+    pipeline_df = pipeline_df.join(
+        ontology_df, col("mouse_anatomy_id") == col("id"), "left_outer"
+    )
+    pipeline_df = pipeline_df.withColumn(
+        "top_level_mouse_anatomy_id", col("top_level_ids")
+    )
+    pipeline_df = pipeline_df.withColumn(
+        "top_level_mouse_anatomy_term", col("top_level_terms")
+    )
+    pipeline_df = pipeline_df.drop(*ontology_df.columns)
     pipeline_df.write.parquet(output_path)
 
 

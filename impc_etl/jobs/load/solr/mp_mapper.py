@@ -90,6 +90,7 @@ def main(argv):
 
     spark = SparkSession.builder.getOrCreate()
     ontology_df = spark.read.parquet(ontology_parquet_path)
+    pipeline_df = spark.read.parquet(pipeline_core_parquet_path)
     ontology_metadata_df = spark.read.parquet(ontology_metadata_parquet_path)
     impc_search_index_df = spark.read.csv(impc_search_index_csv_path, header=True)
     mp_ext_df = spark.read.csv(
@@ -143,7 +144,10 @@ def main(argv):
     mp_df = mp_df.withColumn(
         "doc_id", monotonically_increasing_id().astype(StringType())
     )
-    mp_df = mp_df.select(MP_CORE_COLUMNS)
+    pipeline_df = pipeline_df.withColumn(
+        "mp_id", explode(concat("mp_id", "top_level_mp_id", "intermediate_mp_id"))
+    ).select("mp_id", "fully_qualified_name")
+    mp_df = mp_df.join(pipeline_df, "mp_id")
     mp_df.write.parquet(output_path)
 
 

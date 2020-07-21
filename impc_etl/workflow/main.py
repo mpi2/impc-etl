@@ -46,6 +46,7 @@ class ImpcSolrCores(luigi.Task):
     mp_relation_augmented_metadata_table_csv_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
     embryo_data_json_path = luigi.Parameter()
+    omero_ids_csv_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -130,6 +131,19 @@ class ImpcSolrCores(luigi.Task):
             ),
             ProductExtractor(
                 imits_tsv_path=self.imits_product_tsv_path, output_path=self.output_path
+            ),
+            ImpcImagesCoreLoader(
+                omero_ids_csv_path=self.omero_ids_csv_path,
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
             ),
         ]
 
