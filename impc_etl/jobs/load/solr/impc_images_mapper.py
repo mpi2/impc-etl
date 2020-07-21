@@ -2,7 +2,15 @@
 SOLR module
    Generates the required Solr cores
 """
-from pyspark.sql.functions import col, explode, concat_ws, collect_set, when, flatten
+from pyspark.sql.functions import (
+    col,
+    explode,
+    concat_ws,
+    collect_set,
+    when,
+    flatten,
+    explode_outer,
+)
 from pyspark.sql import DataFrame, SparkSession
 import sys
 
@@ -33,10 +41,6 @@ def main(argv):
         "top_level_embryo_anatomy_id",
         "top_level_embryo_anatomy_term",
     )
-    pipeline_core_df.where(col("mouse_anatomy_id") == "MA:0000151").show(
-        vertical=True, truncate=False
-    )
-    raise ValueError
     omero_ids_df = spark.read.csv(omero_ids_csv_path, header=True)
     image_observations_df = observations_df.where(
         col("observation_type") == "image_record"
@@ -55,7 +59,7 @@ def main(argv):
     )
     image_observations_df = image_observations_df.withColumn(
         "parameter_association_stable_id_exp",
-        explode("parameter_association_stable_id"),
+        explode_outer("parameter_association_stable_id"),
     )
     image_observations_df = image_observations_df.withColumn(
         "fully_qualified_name",
@@ -67,9 +71,15 @@ def main(argv):
         ),
     )
     image_observations_df = image_observations_df.join(
-        pipeline_core_df, "fully_qualified_name"
+        pipeline_core_df, "fully_qualified_name", "left_outer"
     )
-    image_observations_df = image_observations_df.groupBy(observations_df.columns).agg(
+    image_observations_df = image_observations_df.groupBy(
+        [
+            col_name
+            for col_name in observations_df.columns
+            if col_name != "parameter_association_stable_id"
+        ]
+    ).agg(
         collect_set("parameter_association_stable_id_exp").alias(
             "parameter_association_stable_id"
         ),
@@ -100,12 +110,7 @@ def main(argv):
             )
         ).alias("selected_top_level_anatomy_term"),
     )
-    image_observations_df.show(vertical=True, truncate=False)
-    raise ValueError
-
-
-def index_partition(partition):
-    return
+    image_observations_df.write.parquet(output_path)
 
 
 if __name__ == "__main__":
