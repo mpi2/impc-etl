@@ -509,6 +509,7 @@ def standardize_threei_schema(threei_df: DataFrame):
             (col("mp_id") != "NA") & (col("mp_id").isNotNull()),
             struct(
                 lit(None).cast(StringType()).alias("event"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
                 "sex",
                 col("term_id").alias("term_id"),
             ),

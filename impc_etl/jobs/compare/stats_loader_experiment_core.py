@@ -5,6 +5,7 @@ from impc_etl import logger
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import sort_array, col, size, when, lit, count
+from threading import Thread
 
 CSV_FIELDS = [
     "allele_accession_id",
@@ -52,24 +53,41 @@ CSV_FIELDS = [
 ]
 
 
-def get_solr_core(solr_url: str, solr_query: str, solr_core_name: str, json_path: str) -> List[Dict]:
+def get_solr_core(
+    solr_url: str, solr_query: str, solr_core_name: str, json_path: str
+) -> List[Dict]:
     solr = Solr(solr_url)
     results = []
     cursor_mark = "*"
     logger.debug("start")
     done = False
     result_count = 0
+    threads = []
 
     while not done:
         current_results = solr.search(
-            solr_query, sort="anatomy_id asc", rows=25000, cursorMark=cursor_mark
+            solr_query,
+            sort="id asc",
+            rows=250000,
+            cursorMark=cursor_mark,
+            fl="id,phenotyping_center,procedure_group,parameter_stable_id,strain_accession_id,zygosity,metadata_group,colony_id,biological_sample_group",
         )
         next_cursor_mark = current_results.nextCursorMark
         done = cursor_mark == next_cursor_mark
         cursor_mark = next_cursor_mark
-        export_to_json(list(current_results), result_count, json_path)
-        result_count += 25000
-        print(f"Collected {result_count}")
+        thread = Thread(
+            target=export_to_json,
+            args=(list(current_results.docs), result_count, json_path),
+        )
+        result_count += 250000
+        logger.debug(f"Collected {result_count}")
+        logger.debug(f"Dumping {result_count - 250000} to {result_count} on thread")
+        thread.start()
+        threads.append(thread)
+    for thread in threads:
+        if thread.isAlive():
+            thread.join()
+    logger.debug("Finished dumping")
 
 
 def export_to_json(experiments: List[Dict], offset: int, output_path: str):
@@ -92,9 +110,7 @@ def generate_parquet(json_path, output_path: str):
         ]
     )
     spark = (
-        SparkSession.builder.appName("IMPC_CORE_DUMP")
-        .config(conf=conf)
-        .getOrCreate()
+        SparkSession.builder.appName("IMPC_CORE_DUMP").config(conf=conf).getOrCreate()
     )
     experiment_core_df = spark.read.json(f"{json_path}/*.json")
     experiment_core_df.write.parquet(output_path)
@@ -189,10 +205,13 @@ def chunks(l, n):
 
 if __name__ == "__main__":
     solr_query = "*:*"
-    parquet_path = "/nfs/nobackup/spot/mouseinformatics/federico/snapshot/anatomy_core_parquet"
-    json_path = "/nfs/nobackup/spot/mouseinformatics/federico/snapshot/anatomy_core_json"
+    parquet_path = "/nfs/nobackup/spot/mouseinformatics/federico/snapshot/dr11.0/experiment_core_parquet"
+    json_path = "/nfs/nobackup/spot/mouseinformatics/federico/snapshot/dr11.0/experiment_core_json"
     get_solr_core(
-        "http://ves-ebi-d0.ebi.ac.uk:8986/solr/anatomy/", solr_query, "anatomy", json_path
+        "http://ves-ebi-d0.ebi.ac.uk:8986/solr/experiment/",
+        solr_query,
+        "experiment",
+        json_path,
     )
     generate_parquet(json_path, parquet_path)
     # compare(
