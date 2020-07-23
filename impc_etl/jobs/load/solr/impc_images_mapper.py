@@ -10,6 +10,8 @@ from pyspark.sql.functions import (
     when,
     flatten,
     explode_outer,
+    concat,
+    lit,
 )
 from pyspark.sql import DataFrame, SparkSession
 import sys
@@ -76,7 +78,7 @@ def main(argv):
     image_observations_df = image_observations_df.groupBy(
         [
             col_name
-            for col_name in observations_df.columns
+            for col_name in image_observations_df.columns
             if col_name != "parameter_association_stable_id"
         ]
     ).agg(
@@ -109,6 +111,29 @@ def main(argv):
                 ).otherwise(col("top_level_embryo_anatomy_term"))
             )
         ).alias("selected_top_level_anatomy_term"),
+    )
+    image_observations_df = image_observations_df.withColumn(
+        "download_url",
+        concat(
+            lit(
+                "//wwwdev.ebi.ac.uk/mi/media/omero/webgateway/archived_files/download/"
+            ),
+            col("omero_id"),
+        ),
+    )
+    image_observations_df = image_observations_df.withColumn(
+        "jpeg_url",
+        concat(
+            lit("//wwwdev.ebi.ac.uk/mi/media/omero/webgateway/render_image/"),
+            col("omero_id"),
+        ),
+    )
+    image_observations_df = image_observations_df.withColumn(
+        "thumbnail_url",
+        concat(
+            lit("//wwwdev.ebi.ac.uk/mi/media/omero/webgateway/render_birds_eye_view/"),
+            col("omero_id"),
+        ),
     )
     image_observations_df.write.parquet(output_path)
 
