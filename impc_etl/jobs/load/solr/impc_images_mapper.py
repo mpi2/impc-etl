@@ -38,10 +38,16 @@ def main(argv):
         "mouse_anatomy_term",
         "embryo_anatomy_id",
         "embryo_anatomy_term",
+        "mp_id",
+        "mp_term",
         "top_level_mouse_anatomy_id",
         "top_level_mouse_anatomy_term",
         "top_level_embryo_anatomy_id",
         "top_level_embryo_anatomy_term",
+        "top_level_mp_id",
+        "top_level_mp_term",
+        "intermediate_mp_id",
+        "intermediate_mp_term",
     )
     omero_ids_df = spark.read.csv(omero_ids_csv_path, header=True)
     image_observations_df = observations_df.where(
@@ -111,6 +117,12 @@ def main(argv):
                 ).otherwise(col("top_level_embryo_anatomy_term"))
             )
         ).alias("selected_top_level_anatomy_term"),
+        collect_set("mp_id").alias("mp_id"),
+        collect_set("mp_term").alias("mp_term"),
+        flatten(collect_set("top_level_mp_id")).alias("top_level_mp_id"),
+        flatten(collect_set("top_level_mp_term")).alias("top_level_mp_term"),
+        flatten(collect_set("intermediate_mp_id")).alias("intermediate_mp_id"),
+        flatten(collect_set("intermediate_mp_term")).alias("intermediate_mp_term"),
     )
     image_observations_df = image_observations_df.withColumn(
         "download_url",
