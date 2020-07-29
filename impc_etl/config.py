@@ -817,3 +817,19 @@ class Constants:
         "ICSLA_FEA_019_001",
         "ICSLA_FEA_020_001",
     ]
+
+    BACKGROUND_STRAIN_MAPPER = {
+        "B6NTac": "C57BL/6NTac",
+        "129/Sv": "129",
+        "129S5": "129S5/SvEvBrd",
+        "C57BL/6NTacDen": "C57BL/6Dnk",
+        "C57BL/6JTyr": "C57BL/6Brd-Tyr<c-Brd>",
+        "129P2": "129P2/OlaHsd",
+        "B6J.129S2": "129S2",
+        "129/SvEv": "129S/SvEv",
+        "129SvJ-Iso": "129X1/SvJ",
+        "C3H/NHG": "C3H",
+        "129/SvPas": "129S2/SvPas",
+        "C57BL/6NTac-ICS-USA(ImportedLive)": "C57BL/6NTac",
+        "C57BL/6NTac-ICS-Denmark(ImportedLive)": "C57BL/6Dnk",
+    }

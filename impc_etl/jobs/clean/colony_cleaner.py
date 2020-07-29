@@ -3,6 +3,7 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import udf, col, lit, concat
 from pyspark.sql.types import StringType
 from impc_etl.shared import utils
+from impc_etl.config import Constants
 
 
 def main(argv):
@@ -78,6 +79,8 @@ def map_strain_name(strain_name: str) -> str:
     elif strain_name == "B6J.B6N":
         intermediate_backgrounds = "C57BL/6J;C57BL/6N".split(";")
     else:
+        if strain_name in Constants.BACKGROUND_STRAIN_MAPPER.keys():
+            strain_name = Constants.BACKGROUND_STRAIN_MAPPER[strain_name]
         intermediate_backgrounds = [strain_name]
 
     return " * ".join(intermediate_backgrounds)
