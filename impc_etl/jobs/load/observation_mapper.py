@@ -227,7 +227,7 @@ def map_experiment_columns(exp_df: DataFrame):
             col("strain.strainName"),
         ).otherwise(col("colony.colony_background_strain")),
     )
-    ## TODO generate strain accession ids for the ones that are null
+
     exp_df = exp_df.withColumn(
         "genetic_background",
         when(
@@ -241,7 +241,7 @@ def map_experiment_columns(exp_df: DataFrame):
         when(
             col("strain_accession_id").isNull(),
             concat(lit("IMPC-CURATE-"), substring(md5(exp_df["strain_name"]), 0, 5)),
-        ).otherwise("strain_accession_id"),
+        ).otherwise(col("strain_accession_id")),
     )
 
     return exp_df
