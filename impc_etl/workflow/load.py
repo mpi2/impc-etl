@@ -170,6 +170,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
             ),
+            ImpressExtractor(output_path=self.output_path),
             PipelineCoreLoader(
                 dcc_xml_path=self.dcc_xml_path,
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
@@ -202,6 +203,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             self.input()[2].path,
             self.input()[3].path,
             self.input()[4].path,
+            self.input()[5].path,
             self.threei_stats_results_csv,
             self.output().path,
         ]

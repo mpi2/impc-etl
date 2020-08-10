@@ -4,7 +4,7 @@ from pyspark.sql import DataFrame, SparkSession
 import sys
 
 from pyspark.sql.functions import (
-    explode_outer,
+    array_contains,
     col,
     lit,
     split,
@@ -23,8 +23,16 @@ from pyspark.sql.functions import (
     array_distinct,
     first,
     monotonically_increasing_id,
+    from_json,
+    explode,
 )
-from pyspark.sql.types import StructType, StructField, StringType, Row
+from pyspark.sql.types import (
+    StructType,
+    StructField,
+    StringType,
+    IntegerType,
+    DoubleType,
+)
 
 from impc_etl.config import Constants
 from impc_etl.shared.utils import convert_to_row
@@ -76,6 +84,17 @@ OBSERVATIONS_STATS_MAP = {
     "life_stage_acc": "life_stage_acc",
     "experiment_sex": "sex",
 }
+
+STATS_OBSERVATIONS_JOIN = [
+    "procedure_group",
+    "procedure_name",
+    "parameter_stable_id",
+    "phenotyping_center",
+    "pipeline_stable_id",
+    "colony_id",
+    "metadata_group",
+    "zygosity",
+]
 
 
 ALLELE_STATS_MAP = {"allele_name": "allele_name"}
@@ -226,31 +245,85 @@ def main(argv):
     open_stats_parquet_path = argv[1]
     observations_parquet_path = argv[2]
     ontology_parquet_path = argv[3]
-    pipeline_core_parquet_path = argv[4]
-    allele_parquet_path = argv[5]
-    threei_parquet_path = argv[6]
-    output_path = argv[7]
+    pipeline_parquet_path = argv[4]
+    pipeline_core_parquet_path = argv[5]
+    allele_parquet_path = argv[6]
+    threei_parquet_path = argv[7]
+    output_path = argv[8]
     spark = SparkSession.builder.getOrCreate()
-    open_stats_df = spark.read.parquet(open_stats_parquet_path)
+    open_stats_df = spark.read.parquet(open_stats_parquet_path).where(
+        ~(
+            col("procedure_stable_id").contains("IMPC_FER_001")
+            | (col("procedure_stable_id").contains("IMPC_VIA_001"))
+            | (col("procedure_stable_id").contains("IMPC_VIA_002"))
+            | (col("procedure_stable_id").contains("_PAT"))
+            | (col("procedure_stable_id").contains("_EVL"))
+            | (col("procedure_stable_id").contains("_EVM"))
+            | (col("procedure_stable_id").contains("_EVO"))
+            | (col("procedure_stable_id").contains("_EVP"))
+            | (col("procedure_stable_id").contains("IMPC_GPL"))
+            | (col("procedure_stable_id").contains("IMPC_GEL"))
+            | (col("procedure_stable_id").contains("IMPC_GPM"))
+            | (col("procedure_stable_id").contains("IMPC_GEM"))
+            | (col("procedure_stable_id").contains("IMPC_GPO"))
+            | (col("procedure_stable_id").contains("IMPC_GEO"))
+            | (col("procedure_stable_id").contains("IMPC_GPP"))
+            | (col("procedure_stable_id").contains("IMPC_GEP"))
+        )
+    )
     ontology_df = spark.read.parquet(ontology_parquet_path)
     allele_df = spark.read.parquet(allele_parquet_path)
+    pipeline_df = spark.read.parquet(pipeline_parquet_path)
     pipeline_core_df = spark.read.parquet(pipeline_core_parquet_path)
     observations_df = spark.read.parquet(observations_parquet_path)
     threei_df = spark.read.csv(threei_parquet_path, header=True)
     threei_df = standardize_threei_schema(threei_df)
-    stats_observations_join = [
-        "procedure_group",
-        "procedure_name",
-        "parameter_stable_id",
-        "phenotyping_center",
-        "pipeline_stable_id",
-        "colony_id",
-        "metadata_group",
-        "zygosity",
-    ]
+
+    fertility_stats = _fertility_stats_results(observations_df, pipeline_df)
+
+    for col_name in open_stats_df.columns:
+        if col_name not in fertility_stats.columns:
+            fertility_stats = fertility_stats.withColumn(col_name, lit(None))
+    fertility_stats = fertility_stats.select(open_stats_df.columns)
+
+    open_stats_df = open_stats_df.union(fertility_stats)
+
+    viability_stats = _viability_stats_results(observations_df, pipeline_df)
+    for col_name in open_stats_df.columns:
+        if col_name not in viability_stats.columns:
+            viability_stats = viability_stats.withColumn(col_name, lit(None))
+    viability_stats = viability_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(viability_stats)
+
+    gross_pathology_stats = _gross_pathology_stats_results(observations_df)
+    for col_name in open_stats_df.columns:
+        if col_name not in gross_pathology_stats.columns:
+            gross_pathology_stats = gross_pathology_stats.withColumn(
+                col_name, lit(None)
+            )
+    gross_pathology_stats = gross_pathology_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(gross_pathology_stats)
+
+    embryo_viability_stats = _embryo_viability_stats_results(
+        observations_df, pipeline_df
+    )
+    for col_name in open_stats_df.columns:
+        if col_name not in embryo_viability_stats.columns:
+            embryo_viability_stats = embryo_viability_stats.withColumn(
+                col_name, lit(None)
+            )
+    embryo_viability_stats = embryo_viability_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(embryo_viability_stats)
+
+    embryo_stats = _embryo_stats_results(observations_df, pipeline_df)
+    for col_name in open_stats_df.columns:
+        if col_name not in embryo_stats.columns:
+            embryo_stats = embryo_stats.withColumn(col_name, lit(None))
+    embryo_stats = embryo_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(embryo_stats)
 
     observations_metadata_df = observations_df.select(
-        stats_observations_join + list(set(OBSERVATIONS_STATS_MAP.values()))
+        STATS_OBSERVATIONS_JOIN + list(set(OBSERVATIONS_STATS_MAP.values()))
     ).dropDuplicates()
     observations_metadata_df = observations_metadata_df.groupBy(
         *[
@@ -274,12 +347,12 @@ def main(argv):
                 aggregation_expresion.append(collect_set(col_name).alias(col_name))
 
     observations_metadata_df = observations_metadata_df.groupBy(
-        stats_observations_join + ["datasource_name", "production_center"]
+        STATS_OBSERVATIONS_JOIN + ["datasource_name", "production_center"]
     ).agg(*aggregation_expresion)
     open_stats_df = map_to_stats(
         open_stats_df,
         observations_metadata_df,
-        stats_observations_join,
+        STATS_OBSERVATIONS_JOIN,
         OBSERVATIONS_STATS_MAP,
         "observations",
     )
@@ -608,6 +681,629 @@ def map_three_i(open_stats_df):
     )
     open_stats_df = open_stats_df.drop("threei_genotype_effect_p_value")
     return open_stats_df
+
+
+def map_manual_annotations(observations_df: DataFrame):
+
+    return observations_df
+
+
+def _fertility_stats_results(observations_df: DataFrame, pipeline_df: DataFrame):
+    fertility_condition = col("parameter_stable_id").isin(
+        ["IMPC_FER_001_001", "IMPC_FER_019_001"]
+    )
+
+    mp_chooser = (
+        pipeline_df.select(
+            col("pipelineKey").alias("pipeline_stable_id"),
+            col("procedure.procedureKey").alias("procedure_stable_id"),
+            col("parameter.parameterKey").alias("parameter_stable_id"),
+            col("parammpterm.optionText").alias("category"),
+            col("termAcc"),
+        )
+        .withColumn("category", lower(col("category")))
+        .distinct()
+    )
+
+    required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+        "sex",
+        "procedure_stable_id",
+        "pipeline_name",
+        "category",
+        "allele_accession_id",
+        "parameter_name",
+        "allele_symbol",
+        "marker_accession_id",
+        "marker_symbol",
+        "strain_accession_id",
+    ]
+    fertility_stats_results = (
+        observations_df.where(fertility_condition)
+        .withColumnRenamed("gene_accession_id", "marker_accession_id")
+        .withColumnRenamed("gene_symbol", "marker_symbol")
+        .select(required_stats_columns)
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        "category", lower(col("category"))
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        "data_type", lit("line")
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        "effect_size", lit(1.0)
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        "statistical_method", lit("Supplied as data")
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        "status", lit("Successful")
+    )
+    fertility_stats_results = fertility_stats_results.withColumn("p_value", lit(0.0))
+
+    fertility_stats_results = fertility_stats_results.join(
+        mp_chooser,
+        [
+            "pipeline_stable_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "category",
+        ],
+        "left_outer",
+    )
+
+    fertility_stats_results = fertility_stats_results.groupBy(
+        required_stats_columns
+        + ["data_type", "status", "effect_size", "statistical_method", "p_value"]
+    ).agg(
+        collect_set("category").alias("categories"),
+        collect_set(
+            struct(
+                lit("ABNORMAL").cast(StringType()).alias("event"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
+                "sex",
+                col("termAcc").alias("term_id"),
+            )
+        ).alias("mp_term"),
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        "mp_term", expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)")
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        "mp_term",
+        when(size(col("mp_term.term_id")) == 0, lit(None)).otherwise(col("mp_term")),
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        "p_value", when(col("mp_term").isNull(), lit(1.0)).otherwise(col("p_value"))
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        "effect_size",
+        when(col("mp_term").isNull(), lit(0.0)).otherwise(col("effect_size")),
+    )
+    return fertility_stats_results
+
+
+def _embryo_stats_results(observations_df: DataFrame, pipeline_df: DataFrame):
+
+    mp_chooser = pipeline_df.select(
+        "pipelineKey",
+        "procedure.procedureKey",
+        "parameter.parameterKey",
+        "parammpterm.optionText",
+        "parammpterm.selectionOutcome",
+        "termAcc",
+    ).distinct()
+
+    mp_chooser = (
+        mp_chooser.withColumnRenamed("pipelineKey", "pipeline_stable_id")
+        .withColumnRenamed("procedureKey", "procedure_stable_id")
+        .withColumnRenamed("parameterKey", "parameter_stable_id")
+    )
+
+    mp_chooser = mp_chooser.withColumn(
+        "category",
+        when(col("optionText").isNull(), col("selectionOutcome")).otherwise(
+            col("optionText")
+        ),
+    )
+
+    mp_chooser = mp_chooser.withColumn("category", lower(col("category")))
+    mp_chooser = mp_chooser.drop("optionText", "selectionOutcome")
+
+    required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+        "sex",
+        "procedure_stable_id",
+        "pipeline_name",
+        "category",
+        "allele_accession_id",
+        "parameter_name",
+        "allele_symbol",
+        "marker_accession_id",
+        "marker_symbol",
+        "strain_accession_id",
+        "text_value",
+    ]
+    embryo_stats_results = (
+        observations_df.where(
+            col("procedure_group").rlike(
+                "|".join(
+                    [
+                        "IMPC_GPL",
+                        "IMPC_GEL",
+                        "IMPC_GPM",
+                        "IMPC_GEM",
+                        "IMPC_GPO",
+                        "IMPC_GEO",
+                        "IMPC_GPP",
+                        "IMPC_GEP",
+                    ]
+                )
+            )
+            & (col("biological_sample_group") == "experimental")
+        )
+        .withColumnRenamed("gene_accession_id", "marker_accession_id")
+        .withColumnRenamed("gene_symbol", "marker_symbol")
+        .select(required_stats_columns)
+    )
+    embryo_stats_results = embryo_stats_results.withColumn(
+        "category", lower(col("category"))
+    )
+
+    embryo_stats_results = embryo_stats_results.withColumn("data_type", lit("embryo"))
+    embryo_stats_results = embryo_stats_results.withColumn("status", lit("Successful"))
+    embryo_stats_results = embryo_stats_results.withColumn(
+        "statistical_method", lit("Supplied as data")
+    )
+
+    embryo_stats_results = embryo_stats_results.join(
+        mp_chooser,
+        [
+            "pipeline_stable_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "category",
+        ],
+        "left_outer",
+    )
+
+    embryo_stats_results = embryo_stats_results.groupBy(
+        required_stats_columns + ["data_type", "status", "statistical_method"]
+    ).agg(
+        collect_set("category").alias("categories"),
+        collect_set(
+            struct(
+                lit("ABNORMAL").cast(StringType()).alias("event"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
+                col("sex"),
+                col("termAcc").alias("term_id"),
+            )
+        ).alias("mp_term"),
+    )
+
+    embryo_stats_results = embryo_stats_results.withColumn(
+        "mp_term", expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)")
+    )
+    embryo_stats_results = embryo_stats_results.withColumn(
+        "mp_term",
+        when(size(col("mp_term.term_id")) == 0, lit(None)).otherwise(col("mp_term")),
+    )
+    embryo_stats_results = embryo_stats_results.withColumn(
+        "p_value", when(col("mp_term").isNull(), lit(1.0)).otherwise(lit(0.0))
+    )
+    embryo_stats_results = embryo_stats_results.withColumn(
+        "effect_size", when(col("mp_term").isNull(), lit(0.0)).otherwise(lit(1.0))
+    )
+    return embryo_stats_results
+
+
+def _embryo_viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame):
+
+    mp_chooser = (
+        pipeline_df.select(
+            "pipelineKey",
+            "procedure.procedureKey",
+            "parameter.parameterKey",
+            "parammpterm.optionText",
+            "termAcc",
+        )
+        .distinct()
+        .withColumnRenamed("pipelineKey", "pipeline_stable_id")
+        .withColumnRenamed("procedureKey", "procedure_stable_id")
+        .withColumnRenamed("parameterKey", "parameter_stable_id")
+        .withColumnRenamed("optionText", "category")
+    ).withColumn("category", lower(col("category")))
+
+    required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+        "sex",
+        "procedure_stable_id",
+        "pipeline_name",
+        "category",
+        "allele_accession_id",
+        "parameter_name",
+        "allele_symbol",
+        "marker_accession_id",
+        "marker_symbol",
+        "strain_accession_id",
+        "text_value",
+    ]
+    embryo_viability_stats_results = (
+        observations_df.where(
+            col("parameter_stable_id").isin(
+                [
+                    "IMPC_EVL_001_001",
+                    "IMPC_EVM_001_001",
+                    "IMPC_EVO_001_001",
+                    "IMPC_EVP_001_001",
+                ]
+            )
+        )
+        .withColumnRenamed("gene_accession_id", "marker_accession_id")
+        .withColumnRenamed("gene_symbol", "marker_symbol")
+        .select(required_stats_columns)
+    )
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        "category", lower(col("category"))
+    )
+
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        "data_type", lit("embryo")
+    )
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        "status", lit("Successful")
+    )
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        "statistical_method", lit("Supplied as data")
+    )
+
+    embryo_viability_stats_results = embryo_viability_stats_results.join(
+        mp_chooser,
+        [
+            "pipeline_stable_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "category",
+        ],
+        "left_outer",
+    )
+
+    embryo_viability_stats_results = embryo_viability_stats_results.groupBy(
+        required_stats_columns + ["data_type", "status", "statistical_method"]
+    ).agg(
+        collect_set("category").alias("categories"),
+        collect_set(
+            struct(
+                lit("ABNORMAL").cast(StringType()).alias("event"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
+                lit("not_considered").cast(StringType()).alias("sex"),
+                col("termAcc").alias("term_id"),
+            )
+        ).alias("mp_term"),
+    )
+
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        "mp_term", expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)")
+    )
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        "mp_term",
+        when(size(col("mp_term.term_id")) == 0, lit(None)).otherwise(col("mp_term")),
+    )
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        "p_value", when(col("mp_term").isNull(), lit(1.0)).otherwise(lit(0.0))
+    )
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        "effect_size", when(col("mp_term").isNull(), lit(0.0)).otherwise(lit(1.0))
+    )
+
+    return embryo_viability_stats_results
+
+
+def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame):
+    mp_chooser = (
+        pipeline_df.select(
+            "pipelineKey",
+            "procedure.procedureKey",
+            "parameter.parameterKey",
+            "parammpterm.optionText",
+            "termAcc",
+        )
+        .distinct()
+        .withColumnRenamed("pipelineKey", "pipeline_stable_id")
+        .withColumnRenamed("procedureKey", "procedure_stable_id")
+        .withColumnRenamed("parameterKey", "parameter_stable_id")
+        .withColumnRenamed("optionText", "category")
+    ).withColumn("category", lower(col("category")))
+
+    required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+        "sex",
+        "procedure_stable_id",
+        "pipeline_name",
+        "category",
+        "allele_accession_id",
+        "parameter_name",
+        "allele_symbol",
+        "marker_accession_id",
+        "marker_symbol",
+        "strain_accession_id",
+        "text_value",
+    ]
+
+    viability_stats_results = (
+        observations_df.where(
+            (
+                (col("parameter_stable_id") == "IMPC_VIA_001_001")
+                & (col("procedure_stable_id") == "IMPC_VIA_001")
+            )
+            | (
+                (
+                    col("parameter_stable_id").isin(
+                        [
+                            "IMPC_VIA_063_001",
+                            "IMPC_VIA_064_001",
+                            "IMPC_VIA_065_001",
+                            "IMPC_VIA_066_001",
+                            "IMPC_VIA_067_001",
+                        ]
+                    )
+                )
+                & (col("procedure_stable_id") == "IMPC_VIA_002")
+            )
+        )
+        .withColumnRenamed("gene_accession_id", "marker_accession_id")
+        .withColumnRenamed("gene_symbol", "marker_symbol")
+        .select(required_stats_columns)
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        "category", lower(col("category"))
+    )
+
+    json_outcome_schema = StructType(
+        [
+            StructField("outcome", StringType()),
+            StructField("n", IntegerType()),
+            StructField("P", DoubleType()),
+        ]
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        "viability_outcome",
+        when(
+            col("procedure_stable_id") == "IMPC_VIA_002",
+            from_json(col("text_value"), json_outcome_schema),
+        ).otherwise(lit(None)),
+    )
+
+    viability_p_values = observations_df.where(
+        col("parameter_stable_id") == "IMPC_VIA_032_001"
+    ).select("procedure_stable_id", "colony_id", col("data_point").alias("p_value"))
+
+    viability_male_mutants = observations_df.where(
+        col("parameter_stable_id") == "IMPC_VIA_010_001"
+    ).select(
+        "procedure_stable_id", "colony_id", col("data_point").alias("male_mutants")
+    )
+
+    viability_female_mutants = observations_df.where(
+        col("parameter_stable_id") == "IMPC_VIA_014_001"
+    ).select(
+        "procedure_stable_id", "colony_id", col("data_point").alias("female_mutants")
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        "data_type", lit("line")
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        "effect_size", lit(1.0)
+    )
+    viability_stats_results = viability_stats_results.join(
+        viability_p_values, ["colony_id", "procedure_stable_id"], "left_outer"
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        "p_value",
+        when(
+            col("procedure_stable_id") == "IMPC_VIA_002", col("viability_outcome.P")
+        ).otherwise(col("p_value")),
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        "p_value",
+        when(
+            col("p_value").isNull() & ~col("category").contains("Viable"), lit(0.0)
+        ).otherwise(col("p_value")),
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        "male_controls", lit(None)
+    )
+    viability_stats_results = viability_stats_results.join(
+        viability_male_mutants, ["colony_id", "procedure_stable_id"], "left_outer"
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        "male_mutants",
+        when(
+            (col("procedure_stable_id") == "IMPC_VIA_002")
+            & (col("parameter_name").contains(" males ")),
+            col("viability_outcome.n"),
+        ).otherwise(col("male_mutants")),
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        "female_controls", lit(None)
+    )
+    viability_stats_results = viability_stats_results.join(
+        viability_female_mutants, ["colony_id", "procedure_stable_id"], "left_outer"
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        "female_mutants",
+        when(
+            (col("procedure_stable_id") == "IMPC_VIA_002")
+            & (col("parameter_name").contains(" females ")),
+            col("viability_outcome.n"),
+        ).otherwise(col("female_mutants")),
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        "statistical_method", lit("Supplied as data")
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        "zygosity",
+        when(col("parameter_name").contains("Hemizygous"), lit("hemizygote")).otherwise(
+            lit("homozygote")
+        ),
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        "status", lit("Successful")
+    )
+
+    viability_stats_results = viability_stats_results.join(
+        mp_chooser,
+        [
+            "pipeline_stable_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "category",
+        ],
+        "left_outer",
+    )
+
+    viability_stats_results = viability_stats_results.groupBy(
+        required_stats_columns
+        + [
+            "data_type",
+            "status",
+            "effect_size",
+            "statistical_method",
+            "p_value",
+            "male_mutants",
+            "female_mutants",
+            "viability_outcome",
+        ]
+    ).agg(
+        collect_set("category").alias("categories"),
+        collect_set(
+            struct(
+                lit("ABNORMAL").cast(StringType()).alias("event"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
+                lit("not_considered").cast(StringType()).alias("sex"),
+                col("termAcc").alias("term_id"),
+            )
+        ).alias("mp_term"),
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        "mp_term",
+        when(
+            (col("procedure_stable_id") == "IMPC_VIA_002"),
+            array(
+                struct(
+                    lit("ABNORMAL").cast(StringType()).alias("event"),
+                    lit(None).cast(StringType()).alias("otherPossibilities"),
+                    when(col("parameter_name").contains(" males "), lit("male"))
+                    .when(col("parameter_name").contains(" females "), lit("female"))
+                    .otherwise(lit("not_considered"))
+                    .cast(StringType())
+                    .alias("sex"),
+                    when(
+                        col("viability_outcome.outcome").contains("subviable"),
+                        lit("MP:0011110"),
+                    )
+                    .when(
+                        col("viability_outcome.outcome").contains("lethal"),
+                        lit("MP:0011100"),
+                    )
+                    .otherwise(lit(None).cast(StringType()))
+                    .cast(StringType())
+                    .alias("term_id"),
+                )
+            ),
+        ).otherwise(col("mp_term")),
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        "mp_term", expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)")
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        "mp_term",
+        when(size(col("mp_term.term_id")) == 0, lit(None)).otherwise(col("mp_term")),
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        "p_value", when(col("mp_term").isNull(), lit(1.0)).otherwise(col("p_value"))
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        "effect_size",
+        when(col("mp_term").isNull(), lit(0.0)).otherwise(col("effect_size")),
+    )
+    return viability_stats_results
+
+
+def _gross_pathology_stats_results(observations_df: DataFrame):
+    gross_pathology_stats_results = observations_df.where(
+        (col("biological_sample_group") != "control")
+        & col("parameter_stable_id").like("%PAT%")
+        & (
+            ~expr(
+                "exists(sub_term_name, term -> term = 'no abnormal phenotype detected')"
+            )
+        )
+        & (~expr("exists(sub_term_name, term -> term = 'normal')"))
+        & (expr("exists(sub_term_id, term -> term LIKE 'MP:%')"))
+    )
+    required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+        "sex",
+        "procedure_stable_id",
+        "pipeline_name",
+        "category",
+        "allele_accession_id",
+        "parameter_name",
+        "allele_symbol",
+        "marker_accession_id",
+        "marker_symbol",
+        "strain_accession_id",
+        "sub_term_id",
+    ]
+    gross_pathology_stats_results = (
+        gross_pathology_stats_results.withColumnRenamed(
+            "gene_accession_id", "marker_accession_id"
+        )
+        .withColumnRenamed("gene_symbol", "marker_symbol")
+        .select(required_stats_columns)
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "sub_term_id", expr("filter(sub_term_id, mp -> mp LIKE 'MP:%')")
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "term_id", explode("sub_term_id")
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "statistical_method", lit("Supplied as data")
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "status", lit("Successful")
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "mp_term",
+        array(
+            struct(
+                lit("ABNORMAL").cast(StringType()).alias("event"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
+                col("sex"),
+                col("term_id"),
+            )
+        ),
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "mp_term", expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)")
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "mp_term",
+        when(size(col("mp_term.term_id")) == 0, lit(None)).otherwise(col("mp_term")),
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "p_value", when(col("mp_term").isNull(), lit(1.0)).otherwise(lit(0.0))
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "effect_size", when(col("mp_term").isNull(), lit(0.0)).otherwise(lit(1.0))
+    )
+    return gross_pathology_stats_results
 
 
 def stop_and_count(df):

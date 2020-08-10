@@ -76,6 +76,9 @@ def main(argv):
     observations_df = observations_df.where(
         col("category").isNull() | (col("category") != "INCOMPLETE_INPUT_STR")
     )
+    observations_df = observations_df.where(
+        col("strain_name").isNotNull() | (col("biological_sample_group") == "control")
+    )
     observations_df.write.mode("overwrite").parquet(output_path)
 
 
@@ -106,6 +109,13 @@ def map_line_columns(line_df: DataFrame):
                 ),
             ).otherwise(col("allele.mgiAlleleID"))
         ),
+    )
+    line_df = line_df.withColumn(
+        "strain_accession_id",
+        when(
+            col("strain_accession_id").isNull(),
+            concat(lit("IMPC-CURATE-"), substring(md5(line_df["strain_name"]), 0, 5)),
+        ).otherwise(col("strain_accession_id")),
     )
     return line_df
 
