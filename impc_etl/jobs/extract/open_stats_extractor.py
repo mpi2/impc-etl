@@ -29,12 +29,12 @@ def main(argv):
     if use_cache != "true":
         stats_df = spark.read.jdbc(
             jdbc_connection_str,
-            table="(SELECT CAST(id AS BIGINT) AS numericId, * FROM dr12withmptermsv2) AS tmp",
+            table="(SELECT CAST(id AS BIGINT) AS numericId, * FROM dr12withmptermsv4882020) AS tmp",
             properties=properties,
             numPartitions=5000,
             column="numericId",
             lowerBound=0,
-            upperBound=9999999210,
+            upperBound=9999999338,
         )
         stats_df = stats_df.withColumnRenamed("statpacket", "json")
         stats_df.write.mode("overwrite").parquet(output_path + "_temp")
@@ -63,7 +63,12 @@ def main(argv):
     #     .union(stats_df.where(col("json").contains("MPTERM")).limit(1))
     # )
     # stats_df.limit(100).rdd.map(dump_json).saveAsTextFile(output_path + "_json_temp")
-    stats_df.rdd.map(dump_json).saveAsTextFile(output_path + "_json_temp")
+    stats_df.where(
+        ~(
+            (col("parameter_stable_id") == "IMPC_CAL_009_001")
+            & (col("colony_id") == "CCP-1810011H11Rik-DEL17-EM1-B6N_Tmem273")
+        )
+    ).rdd.map(dump_json).saveAsTextFile(output_path + "_json_temp")
     json_df = spark.read.json(output_path + "_json_temp", mode="FAILFAST")
     json_df.write.mode("overwrite").parquet(output_path)
 
