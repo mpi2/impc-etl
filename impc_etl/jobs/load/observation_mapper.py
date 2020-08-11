@@ -22,6 +22,7 @@ from pyspark.sql.types import StringType, IntegerType, LongType, ArrayType
 from impc_etl.config import Constants
 import datetime
 
+from impc_etl.jobs.clean.colony_cleaner import map_strain_name
 from impc_etl.shared.utils import has_column
 
 
@@ -864,6 +865,19 @@ def map_experiments_to_observations(
     specimen_df = specimen_df.withColumnRenamed("_sourceFile", "specimen_source_file")
     specimen_df = specimen_df.withColumnRenamed("unique_id", "specimen_id")
     specimen_df = specimen_df.alias("specimen")
+
+    map_strain_name_udf = udf(map_strain_name, StringType())
+    specimen_df = specimen_df.withColumn(
+        "_strainID",
+        when(
+            (~col("_strainID").startswith("MGI:"))
+            & (
+                (lower(col("specimen._colonyID")) == "baseline")
+                | (col("specimen._isBaseline") == True)
+            ),
+            map_strain_name_udf("_strainID"),
+        ).otherwise(col("_strainID")),
+    )
 
     allele_df = allele_df.alias("allele")
     strain_df = strain_df.alias("strain")
