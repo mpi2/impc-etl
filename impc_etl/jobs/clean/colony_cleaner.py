@@ -79,9 +79,15 @@ def map_strain_name(strain_name: str) -> str:
     elif strain_name == "B6J.B6N":
         intermediate_backgrounds = "C57BL/6J;C57BL/6N".split(";")
     else:
-        if strain_name in Constants.BACKGROUND_STRAIN_MAPPER.keys():
-            strain_name = Constants.BACKGROUND_STRAIN_MAPPER[strain_name]
         intermediate_backgrounds = [strain_name]
+    if strain_name in Constants.BACKGROUND_STRAIN_MAPPER.keys():
+        strain_name = Constants.BACKGROUND_STRAIN_MAPPER[strain_name]
+    intermediate_backgrounds = [
+        Constants.BACKGROUND_STRAIN_MAPPER[strain_name]
+        if strain_name in Constants.BACKGROUND_STRAIN_MAPPER.keys()
+        else strain
+        for strain in intermediate_backgrounds
+    ]
 
     return " * ".join(intermediate_backgrounds)
 
