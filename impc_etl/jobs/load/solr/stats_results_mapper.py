@@ -51,7 +51,7 @@ PIPELINE_STATS_MAP = {
     "top_level_mp_id_options": "top_level_mp_id",
     "top_level_mp_term_options": "top_level_mp_term",
     "parameter_stable_key": "parameter_stable_key",
-    "procedure_stable_id": "procedure_stable_id",
+    "procedure_name": "procedure_name",
     "pipeline_stable_key": "pipeline_stable_key",
     "procedure_stable_key": "procedure_stable_key",
 }
@@ -433,7 +433,11 @@ def main(argv):
         open_stats_df, ontology_df, ["mp_term_id"], ONTOLOGY_STATS_MAP, "ontology"
     )
 
-    pipeline_core_join = ["parameter_stable_id", "pipeline_stable_id", "procedure_name"]
+    pipeline_core_join = [
+        "parameter_stable_id",
+        "pipeline_stable_id",
+        "procedure_stable_id",
+    ]
     pipeline_core_df = (
         pipeline_core_df.select(
             [
@@ -447,7 +451,7 @@ def main(argv):
             [
                 "parameter_stable_id",
                 "pipeline_stable_id",
-                "procedure_name",
+                "procedure_stable_id",
                 "pipeline_stable_key",
             ]
         )
@@ -462,6 +466,12 @@ def main(argv):
             ]
         )
         .dropDuplicates()
+    )
+    pipeline_core_df = pipeline_core_df.withColumnRenamed(
+        "procedure_stable_id", "proc_id"
+    )
+    pipeline_core_df = pipeline_core_df.withColumn(
+        "procedure_stable_id", array(col("proc_id"))
     )
     open_stats_df = map_to_stats(
         open_stats_df,
@@ -1239,13 +1249,17 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
     gross_pathology_stats_results = observations_df.where(
         (col("biological_sample_group") != "control")
         & col("parameter_stable_id").like("%PAT%")
-        & (
-            ~expr(
+        & (expr("exists(sub_term_id, term -> term LIKE 'MP:%')"))
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "sub_term_id",
+        when(
+            expr(
                 "exists(sub_term_name, term -> term = 'no abnormal phenotype detected')"
             )
-        )
-        & (~expr("exists(sub_term_name, term -> term = 'normal')"))
-        & (expr("exists(sub_term_id, term -> term LIKE 'MP:%')"))
+            | expr("exists(sub_term_name, term -> term = 'normal')"),
+            lit(None),
+        ).otherwise(col("sub_term_id")),
     )
     required_stats_columns = STATS_OBSERVATIONS_JOIN + [
         "sex",
