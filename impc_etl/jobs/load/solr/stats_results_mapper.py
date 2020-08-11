@@ -1329,6 +1329,9 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
     gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
         "effect_size", when(col("mp_term").isNull(), lit(0.0)).otherwise(lit(1.0))
     )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "data_type", lit("adult-gross-path")
+    )
     return gross_pathology_stats_results
 
 

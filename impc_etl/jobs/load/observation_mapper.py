@@ -234,7 +234,9 @@ def map_experiment_columns(exp_df: DataFrame):
         "strain_name",
         when(
             (col("colony_id") == "baseline") | (col("specimen._isBaseline") == True),
-            col("strain.strainName"),
+            when(
+                col("strain.strainName").isNotNull(), col("strain.strainName")
+            ).otherwise(col("specimen._strainID")),
         ).otherwise(col("colony.colony_background_strain")),
     )
 
