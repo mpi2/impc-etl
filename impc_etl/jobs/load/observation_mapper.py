@@ -861,7 +861,12 @@ def map_experiments_to_observations(
     mouse_df = mouse_df.withColumn("_stage", lit(None).cast(StringType()))
     mouse_df = mouse_df.withColumn("_stageUnit", lit(None).cast(StringType()))
     specimen_df = mouse_df.union(embryo_df.select(mouse_df.columns))
-    map_strain_name_udf = udf(map_strain_name, StringType())
+    map_strain_name_udf = udf(
+        lambda strain_name: Constants.BACKGROUND_STRAIN_MAPPER[strain_name]
+        if strain_name in Constants.BACKGROUND_STRAIN_MAPPER.keys()
+        else strain_name,
+        StringType(),
+    )
     specimen_df = specimen_df.withColumn(
         "_strainID",
         when(
