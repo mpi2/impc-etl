@@ -25,6 +25,7 @@ from pyspark.sql.functions import (
     monotonically_increasing_id,
     from_json,
     explode,
+    explode_outer,
 )
 from pyspark.sql.types import (
     StructType,
@@ -1251,16 +1252,6 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
         & col("parameter_stable_id").like("%PAT%")
         & (expr("exists(sub_term_id, term -> term LIKE 'MP:%')"))
     )
-    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
-        "sub_term_id",
-        when(
-            expr(
-                "exists(sub_term_name, term -> term = 'no abnormal phenotype detected')"
-            )
-            | expr("exists(sub_term_name, term -> term = 'normal')"),
-            lit(None),
-        ).otherwise(col("sub_term_id")),
-    )
     required_stats_columns = STATS_OBSERVATIONS_JOIN + [
         "sex",
         "procedure_stable_id",
@@ -1273,6 +1264,8 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
         "marker_symbol",
         "strain_accession_id",
         "sub_term_id",
+        "sub_term_name",
+        "specimen_id",
     ]
     gross_pathology_stats_results = (
         gross_pathology_stats_results.withColumnRenamed(
@@ -1281,28 +1274,40 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
         .withColumnRenamed("gene_symbol", "marker_symbol")
         .select(required_stats_columns)
     )
+
     gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
         "sub_term_id", expr("filter(sub_term_id, mp -> mp LIKE 'MP:%')")
     )
     gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
-        "term_id", explode("sub_term_id")
+        "term_id", explode_outer("sub_term_id")
     )
+
     gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
-        "statistical_method", lit("Supplied as data")
+        "term_id",
+        when(
+            expr(
+                "exists(sub_term_name, term -> term = 'no abnormal phenotype detected')"
+            )
+            | expr("exists(sub_term_name, term -> term = 'normal')"),
+            lit(None),
+        ).otherwise(col("term_id")),
     )
-    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
-        "status", lit("Successful")
-    )
-    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
-        "mp_term",
-        array(
+
+    gross_pathology_stats_results = gross_pathology_stats_results.groupBy(
+        *[
+            col_name
+            for col_name in required_stats_columns
+            if col_name not in ["sex", "term_id"]
+        ]
+    ).agg(
+        collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
                 lit(None).cast(StringType()).alias("otherPossibilities"),
                 col("sex"),
                 col("term_id"),
             )
-        ),
+        ).alias("mp_term")
     )
     gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
         "mp_term", expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)")
@@ -1310,6 +1315,13 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
     gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
         "mp_term",
         when(size(col("mp_term.term_id")) == 0, lit(None)).otherwise(col("mp_term")),
+    )
+
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "statistical_method", lit("Supplied as data")
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        "status", lit("Successful")
     )
     gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
         "p_value", when(col("mp_term").isNull(), lit(1.0)).otherwise(lit(0.0))
