@@ -889,7 +889,6 @@ def map_experiments_to_observations(
     observation_df = observation_df.join(
         colony_df,
         (observation_df["specimen._colonyID"] == colony_df["colony.colony_name"]),
-        "left_outer",
     )
     observation_df = observation_df.join(
         allele_df,
