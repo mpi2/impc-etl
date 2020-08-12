@@ -17,6 +17,7 @@ from pyspark.sql.functions import (
     udf,
     array,
     substring,
+    upper,
 )
 from pyspark.sql.types import StringType, IntegerType, LongType, ArrayType
 from impc_etl.config import Constants
@@ -115,7 +116,9 @@ def map_line_columns(line_df: DataFrame):
         "strain_accession_id",
         when(
             col("strain_accession_id").isNull(),
-            concat(lit("IMPC-CURATE-"), substring(md5(line_df["strain_name"]), 0, 5)),
+            concat(
+                lit("IMPC-CURATE-"), upper(substring(md5(line_df["strain_name"]), 0, 5))
+            ),
         ).otherwise(col("strain_accession_id")),
     )
     return line_df
@@ -253,7 +256,9 @@ def map_experiment_columns(exp_df: DataFrame):
         "strain_accession_id",
         when(
             col("strain_accession_id").isNull(),
-            concat(lit("IMPC-CURATE-"), substring(md5(exp_df["strain_name"]), 0, 5)),
+            concat(
+                lit("IMPC-CURATE-"), upper(substring(md5(exp_df["strain_name"]), 0, 5))
+            ),
         ).otherwise(col("strain_accession_id")),
     )
 
@@ -889,6 +894,14 @@ def map_experiments_to_observations(
     observation_df = observation_df.join(
         colony_df,
         (observation_df["specimen._colonyID"] == colony_df["colony.colony_name"]),
+        "left_outer",
+    )
+    observation_df = observation_df.where(
+        col("colony.colony_name").isNotNull()
+        | (
+            (lower(col("specimen._colonyID")) == "baseline")
+            | (col("specimen._isBaseline") == True)
+        )
     )
     observation_df = observation_df.join(
         allele_df,
