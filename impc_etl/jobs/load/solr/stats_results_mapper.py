@@ -46,6 +46,13 @@ ONTOLOGY_STATS_MAP = {
     "intermediate_mp_term_name": "intermediate_terms",
 }
 
+BAD_MP_MAP = {
+    '["MP:0000592","MP:0000592"]': "MP:0000592",
+    '["MP:0003956","MP:0003956"]': "MP:0003956",
+    '["MP:0000589","MP:0000589"]': "MP:0000589",
+    '["MP:0010101","MP:0004649"]': "MP:0004649",
+}
+
 PIPELINE_STATS_MAP = {
     "mp_term_id_options": "mp_id",
     "mp_term_name_options": "mp_term",
@@ -420,8 +427,18 @@ def main(argv):
     open_stats_df = open_stats_df.drop("threei_collapsed_mp_term")
 
     open_stats_df = open_stats_df.withColumn(
-        "mp_term_id", col("collapsed_mp_term.term_id")
+        "mp_term_id", regexp_replace("collapsed_mp_term.term_id", " ", "")
     )
+    open_stats_df = open_stats_df.withColumn(
+        "mp_term_id", regexp_replace("collapsed_mp_term.term_id", " ", "")
+    )
+    for bad_mp in BAD_MP_MAP.keys():
+        open_stats_df = open_stats_df.withColumn(
+            "mp_term_id",
+            when(col("mp_term_id") == bad_mp, lit(BAD_MP_MAP[bad_mp])).otherwise(
+                col("mp_term_id")
+            ),
+        )
     open_stats_df = open_stats_df.withColumn(
         "mp_term_event", col("collapsed_mp_term.event")
     )
