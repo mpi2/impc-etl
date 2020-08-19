@@ -870,8 +870,7 @@ def map_experiments_to_observations(
     specimen_df = specimen_df.withColumn(
         "_strainID",
         when(
-            (~col("_strainID").startswith("MGI:"))
-            & ((lower(col("_colonyID")) == "baseline") | (col("_isBaseline") == True)),
+            ((lower(col("_colonyID")) == "baseline") | (col("_isBaseline") == True)),
             map_strain_name_udf("_strainID"),
         ).otherwise(col("_strainID")),
     )
@@ -914,7 +913,15 @@ def map_experiments_to_observations(
         & (col("specimen._isBaseline") != True)
     ).join(
         strain_df,
-        col("colony.colony_background_strain") == col("strain.strainName"),
+        when(
+            col("colony.colony_background_strain") == col("strain.strainName"),
+            col("colony.colony_background_strain") == col("strain.strainName"),
+        )
+        .when(
+            concat(lit("MGI:"), col("specimen._strainID")) == col("strain.mgiStrainID"),
+            concat(lit("MGI:"), col("specimen._strainID")) == col("strain.mgiStrainID"),
+        )
+        .otherwise(col("specimen._strainID") == col("strain.strainName")),
         "left_outer",
     )
 
@@ -955,7 +962,17 @@ def map_experiments_to_observations(
     )
 
     line_observation_df = line_observation_df.join(
-        strain_df, col("colony.colony_background_strain") == col("strain.strainName")
+        strain_df,
+        when(
+            col("colony.colony_background_strain") == col("strain.strainName"),
+            col("colony.colony_background_strain") == col("strain.strainName"),
+        )
+        .when(
+            concat(lit("MGI:"), col("specimen._strainID")) == col("strain.mgiStrainID"),
+            concat(lit("MGI:"), col("specimen._strainID")) == col("strain.mgiStrainID"),
+        )
+        .otherwise(col("specimen._strainID") == col("strain.strainName")),
+        "left_outer",
     )
 
     line_observation_df = line_observation_df.join(

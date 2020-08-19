@@ -87,7 +87,7 @@ def map_strain_name(strain_name: str) -> str:
         for strain in intermediate_backgrounds
     ]
 
-    return " * ".join(intermediate_backgrounds)
+    return ";".join(intermediate_backgrounds)
 
 
 if __name__ == "__main__":
