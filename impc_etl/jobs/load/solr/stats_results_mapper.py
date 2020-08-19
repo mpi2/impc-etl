@@ -199,6 +199,8 @@ STATS_RESULTS_COLUMNS = [
     "strain_accession_id",
     "variance_significant",
     "zygosity",
+    "mpath_term_id",
+    "mpath_term_name",
     "mp_term_id",
     "mp_term_name",
     "mp_term_event",
