@@ -262,6 +262,8 @@ def main(argv):
             | (col("procedure_stable_id").contains("_EVM"))
             | (col("procedure_stable_id").contains("_EVO"))
             | (col("procedure_stable_id").contains("_EVP"))
+            | (col("procedure_stable_id").contains("_ELZ"))
+            | (col("procedure_name").startswith("Histopathology"))
             | (col("procedure_stable_id").contains("IMPC_GPL"))
             | (col("procedure_stable_id").contains("IMPC_GEL"))
             | (col("procedure_stable_id").contains("IMPC_GPM"))
@@ -304,6 +306,13 @@ def main(argv):
             )
     gross_pathology_stats = gross_pathology_stats.select(open_stats_df.columns)
     open_stats_df = open_stats_df.union(gross_pathology_stats)
+
+    histopathology_stats = _histopathology_stats_results(observations_df)
+    for col_name in open_stats_df.columns:
+        if col_name not in histopathology_stats.columns:
+            histopathology_stats = histopathology_stats.withColumn(col_name, lit(None))
+    histopathology_stats = histopathology_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(histopathology_stats)
 
     embryo_viability_stats = _embryo_viability_stats_results(
         observations_df, pipeline_df
@@ -544,6 +553,30 @@ def main(argv):
         "zygosity",
         when(col("zygosity") == "homozygous", lit("homozygote")).otherwise(
             col("zygosity")
+        ),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "mpath_term_id",
+        when(col("data_type") == "histopathology", col("mp_term_id")).otherwise(
+            lit(None)
+        ),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "mp_term_id",
+        when(col("data_type") == "histopathology", lit(None)).otherwise(
+            col("mp_term_id")
+        ),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "mpath_term_name",
+        when(col("data_type") == "histopathology", col("mp_term_name")).otherwise(
+            lit(None)
+        ),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "mp_term_name",
+        when(col("data_type") == "histopathology", lit(None)).otherwise(
+            col("mp_term_name")
         ),
     )
     open_stats_df.select(*STATS_RESULTS_COLUMNS).distinct().write.parquet(output_path)
@@ -1244,6 +1277,110 @@ def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
         when(col("mp_term").isNull(), lit(0.0)).otherwise(col("effect_size")),
     )
     return viability_stats_results
+
+
+def _histopathology_stats_results(observations_df: DataFrame):
+    histopathology_significance_scores = observations_df.where(
+        col("parameter_name").endswith("Significance score")
+    ).where(col("category") == "1")
+
+    histopathology_significance_scores = histopathology_significance_scores.withColumn(
+        "tissue_name", regexp_extract("parameter_name", "(.*)( - .*)", 1)
+    )
+
+    histopathology_stats_results = observations_df.where(
+        expr("exists(sub_term_id, term -> term LIKE 'MPATH:%')")
+        & ~expr("exists(sub_term_name, term -> term = 'normal')")
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "tissue_name", regexp_extract("parameter_name", "(.*)( - .*)", 1)
+    )
+    significance_stats_join = [
+        "pipeline_stable_id",
+        "procedure_stable_id",
+        "specimen_id",
+        "experiment_id",
+        "tissue_name",
+    ]
+    histopathology_significance_scores = histopathology_significance_scores.select(
+        significance_stats_join
+    )
+    histopathology_stats_results = histopathology_stats_results.join(
+        histopathology_significance_scores, significance_stats_join
+    )
+
+    required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+        "sex",
+        "procedure_stable_id",
+        "pipeline_name",
+        "allele_accession_id",
+        "parameter_name",
+        "allele_symbol",
+        "marker_accession_id",
+        "marker_symbol",
+        "strain_accession_id",
+        "sub_term_id",
+        "sub_term_name",
+        "specimen_id",
+    ]
+
+    histopathology_stats_results = (
+        histopathology_stats_results.withColumnRenamed(
+            "gene_accession_id", "marker_accession_id"
+        )
+        .withColumnRenamed("gene_symbol", "marker_symbol")
+        .select(required_stats_columns)
+    )
+
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "sub_term_id", expr("filter(sub_term_id, mp -> mp LIKE 'MPATH:%')")
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "term_id", explode_outer("sub_term_id")
+    )
+
+    histopathology_stats_results = histopathology_stats_results.groupBy(
+        *[
+            col_name
+            for col_name in required_stats_columns
+            if col_name not in ["sex", "term_id"]
+        ]
+    ).agg(
+        collect_set(
+            struct(
+                lit("ABNORMAL").cast(StringType()).alias("event"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
+                col("sex"),
+                col("term_id"),
+            )
+        ).alias("mp_term")
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "mp_term", expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)")
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "mp_term",
+        when(size(col("mp_term.term_id")) == 0, lit(None)).otherwise(col("mp_term")),
+    )
+
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "statistical_method", lit("Supplied as data")
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "status", lit("Successful")
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "p_value", when(col("mp_term").isNull(), lit(1.0)).otherwise(lit(0.0))
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "effect_size", when(col("mp_term").isNull(), lit(0.0)).otherwise(lit(1.0))
+    )
+
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "data_type", lit("histopathology")
+    )
+
+    return histopathology_stats_results
 
 
 def _gross_pathology_stats_results(observations_df: DataFrame):
