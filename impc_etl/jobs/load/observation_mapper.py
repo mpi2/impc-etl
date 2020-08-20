@@ -917,17 +917,9 @@ def map_experiments_to_observations(
         & (col("specimen._isBaseline") != True)
     ).join(
         strain_df,
-        when(
-            col("colony.colony_background_strain") == col("strain.strainName"),
-            col("colony.colony_background_strain") == col("strain.strainName"),
-        ).otherwise(
-            when(
-                concat(lit("MGI:"), col("specimen._strainID"))
-                == col("strain.mgiStrainID"),
-                concat(lit("MGI:"), col("specimen._strainID"))
-                == col("strain.mgiStrainID"),
-            ).otherwise(col("specimen._strainID") == col("strain.strainName"))
-        ),
+        (col("colony.colony_background_strain") == col("strain.strainName"))
+        | (concat(lit("MGI:"), col("specimen._strainID")) == col("strain.mgiStrainID"))
+        | (col("specimen._strainID") == col("strain.strainName")),
         "left_outer",
     )
 
