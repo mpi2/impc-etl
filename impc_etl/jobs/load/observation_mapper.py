@@ -241,11 +241,7 @@ def map_experiment_columns(exp_df: DataFrame):
             when(
                 col("strain.strainName").isNotNull(), col("strain.strainName")
             ).otherwise(col("specimen._strainID")),
-        ).otherwise(
-            when(
-                col("strain.strainName").isNotNull(), col("strain.strainName")
-            ).otherwise(col("specimen._strainID"))
-        ),
+        ).otherwise(col("colony.colony_background_strain")),
     )
 
     exp_df = exp_df.withColumn(
@@ -917,9 +913,7 @@ def map_experiments_to_observations(
         & (col("specimen._isBaseline") != True)
     ).join(
         strain_df,
-        (col("colony.colony_background_strain") == col("strain.strainName"))
-        | (concat(lit("MGI:"), col("specimen._strainID")) == col("strain.mgiStrainID"))
-        | (col("specimen._strainID") == col("strain.strainName")),
+        (col("colony.colony_background_strain") == col("strain.strainName")),
         "left_outer",
     )
 
