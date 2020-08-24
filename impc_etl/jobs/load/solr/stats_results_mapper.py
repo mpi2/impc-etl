@@ -582,13 +582,13 @@ def main(argv):
     )
 
     open_stats_df = map_ontology_prefix(open_stats_df, "MA:", "anatomy_")
-    open_stats_df = map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
     open_stats_df = map_ontology_prefix(open_stats_df, "EMAP:", "anatomy_")
     open_stats_df = map_ontology_prefix(open_stats_df, "EMAPA:", "anatomy_")
     open_stats_df = open_stats_df.withColumn(
         "significant",
         when(col("mp_term_id").isNotNull(), lit(True)).otherwise(lit(False)),
     )
+    open_stats_df = map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
     open_stats_df.select(*STATS_RESULTS_COLUMNS).distinct().write.parquet(output_path)
 
 
