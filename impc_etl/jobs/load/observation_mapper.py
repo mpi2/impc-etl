@@ -426,7 +426,7 @@ def resolve_simple_value(exp_df, pipeline_df):
 
 
 def resolve_ontology_value(ontological_observation_df, ontology_df):
-    ontology_df = ontology_df.alias("onto")
+    ontology_df = ontology_df.distinct().alias("onto")
     id_vs_terms_df = (
         ontological_observation_df.withColumn("term", explode("ontologyParameter.term"))
         .withColumnRenamed("pos", "ontologyPos")
@@ -435,7 +435,7 @@ def resolve_ontology_value(ontological_observation_df, ontology_df):
     )
     id_vs_terms_df = id_vs_terms_df.join(
         ontology_df,
-        (regexp_extract(col("temp.term"), "(.+:.+):.+", 1) == col("onto.curie")),
+        (regexp_extract(col("temp.term"), "(.+:\d+)(\s|:).*", 1) == col("onto.curie")),
     )
     id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_id", col("onto.curie"))
     id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_name", col("onto.name"))
@@ -449,13 +449,6 @@ def resolve_ontology_value(ontological_observation_df, ontology_df):
         collect_list("sub_term_name").alias("sub_term_name"),
         collect_list("sub_term_description").alias("sub_term_description"),
     )
-    # id_vs_terms_df = id_vs_terms_df.withColumn(
-    #     "sub_term_description",
-    #     udf(
-    #         lambda l: [item for sublist in l for item in sublist],
-    #         ArrayType(StringType()),
-    #     )("sub_term_description"),
-    # )
     ontological_observation_df = ontological_observation_df.join(
         id_vs_terms_df, "observation_id", "left_outer"
     )
