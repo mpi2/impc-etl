@@ -22,6 +22,8 @@ ONTOLOGY_STATS_MAP = {
 }
 
 GENOTYPE_PHENOTYPE_COLUMNS = [
+    "mpath_term_id",
+    "mpath_term_name",
     "marker_symbol",
     "marker_accession_id",
     "colony_id",
@@ -54,6 +56,8 @@ GENOTYPE_PHENOTYPE_COLUMNS = [
 
 STATS_RESULTS_COLUMNS = [
     "full_mp_term",
+    "mpath_term_id",
+    "mpath_term_name",
     "genotype_effect_p_value",
     "female_pvalue_low_vs_normal_high",
     "female_pvalue_low_normal_vs_high",
@@ -113,7 +117,7 @@ def main(argv):
         "p_value",
         when(
             col("statistical_method").isin(["Manual", "Supplied as data"]),
-            col("genotype_effect_p_value"),
+            col("p_value"),
         )
         .when(
             col("statistical_method").contains("Reference Range Plus"),
