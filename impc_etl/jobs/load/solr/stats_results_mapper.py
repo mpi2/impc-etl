@@ -218,6 +218,16 @@ STATS_RESULTS_COLUMNS = [
     "intermediate_mp_term_name",
     "mp_term_id_options",
     "mp_term_name_options",
+    "anatomy_term_id",
+    "anatomy_term_name",
+    "anatomy_term_event",
+    "anatomy_term_sex",
+    "top_level_anatomy_term_id",
+    "top_level_anatomy_term_name",
+    "intermediate_anatomy_term_id",
+    "intermediate_anatomy_term_name",
+    "anatomy_term_id_options",
+    "anatomy_term_name_options",
     "parameter_stable_key",
     "pipeline_stable_key",
     "genetic_background",
@@ -574,31 +584,37 @@ def main(argv):
             col("zygosity")
         ),
     )
-    open_stats_df = open_stats_df.withColumn(
-        "mpath_term_id",
-        when(col("data_type") == "histopathology", col("mp_term_id")).otherwise(
-            lit(None)
-        ),
-    )
-    open_stats_df = open_stats_df.withColumn(
-        "mp_term_id",
-        when(col("data_type") == "histopathology", lit(None)).otherwise(
-            col("mp_term_id")
-        ),
-    )
-    open_stats_df = open_stats_df.withColumn(
-        "mpath_term_name",
-        when(col("data_type") == "histopathology", col("mp_term_name")).otherwise(
-            lit(None)
-        ),
-    )
-    open_stats_df = open_stats_df.withColumn(
-        "mp_term_name",
-        when(col("data_type") == "histopathology", lit(None)).otherwise(
-            col("mp_term_name")
-        ),
-    )
+
+    open_stats_df = map_ontology_prefix(open_stats_df, "MA:", "anatomy_")
+    open_stats_df = map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
+    open_stats_df = map_ontology_prefix(open_stats_df, "EMAP:", "anatomy_")
+    open_stats_df = map_ontology_prefix(open_stats_df, "EMAPA:", "anatomy_")
     open_stats_df.select(*STATS_RESULTS_COLUMNS).distinct().write.parquet(output_path)
+
+
+def map_ontology_prefix(open_stats_df, term_prefix, field_prefix):
+    mapped_columns = [
+        col_name for col_name in STATS_RESULTS_COLUMNS if field_prefix in col_name
+    ]
+    for col_name in mapped_columns:
+        mp_col_name = col_name.replace(field_prefix, "mp_")
+        open_stats_df = open_stats_df.withColumn(
+            col_name,
+            when(
+                col(col_name).isNull(),
+                when(
+                    col("mp_term_id").startswith(term_prefix), col(mp_col_name)
+                ).otherwise(lit(None)),
+            ).otherwise(col(col_name)),
+        )
+    mapped_id = field_prefix + "term_id"
+    for col_name in mapped_columns:
+        mp_col_name = col_name.replace(field_prefix, "mp_")
+        open_stats_df = open_stats_df.withColumn(
+            mp_col_name,
+            when(col(mapped_id).isNotNull(), lit(None)).otherwise(col(mp_col_name)),
+        )
+    return open_stats_df
 
 
 def map_to_stats(
