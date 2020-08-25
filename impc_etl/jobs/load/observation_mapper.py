@@ -435,7 +435,10 @@ def resolve_ontology_value(ontological_observation_df, ontology_df):
     )
     id_vs_terms_df = id_vs_terms_df.join(
         ontology_df,
-        (regexp_extract(col("temp.term"), "(.+:\d+)(\s|:).*", 1) == col("onto.curie")),
+        (
+            regexp_extract(col("temp.term"), "([A-Z]+:\d+)[\s:]*", 1)
+            == col("onto.curie")
+        ),
     )
     id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_id", col("onto.curie"))
     id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_name", col("onto.name"))
