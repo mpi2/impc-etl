@@ -592,9 +592,12 @@ def main(argv):
     )
     open_stats_df = map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
     mpath_metadata_df = mpath_metadata_df.select(
-        col("acc").alias("mpath_term_id"), col("name").alias("mpath_term_name")
+        col("acc").alias("mpath_term_id"), col("name").alias("mpath_metadata_term_name")
     ).distinct()
     open_stats_df = open_stats_df.join(mpath_metadata_df, "mpath_term_id", "left_outer")
+    open_stats_df = open_stats_df.withColumn(
+        "mpath_term_name", col("mpath_metadata_term_name")
+    )
     open_stats_df.select(*STATS_RESULTS_COLUMNS).distinct().write.parquet(output_path)
 
 
