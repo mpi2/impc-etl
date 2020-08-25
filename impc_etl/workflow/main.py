@@ -79,6 +79,7 @@ class ImpcSolrCores(luigi.Task):
                 emap_emapa_csv_path=self.emap_emapa_csv_path,
                 emapa_metadata_csv_path=self.emapa_metadata_csv_path,
                 ma_metadata_csv_path=self.ma_metadata_csv_path,
+                mpath_metadata_csv_path=self.mpath_metadata_csv_path,
                 threei_stats_results_csv=self.threei_stats_results_csv,
                 output_path=self.output_path,
             ),
