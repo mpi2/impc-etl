@@ -145,6 +145,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
     emap_emapa_csv_path = luigi.Parameter()
     emapa_metadata_csv_path = luigi.Parameter()
     ma_metadata_csv_path = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
     output_path = luigi.Parameter()
 
@@ -205,6 +206,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             self.input()[4].path,
             self.input()[5].path,
             self.threei_stats_results_csv,
+            self.mpath_metadata_csv_path,
             self.output().path,
         ]
 

@@ -269,7 +269,8 @@ def main(argv):
     pipeline_core_parquet_path = argv[5]
     allele_parquet_path = argv[6]
     threei_parquet_path = argv[7]
-    output_path = argv[8]
+    mpath_metadata_path = argv[8]
+    output_path = argv[9]
     spark = SparkSession.builder.getOrCreate()
     open_stats_df = spark.read.parquet(open_stats_parquet_path).where(
         ~(
@@ -300,6 +301,7 @@ def main(argv):
     observations_df = spark.read.parquet(observations_parquet_path)
     threei_df = spark.read.csv(threei_parquet_path, header=True)
     threei_df = standardize_threei_schema(threei_df)
+    mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
 
     fertility_stats = _fertility_stats_results(observations_df, pipeline_df)
 
@@ -589,6 +591,10 @@ def main(argv):
         when(col("mp_term_id").isNotNull(), lit(True)).otherwise(lit(False)),
     )
     open_stats_df = map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
+    mpath_metadata_df = mpath_metadata_df.select(
+        col("acc").alias("mpath_term_id"), col("name").alias("mpath_term_name")
+    ).distinct()
+    open_stats_df = open_stats_df.join(mpath_metadata_df, "mpath_term_id", "left_outer")
     open_stats_df.select(*STATS_RESULTS_COLUMNS).distinct().write.parquet(output_path)
 
 
