@@ -228,6 +228,7 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
     emap_emapa_csv_path = luigi.Parameter()
     emapa_metadata_csv_path = luigi.Parameter()
     ma_metadata_csv_path = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
     output_path = luigi.Parameter()
 
@@ -248,6 +249,7 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
                 emap_emapa_csv_path=self.emap_emapa_csv_path,
                 emapa_metadata_csv_path=self.emapa_metadata_csv_path,
                 ma_metadata_csv_path=self.ma_metadata_csv_path,
+                mpath_metadata_csv_path=self.mpath_metadata_csv_path,
                 threei_stats_results_csv=self.threei_stats_results_csv,
                 output_path=self.output_path,
             ),
