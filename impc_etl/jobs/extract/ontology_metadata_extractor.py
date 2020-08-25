@@ -20,7 +20,10 @@ def main(argv):
     input_path = argv[1]
     output_path = argv[2]
     spark = SparkSession.builder.getOrCreate()
-    ontology_df = spark.read.csv(f"{input_path}/*_metadata_table.csv", header=True)
+    ontology_df = spark.read.csv(
+        input_path + "/{eco,efo,emap,emapa,ma,mp,mpath,pato,uberon}_metadata_table.csv",
+        header=True,
+    )
     ontology_df.distinct().write.mode("overwrite").parquet(output_path)
 
 

@@ -427,26 +427,32 @@ def resolve_simple_value(exp_df, pipeline_df):
 
 def resolve_ontology_value(ontological_observation_df, ontology_df):
     ontology_df = ontology_df.distinct().alias("onto")
+    if has_column(ontology_df, "ontologyParameter._sequenceID"):
+        ontology_df = ontology_df.withColumn(
+            "sequence_id", col("ontologyParameter._sequenceID")
+        )
     id_vs_terms_df = (
         ontological_observation_df.withColumn("term", explode("ontologyParameter.term"))
         .withColumnRenamed("pos", "ontologyPos")
-        .select("observation_id", "ontologyParameter._parameterID", "term")
+        .select(
+            "observation_id",
+            "ontologyParameter._parameterID",
+            "ontologyParameter._sequenceID",
+            "term",
+        )
         .alias("temp")
     )
     id_vs_terms_df = id_vs_terms_df.join(
         ontology_df,
-        (
-            regexp_extract(col("temp.term"), "([A-Z]+:\d+)[\s:]*", 1)
-            == col("onto.curie")
-        ),
+        (regexp_extract(col("temp.term"), "([A-Z]+:\d+)[\s:]*", 1) == col("onto.acc")),
     )
-    id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_id", col("onto.curie"))
+    id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_id", col("onto.acc"))
     id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_name", col("onto.name"))
     id_vs_terms_df = id_vs_terms_df.withColumn(
         "sub_term_description", col("onto.description")
     ).dropDuplicates()
     id_vs_terms_df = id_vs_terms_df.groupBy(
-        col("observation_id"), col("temp._parameterID")
+        col("observation_id"), col("temp._parameterID"), col("temp._sequenceID")
     ).agg(
         collect_list("sub_term_id").alias("sub_term_id"),
         collect_list("sub_term_name").alias("sub_term_name"),
