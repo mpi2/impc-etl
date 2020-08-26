@@ -626,13 +626,17 @@ def main(argv):
     )
 
 
+def _compress_and_encode(json_text):
+    if json_text is None:
+        return None
+    else:
+        return str(
+            base64.encodebytes(gzip.compress(bytes(json_text, "utf-8"))), "utf-8"
+        )
+
+
 def _parse_raw_data(open_stats_df):
-    compress_and_encode = udf(
-        lambda json_text: None
-        if json_text is None
-        else str(base64.encodebytes(gzip.compress(bytes(json_text, "utf-8"))), "utf-8"),
-        StringType(),
-    )
+    compress_and_encode = udf(_compress_and_encode, StringType())
     for col_name in [
         "observations_biological_sample_group",
         "observations_date_of_experiment",
@@ -647,31 +651,31 @@ def _parse_raw_data(open_stats_df):
                         ["unidimensional", "time_series", "categorical"]
                     )
                 ),
-                compress_and_encode(col(col_name)),
-            ).otherwise(lit(None)),
+                compress_and_encode(col_name),
+            ).otherwise(lit(None).astype(StringType())),
         )
     open_stats_df = open_stats_df.withColumn(
         "observations_body_weight",
         when(
             (col("data_type").isin(["unidimensional", "time_series", "categorical"])),
-            compress_and_encode(col("observations_body_weight")),
-        ).otherwise(lit(None)),
+            compress_and_encode("observations_body_weight"),
+        ).otherwise(lit(None).astype(StringType())),
     )
     open_stats_df = open_stats_df.withColumn(
         "observations_data_points",
         when(
             (col("data_type").isin(["unidimensional", "time_series"]))
             & (col("observations_response").isNotNull()),
-            compress_and_encode(col("observations_response")),
-        ).otherwise(lit(None)),
+            compress_and_encode("observations_response"),
+        ).otherwise(lit(None).astype(StringType())),
     )
     open_stats_df = open_stats_df.withColumn(
         "observations_categories",
         when(
             (col("data_type") == "categorical")
             & (col("observations_response").isNotNull()),
-            compress_and_encode(col("observations_response")),
-        ).otherwise(lit(None)),
+            compress_and_encode("observations_response"),
+        ).otherwise(lit(None).astype(StringType())),
     )
     return open_stats_df
 
