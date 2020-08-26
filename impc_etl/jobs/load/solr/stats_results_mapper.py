@@ -628,7 +628,7 @@ def main(argv):
 
 def _parse_raw_data(open_stats_df):
     compress_and_encode = udf(
-        lambda json_text: base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))),
+        lambda json_text: base64.encodebytes(gzip.compress(bytes(json_text, "utf-8"))),
         StringType(),
     )
     for col_name in [
