@@ -30,6 +30,7 @@ from pyspark.sql.functions import (
     explode_outer,
     md5,
     arrays_zip,
+    array_repeat,
 )
 from pyspark.sql.types import (
     StructType,
@@ -669,7 +670,9 @@ def _parse_raw_data(open_stats_df):
         when(
             (col("data_type").isin(["unidimensional", "time_series", "categorical"])),
             from_json(col("observations_body_weight"), ArrayType(DoubleType(), True)),
-        ).otherwise(lit(None)),
+        ).otherwise(
+            expr("transform(observations_external_sample_id, sample_id -> NULL)")
+        ),
     )
     evidence_df = evidence_df.withColumn(
         "observations_data_points",
@@ -677,7 +680,9 @@ def _parse_raw_data(open_stats_df):
             (col("data_type").isin(["unidimensional", "time_series"]))
             & (col("observations_response").isNotNull()),
             from_json(col("observations_response"), ArrayType(DoubleType(), True)),
-        ).otherwise(lit(None)),
+        ).otherwise(
+            expr("transform(observations_external_sample_id, sample_id -> NULL)")
+        ),
     )
     evidence_df = evidence_df.withColumn(
         "observations_categories",
@@ -685,37 +690,24 @@ def _parse_raw_data(open_stats_df):
             (col("data_type") == "categorical")
             & (col("observations_response").isNotNull()),
             from_json(col("observations_response"), ArrayType(StringType(), True)),
-        ).otherwise(lit(None)),
+        ).otherwise(
+            expr("transform(observations_external_sample_id, sample_id -> NULL)")
+        ),
     )
     evidence_df = evidence_df.withColumn(
         "facts",
-        explode(
-            when(
-                (col("data_type") == "categorical"),
-                arrays_zip(
-                    "observations_biological_sample_group",
-                    "observations_date_of_experiment",
-                    "observations_external_sample_id",
-                    "observations_sex",
-                    "observations_body_weight",
-                    "observations_categories",
-                ),
+        explode_outer(
+            arrays_zip(
+                "observations_biological_sample_group",
+                "observations_date_of_experiment",
+                "observations_external_sample_id",
+                "observations_sex",
+                "observations_categories",
+                "observations_data_points",
+                "observations_body_weight",
             )
-            .when(
-                col("data_type").isin(["unidimensional", "time_series"]),
-                arrays_zip(
-                    "observations_biological_sample_group",
-                    "observations_date_of_experiment",
-                    "observations_external_sample_id",
-                    "observations_sex",
-                    "observations_body_weight",
-                    "observations_data_points",
-                ),
-            )
-            .otherwise(lit(None))
         ),
     )
-
     evidence_df = evidence_df.select("stat_packet_id", "data_type", "facts.*")
     return evidence_df
 
