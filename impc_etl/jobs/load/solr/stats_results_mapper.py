@@ -629,7 +629,7 @@ def main(argv):
         ]
     )
     concat_expression = (
-        "concat(" + concat_expression + ", nvl(concat_ws(procedure_name), '')" + ")"
+        "concat(" + concat_expression + ", nvl(concat_ws('', procedure_name), '')" + ")"
     )
     open_stats_df = open_stats_df.withColumn(
         "stat_packet_id", md5(expr(concat_expression))
