@@ -196,6 +196,7 @@ class OpenStatsExtractor(SparkSubmitTask):
     openstats_db_password = luigi.Parameter()
     data_release_version = luigi.Parameter()
     use_cache = luigi.Parameter()
+    raw_data_in_output = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def output(self):
@@ -204,7 +205,12 @@ class OpenStatsExtractor(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return ImpcConfig().get_target(f"{self.output_path}open_stats_parquet")
+        if self.raw_data_in_output == "include":
+            return ImpcConfig().get_target(
+                f"{self.output_path}open_stats_parquet_with_raw_data"
+            )
+        else:
+            return ImpcConfig().get_target(f"{self.output_path}open_stats_parquet")
 
     def app_options(self):
         return [
@@ -213,5 +219,6 @@ class OpenStatsExtractor(SparkSubmitTask):
             self.openstats_db_password,
             self.data_release_version,
             self.use_cache,
+            self.raw_data_in_output,
             self.output().path,
         ]

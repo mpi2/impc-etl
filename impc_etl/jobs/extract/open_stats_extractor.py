@@ -17,7 +17,8 @@ def main(argv):
     db_password = argv[3]
     data_release_version = argv[4]
     use_cache = argv[5]
-    output_path = argv[6]
+    raw_data_in_output = argv[6]
+    output_path = argv[7]
 
     properties = {
         "user": db_user,
@@ -29,46 +30,20 @@ def main(argv):
     if use_cache != "true":
         stats_df = spark.read.jdbc(
             jdbc_connection_str,
-            table="(SELECT CAST(id AS BIGINT) AS numericId, * FROM dr12withmptermsv4882020) AS tmp",
+            table="(SELECT CAST(id AS BIGINT) AS numericId, * FROM dr12withmptermsv623082020_17) AS tmp",
             properties=properties,
             numPartitions=5000,
             column="numericId",
             lowerBound=0,
-            upperBound=9999999338,
+            upperBound=99999948351702,
         )
         stats_df = stats_df.withColumnRenamed("statpacket", "json")
         stats_df.write.mode("overwrite").parquet(output_path + "_temp")
     stats_df = spark.read.parquet(output_path + "_temp").repartition(10000)
-    # stats_df = (
-    #     stats_df.where(col("status") == "NotProcessed")
-    #     .limit(1)
-    #     .union(stats_df.where(col("json").contains("Mixed Model")).limit(10))
-    #     .union(
-    #         stats_df.where(
-    #             col("json").contains("MPTERM") & col("json").contains("Mixed Model")
-    #         ).limit(10)
-    #     )
-    #     .union(stats_df.where(col("json").contains("Reference Range")).limit(10))
-    #     .union(
-    #         stats_df.where(
-    #             col("json").contains("MPTERM") & col("json").contains("Reference Range")
-    #         ).limit(10)
-    #     )
-    #     .union(stats_df.where(col("json").contains("Fisher Exact")).limit(10))
-    #     .union(
-    #         stats_df.where(
-    #             col("json").contains("MPTERM") & col("json").contains("Fisher Exact")
-    #         ).limit(10)
-    #     )
-    #     .union(stats_df.where(col("json").contains("MPTERM")).limit(1))
-    # )
-    # stats_df.limit(100).rdd.map(dump_json).saveAsTextFile(output_path + "_json_temp")
-    stats_df.where(
-        ~(
-            (col("parameter_stable_id") == "IMPC_CAL_009_001")
-            & (col("colony_id") == "CCP-1810011H11Rik-DEL17-EM1-B6N_Tmem273")
-        )
-    ).rdd.map(dump_json).saveAsTextFile(output_path + "_json_temp")
+    dumping_function = (
+        dump_json if raw_data_in_output == "exclude" else dump_json_raw_data
+    )
+    stats_df.rdd.map(dumping_function).saveAsTextFile(output_path + "_json_temp")
     json_df = spark.read.json(output_path + "_json_temp", mode="FAILFAST")
     json_df.write.mode("overwrite").parquet(output_path)
 
@@ -101,7 +76,19 @@ def object_pairs_hook(lit):
     )
 
 
+def dump_json_raw_data(row):
+    stats_result = _get_stat_result(row, True)
+    json_str = json.dumps(stats_result)
+    return json_str
+
+
 def dump_json(row):
+    stats_result = _get_stat_result(row)
+    json_str = json.dumps(stats_result)
+    return json_str
+
+
+def _get_stat_result(row, include_raw_data=False):
     packet_result_map = {
         "gene_accession_id": "marker_accession_id",
         "gene_symbol": "marker_symbol",
@@ -134,8 +121,22 @@ def dump_json(row):
         stats_result["mp_term"] = (
             stats_packet_detail["MPTERM"] if "MPTERM" in stats_packet_detail else None
         )
-    json_str = json.dumps(stats_result)
-    return json_str
+    if include_raw_data:
+        stats_result["observations_biological_sample_group"] = experiment_detail[
+            "Original_biological_sample_group"
+        ]
+        stats_result["observations_body_weight"] = experiment_detail[
+            "Original_body_weight"
+        ]
+        stats_result["observations_date_of_experiment"] = experiment_detail[
+            "Original_date_of_experiment"
+        ]
+        stats_result["observations_external_sample_id"] = experiment_detail[
+            "Original_external_sample_id"
+        ]
+        stats_result["observations_response"] = experiment_detail["Original_response"]
+        stats_result["observations_sex"] = experiment_detail["Original_sex"]
+    return stats_result
 
 
 def get_raw_data_details(stats_packet_detail) -> Dict:

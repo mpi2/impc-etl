@@ -147,6 +147,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
     ma_metadata_csv_path = luigi.Parameter()
     mpath_metadata_csv_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
+    raw_data_in_output = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -157,6 +158,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
                 openstats_db_password=self.openstats_db_password,
                 data_release_version=self.data_release_version,
                 use_cache=self.use_cache,
+                raw_data_in_output=self.raw_data_in_output,
                 output_path=self.output_path,
             ),
             ObservationsMapper(
@@ -195,7 +197,12 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return ImpcConfig().get_target(f"{self.output_path}stats_results_parquet")
+        if self.raw_data_in_output == "include":
+            return ImpcConfig().get_target(
+                f"{self.output_path}stats_results_parquet_with_raw_data"
+            )
+        else:
+            return ImpcConfig().get_target(f"{self.output_path}stats_results_parquet")
 
     def app_options(self):
         return [
@@ -207,6 +214,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             self.input()[5].path,
             self.threei_stats_results_csv,
             self.mpath_metadata_csv_path,
+            self.raw_data_in_output,
             self.output().path,
         ]
 
@@ -219,6 +227,7 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
     openstats_db_password = luigi.Parameter()
     data_release_version = luigi.Parameter()
     use_cache = luigi.Parameter()
+    raw_data_in_output = luigi.Parameter()
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     imits_alleles_tsv_path = luigi.Parameter()
@@ -251,6 +260,7 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
                 ma_metadata_csv_path=self.ma_metadata_csv_path,
                 mpath_metadata_csv_path=self.mpath_metadata_csv_path,
                 threei_stats_results_csv=self.threei_stats_results_csv,
+                raw_data_in_output="exclude",
                 output_path=self.output_path,
             ),
             OntologyExtractor(

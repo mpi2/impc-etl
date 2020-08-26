@@ -104,6 +104,14 @@ STATS_OBSERVATIONS_JOIN = [
     "zygosity",
 ]
 
+RAW_DATA_COLUMNS = [
+    "observations_biological_sample_group",
+    "observations_body_weight",
+    "observations_date_of_experiment",
+    "observations_external_sample_id",
+    "observations_response",
+]
+
 
 ALLELE_STATS_MAP = {"allele_name": "allele_name"}
 
@@ -270,7 +278,8 @@ def main(argv):
     allele_parquet_path = argv[6]
     threei_parquet_path = argv[7]
     mpath_metadata_path = argv[8]
-    output_path = argv[9]
+    raw_data_in_output = argv[9]
+    output_path = argv[10]
     spark = SparkSession.builder.getOrCreate()
     open_stats_df = spark.read.parquet(open_stats_parquet_path).where(
         ~(
@@ -465,7 +474,13 @@ def main(argv):
         ),
     )
 
-    for col_name in STATS_RESULTS_COLUMNS:
+    stats_results_column_list = (
+        STATS_RESULTS_COLUMNS
+        if raw_data_in_output == "exclude"
+        else STATS_RESULTS_COLUMNS + RAW_DATA_COLUMNS
+    )
+
+    for col_name in stats_results_column_list:
         if col_name not in open_stats_df.columns:
             open_stats_df = open_stats_df.withColumn(col_name, lit(None))
 
@@ -598,7 +613,9 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "mpath_term_name", col("mpath_metadata_term_name")
     )
-    open_stats_df.select(*STATS_RESULTS_COLUMNS).distinct().write.parquet(output_path)
+    open_stats_df.select(*stats_results_column_list).distinct().write.parquet(
+        output_path
+    )
 
 
 def map_ontology_prefix(open_stats_df, term_prefix, field_prefix):
