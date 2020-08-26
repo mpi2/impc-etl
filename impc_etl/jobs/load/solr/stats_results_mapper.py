@@ -110,6 +110,7 @@ RAW_DATA_COLUMNS = [
     "observations_date_of_experiment",
     "observations_external_sample_id",
     "observations_response",
+    "observations_sex",
 ]
 
 
