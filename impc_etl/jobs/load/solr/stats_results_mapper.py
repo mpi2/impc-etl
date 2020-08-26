@@ -395,7 +395,7 @@ def main(argv):
         observations_metadata_df,
         STATS_OBSERVATIONS_JOIN,
         OBSERVATIONS_STATS_MAP,
-        "observations",
+        "observation",
     )
     open_stats_df = open_stats_df.withColumn(
         "pipeline_stable_id",
