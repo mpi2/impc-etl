@@ -100,7 +100,7 @@ OBSERVATIONS_STATS_MAP = {
 
 STATS_OBSERVATIONS_JOIN = [
     "procedure_group",
-    "procedure_stable_id",
+    "procedure_name",
     "parameter_stable_id",
     "phenotyping_center",
     "pipeline_stable_id",
@@ -629,7 +629,7 @@ def main(argv):
         "stat_packet_id", md5(expr(concat_expression))
     )
     open_stats_df.select(
-        "stat_packet_id", *stats_results_column_list
+        "stat_packet_id", *STATS_RESULTS_COLUMNS
     ).distinct().write.parquet(output_path)
 
     if raw_data_in_output == "include":
@@ -683,14 +683,16 @@ def _parse_raw_data(open_stats_df):
     )
     evidence_df = evidence_df.withColumn(
         "facts",
-        arrays_zip(
-            "observations_biological_sample_group",
-            "observations_date_of_experiment",
-            "observations_external_sample_id",
-            "observations_sex",
-            "observations_categories",
-            "observations_data_points",
-            "observations_body_weight",
+        explode_outer(
+            arrays_zip(
+                "observations_biological_sample_group",
+                "observations_date_of_experiment",
+                "observations_external_sample_id",
+                "observations_sex",
+                "observations_categories",
+                "observations_data_points",
+                "observations_body_weight",
+            )
         ),
     )
     evidence_df = evidence_df.select("stat_packet_id", "facts.*")
