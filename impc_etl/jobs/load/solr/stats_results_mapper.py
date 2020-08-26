@@ -645,7 +645,7 @@ def main(argv):
 
 def _parse_raw_data(open_stats_df):
     evidence_df = open_stats_df.select(
-        ["stat_packet_id"] + STATS_OBSERVATIONS_JOIN + RAW_DATA_COLUMNS
+        ["stat_packet_id", "data_type"] + STATS_OBSERVATIONS_JOIN + RAW_DATA_COLUMNS
     )
     for col_name in [
         "observations_biological_sample_group",
@@ -701,7 +701,7 @@ def _parse_raw_data(open_stats_df):
             )
         ),
     )
-    evidence_df = evidence_df.select("stat_packet_id", "facts.*")
+    evidence_df = evidence_df.select("stat_packet_id", "data_type", "facts.*")
     return evidence_df
 
 
