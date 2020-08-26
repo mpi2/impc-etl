@@ -33,6 +33,7 @@ from pyspark.sql.types import (
     StringType,
     IntegerType,
     DoubleType,
+    ArrayType,
 )
 
 from impc_etl.config import Constants
@@ -614,6 +615,24 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "mpath_term_name", col("mpath_metadata_term_name")
     )
+    if raw_data_in_output == "include":
+        open_stats_df = open_stats_df.withColumn(
+            "observations_data_points",
+            when(
+                (col("data_type").isin(["unidimensional", "time_series"]))
+                & (col("observations_response").isNotNull()),
+                from_json(col("observations_response"), ArrayType(DoubleType(), True)),
+            ).otherwise(lit(None)),
+        )
+
+        open_stats_df = open_stats_df.withColumn(
+            "observations_data_points",
+            when(
+                (col("data_type") == "categorical")
+                & (col("observations_response").isNotNull()),
+                from_json(col("observations_response"), ArrayType(StringType(), True)),
+            ).otherwise(lit(None)),
+        )
     open_stats_df.select(*stats_results_column_list).distinct().write.parquet(
         output_path
     )
