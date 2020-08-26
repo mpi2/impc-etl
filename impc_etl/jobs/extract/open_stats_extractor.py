@@ -122,20 +122,36 @@ def _get_stat_result(row, include_raw_data=False):
             stats_packet_detail["MPTERM"] if "MPTERM" in stats_packet_detail else None
         )
     if include_raw_data:
-        stats_result["observations_biological_sample_group"] = experiment_detail[
-            "Original_biological_sample_group"
-        ]
-        stats_result["observations_body_weight"] = experiment_detail[
-            "Original_body_weight"
-        ]
-        stats_result["observations_date_of_experiment"] = experiment_detail[
-            "Original_date_of_experiment"
-        ]
-        stats_result["observations_external_sample_id"] = experiment_detail[
-            "Original_external_sample_id"
-        ]
-        stats_result["observations_response"] = experiment_detail["Original_response"]
-        stats_result["observations_sex"] = experiment_detail["Original_sex"]
+        stats_result["observations_biological_sample_group"] = (
+            stats_packet_detail["Original_biological_sample_group"]
+            if "Original_biological_sample_group" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_body_weight"] = (
+            stats_packet_detail["Original_body_weight"]
+            if "Original_body_weight" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_date_of_experiment"] = (
+            stats_packet_detail["Original_date_of_experiment"]
+            if "Original_date_of_experiment" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_external_sample_id"] = (
+            stats_packet_detail["Original_external_sample_id"]
+            if "Original_external_sample_id" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_response"] = (
+            stats_packet_detail["Original_response"]
+            if "Original_response" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_sex"] = (
+            stats_packet_detail["Original_sex"]
+            if "Original_sex" in stats_packet_detail
+            else []
+        )
     return stats_result
 
 
