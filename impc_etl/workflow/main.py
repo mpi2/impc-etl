@@ -153,6 +153,24 @@ class ImpcSolrCores(luigi.Task):
 
 
 class ImpcStatPacketLoader(luigi.Task):
+    openstats_jdbc_connection = luigi.Parameter()
+    openstats_db_user = luigi.Parameter()
+    openstats_db_password = luigi.Parameter()
+    data_release_version = luigi.Parameter()
+    use_cache = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
+    threei_stats_results_csv = luigi.Parameter()
+    output_path = luigi.Parameter()
+
     def requires(self):
         return [
             StatsResultsCoreLoader(
