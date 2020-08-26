@@ -618,26 +618,54 @@ def main(argv):
         "mpath_term_name", col("mpath_metadata_term_name")
     )
     if raw_data_in_output == "include":
-        open_stats_df = open_stats_df.withColumn(
-            "observations_data_points",
-            when(
-                (col("data_type").isin(["unidimensional", "time_series"]))
-                & (col("observations_response").isNotNull()),
-                from_json(col("observations_response"), ArrayType(DoubleType(), True)),
-            ).otherwise(lit(None)),
-        )
-
-        open_stats_df = open_stats_df.withColumn(
-            "observations_categories",
-            when(
-                (col("data_type") == "categorical")
-                & (col("observations_response").isNotNull()),
-                from_json(col("observations_response"), ArrayType(StringType(), True)),
-            ).otherwise(lit(None)),
-        )
+        open_stats_df = _parse_raw_data(open_stats_df)
     open_stats_df.select(*stats_results_column_list).distinct().write.parquet(
         output_path
     )
+
+
+def _parse_raw_data(open_stats_df):
+    for col_name in [
+        "observations_biological_sample_group",
+        "observations_date_of_experiment",
+        "observations_external_sample_id",
+        "observations_sex",
+    ]:
+        open_stats_df = open_stats_df.withColumn(
+            col_name,
+            when(
+                (
+                    col("data_type").isin(
+                        ["unidimensional", "time_series", "categorical"]
+                    )
+                ),
+                from_json(col(col_name), ArrayType(StringType(), True)),
+            ).otherwise(lit(None)),
+        )
+    open_stats_df = open_stats_df.withColumn(
+        "observations_body_weight",
+        when(
+            (col("data_type").isin(["unidimensional", "time_series", "categorical"])),
+            from_json(col("observations_body_weight"), ArrayType(DoubleType(), True)),
+        ).otherwise(lit(None)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "observations_data_points",
+        when(
+            (col("data_type").isin(["unidimensional", "time_series"]))
+            & (col("observations_response").isNotNull()),
+            from_json(col("observations_response"), ArrayType(DoubleType(), True)),
+        ).otherwise(lit(None)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "observations_categories",
+        when(
+            (col("data_type") == "categorical")
+            & (col("observations_response").isNotNull()),
+            from_json(col("observations_response"), ArrayType(StringType(), True)),
+        ).otherwise(lit(None)),
+    )
+    return open_stats_df
 
 
 def map_ontology_prefix(open_stats_df, term_prefix, field_prefix):
