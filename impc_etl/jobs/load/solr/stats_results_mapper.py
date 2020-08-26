@@ -622,9 +622,15 @@ def main(argv):
         "mpath_term_name", col("mpath_metadata_term_name")
     )
     concat_expression = ", ".join(
-        [f"nvl({col_name}, '')" for col_name in STATS_OBSERVATIONS_JOIN]
+        [
+            f"nvl({col_name}, '')"
+            for col_name in STATS_OBSERVATIONS_JOIN
+            if col_name != "procedure_name"
+        ]
     )
-    concat_expression = "concat(" + concat_expression + ")"
+    concat_expression = (
+        "concat(" + concat_expression + ", nvl(concat_ws(procedure_name), '')" + ")"
+    )
     open_stats_df = open_stats_df.withColumn(
         "stat_packet_id", md5(expr(concat_expression))
     )
