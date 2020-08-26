@@ -626,7 +626,7 @@ def main(argv):
         )
 
         open_stats_df = open_stats_df.withColumn(
-            "observations_data_points",
+            "observations_categories",
             when(
                 (col("data_type") == "categorical")
                 & (col("observations_response").isNotNull()),
