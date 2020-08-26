@@ -112,6 +112,8 @@ RAW_DATA_COLUMNS = [
     "observations_external_sample_id",
     "observations_response",
     "observations_sex",
+    "observations_data_points",
+    "observations_categories",
 ]
 
 
