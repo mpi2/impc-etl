@@ -1,3 +1,5 @@
+import base64
+import gzip
 from typing import Dict, List
 
 from pyspark.sql import DataFrame, SparkSession
@@ -625,6 +627,10 @@ def main(argv):
 
 
 def _parse_raw_data(open_stats_df):
+    compress_and_encode = udf(
+        lambda json_text: base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))),
+        StringType(),
+    )
     for col_name in [
         "observations_biological_sample_group",
         "observations_date_of_experiment",
@@ -639,14 +645,14 @@ def _parse_raw_data(open_stats_df):
                         ["unidimensional", "time_series", "categorical"]
                     )
                 ),
-                from_json(col(col_name), ArrayType(StringType(), True)),
+                compress_and_encode(col(col_name)),
             ).otherwise(lit(None)),
         )
     open_stats_df = open_stats_df.withColumn(
         "observations_body_weight",
         when(
             (col("data_type").isin(["unidimensional", "time_series", "categorical"])),
-            from_json(col("observations_body_weight"), ArrayType(DoubleType(), True)),
+            compress_and_encode(col("observations_body_weight")),
         ).otherwise(lit(None)),
     )
     open_stats_df = open_stats_df.withColumn(
@@ -654,7 +660,7 @@ def _parse_raw_data(open_stats_df):
         when(
             (col("data_type").isin(["unidimensional", "time_series"]))
             & (col("observations_response").isNotNull()),
-            from_json(col("observations_response"), ArrayType(DoubleType(), True)),
+            compress_and_encode(col("observations_response")),
         ).otherwise(lit(None)),
     )
     open_stats_df = open_stats_df.withColumn(
@@ -662,7 +668,7 @@ def _parse_raw_data(open_stats_df):
         when(
             (col("data_type") == "categorical")
             & (col("observations_response").isNotNull()),
-            from_json(col("observations_response"), ArrayType(StringType(), True)),
+            compress_and_encode(col("observations_response")),
         ).otherwise(lit(None)),
     )
     return open_stats_df
