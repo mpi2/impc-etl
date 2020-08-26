@@ -634,13 +634,15 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "stat_packet_id", md5(expr(concat_expression))
     )
-    open_stats_df.select(
-        "stat_packet_id", *STATS_RESULTS_COLUMNS
-    ).distinct().write.parquet(output_path)
 
     if raw_data_in_output == "include":
         evidence_df = _parse_raw_data(open_stats_df)
+        raise ValueError
         evidence_df.write.parquet(output_path + "evidence")
+
+    open_stats_df.select(
+        "stat_packet_id", *STATS_RESULTS_COLUMNS
+    ).distinct().write.parquet(output_path)
 
 
 def _parse_raw_data(open_stats_df):
@@ -689,19 +691,19 @@ def _parse_raw_data(open_stats_df):
     )
     evidence_df = evidence_df.withColumn(
         "facts",
-        explode_outer(
-            arrays_zip(
-                "observations_biological_sample_group",
-                "observations_date_of_experiment",
-                "observations_external_sample_id",
-                "observations_sex",
-                "observations_categories",
-                "observations_data_points",
-                "observations_body_weight",
-            )
+        arrays_zip(
+            "observations_external_sample_id",
+            "observations_sex",
+            "observations_biological_sample_group",
+            "observations_date_of_experiment",
+            "observations_categories",
+            "observations_data_points",
+            "observations_body_weight",
         ),
     )
-    evidence_df = evidence_df.select("stat_packet_id", "data_type", "facts.*")
+    evidence_df.printSchema()
+    evidence_df.show()
+    evidence_df = evidence_df.select("stat_packet_id", "data_type", "facts")
     return evidence_df
 
 
