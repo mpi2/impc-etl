@@ -712,7 +712,7 @@ def _parse_raw_data(open_stats_df):
     to_json_udf = udf(
         lambda row: json.dumps(
             [
-                {raw_data_cols[int(key)]: value for key, value in item.items()}
+                {raw_data_cols[int(key)]: value for key, value in item.asDict().items()}
                 for item in row
             ]
         ),
