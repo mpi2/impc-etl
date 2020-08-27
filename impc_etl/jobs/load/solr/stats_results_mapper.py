@@ -712,7 +712,8 @@ def _parse_raw_data(open_stats_df):
             "category",
         ),
     )
-    open_stats_df = open_stats_df.withColumn("raw_data", udf(lambda d: json.dumps(d)))
+    to_json_udf = udf(lambda d: json.dumps(d), StringType())
+    open_stats_df = open_stats_df.withColumn("raw_data", to_json_udf("raw_data_struct"))
     open_stats_df.select("raw_data").show(10, truncate=False)
     raise ValueError
     open_stats_df = open_stats_df.withColumn(
