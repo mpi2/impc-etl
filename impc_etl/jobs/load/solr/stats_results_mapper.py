@@ -642,25 +642,23 @@ def _compress_and_encode(json_text):
 
 def _parse_raw_data(open_stats_df):
     compress_and_encode = udf(_compress_and_encode, StringType())
-    open_stats_df = open_stats_df.withColumnRenamed(
-        "observations_biological_sample_group", "biological_sample_group"
+    open_stats_df = open_stats_df.withColumn(
+        "biological_sample_group", col("observations_biological_sample_group")
     )
-    open_stats_df = open_stats_df.withColumnRenamed(
-        "observations_date_of_experiment", "date_of_experiment"
+    open_stats_df = open_stats_df.withColumn(
+        "date_of_experiment", col("observations_date_of_experiment")
     )
-    open_stats_df = open_stats_df.withColumnRenamed(
-        "observations_external_sample_id", "external_sample_id"
+    open_stats_df = open_stats_df.withColumn(
+        "external_sample_id", col("observations_external_sample_id")
     )
-    open_stats_df = open_stats_df.withColumnRenamed("observations_sex", "specimen_sex")
-    open_stats_df = open_stats_df.withColumnRenamed(
-        "observations_body_weight", "body_weight"
+    open_stats_df = open_stats_df.withColumn("specimen_sex", col("observations_sex"))
+    open_stats_df = open_stats_df.withColumn(
+        "body_weight", col("observations_body_weight")
     )
-    open_stats_df = open_stats_df.withColumnRenamed(
-        "observations_data_points", "data_point"
+    open_stats_df = open_stats_df.withColumn(
+        "data_point", col("observations_data_points")
     )
-    open_stats_df = open_stats_df.withColumnRenamed(
-        "observations_categories", "category"
-    )
+    open_stats_df = open_stats_df.withColumn("category", col("observations_categories"))
     for col_name in [
         "biological_sample_group",
         "date_of_experiment",
@@ -704,20 +702,16 @@ def _parse_raw_data(open_stats_df):
     open_stats_df = open_stats_df.withColumn(
         "raw_data",
         arrays_zip(
-            open_stats_df.biological_sample_group,
-            open_stats_df.date_of_experiment,
-            open_stats_df.external_sample_id,
-            open_stats_df.specimen_sex,
-            open_stats_df.body_weight,
-            open_stats_df.data_point,
-            open_stats_df.category,
+            "biological_sample_group",
+            "date_of_experiment",
+            "external_sample_id",
+            "specimen_sex",
+            "body_weight",
+            "data_point",
+            "category",
         ),
     )
-
     open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
-    open_stats_df.printSchema()
-    open_stats_df.select("raw_data").show(10, truncate=False)
-    raise ValueError
     open_stats_df = open_stats_df.withColumn(
         "raw_data", compress_and_encode("raw_data")
     )
