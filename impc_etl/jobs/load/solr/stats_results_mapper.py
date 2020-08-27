@@ -626,6 +626,10 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "mpath_term_name", col("mpath_metadata_term_name")
     )
+    open_stats_df = open_stats_df.withColumn(
+        "metadata",
+        expr("transform(metadata, metadata_values -> concat_ws('|', metadata_values))"),
+    )
     if raw_data_in_output == "include":
         open_stats_df = _parse_raw_data(open_stats_df)
     output_columns = (
