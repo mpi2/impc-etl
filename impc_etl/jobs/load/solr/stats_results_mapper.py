@@ -33,7 +33,6 @@ from pyspark.sql.functions import (
     array_repeat,
     to_json,
 )
-import json
 from pyspark.sql.types import (
     StructType,
     StructField,
@@ -643,28 +642,11 @@ def _compress_and_encode(json_text):
 
 def _parse_raw_data(open_stats_df):
     compress_and_encode = udf(_compress_and_encode, StringType())
-    open_stats_df = open_stats_df.withColumn(
-        "biological_sample_group", col("observations_biological_sample_group")
-    )
-    open_stats_df = open_stats_df.withColumn(
-        "date_of_experiment", col("observations_date_of_experiment")
-    )
-    open_stats_df = open_stats_df.withColumn(
-        "external_sample_id", col("observations_external_sample_id")
-    )
-    open_stats_df = open_stats_df.withColumn("specimen_sex", col("observations_sex"))
-    open_stats_df = open_stats_df.withColumn(
-        "body_weight", col("observations_body_weight")
-    )
-    open_stats_df = open_stats_df.withColumn(
-        "data_point", col("observations_data_points")
-    )
-    open_stats_df = open_stats_df.withColumn("category", col("observations_categories"))
     for col_name in [
-        "biological_sample_group",
-        "date_of_experiment",
-        "external_sample_id",
-        "specimen_sex",
+        "observations_biological_sample_group",
+        "observations_date_of_experiment",
+        "observations_external_sample_id",
+        "observations_sex",
     ]:
         open_stats_df = open_stats_df.withColumn(
             col_name,
@@ -678,11 +660,13 @@ def _parse_raw_data(open_stats_df):
             ).otherwise(lit(None)),
         )
     open_stats_df = open_stats_df.withColumn(
-        "body_weight",
+        "observations_body_weight",
         when(
             (col("data_type").isin(["unidimensional", "time_series", "categorical"])),
-            from_json(col("body_weight"), ArrayType(DoubleType(), True)),
-        ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
+            from_json(col("observations_body_weight"), ArrayType(DoubleType(), True)),
+        ).otherwise(
+            expr("transform(observations_external_sample_id, sample_id -> NULL)")
+        ),
     )
     open_stats_df = open_stats_df.withColumn(
         "data_point",
@@ -690,7 +674,9 @@ def _parse_raw_data(open_stats_df):
             (col("data_type").isin(["unidimensional", "time_series"]))
             & (col("observations_response").isNotNull()),
             from_json(col("observations_response"), ArrayType(DoubleType(), True)),
-        ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
+        ).otherwise(
+            expr("transform(observations_external_sample_id, sample_id -> NULL)")
+        ),
     )
     open_stats_df = open_stats_df.withColumn(
         "category",
@@ -698,23 +684,24 @@ def _parse_raw_data(open_stats_df):
             (col("data_type") == "categorical")
             & (col("observations_response").isNotNull()),
             from_json(col("observations_response"), ArrayType(StringType(), True)),
-        ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
+        ).otherwise(
+            expr("transform(observations_external_sample_id, sample_id -> NULL)")
+        ),
     )
     open_stats_df = open_stats_df.withColumn(
-        "raw_data_struct",
+        "raw_data",
         arrays_zip(
-            "biological_sample_group",
-            "date_of_experiment",
-            "external_sample_id",
-            "specimen_sex",
-            "body_weight",
+            "observations_biological_sample_group",
+            "observations_date_of_experiment",
+            "observations_external_sample_id",
+            "observations_sex",
+            "observations_body_weight",
             "data_point",
             "category",
         ),
     )
-    to_json_udf = udf(lambda d: json.dumps(d), StringType())
-    open_stats_df = open_stats_df.withColumn("raw_data", to_json_udf("raw_data_struct"))
-    open_stats_df.select("raw_data").show(10, truncate=False)
+    open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
+    open_stats_df.select("raw_data").show(10)
     raise ValueError
     open_stats_df = open_stats_df.withColumn(
         "raw_data", compress_and_encode("raw_data")
