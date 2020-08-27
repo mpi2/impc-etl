@@ -704,13 +704,13 @@ def _parse_raw_data(open_stats_df):
     open_stats_df = open_stats_df.withColumn(
         "raw_data",
         arrays_zip(
-            col("biological_sample_group"),
-            col("date_of_experiment"),
-            col("external_sample_id"),
-            col("specimen_sex"),
-            col("body_weight"),
-            col("data_point"),
-            col("category"),
+            "biological_sample_group",
+            "date_of_experiment",
+            "external_sample_id",
+            "specimen_sex",
+            "body_weight",
+            "data_point",
+            "category",
         ),
     )
     open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
