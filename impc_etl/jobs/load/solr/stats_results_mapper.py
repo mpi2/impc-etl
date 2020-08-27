@@ -711,7 +711,8 @@ def _parse_raw_data(open_stats_df):
             "category",
         ),
     )
-    open_stats_df.select("raw_data.*").show(10)
+    test = open_stats_df.select("raw_data").limit(10).collect()
+    print(test)
     raise ValueError
     open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
     open_stats_df.select("raw_data").show(10, truncate=False)
