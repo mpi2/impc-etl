@@ -31,6 +31,7 @@ from pyspark.sql.functions import (
     md5,
     arrays_zip,
     array_repeat,
+    to_json,
 )
 from pyspark.sql.types import (
     StructType,
@@ -622,39 +623,34 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "mpath_term_name", col("mpath_metadata_term_name")
     )
-    concat_expression = ", ".join(
-        [
-            f"nvl({col_name}, '')"
-            for col_name in STATS_OBSERVATIONS_JOIN
-            if col_name != "procedure_name"
-        ]
-    )
-    concat_expression = (
-        "concat(" + concat_expression + ", nvl(concat_ws('', procedure_name), '')" + ")"
-    )
-    open_stats_df = open_stats_df.withColumn(
-        "stat_packet_id", md5(expr(concat_expression))
-    )
-    open_stats_df.select(
-        "stat_packet_id", *STATS_RESULTS_COLUMNS
-    ).distinct().write.parquet(output_path)
-
     if raw_data_in_output == "include":
-        evidence_df = _parse_raw_data(open_stats_df)
-        evidence_df.write.parquet(output_path + "evidence")
+        open_stats_df = _parse_raw_data(open_stats_df)
+    output_columns = (
+        STATS_RESULTS_COLUMNS
+        if raw_data_in_output == "exclude"
+        else STATS_RESULTS_COLUMNS + ["raw_data"]
+    )
+    open_stats_df.select(*output_columns).distinct().write.parquet(output_path)
+
+
+def _compress_and_encode(json_text):
+    if json_text is None:
+        return None
+    else:
+        return str(
+            base64.encodebytes(gzip.compress(bytes(json_text, "utf-8"))), "utf-8"
+        )
 
 
 def _parse_raw_data(open_stats_df):
-    evidence_df = open_stats_df.select(
-        ["stat_packet_id", "data_type"] + STATS_OBSERVATIONS_JOIN + RAW_DATA_COLUMNS
-    )
+    compress_and_encode = udf(_compress_and_encode, StringType())
     for col_name in [
         "observations_biological_sample_group",
         "observations_date_of_experiment",
         "observations_external_sample_id",
         "observations_sex",
     ]:
-        evidence_df = evidence_df.withColumn(
+        open_stats_df = open_stats_df.withColumn(
             col_name,
             when(
                 (
@@ -665,7 +661,7 @@ def _parse_raw_data(open_stats_df):
                 from_json(col(col_name), ArrayType(StringType(), True)),
             ).otherwise(lit(None)),
         )
-    evidence_df = evidence_df.withColumn(
+    open_stats_df = open_stats_df.withColumn(
         "observations_body_weight",
         when(
             (col("data_type").isin(["unidimensional", "time_series", "categorical"])),
@@ -674,7 +670,7 @@ def _parse_raw_data(open_stats_df):
             expr("transform(observations_external_sample_id, sample_id -> NULL)")
         ),
     )
-    evidence_df = evidence_df.withColumn(
+    open_stats_df = open_stats_df.withColumn(
         "observations_data_points",
         when(
             (col("data_type").isin(["unidimensional", "time_series"]))
@@ -684,7 +680,7 @@ def _parse_raw_data(open_stats_df):
             expr("transform(observations_external_sample_id, sample_id -> NULL)")
         ),
     )
-    evidence_df = evidence_df.withColumn(
+    open_stats_df = open_stats_df.withColumn(
         "observations_categories",
         when(
             (col("data_type") == "categorical")
@@ -694,22 +690,23 @@ def _parse_raw_data(open_stats_df):
             expr("transform(observations_external_sample_id, sample_id -> NULL)")
         ),
     )
-    evidence_df = evidence_df.withColumn(
-        "facts",
-        explode_outer(
-            arrays_zip(
-                "observations_biological_sample_group",
-                "observations_date_of_experiment",
-                "observations_external_sample_id",
-                "observations_sex",
-                "observations_categories",
-                "observations_data_points",
-                "observations_body_weight",
-            )
+    open_stats_df = open_stats_df.withColumn(
+        "raw_data",
+        arrays_zip(
+            "observations_biological_sample_group",
+            "observations_date_of_experiment",
+            "observations_external_sample_id",
+            "observations_sex",
+            "observations_categories",
+            "observations_data_points",
+            "observations_body_weight",
         ),
     )
-    evidence_df = evidence_df.select("stat_packet_id", "data_type", "facts.*")
-    return evidence_df
+    open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
+    open_stats_df = open_stats_df.withColumn(
+        "raw_data", compress_and_encode("raw_data")
+    )
+    return open_stats_df
 
 
 def map_ontology_prefix(open_stats_df, term_prefix, field_prefix):
