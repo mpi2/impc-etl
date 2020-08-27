@@ -700,7 +700,7 @@ def _parse_raw_data(open_stats_df):
         ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
     open_stats_df = open_stats_df.withColumn(
-        "raw_data",
+        "raw_data_struct",
         arrays_zip(
             "biological_sample_group",
             "date_of_experiment",
@@ -711,10 +711,7 @@ def _parse_raw_data(open_stats_df):
             "category",
         ),
     )
-    test = open_stats_df.select("raw_data").limit(10).collect()
-    print(test)
-    raise ValueError
-    open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
+    open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data_struct"))
     open_stats_df.select("raw_data").show(10, truncate=False)
     raise ValueError
     open_stats_df = open_stats_df.withColumn(
