@@ -655,6 +655,9 @@ def _parse_raw_data(open_stats_df):
         "observations_date_of_experiment", "date_of_experiment"
     )
     open_stats_df = open_stats_df.withColumnRenamed("observations_sex", "specimen_sex")
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_body_weight", "body_weight"
+    )
     for col_name in [
         "biological_sample_group",
         "date_of_experiment",
