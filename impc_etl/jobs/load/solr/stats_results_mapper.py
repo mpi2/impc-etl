@@ -1,5 +1,6 @@
 import base64
 import gzip
+import json
 from typing import Dict, List
 
 from pyspark.sql import DataFrame, SparkSession
@@ -644,11 +645,21 @@ def _compress_and_encode(json_text):
 
 def _parse_raw_data(open_stats_df):
     compress_and_encode = udf(_compress_and_encode, StringType())
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_biological_sample_group", "biological_sample_group"
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_external_sample_id", "external_sample_id"
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_date_of_experiment", "date_of_experiment"
+    )
+    open_stats_df = open_stats_df.withColumnRenamed("observations_sex", "specimen_sex")
     for col_name in [
-        "observations_biological_sample_group",
-        "observations_date_of_experiment",
-        "observations_external_sample_id",
-        "observations_sex",
+        "biological_sample_group",
+        "date_of_experiment",
+        "external_sample_id",
+        "specimen_sex",
     ]:
         open_stats_df = open_stats_df.withColumn(
             col_name,
@@ -662,47 +673,46 @@ def _parse_raw_data(open_stats_df):
             ).otherwise(lit(None)),
         )
     open_stats_df = open_stats_df.withColumn(
-        "observations_body_weight",
+        "body_weight",
         when(
             (col("data_type").isin(["unidimensional", "time_series", "categorical"])),
-            from_json(col("observations_body_weight"), ArrayType(DoubleType(), True)),
-        ).otherwise(
-            expr("transform(observations_external_sample_id, sample_id -> NULL)")
-        ),
+            from_json(col("body_weight"), ArrayType(DoubleType(), True)),
+        ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
     open_stats_df = open_stats_df.withColumn(
-        "observations_data_points",
+        "data_point",
         when(
             (col("data_type").isin(["unidimensional", "time_series"]))
             & (col("observations_response").isNotNull()),
             from_json(col("observations_response"), ArrayType(DoubleType(), True)),
-        ).otherwise(
-            expr("transform(observations_external_sample_id, sample_id -> NULL)")
-        ),
+        ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
     open_stats_df = open_stats_df.withColumn(
-        "observations_categories",
+        "category",
         when(
             (col("data_type") == "categorical")
             & (col("observations_response").isNotNull()),
             from_json(col("observations_response"), ArrayType(StringType(), True)),
-        ).otherwise(
-            expr("transform(observations_external_sample_id, sample_id -> NULL)")
-        ),
+        ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
-    open_stats_df = open_stats_df.withColumn(
-        "raw_data",
-        arrays_zip(
-            "observations_biological_sample_group",
-            "observations_date_of_experiment",
-            "observations_external_sample_id",
-            "observations_sex",
-            "observations_body_weight",
-            "observations_data_points",
-            "observations_categories",
+    raw_data_cols = [
+        "biological_sample_group",
+        "date_of_experiment",
+        "external_sample_id",
+        "specimen_sex",
+        "body_weight",
+        "data_point",
+        "category",
+    ]
+    open_stats_df = open_stats_df.withColumn("raw_data", arrays_zip(*raw_data_cols))
+
+    to_json_udf = udf(
+        lambda row: json.dumps(
+            {raw_data_cols[int(key)]: value for key, value in row.asDict().items()}
         ),
+        StringType(),
     )
-    open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
+    open_stats_df = open_stats_df.withColumn("raw_data", to_json_udf("raw_data"))
     open_stats_df.select("raw_data").show(10)
     raise ValueError
     open_stats_df = open_stats_df.withColumn(
