@@ -721,10 +721,6 @@ def _parse_raw_data(open_stats_df):
         StringType(),
     )
     open_stats_df = open_stats_df.withColumn("raw_data", to_json_udf("raw_data"))
-    open_stats_df.where(col("data_point").isNotNull()).select("raw_data").show(
-        10, truncate=False
-    )
-    raise ValueError
     open_stats_df = open_stats_df.withColumn(
         "raw_data", compress_and_encode("raw_data")
     )
