@@ -98,6 +98,7 @@ OBSERVATIONS_STATS_MAP = {
     "resource_fullname": "datasource_name",
     "life_stage_acc": "life_stage_acc",
     "experiment_sex": "sex",
+    "metadata": "metadata",
 }
 
 STATS_OBSERVATIONS_JOIN = [
@@ -197,6 +198,7 @@ STATS_RESULTS_COLUMNS = [
     "male_effect_size_low_vs_normal_high",
     "marker_accession_id",
     "marker_symbol",
+    "metadata",
     "metadata_group",
     "percentage_change",
     "no_data_control_count",
@@ -669,7 +671,7 @@ def _parse_raw_data(open_stats_df):
         ),
     )
     open_stats_df = open_stats_df.withColumn(
-        "data_point",
+        "observations_data_points",
         when(
             (col("data_type").isin(["unidimensional", "time_series"]))
             & (col("observations_response").isNotNull()),
@@ -679,7 +681,7 @@ def _parse_raw_data(open_stats_df):
         ),
     )
     open_stats_df = open_stats_df.withColumn(
-        "category",
+        "observations_categories",
         when(
             (col("data_type") == "categorical")
             & (col("observations_response").isNotNull()),
@@ -696,8 +698,8 @@ def _parse_raw_data(open_stats_df):
             "observations_external_sample_id",
             "observations_sex",
             "observations_body_weight",
-            "data_point",
-            "category",
+            "observations_data_points",
+            "observations_categories",
         ),
     )
     open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
