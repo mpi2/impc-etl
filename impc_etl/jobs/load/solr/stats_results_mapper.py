@@ -693,13 +693,15 @@ def _parse_raw_data(open_stats_df):
     open_stats_df = open_stats_df.withColumn(
         "raw_data",
         arrays_zip(
-            "observations_biological_sample_group",
-            "observations_date_of_experiment",
-            "observations_external_sample_id",
-            "observations_sex",
-            "observations_categories",
-            "observations_data_points",
-            "observations_body_weight",
+            col("observations_biological_sample_group").alias(
+                "biological_sample_group"
+            ),
+            col("observations_date_of_experiment").alias("ate_of_experiment"),
+            col("observations_external_sample_id").alias("external_sample_id"),
+            col("observations_sex").alias("sex"),
+            col("observations_categories").alias("categories"),
+            col("observations_data_points").alias("data_points"),
+            col("observations_body_weight").alias("body_weight"),
         ),
     )
     open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
