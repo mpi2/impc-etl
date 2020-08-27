@@ -637,18 +637,35 @@ def _compress_and_encode(json_text):
     if json_text is None:
         return None
     else:
-        return str(
-            base64.encodebytes(gzip.compress(bytes(json_text, "utf-8"))), "utf-8"
-        )
+        return str(base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))), "utf-8")
 
 
 def _parse_raw_data(open_stats_df):
     compress_and_encode = udf(_compress_and_encode, StringType())
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_biological_sample_group", "biological_sample_group"
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_date_of_experiment", "date_of_experiment"
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_external_sample_id", "external_sample_id"
+    )
+    open_stats_df = open_stats_df.withColumnRenamed("observations_sex", "specimen_sex")
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_body_weight", "body_weight"
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_data_points", "data_point"
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_categories", "category"
+    )
     for col_name in [
-        "observations_biological_sample_group",
-        "observations_date_of_experiment",
-        "observations_external_sample_id",
-        "observations_sex",
+        "biological_sample_group",
+        "date_of_experiment",
+        "external_sample_id",
+        "specimen_sex",
     ]:
         open_stats_df = open_stats_df.withColumn(
             col_name,
@@ -662,46 +679,38 @@ def _parse_raw_data(open_stats_df):
             ).otherwise(lit(None)),
         )
     open_stats_df = open_stats_df.withColumn(
-        "observations_body_weight",
+        "body_weight",
         when(
             (col("data_type").isin(["unidimensional", "time_series", "categorical"])),
-            from_json(col("observations_body_weight"), ArrayType(DoubleType(), True)),
-        ).otherwise(
-            expr("transform(observations_external_sample_id, sample_id -> NULL)")
-        ),
+            from_json(col("body_weight"), ArrayType(DoubleType(), True)),
+        ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
     open_stats_df = open_stats_df.withColumn(
-        "observations_data_points",
+        "data_point",
         when(
             (col("data_type").isin(["unidimensional", "time_series"]))
             & (col("observations_response").isNotNull()),
             from_json(col("observations_response"), ArrayType(DoubleType(), True)),
-        ).otherwise(
-            expr("transform(observations_external_sample_id, sample_id -> NULL)")
-        ),
+        ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
     open_stats_df = open_stats_df.withColumn(
-        "observations_categories",
+        "category",
         when(
             (col("data_type") == "categorical")
             & (col("observations_response").isNotNull()),
             from_json(col("observations_response"), ArrayType(StringType(), True)),
-        ).otherwise(
-            expr("transform(observations_external_sample_id, sample_id -> NULL)")
-        ),
+        ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
     open_stats_df = open_stats_df.withColumn(
         "raw_data",
         arrays_zip(
-            col("observations_biological_sample_group").alias(
-                "biological_sample_group"
-            ),
-            col("observations_date_of_experiment").alias("ate_of_experiment"),
-            col("observations_external_sample_id").alias("external_sample_id"),
-            col("observations_sex").alias("sex"),
-            col("observations_categories").alias("categories"),
-            col("observations_data_points").alias("data_points"),
-            col("observations_body_weight").alias("body_weight"),
+            col("biological_sample_group"),
+            col("date_of_experiment"),
+            col("external_sample_id"),
+            col("specimen_sex"),
+            col("body_weight"),
+            col("data_point"),
+            col("category"),
         ),
     )
     open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
