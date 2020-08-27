@@ -713,9 +713,11 @@ def _parse_raw_data(open_stats_df):
             open_stats_df.category,
         ),
     )
-    open_stats_df.printSchema()
-    raise ValueError
+
     open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
+    open_stats_df.printSchema()
+    open_stats_df.select("raw_data").show(10, truncate=False)
+    raise ValueError
     open_stats_df = open_stats_df.withColumn(
         "raw_data", compress_and_encode("raw_data")
     )
