@@ -356,7 +356,7 @@ def add_impress_info(
                 col("parameter_stable_id").isin(Constants.ZYG_NA_LINE_PARAMETERS),
                 lit("not_applicable"),
             )
-            .otherwise(lit("homozygous")),
+            .otherwise(lit("homozygote")),
         )
     return experiments_df
 

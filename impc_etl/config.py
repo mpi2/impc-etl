@@ -516,10 +516,20 @@ class Constants:
         "IMPC_FER_010_001",
         "IMPC_FER_012_001",
         "IMPC_FER_013_001",
-        "IMPC_VIA_062_001",
+        "IMPC_VIA_026_001",
+        "IMPC_VIA_036_001",
+        "IMPC_VIA_038_001",
+        "IMPC_VIA_039_001",
+        "IMPC_VIA_042_001",
+        "IMPC_VIA_044_001",
+        "IMPC_VIA_046_001",
+        "IMPC_VIA_048_001",
         "IMPC_VIA_050_001",
-        "IMPC_VIA_054_001",
         "IMPC_VIA_052_001",
+        "IMPC_VIA_054_001",
+        "IMPC_VIA_056_001",
+        "IMPC_VIA_062_001",
+        "IMPC_VIA_064_001",
     ]
 
     MALE_LINE_PARAMETERS = [
@@ -528,27 +538,43 @@ class Constants:
         "IMPC_FER_006_001",
         "IMPC_FER_008_001",
         "IMPC_FER_009_001",
+        "IMPC_VIA_035_001",
+        "IMPC_VIA_037_001",
+        "IMPC_VIA_041_001",
+        "IMPC_VIA_043_001",
+        "IMPC_VIA_045_001",
+        "IMPC_VIA_047_001",
         "IMPC_VIA_061_001",
         "IMPC_VIA_049_001",
-        "IMPC_VIA_053_001",
         "IMPC_VIA_051_001",
+        "IMPC_VIA_053_001",
+        "IMPC_VIA_055_001",
+        "IMPC_VIA_061_001",
+        "IMPC_VIA_063_001",
+        "IMPC_VIA_065_001",
     ]
 
     HET_LINE_PARAMETERS = [
-        "IMPC_VIA_059_001",
+        "IMPC_VIA_043_001",
+        "IMPC_VIA_044_001",
         "IMPC_VIA_051_001",
         "IMPC_VIA_052_001",
+        "IMPC_VIA_059_001",
         "IMPC_VIA_066_001",
     ]
 
     HOM_LINE_PARAMETERS = [
-        "IMPC_VIA_054_001",
+        "IMPC_VIA_045_001",
+        "IMPC_VIA_046_001",
         "IMPC_VIA_053_001",
+        "IMPC_VIA_054_001",
         "IMPC_VIA_060_001",
+        "IMPC_VIA_063_001",
+        "IMPC_VIA_064_001",
         "IMPC_VIA_067_001",
     ]
 
-    HEM_LINE_PARAMETERS = ["IMPC_VIA_065_001"]
+    HEM_LINE_PARAMETERS = ["IMPC_VIA_047_001", "IMPC_VIA_055_001", "IMPC_VIA_065_001"]
 
     ZYG_NA_LINE_PARAMETERS = [
         "IMPC_VIA_057_001",
