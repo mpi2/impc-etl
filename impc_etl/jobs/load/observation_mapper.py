@@ -345,21 +345,18 @@ def add_impress_info(
         experiments_df = experiments_df.withColumn(
             "zygosity",
             when(
-                col("zygosity").isNull(),
-                when(
-                    col("parameter_stable_id").isin(Constants.HET_LINE_PARAMETERS),
-                    lit("heterozygote"),
-                )
-                .when(
-                    col("parameter_stable_id").isin(Constants.HEM_LINE_PARAMETERS),
-                    lit("hemizygote"),
-                )
-                .when(
-                    col("parameter_stable_id").isin(Constants.ZYG_NA_LINE_PARAMETERS),
-                    lit("not_applicable"),
-                )
-                .otherwise(lit("homozygous")),
-            ).otherwise(col("zygosity")),
+                col("parameter_stable_id").isin(Constants.HET_LINE_PARAMETERS),
+                lit("heterozygote"),
+            )
+            .when(
+                col("parameter_stable_id").isin(Constants.HEM_LINE_PARAMETERS),
+                lit("hemizygote"),
+            )
+            .when(
+                col("parameter_stable_id").isin(Constants.ZYG_NA_LINE_PARAMETERS),
+                lit("not_applicable"),
+            )
+            .otherwise(lit("homozygous")),
         )
     return experiments_df
 
