@@ -1040,6 +1040,9 @@ def map_experiments_to_observations(
     line_time_series_observation_df = resolve_time_series_value(
         line_time_series_observation_df
     )
+    line_time_series_observation_df = line_time_series_observation_df.withColumn(
+        "specimen_id", lit(None)
+    )
     line_time_series_observation_df = unify_schema(
         line_time_series_observation_df
     ).select(Constants.OBSERVATION_COLUMNS)
