@@ -91,7 +91,6 @@ def map_line_columns(line_df: DataFrame):
         else:
             line_df = line_df.withColumn(field, lit(None))
     line_df = line_df.withColumn("biological_sample_group", lit("experimental"))
-    line_df = line_df.withColumn("zygosity", lit("homozygote"))
     line_df = line_df.withColumn(
         "datasource_name",
         when(col("_dataSource") == "impc", lit("IMPC")).otherwise(
@@ -342,6 +341,25 @@ def add_impress_info(
                 )
                 .otherwise(lit("both")),
             ).otherwise(col("sex")),
+        ):
+        experiments_df = experiments_df.withColumn(
+            "zygosity",
+            when(
+                col("zygosity").isNull(),
+                when(
+                    col("parameter_stable_id").isin(Constants.HET_LINE_PARAMETERS),
+                    lit("heterozygote"),
+                )
+                .when(
+                    col("parameter_stable_id").isin(Constants.HEM_LINE_PARAMETERS),
+                    lit("hemizygote"),
+                )
+                .when(
+                    col("parameter_stable_id").isin(Constants.ZYG_NA_LINE_PARAMETERS),
+                    lit("not_applicable"),
+                )
+                .otherwise(lit("homozygous")),
+            ).otherwise(col("zygosity")),
         )
     return experiments_df
 
@@ -1017,6 +1035,19 @@ def map_experiments_to_observations(
     time_series_observation_df = resolve_time_series_value(time_series_observation_df)
     time_series_observation_df = unify_schema(time_series_observation_df).select(
         Constants.OBSERVATION_COLUMNS
+    )
+
+    line_time_series_observation_df = process_parameter_values(
+        line_observation_df, pipeline_df, "seriesParameter", exp_type="line"
+    )
+    line_time_series_observation_df = resolve_time_series_value(
+        line_time_series_observation_df
+    )
+    line_time_series_observation_df = unify_schema(
+        line_time_series_observation_df
+    ).select(Constants.OBSERVATION_COLUMNS)
+    time_series_observation_df = time_series_observation_df.union(
+        line_time_series_observation_df
     )
 
     image_record_observation_df = process_parameter_values(
