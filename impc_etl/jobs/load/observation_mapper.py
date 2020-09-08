@@ -566,13 +566,13 @@ def resolve_time_series_value(time_series_observation_df: DataFrame):
             col("time_point").isNull(), col("seriesParameterValue._incrementValue")
         ).otherwise((col("measured_at") - col("lights_out")) / 3600),
     )
-
-    time_series_observation_df = time_series_observation_df.withColumn(
-        "time_point",
-        when(col("time_point").isNull(), col("_dateOfExperiment")).otherwise(
-            col("time_point")
-        ),
-    )
+    if has_column(time_series_observation_df, "_dateOfExperiment"):
+        time_series_observation_df = time_series_observation_df.withColumn(
+            "time_point",
+            when(col("time_point").isNull(), col("_dateOfExperiment")).otherwise(
+                col("time_point")
+            ),
+        )
     time_series_observation_df = time_series_observation_df.withColumn(
         "observation_type", lit("time_series")
     )
