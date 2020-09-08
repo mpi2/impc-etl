@@ -341,7 +341,7 @@ def add_impress_info(
                 )
                 .otherwise(lit("both")),
             ).otherwise(col("sex")),
-        ):
+        )
         experiments_df = experiments_df.withColumn(
             "zygosity",
             when(
