@@ -353,6 +353,10 @@ def add_impress_info(
                 lit("hemizygote"),
             )
             .when(
+                col("parameter_stable_id").isin(Constants.ANZ_LINE_PARAMETERS),
+                lit("anzygote"),
+            )
+            .when(
                 col("parameter_stable_id").isin(Constants.ZYG_NA_LINE_PARAMETERS),
                 lit("not_applicable"),
             )
