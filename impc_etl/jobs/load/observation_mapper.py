@@ -81,6 +81,7 @@ def main(argv):
     observations_df = observations_df.where(
         col("strain_name").isNotNull() | (col("biological_sample_group") == "control")
     )
+    observations_df = observations_df.where(~col("text_value").like('%outcome": null%'))
     observations_df.write.mode("overwrite").parquet(output_path)
 
 
@@ -865,6 +866,12 @@ def get_body_weight_curve_observations(unidimensional_observations_df: DataFrame
             body_weight_curve_df = bwt_observations
         else:
             body_weight_curve_df = body_weight_curve_df.union(bwt_observations)
+        body_weight_curve_df = body_weight_curve_df.withColumn(
+            "life_stage_name", lit("Early adult")
+        )
+        body_weight_curve_df = body_weight_curve_df.withColumn(
+            "life_stage_acc", lit("IMPCLS:0005")
+        )
     return body_weight_curve_df.drop_duplicates()
 
 

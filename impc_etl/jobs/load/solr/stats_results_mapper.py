@@ -630,6 +630,7 @@ def main(argv):
         "metadata",
         expr("transform(metadata, metadata_values -> concat_ws('|', metadata_values))"),
     )
+    open_stats_df = _raw_data_for_time_series(open_stats_df, observations_df)
     if raw_data_in_output == "include":
         open_stats_df = _parse_raw_data(open_stats_df)
     output_columns = (
@@ -764,8 +765,10 @@ def map_to_stats(
             metadata_df = metadata_df.withColumnRenamed(
                 col_name, f"{source_name}_{col_name}"
             )
-
-    open_stats_df = open_stats_df.join(metadata_df, join_columns, "left_outer")
+    if source_name == "observations":
+        open_stats_df = open_stats_df.join(metadata_df, join_columns)
+    else:
+        open_stats_df = open_stats_df.join(metadata_df, join_columns, "left_outer")
     for column_name, source_column in source_stats_map.items():
         open_stats_df = open_stats_df.withColumn(
             column_name, col(f"{source_name}_{source_column}")
@@ -1361,12 +1364,6 @@ def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
     viability_stats_results = viability_stats_results.withColumn(
         "statistical_method", lit("Supplied as data")
     )
-    viability_stats_results = viability_stats_results.withColumn(
-        "zygosity",
-        when(col("parameter_name").contains("Hemizygous"), lit("hemizygote")).otherwise(
-            lit("homozygote")
-        ),
-    )
 
     viability_stats_results = viability_stats_results.withColumn(
         "status", lit("Successful")
@@ -1644,6 +1641,76 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
         "data_type", lit("adult-gross-path")
     )
     return gross_pathology_stats_results
+
+
+def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFrame):
+    observations_df = observations_df.withColumnRenamed("sex", "specimen_sex")
+    open_stats_df = open_stats_df.withColumn(
+        "raw_data",
+        when(col("data_type") == "time_series", lit(None)).otherwise(col("raw_data")),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "status",
+        when(col("data_type") == "time_series", lit("NotProcessed")).otherwise(
+            col("status")
+        ),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "significant",
+        when(col("data_type") == "time_series", lit(False)).otherwise(
+            col("significant")
+        ),
+    )
+    population_join_columns = [
+        "procedure_group",
+        "procedure_stable_id",
+        "procedure_name",
+        "parameter_stable_id",
+        "phenotyping_center",
+        "pipeline_stable_id",
+        "metadata_group",
+    ]
+
+    experimental_population_join_columns = [
+        "zygosity",
+        "colony_id",
+        "strain_accession_id",
+    ]
+
+    raw_data_columns = [
+        "strain_accession_id",
+        "biological_sample_group",
+        "data_of_experiment",
+        "external_sample_id",
+        "specimen_sex",
+        "body_weight",
+        "data_point",
+        "category",
+        "time_point",
+        "discrete_point",
+    ]
+
+    observations_df = observations_df.select(
+        population_join_columns
+        + experimental_population_join_columns
+        + raw_data_columns
+    )
+
+    join_expr = [col(col_name) for col_name in population_join_columns]
+
+    for col_name in experimental_population_join_columns:
+        join_expr.append(
+            when(col("biological_sample_group") == "control", lit(True)).otherwise(
+                col(col_name)
+            )
+        )
+
+    open_stats_df = open_stats_df.join(observations_df, join_expr)
+    open_stats_df.where(col("data_type") == "time_series").show(
+        truncate=False, vertical=True
+    )
+    raise ValueError
+    return open_stats_df
 
 
 def stop_and_count(df):
