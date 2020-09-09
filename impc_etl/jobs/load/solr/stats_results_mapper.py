@@ -1665,6 +1665,7 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
     )
     population_join_columns = [
         "procedure_group",
+        "procedure_stable_id",
         "procedure_name",
         "parameter_stable_id",
         "phenotyping_center",
@@ -1697,10 +1698,13 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         + raw_data_columns
     )
 
-    join_expr = [
-        open_stats_df[col_name] == observations_df[col_name]
-        for col_name in population_join_columns
-    ]
+    join_expr = []
+    for col_name in population_join_columns:
+        if "procedure" not in col_name:
+            col_expr = open_stats_df[col_name] == observations_df[col_name]
+        else:
+            col_expr = open_stats_df[col_name] == array(observations_df[col_name])
+        join_expr.append(col_expr)
 
     for col_name in experimental_population_join_columns:
         join_expr.append(
