@@ -1699,7 +1699,7 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         .groupBy(population_join_columns)
         .agg(collect_set(struct(*raw_data_columns)))
     )
-    control_observations_df.show(truncate=False, vertical=True)
+    control_observations_df.show(vertical=True)
     raise ValueError
     return open_stats_df
 
