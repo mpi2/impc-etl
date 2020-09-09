@@ -1665,7 +1665,6 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
     )
     population_join_columns = [
         "procedure_group",
-        "procedure_stable_id",
         "procedure_name",
         "parameter_stable_id",
         "phenotyping_center",
