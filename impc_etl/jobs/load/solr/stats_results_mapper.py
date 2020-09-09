@@ -1699,7 +1699,17 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         .groupBy(population_join_columns)
         .agg(collect_set(struct(*raw_data_columns)).alias("control_data"))
     )
-    control_observations_df.show(vertical=True)
+    experimental_observations_df = (
+        observations_df.where(col("biological_sample_group") == "experimental")
+        .groupBy(population_join_columns + experimental_population_join_columns)
+        .agg(collect_set(struct(*raw_data_columns)).alias("experimental_data"))
+    )
+    open_stats_df = open_stats_df.join(control_observations_df, population_join_columns)
+    open_stats_df = open_stats_df.join(
+        experimental_observations_df,
+        population_join_columns + experimental_population_join_columns,
+    )
+    open_stats_df.show(vertical=True)
     raise ValueError
     return open_stats_df
 
