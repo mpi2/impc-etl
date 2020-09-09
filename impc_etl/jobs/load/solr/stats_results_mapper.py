@@ -630,7 +630,6 @@ def main(argv):
         "metadata",
         expr("transform(metadata, metadata_values -> concat_ws('|', metadata_values))"),
     )
-    open_stats_df = _raw_data_for_time_series(open_stats_df, observations_df)
     if raw_data_in_output == "include":
         open_stats_df = _parse_raw_data(open_stats_df)
     output_columns = (
@@ -638,6 +637,7 @@ def main(argv):
         if raw_data_in_output == "exclude"
         else STATS_RESULTS_COLUMNS + ["raw_data"]
     )
+    open_stats_df = _raw_data_for_time_series(open_stats_df, observations_df)
     open_stats_df.select(*output_columns).distinct().write.parquet(output_path)
 
 
