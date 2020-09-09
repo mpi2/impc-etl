@@ -1647,6 +1647,9 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
 def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFrame):
     observations_df = observations_df.withColumnRenamed("sex", "specimen_sex")
     observations_df = observations_df.withColumnRenamed("weight", "body_weight")
+    observations_df = observations_df.alias("obs")
+    open_stats_df = open_stats_df.alias("stats")
+
     observations_df = observations_df.where(col("observation_type") == "time_series")
     open_stats_df = open_stats_df.withColumn(
         "raw_data",
@@ -1715,9 +1718,7 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         if "procedure" in col_name
     ]
     time_series_raw_data = open_stats_df.join(control_observations_df, pop_join_exp)
-    time_series_raw_data = time_series_raw_data.select(
-        open_stats_df.columns + ["control_data"]
-    )
+    time_series_raw_data = time_series_raw_data.select("stats.*", "control_data")
     pop_join_exp = [
         time_series_raw_data[col_name] == experimental_observations_df[col_name]
         for col_name in population_join_columns
