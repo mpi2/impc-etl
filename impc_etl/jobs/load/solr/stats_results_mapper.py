@@ -33,6 +33,8 @@ from pyspark.sql.functions import (
     arrays_zip,
     array_repeat,
     to_json,
+    coalesce,
+    concat,
 )
 from pyspark.sql.types import (
     StructType,
@@ -1651,6 +1653,7 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
     open_stats_df = open_stats_df.alias("stats")
 
     observations_df = observations_df.where(col("observation_type") == "time_series")
+    open_stats_df = open_stats_df.where(col("data_type") == "time_series")
     open_stats_df = open_stats_df.withColumn(
         "raw_data",
         when(col("data_type") == "time_series", lit(None)).otherwise(col("raw_data")),
@@ -1736,7 +1739,16 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
     time_series_raw_data = time_series_raw_data.join(
         experimental_observations_df, pop_join_exp
     )
-    time_series_raw_data.show(1, vertical=True)
+    time_series_raw_data = time_series_raw_data.withColumn(
+        "control_data", coalesce("control_data", array())
+    )
+    time_series_raw_data = time_series_raw_data.withColumn(
+        "experimental_data", coalesce("experimental_data", array())
+    )
+    time_series_raw_data = time_series_raw_data.withColumn(
+        "raw_data", concat("control_data", "experimental_dara")
+    )
+    time_series_raw_data.show(1, vertical=True, truncate=False)
     raise ValueError
     return open_stats_df
 
