@@ -1714,24 +1714,28 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         for col_name in population_join_columns
         if "procedure" in col_name
     ]
-    open_stats_df = open_stats_df.join(control_observations_df, pop_join_exp)
-    open_stats_df = open_stats_df.select(open_stats_df.columns + ["control_data"])
+    time_series_raw_data = open_stats_df.join(control_observations_df, pop_join_exp)
+    time_series_raw_data = time_series_raw_data.select(
+        open_stats_df.columns + ["control_data"]
+    )
     pop_join_exp = [
-        open_stats_df[col_name] == experimental_observations_df[col_name]
+        time_series_raw_data[col_name] == experimental_observations_df[col_name]
         for col_name in population_join_columns
         if "procedure" not in col_name
     ]
     pop_join_exp += [
-        open_stats_df[col_name] == array(experimental_observations_df[col_name])
+        time_series_raw_data[col_name] == array(experimental_observations_df[col_name])
         for col_name in population_join_columns
         if "procedure" in col_name
     ]
     pop_join_exp += [
-        open_stats_df[col_name] == experimental_observations_df[col_name]
+        time_series_raw_data[col_name] == experimental_observations_df[col_name]
         for col_name in experimental_population_join_columns
     ]
-    open_stats_df = open_stats_df.join(experimental_observations_df, pop_join_exp)
-    open_stats_df.show(1, vertical=True)
+    time_series_raw_data = time_series_raw_data.join(
+        experimental_observations_df, pop_join_exp
+    )
+    time_series_raw_data.show(1, vertical=True)
     raise ValueError
     return open_stats_df
 
