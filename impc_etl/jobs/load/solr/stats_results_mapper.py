@@ -1705,17 +1705,20 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         .agg(collect_set(struct(*raw_data_columns)).alias("experimental_data"))
     )
     pop_join_exp = [
-        col(col_name)
+        open_stats_df[col_name] == observations_df[col_name]
         for col_name in population_join_columns
         if "procedure" not in col_name
     ]
     pop_join_exp += [
-        array(col_name)
+        open_stats_df[col_name] == array(observations_df[col_name])
         for col_name in population_join_columns
         if "procedure" in col_name
     ]
     open_stats_df = open_stats_df.join(control_observations_df, pop_join_exp)
-    pop_join_exp += [col(col_name) for col_name in experimental_population_join_columns]
+    pop_join_exp += [
+        open_stats_df[col_name] == observations_df[col_name]
+        for col_name in experimental_population_join_columns
+    ]
     open_stats_df = open_stats_df.join(experimental_observations_df, pop_join_exp)
     open_stats_df.show(vertical=True)
     raise ValueError
