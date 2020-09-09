@@ -1740,7 +1740,7 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         experimental_observations_df, pop_join_exp
     )
     time_series_raw_data = time_series_raw_data.withColumn(
-        "raw_data", concat("control_data", "experimental_dara")
+        "raw_data", concat("control_data", "experimental_data")
     )
     time_series_raw_data.show(1, vertical=True, truncate=False)
     raise ValueError
