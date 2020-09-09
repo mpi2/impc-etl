@@ -1697,7 +1697,7 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
     control_observations_df = (
         observations_df.where(col("biological_sample_group") == "control")
         .groupBy(population_join_columns)
-        .agg(collect_set(struct(*raw_data_columns)))
+        .agg(collect_set(struct(*raw_data_columns)).alias("control_data"))
     )
     control_observations_df.show(vertical=True)
     raise ValueError
