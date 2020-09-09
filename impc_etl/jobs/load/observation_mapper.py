@@ -81,7 +81,9 @@ def main(argv):
     observations_df = observations_df.where(
         col("strain_name").isNotNull() | (col("biological_sample_group") == "control")
     )
-    observations_df = observations_df.where(~col("text_value").like('%outcome": null%'))
+    observations_df = observations_df.where(
+        (~col("text_value").like('%outcome": null%')) | col("text_value").isNull()
+    )
     observations_df.write.mode("overwrite").parquet(output_path)
 
 
