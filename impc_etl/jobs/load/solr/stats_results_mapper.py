@@ -1730,7 +1730,7 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         for col_name in experimental_population_join_columns
     ]
     open_stats_df = open_stats_df.join(experimental_observations_df, pop_join_exp)
-    open_stats_df.show(vertical=True)
+    open_stats_df.show(1, vertical=True)
     raise ValueError
     return open_stats_df
 
