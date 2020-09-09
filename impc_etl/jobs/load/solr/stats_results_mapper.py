@@ -1740,12 +1740,6 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         experimental_observations_df, pop_join_exp
     )
     time_series_raw_data = time_series_raw_data.withColumn(
-        "control_data", coalesce("control_data", array())
-    )
-    time_series_raw_data = time_series_raw_data.withColumn(
-        "experimental_data", coalesce("experimental_data", array())
-    )
-    time_series_raw_data = time_series_raw_data.withColumn(
         "raw_data", concat("control_data", "experimental_dara")
     )
     time_series_raw_data.show(1, vertical=True, truncate=False)
