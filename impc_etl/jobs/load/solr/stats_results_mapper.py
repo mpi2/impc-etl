@@ -1698,12 +1698,15 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         + raw_data_columns
     )
 
-    join_expr = [col(col_name) == col(col_name) for col_name in population_join_columns]
+    join_expr = [
+        open_stats_df[col_name] == observations_df[col_name]
+        for col_name in population_join_columns
+    ]
 
     for col_name in experimental_population_join_columns:
         join_expr.append(
             when(col("biological_sample_group") == "control", lit(True)).otherwise(
-                col(col_name)
+                open_stats_df[col_name] == observations_df[col_name]
             )
         )
 
