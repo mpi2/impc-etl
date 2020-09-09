@@ -1746,8 +1746,9 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
     time_series_raw_data = time_series_raw_data.withColumn(
         "raw_data", to_json("raw_data")
     )
+    compress_and_encode = udf(_compress_and_encode, StringType())
     time_series_raw_data = time_series_raw_data.withColumn(
-        "raw_data", _compress_and_encode("raw_data")
+        "raw_data", compress_and_encode("raw_data")
     )
     time_series_raw_data.show(1, vertical=True, truncate=False)
     raise ValueError
