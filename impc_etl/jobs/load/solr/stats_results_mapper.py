@@ -1645,6 +1645,7 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
 
 def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFrame):
     observations_df = observations_df.withColumnRenamed("sex", "specimen_sex")
+    observations_df = observations_df.withColumnRenamed("weight", "body_weight")
     open_stats_df = open_stats_df.withColumn(
         "raw_data",
         when(col("data_type") == "time_series", lit(None)).otherwise(col("raw_data")),
