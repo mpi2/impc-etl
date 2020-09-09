@@ -1647,6 +1647,7 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
 def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFrame):
     observations_df = observations_df.withColumnRenamed("sex", "specimen_sex")
     observations_df = observations_df.withColumnRenamed("weight", "body_weight")
+    observations_df = observations_df.where(col("observation_type") == "time_series")
     open_stats_df = open_stats_df.withColumn(
         "raw_data",
         when(col("data_type") == "time_series", lit(None)).otherwise(col("raw_data")),
@@ -1670,16 +1671,12 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         "phenotyping_center",
         "pipeline_stable_id",
         "metadata_group",
-    ]
-
-    experimental_population_join_columns = [
-        "zygosity",
-        "colony_id",
         "strain_accession_id",
     ]
+
+    experimental_population_join_columns = ["zygosity", "colony_id"]
 
     raw_data_columns = [
-        "strain_accession_id",
         "biological_sample_group",
         "date_of_experiment",
         "external_sample_id",
@@ -1697,25 +1694,12 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         + raw_data_columns
     )
 
-    join_expr = []
-    for col_name in population_join_columns:
-        if "procedure" not in col_name:
-            col_expr = open_stats_df[col_name] == observations_df[col_name]
-        else:
-            col_expr = open_stats_df[col_name] == array(observations_df[col_name])
-        join_expr.append(col_expr)
-
-    for col_name in experimental_population_join_columns:
-        join_expr.append(
-            when(col("biological_sample_group") == "control", lit(True)).otherwise(
-                open_stats_df[col_name] == observations_df[col_name]
-            )
-        )
-
-    open_stats_df = open_stats_df.join(observations_df, join_expr)
-    open_stats_df.where(col("data_type") == "time_series").show(
-        truncate=False, vertical=True
+    control_observations_df = (
+        observations_df.where(col("biological_sample_group") == "control")
+        .groupBy(population_join_columns)
+        .agg(collect_set(struct(*raw_data_columns)))
     )
+    control_observations_df.show(truncate=False, vertical=True)
     raise ValueError
     return open_stats_df
 
