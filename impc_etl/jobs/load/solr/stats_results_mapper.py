@@ -1647,7 +1647,6 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
 def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFrame):
     observations_df = observations_df.withColumnRenamed("sex", "specimen_sex")
     observations_df = observations_df.withColumnRenamed("weight", "body_weight")
-    open_stats_df = open_stats_df.drop("stats.procedure_group")
     open_stats_df = open_stats_df.withColumn(
         "raw_data",
         when(col("data_type") == "time_series", lit(None)).otherwise(col("raw_data")),
@@ -1699,7 +1698,7 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         + raw_data_columns
     )
 
-    join_expr = [col(col_name) for col_name in population_join_columns]
+    join_expr = [col(col_name) == col(col_name) for col_name in population_join_columns]
 
     for col_name in experimental_population_join_columns:
         join_expr.append(
