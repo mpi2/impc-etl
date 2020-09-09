@@ -862,16 +862,17 @@ def get_body_weight_curve_observations(unidimensional_observations_df: DataFrame
         bwt_observations = bwt_observations.withColumn(
             "time_point", col("date_of_experiment")
         )
+        bwt_observations = bwt_observations.withColumn(
+            "life_stage_name", lit("Early adult")
+        )
+        bwt_observations = bwt_observations.withColumn(
+            "life_stage_acc", lit("IMPCLS:0005")
+        )
         if body_weight_curve_df is None:
             body_weight_curve_df = bwt_observations
         else:
             body_weight_curve_df = body_weight_curve_df.union(bwt_observations)
-        body_weight_curve_df = body_weight_curve_df.withColumn(
-            "life_stage_name", lit("Early adult")
-        )
-        body_weight_curve_df = body_weight_curve_df.withColumn(
-            "life_stage_acc", lit("IMPCLS:0005")
-        )
+
     return body_weight_curve_df.drop_duplicates()
 
 
