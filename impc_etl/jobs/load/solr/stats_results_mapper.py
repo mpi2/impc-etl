@@ -637,8 +637,9 @@ def main(argv):
         if raw_data_in_output == "exclude"
         else STATS_RESULTS_COLUMNS + ["raw_data"]
     )
+    open_stats_df = open_stats_df.select(*output_columns)
     open_stats_df = _raw_data_for_time_series(open_stats_df, observations_df)
-    open_stats_df.select(*output_columns).distinct().write.parquet(output_path)
+    open_stats_df.distinct().write.parquet(output_path)
 
 
 def _compress_and_encode(json_text):
