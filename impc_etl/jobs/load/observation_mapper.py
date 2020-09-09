@@ -813,12 +813,6 @@ def process_parameter_values(
 
 def get_body_weight_curve_observations(unidimensional_observations_df: DataFrame):
     body_weight_curve_df = None
-    unidimensional_observations_df = unidimensional_observations_df.withColumn(
-        "life_stage_name", lit("Early adult")
-    )
-    unidimensional_observations_df = unidimensional_observations_df.withColumn(
-        "life_stage_acc", lit("IMPCLS:0005")
-    )
     for (
         parameter_stable_id,
         parameter_data,
@@ -872,7 +866,6 @@ def get_body_weight_curve_observations(unidimensional_observations_df: DataFrame
             body_weight_curve_df = bwt_observations
         else:
             body_weight_curve_df = body_weight_curve_df.union(bwt_observations)
-
     return body_weight_curve_df.drop_duplicates()
 
 
