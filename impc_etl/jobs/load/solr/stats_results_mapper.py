@@ -1680,7 +1680,7 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
     raw_data_columns = [
         "strain_accession_id",
         "biological_sample_group",
-        "data_of_experiment",
+        "date_of_experiment",
         "external_sample_id",
         "specimen_sex",
         "body_weight",
