@@ -634,6 +634,24 @@ def main(argv):
     )
     if raw_data_in_output == "include":
         open_stats_df = _parse_raw_data(open_stats_df)
+        open_stats_df = open_stats_df.withColumn(
+            "raw_data",
+            when(col("data_type") == "time_series", lit(None)).otherwise(
+                col("raw_data")
+            ),
+        )
+        open_stats_df = open_stats_df.withColumn(
+            "status",
+            when(col("data_type") == "time_series", lit("NotProcessed")).otherwise(
+                col("status")
+            ),
+        )
+        open_stats_df = open_stats_df.withColumn(
+            "significant",
+            when(col("data_type") == "time_series", lit(False)).otherwise(
+                col("significant")
+            ),
+        )
         time_series_raw_data = _raw_data_for_time_series(open_stats_df, observations_df)
         open_stats_df = open_stats_df.join(time_series_raw_data, "doc_id", "left_outer")
         open_stats_df = open_stats_df.withColumn(
@@ -1661,22 +1679,6 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
 
     observations_df = observations_df.where(col("observation_type") == "time_series")
     open_stats_df = open_stats_df.where(col("data_type") == "time_series")
-    open_stats_df = open_stats_df.withColumn(
-        "raw_data",
-        when(col("data_type") == "time_series", lit(None)).otherwise(col("raw_data")),
-    )
-    open_stats_df = open_stats_df.withColumn(
-        "status",
-        when(col("data_type") == "time_series", lit("NotProcessed")).otherwise(
-            col("status")
-        ),
-    )
-    open_stats_df = open_stats_df.withColumn(
-        "significant",
-        when(col("data_type") == "time_series", lit(False)).otherwise(
-            col("significant")
-        ),
-    )
     population_join_columns = [
         "procedure_stable_id",
         "procedure_name",
@@ -1747,7 +1749,13 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         experimental_observations_df, pop_join_exp
     )
     time_series_raw_data = time_series_raw_data.withColumn(
-        "time_series_raw_data", concat("control_data", "experimental_data")
+        "time_series_raw_data",
+        when(
+            col("control_data").isNotNull() & col("experimental_data").isNotNull(),
+            concat("control_data", "experimental_data"),
+        )
+        .when(col("experimental_data").isNotNull(), col("experimental_data"))
+        .otherwise(col("control_data")),
     )
     time_series_raw_data = time_series_raw_data.select("doc_id", "time_series_raw_data")
     time_series_raw_data = time_series_raw_data.withColumn(
