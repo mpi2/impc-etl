@@ -1759,15 +1759,11 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         ).otherwise(col("time_series_raw_data")),
     )
     time_series_raw_data = time_series_raw_data.select("doc_id", "time_series_raw_data")
-    to_json_udf = udf(
-        lambda row: None
-        if row is None
-        else json.dumps([item.asDict() for item in row]),
-        StringType(),
-    )
     time_series_raw_data = time_series_raw_data.withColumn(
-        "time_series_raw_data", to_json_udf("time_series_raw_data")
+        "time_series_raw_data", to_json("time_series_raw_data")
     )
+    print(time_series_raw_data.where(col("time_series_raw_data").isNull()).count())
+    raise ValueError
     compress_and_encode = udf(_compress_and_encode, StringType())
     time_series_raw_data = time_series_raw_data.withColumn(
         "time_series_raw_data", compress_and_encode("time_series_raw_data")
