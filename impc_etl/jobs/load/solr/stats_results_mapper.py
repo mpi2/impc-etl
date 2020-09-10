@@ -1768,6 +1768,9 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
     time_series_raw_data = time_series_raw_data.withColumn(
         "time_series_raw_data", compress_and_encode("time_series_raw_data")
     )
+    print(
+        f"null raw_data: {time_series_raw_data.where(col('time_series_raw_data').isNull()).count()}"
+    )
     return time_series_raw_data
 
 
