@@ -465,9 +465,6 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "mp_term_id", regexp_replace("collapsed_mp_term.term_id", " ", "")
     )
-    open_stats_df = open_stats_df.withColumn(
-        "mp_term_id", regexp_replace("collapsed_mp_term.term_id", " ", "")
-    )
     for bad_mp in BAD_MP_MAP.keys():
         open_stats_df = open_stats_df.withColumn(
             "mp_term_id",

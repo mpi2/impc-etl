@@ -9,6 +9,7 @@ from pyspark.sql.functions import (
     least,
     monotonically_increasing_id,
     expr,
+    regexp_replace,
 )
 from pyspark.sql.types import StringType
 
@@ -19,6 +20,13 @@ ONTOLOGY_STATS_MAP = {
     "top_level_mp_term_name": "top_level_terms",
     "intermediate_mp_term_id": "intermediate_ids",
     "intermediate_mp_term_name": "intermediate_terms",
+}
+
+BAD_MP_MAP = {
+    '["MP:0000592","MP:0000592"]': "MP:0000592",
+    '["MP:0003956","MP:0003956"]': "MP:0003956",
+    '["MP:0000589","MP:0000589"]': "MP:0000589",
+    '["MP:0010101","MP:0004649"]': "MP:0004649",
 }
 
 GENOTYPE_PHENOTYPE_COLUMNS = [
@@ -103,6 +111,16 @@ def main(argv):
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
         "mp_term_id", col("mp_term.term_id")
     )
+    genotype_phenotype_df = genotype_phenotype_df.withColumn(
+        "mp_term_id", regexp_replace("mp_term_id", " ", "")
+    )
+    for bad_mp in BAD_MP_MAP.keys():
+        genotype_phenotype_df = genotype_phenotype_df.withColumn(
+            "mp_term_id",
+            when(col("mp_term_id") == bad_mp, lit(BAD_MP_MAP[bad_mp])).otherwise(
+                col("mp_term_id")
+            ),
+        )
 
     genotype_phenotype_df = genotype_phenotype_df.join(
         ontology_df, col("mp_term_id") == col("id"), "left_outer"
