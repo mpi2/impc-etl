@@ -1762,7 +1762,7 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
     to_json_udf = udf(
         lambda row: None
         if row is None
-        else json.dumps([item.asDict().items() for item in row]),
+        else json.dumps([item.asDict() for item in row]),
         StringType(),
     )
     time_series_raw_data = time_series_raw_data.withColumn(
