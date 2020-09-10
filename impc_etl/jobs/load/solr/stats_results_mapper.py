@@ -634,13 +634,20 @@ def main(argv):
     )
     if raw_data_in_output == "include":
         open_stats_df = _parse_raw_data(open_stats_df)
+        time_series_raw_data = _raw_data_for_time_series(open_stats_df, observations_df)
+        open_stats_df = open_stats_df.join(time_series_raw_data, "doc_id", "left_outer")
+        open_stats_df = open_stats_df.withColumn(
+            "raw_data",
+            when(
+                col("time_series_raw_data").isNotNull(), col("time_series_raw_data")
+            ).otherwise(col("raw_data")),
+        )
     output_columns = (
         STATS_RESULTS_COLUMNS
         if raw_data_in_output == "exclude"
         else STATS_RESULTS_COLUMNS + ["raw_data"]
     )
     open_stats_df = open_stats_df.select(*output_columns)
-    open_stats_df = _raw_data_for_time_series(open_stats_df, observations_df)
     open_stats_df.distinct().write.parquet(output_path)
 
 
@@ -1740,19 +1747,17 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         experimental_observations_df, pop_join_exp
     )
     time_series_raw_data = time_series_raw_data.withColumn(
-        "raw_data", concat("control_data", "experimental_data")
+        "time_series_raw_data", concat("control_data", "experimental_data")
     )
-    time_series_raw_data = time_series_raw_data.select("doc_id", "raw_data")
+    time_series_raw_data = time_series_raw_data.select("doc_id", "time_series_raw_data")
     time_series_raw_data = time_series_raw_data.withColumn(
-        "raw_data", to_json("raw_data")
+        "time_series_raw_data", to_json("time_series_raw_data")
     )
     compress_and_encode = udf(_compress_and_encode, StringType())
     time_series_raw_data = time_series_raw_data.withColumn(
-        "raw_data", compress_and_encode("raw_data")
+        "time_series_raw_data", compress_and_encode("time_series_raw_data")
     )
-    time_series_raw_data.show(1, vertical=True, truncate=False)
-    raise ValueError
-    return open_stats_df
+    return time_series_raw_data
 
 
 def stop_and_count(df):
