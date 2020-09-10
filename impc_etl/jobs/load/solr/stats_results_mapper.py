@@ -1749,13 +1749,16 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
         experimental_observations_df, pop_join_exp
     )
     time_series_raw_data = time_series_raw_data.withColumn(
+        "time_series_raw_data", concat("control_data", "experimental_data")
+    )
+    time_series_raw_data = time_series_raw_data.withColumn(
         "time_series_raw_data",
         when(
-            col("control_data").isNotNull() & col("experimental_data").isNotNull(),
-            concat("control_data", "experimental_data"),
-        )
-        .when(col("experimental_data").isNotNull(), col("experimental_data"))
-        .otherwise(col("control_data")),
+            col("time_series_raw_data").isNull(),
+            when(
+                col("experimental_data").isNotNull(), col("experimental_data")
+            ).otherwise(col("control_data")),
+        ).otherwise(col("time_series_raw_data")),
     )
     time_series_raw_data = time_series_raw_data.select("doc_id", "time_series_raw_data")
     time_series_raw_data = time_series_raw_data.withColumn(
