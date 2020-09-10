@@ -1751,15 +1751,22 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
     time_series_raw_data = time_series_raw_data.withColumn(
         "time_series_raw_data", concat("control_data", "experimental_data")
     )
-    # time_series_raw_data = time_series_raw_data.withColumn(
-    #     "time_series_raw_data",
-    #     when(
-    #         col("time_series_raw_data").isNull(),
-    #         when(
-    #             col("experimental_data").isNotNull(), col("experimental_data")
-    #         ).otherwise(col("control_data")),
-    #     ).otherwise(col("time_series_raw_data")),
-    # )
+    time_series_raw_data = time_series_raw_data.withColumn(
+        "time_series_raw_data",
+        when(
+            col("time_series_raw_data").isNull(),
+            when(
+                col("experimental_data").isNotNull(), col("experimental_data")
+            ).otherwise(col("control_data")),
+        ).otherwise(col("time_series_raw_data")),
+    )
+    print(time_series_raw_data.where(col("time_series_raw_data").isNull()).count())
+    print(
+        time_series_raw_data.where(
+            col("experimental_data").isNull() & col("control_data").isNull()
+        ).count()
+    )
+    raise ValueError
     time_series_raw_data = time_series_raw_data.select("doc_id", "time_series_raw_data")
     time_series_raw_data = time_series_raw_data.withColumn(
         "time_series_raw_data", to_json("time_series_raw_data")
