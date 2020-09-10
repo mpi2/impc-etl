@@ -651,10 +651,7 @@ def main(argv):
             ),
         )
         time_series_raw_data = _raw_data_for_time_series(open_stats_df, observations_df)
-        print(f"before join: {open_stats_df.count()}")
         open_stats_df = open_stats_df.join(time_series_raw_data, "doc_id", "left_outer")
-        print(f"after join: {open_stats_df.count()}")
-        raise ValueError
         open_stats_df = open_stats_df.withColumn(
             "raw_data",
             when(
@@ -1768,9 +1765,6 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
     compress_and_encode = udf(_compress_and_encode, StringType())
     time_series_raw_data = time_series_raw_data.withColumn(
         "time_series_raw_data", compress_and_encode("time_series_raw_data")
-    )
-    print(
-        f"null raw_data: {time_series_raw_data.where(col('time_series_raw_data').isNull()).count()}"
     )
     return time_series_raw_data
 
