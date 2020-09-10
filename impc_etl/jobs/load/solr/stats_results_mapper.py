@@ -653,7 +653,10 @@ def main(argv):
             ),
         )
         time_series_raw_data = _raw_data_for_time_series(open_stats_df, observations_df)
+        print(f"before join: {open_stats_df.count()}")
         open_stats_df = open_stats_df.join(time_series_raw_data, "doc_id", "left_outer")
+        print(f"after join: {open_stats_df.count()}")
+        raise ValueError
         open_stats_df = open_stats_df.withColumn(
             "raw_data",
             when(
@@ -1760,13 +1763,6 @@ def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFra
             ).otherwise(col("control_data")),
         ).otherwise(col("time_series_raw_data")),
     )
-    print(time_series_raw_data.where(col("time_series_raw_data").isNull()).count())
-    print(
-        time_series_raw_data.where(
-            col("experimental_data").isNull() & col("control_data").isNull()
-        ).count()
-    )
-    raise ValueError
     time_series_raw_data = time_series_raw_data.select("doc_id", "time_series_raw_data")
     time_series_raw_data = time_series_raw_data.withColumn(
         "time_series_raw_data", to_json("time_series_raw_data")
