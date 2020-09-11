@@ -125,6 +125,8 @@ RAW_DATA_COLUMNS = [
     "observations_sex",
     "observations_data_points",
     "observations_categories",
+    "observations_time_point",
+    "observations_discrete_point",
 ]
 
 
@@ -665,6 +667,12 @@ def _parse_raw_data(open_stats_df):
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_body_weight", "body_weight"
     )
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_time_point", "time_point"
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_discrete_point", "discrete_point"
+    )
     for col_name in [
         "biological_sample_group",
         "date_of_experiment",
@@ -713,6 +721,8 @@ def _parse_raw_data(open_stats_df):
         "body_weight",
         "data_point",
         "category",
+        "time_point",
+        "discrete_point",
     ]
     open_stats_df = open_stats_df.withColumn("raw_data", arrays_zip(*raw_data_cols))
 
@@ -1648,106 +1658,6 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
         "data_type", lit("adult-gross-path")
     )
     return gross_pathology_stats_results
-
-
-def _raw_data_for_time_series(open_stats_df: DataFrame, observations_df: DataFrame):
-    observations_df = observations_df.withColumnRenamed("sex", "specimen_sex")
-    observations_df = observations_df.withColumnRenamed("weight", "body_weight")
-    observations_df = observations_df.alias("obs")
-    open_stats_df = open_stats_df.alias("stats")
-
-    observations_df = observations_df.where(col("observation_type") == "time_series")
-    open_stats_df = open_stats_df.where(col("data_type") == "time_series")
-    population_join_columns = [
-        "procedure_stable_id",
-        "procedure_name",
-        "parameter_stable_id",
-        "phenotyping_center",
-        "pipeline_stable_id",
-        "metadata_group",
-        "strain_accession_id",
-    ]
-
-    experimental_population_join_columns = ["zygosity", "colony_id"]
-
-    raw_data_columns = [
-        "biological_sample_group",
-        "date_of_experiment",
-        "external_sample_id",
-        "specimen_sex",
-        "body_weight",
-        "data_point",
-        "category",
-        "time_point",
-        "discrete_point",
-    ]
-
-    observations_df = observations_df.select(
-        population_join_columns
-        + experimental_population_join_columns
-        + raw_data_columns
-    )
-
-    control_observations_df = (
-        observations_df.where(col("biological_sample_group") == "control")
-        .groupBy(population_join_columns)
-        .agg(collect_set(struct(*raw_data_columns)).alias("control_data"))
-    )
-    experimental_observations_df = (
-        observations_df.where(col("biological_sample_group") == "experimental")
-        .groupBy(population_join_columns + experimental_population_join_columns)
-        .agg(collect_set(struct(*raw_data_columns)).alias("experimental_data"))
-    )
-    pop_join_exp = [
-        open_stats_df[col_name] == control_observations_df[col_name]
-        for col_name in population_join_columns
-        if "procedure" not in col_name
-    ]
-    pop_join_exp += [
-        open_stats_df[col_name] == array(control_observations_df[col_name])
-        for col_name in population_join_columns
-        if "procedure" in col_name
-    ]
-    time_series_raw_data = open_stats_df.join(control_observations_df, pop_join_exp)
-    time_series_raw_data = time_series_raw_data.select("stats.*", "control_data")
-    pop_join_exp = [
-        time_series_raw_data[col_name] == experimental_observations_df[col_name]
-        for col_name in population_join_columns
-        if "procedure" not in col_name
-    ]
-    pop_join_exp += [
-        time_series_raw_data[col_name] == array(experimental_observations_df[col_name])
-        for col_name in population_join_columns
-        if "procedure" in col_name
-    ]
-    pop_join_exp += [
-        time_series_raw_data[col_name] == experimental_observations_df[col_name]
-        for col_name in experimental_population_join_columns
-    ]
-    time_series_raw_data = time_series_raw_data.join(
-        experimental_observations_df, pop_join_exp
-    )
-    time_series_raw_data = time_series_raw_data.withColumn(
-        "time_series_raw_data", concat("control_data", "experimental_data")
-    )
-    time_series_raw_data = time_series_raw_data.withColumn(
-        "time_series_raw_data",
-        when(
-            col("time_series_raw_data").isNull(),
-            when(
-                col("experimental_data").isNotNull(), col("experimental_data")
-            ).otherwise(col("control_data")),
-        ).otherwise(col("time_series_raw_data")),
-    )
-    time_series_raw_data = time_series_raw_data.select("doc_id", "time_series_raw_data")
-    time_series_raw_data = time_series_raw_data.withColumn(
-        "time_series_raw_data", to_json("time_series_raw_data")
-    )
-    compress_and_encode = udf(_compress_and_encode, StringType())
-    time_series_raw_data = time_series_raw_data.withColumn(
-        "time_series_raw_data", compress_and_encode("time_series_raw_data")
-    )
-    return time_series_raw_data
 
 
 def stop_and_count(df):
