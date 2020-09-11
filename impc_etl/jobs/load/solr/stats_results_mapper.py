@@ -630,34 +630,10 @@ def main(argv):
         "metadata",
         expr("transform(metadata, metadata_values -> concat_ws('|', metadata_values))"),
     )
+
     if raw_data_in_output == "include":
         open_stats_df = _parse_raw_data(open_stats_df)
-        open_stats_df = open_stats_df.withColumn(
-            "status",
-            when(col("data_type") == "time_series", lit("NotProcessed")).otherwise(
-                col("status")
-            ),
-        )
-        open_stats_df = open_stats_df.withColumn(
-            "significant",
-            when(col("data_type") == "time_series", lit(False)).otherwise(
-                col("significant")
-            ),
-        )
-        time_series_raw_data = _raw_data_for_time_series(open_stats_df, observations_df)
-        open_stats_df = open_stats_df.join(time_series_raw_data, "doc_id", "left_outer")
-        print(
-            open_stats_df.where(col("data_type") == "time_series")
-            .where(col("time_series_raw_data").isNull())
-            .count()
-        )
-        raise ValueError
-        open_stats_df = open_stats_df.withColumn(
-            "raw_data",
-            when(
-                col("time_series_raw_data").isNotNull(), col("time_series_raw_data")
-            ).otherwise(col("raw_data")),
-        )
+
     output_columns = (
         STATS_RESULTS_COLUMNS
         if raw_data_in_output == "exclude"
@@ -700,8 +676,7 @@ def _parse_raw_data(open_stats_df):
             when(
                 (
                     col("data_type").isin(
-                        #  ["unidimensional", "time_series", "categorical"]
-                        ["unidimensional", "categorical"]
+                        ["unidimensional", "time_series", "categorical"]
                     )
                 ),
                 from_json(col(col_name), ArrayType(StringType(), True)),
