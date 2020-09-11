@@ -744,7 +744,12 @@ def _parse_raw_data(open_stats_df):
         "data_point",
         "category",
     ]
-    open_stats_df = open_stats_df.withColumn("raw_data", arrays_zip(*raw_data_cols))
+    open_stats_df = open_stats_df.withColumn(
+        "raw_data",
+        when(col("data_type") == "time_series", lit(None)).otherwise(
+            arrays_zip(*raw_data_cols)
+        ),
+    )
 
     to_json_udf = udf(
         lambda row: None
