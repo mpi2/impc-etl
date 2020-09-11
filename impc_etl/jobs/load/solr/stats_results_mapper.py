@@ -117,7 +117,6 @@ STATS_OBSERVATIONS_JOIN = [
 ]
 
 RAW_DATA_COLUMNS = [
-    "observations_biological_sample_group",
     "observations_body_weight",
     "observations_date_of_experiment",
     "observations_external_sample_id",
@@ -678,6 +677,8 @@ def _parse_raw_data(open_stats_df):
         "date_of_experiment",
         "external_sample_id",
         "specimen_sex",
+        "time_point",
+        "discrete_point",
     ]:
         open_stats_df = open_stats_df.withColumn(
             col_name,
