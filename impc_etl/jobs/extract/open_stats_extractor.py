@@ -30,12 +30,12 @@ def main(argv):
     if use_cache != "true":
         stats_df = spark.read.jdbc(
             jdbc_connection_str,
-            table="(SELECT CAST(id AS BIGINT) AS numericId, * FROM dr12withmptermsv623082020_17) AS tmp",
+            table="(SELECT CAST(id AS BIGINT) AS numericId, * FROM dr12window10092020_22) AS tmp",
             properties=properties,
             numPartitions=5000,
             column="numericId",
             lowerBound=0,
-            upperBound=99999948351702,
+            upperBound=99999986070243,
         )
         stats_df = stats_df.withColumnRenamed("statpacket", "json")
         stats_df.write.mode("overwrite").parquet(output_path + "_temp")
@@ -145,6 +145,16 @@ def _get_stat_result(row, include_raw_data=False):
         stats_result["observations_response"] = (
             stats_packet_detail["Original_response"]
             if "Original_response" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_time_point"] = (
+            stats_packet_detail["Original_time_point"]
+            if "Original_time_point" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_discrete_point"] = (
+            stats_packet_detail["Original_discrete_point"]
+            if "Original_discrete_point" in stats_packet_detail
             else []
         )
         stats_result["observations_sex"] = (
