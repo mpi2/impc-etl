@@ -700,7 +700,8 @@ def _parse_raw_data(open_stats_df):
             when(
                 (
                     col("data_type").isin(
-                        ["unidimensional", "time_series", "categorical"]
+                        #  ["unidimensional", "time_series", "categorical"]
+                        ["unidimensional", "categorical"]
                     )
                 ),
                 from_json(col(col_name), ArrayType(StringType(), True)),
@@ -739,11 +740,6 @@ def _parse_raw_data(open_stats_df):
         "category",
     ]
     open_stats_df = open_stats_df.withColumn("raw_data", arrays_zip(*raw_data_cols))
-
-    open_stats_df = open_stats_df.withColumn(
-        "raw_data",
-        when(col("data_type") != "time_series", col("raw_data")).otherwise(lit(None)),
-    )
 
     to_json_udf = udf(
         lambda row: None
