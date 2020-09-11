@@ -744,11 +744,11 @@ def _parse_raw_data(open_stats_df):
         "data_point",
         "category",
     ]
+    open_stats_df = open_stats_df.withColumn("raw_data", arrays_zip(*raw_data_cols))
+
     open_stats_df = open_stats_df.withColumn(
         "raw_data",
-        when(col("data_type") == "time_series", lit(None)).otherwise(
-            arrays_zip(*raw_data_cols)
-        ),
+        when(col("data_type") != "time_series", col("raw_data")).otherwise(lit(None)),
     )
 
     to_json_udf = udf(
@@ -762,7 +762,12 @@ def _parse_raw_data(open_stats_df):
         ),
         StringType(),
     )
-    open_stats_df = open_stats_df.withColumn("raw_data", to_json_udf("raw_data"))
+    open_stats_df = open_stats_df.withColumn(
+        "raw_data",
+        when(col("raw_data").isNotNull(), to_json_udf("raw_data")).otherwise(
+            lit(None).cast(StringType())
+        ),
+    )
     open_stats_df = open_stats_df.withColumn(
         "raw_data", compress_and_encode("raw_data")
     )
