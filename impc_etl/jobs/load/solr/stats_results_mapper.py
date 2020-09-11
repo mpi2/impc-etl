@@ -633,12 +633,6 @@ def main(argv):
     if raw_data_in_output == "include":
         open_stats_df = _parse_raw_data(open_stats_df)
         open_stats_df = open_stats_df.withColumn(
-            "raw_data",
-            when(col("data_type") == "time_series", lit(None)).otherwise(
-                col("raw_data")
-            ),
-        )
-        open_stats_df = open_stats_df.withColumn(
             "status",
             when(col("data_type") == "time_series", lit("NotProcessed")).otherwise(
                 col("status")
