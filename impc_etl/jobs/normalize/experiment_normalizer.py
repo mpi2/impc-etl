@@ -588,7 +588,9 @@ def get_derived_parameters(
         when(
             (col("results").isNotNull() & col("simpleParameter").isNotNull()),
             merge_simple_parameters(col("simpleParameter"), col("results")),
-        ).otherwise(col("simpleParameter")),
+        )
+        .when(col("simpleParameter").isNull(), col("results"))
+        .otherwise(col("simpleParameter")),
     )
     dcc_experiment_df = dcc_experiment_df.drop(
         "complete_derivations.unique_id",

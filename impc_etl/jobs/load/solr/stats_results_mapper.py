@@ -641,6 +641,18 @@ def main(argv):
         else STATS_RESULTS_COLUMNS + ["raw_data"]
     )
     open_stats_df = open_stats_df.select(*output_columns)
+    open_stats_df = open_stats_df.withColumn(
+        "significant",
+        when(col("data_type") == "time_series", lit(False)).otherwise(
+            col("significant")
+        ),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "status",
+        when(col("data_type") == "time_series", lit("NotProcessed")).otherwise(
+            col("status")
+        ),
+    )
     open_stats_df.distinct().write.parquet(output_path)
 
 
