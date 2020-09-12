@@ -689,8 +689,6 @@ def _parse_raw_data(open_stats_df):
         "date_of_experiment",
         "external_sample_id",
         "specimen_sex",
-        "time_point",
-        "discrete_point",
     ]:
         open_stats_df = open_stats_df.withColumn(
             col_name,
@@ -726,6 +724,20 @@ def _parse_raw_data(open_stats_df):
             from_json(col("observations_response"), ArrayType(StringType(), True)),
         ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
+    open_stats_df = open_stats_df.withColumn(
+        "time_point",
+        when(
+            (col("data_type") == "time_series") & (col("time_point").isNotNull()),
+            from_json(col("time_point"), ArrayType(StringType(), True)),
+        ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "discrete_point",
+        when(
+            (col("data_type") == "time_series") & (col("discrete_point").isNotNull()),
+            from_json(col("discrete_point"), ArrayType(DoubleType(), True)),
+        ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
+    )
     raw_data_cols = [
         "biological_sample_group",
         "date_of_experiment",
@@ -750,12 +762,7 @@ def _parse_raw_data(open_stats_df):
         ),
         StringType(),
     )
-    open_stats_df = open_stats_df.withColumn(
-        "raw_data",
-        when(col("raw_data").isNotNull(), to_json_udf("raw_data")).otherwise(
-            lit(None).cast(StringType())
-        ),
-    )
+    open_stats_df = open_stats_df.withColumn("raw_data", to_json_udf("raw_data"))
     open_stats_df = open_stats_df.withColumn(
         "raw_data", compress_and_encode("raw_data")
     )
