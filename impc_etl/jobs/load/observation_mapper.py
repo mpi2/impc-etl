@@ -1044,18 +1044,19 @@ def map_experiments_to_observations(
     line_time_series_observation_df = process_parameter_values(
         line_observation_df, pipeline_df, "seriesParameter", exp_type="line"
     )
-    line_time_series_observation_df = resolve_time_series_value(
-        line_time_series_observation_df
-    )
-    line_time_series_observation_df = line_time_series_observation_df.withColumn(
-        "specimen_id", lit(None)
-    )
-    line_time_series_observation_df = unify_schema(
-        line_time_series_observation_df
-    ).select(Constants.OBSERVATION_COLUMNS)
-    time_series_observation_df = time_series_observation_df.union(
-        line_time_series_observation_df
-    )
+    if line_time_series_observation_df is not None:
+        line_time_series_observation_df = resolve_time_series_value(
+            line_time_series_observation_df
+        )
+        line_time_series_observation_df = line_time_series_observation_df.withColumn(
+            "specimen_id", lit(None)
+        )
+        line_time_series_observation_df = unify_schema(
+            line_time_series_observation_df
+        ).select(Constants.OBSERVATION_COLUMNS)
+        time_series_observation_df = time_series_observation_df.union(
+            line_time_series_observation_df
+        )
 
     image_record_observation_df = process_parameter_values(
         observation_df, pipeline_df, "seriesMediaParameter"
