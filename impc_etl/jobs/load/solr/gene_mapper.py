@@ -164,7 +164,7 @@ def main(argv):
         "procedure_stable_id", explode("procedure_stable_id")
     )
     stats_results_df = stats_results_df.withColumn(
-        "life_stage_acc", explode("life_stage_acc")
+        "life_stage_name", explode("life_stage_name")
     )
 
     significance_cols = [
@@ -188,7 +188,7 @@ def main(argv):
         "pipeline_stable_id",
         "zygosity",
         "phenotyping_center",
-        "life_stage_acc",
+        "life_stage_name",
     ]
 
     stats_results_df = stats_results_df.select(*(data_set_cols + significance_cols))
