@@ -404,6 +404,8 @@ class GeneCoreLoader(SparkSubmitTask):
     ma_metadata_csv_path = luigi.Parameter()
     mpath_metadata_csv_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
 
     def output(self):
         self.output_path = (
