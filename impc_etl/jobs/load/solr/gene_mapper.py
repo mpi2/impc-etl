@@ -285,10 +285,7 @@ def main(argv):
         lambda row: None
         if row is None
         else json.dumps(
-            [
-                {raw_data_cols[int(key)]: value for key, value in item.asDict().items()}
-                for item in row
-            ]
+            [{key: value for key, value in item.asDict().items()} for item in row]
         ),
         StringType(),
     )
