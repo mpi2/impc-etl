@@ -388,7 +388,6 @@ class GeneCoreLoader(SparkSubmitTask):
     mgi_homologene_input_path = luigi.Parameter()
     mgi_mrk_list_input_path = luigi.Parameter()
     embryo_data_json_path = luigi.Parameter()
-    observations_parquet_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     dcc_xml_path = luigi.Parameter()
