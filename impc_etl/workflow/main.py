@@ -139,6 +139,13 @@ class ImpcSolrCores(luigi.Task):
                 ma_metadata_csv_path=self.ma_metadata_csv_path,
                 mpath_metadata_csv_path=self.mpath_metadata_csv_path,
                 threei_stats_results_csv=self.threei_stats_results_csv,
+                openstats_jdbc_connection=self.openstats_jdbc_connection,
+                openstats_db_user=self.openstats_db_user,
+                openstats_db_password=self.openstats_db_password,
+                data_release_version=self.data_release_version,
+                use_cache=self.use_cache,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
             ),
             Allele2Extractor(
                 imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
