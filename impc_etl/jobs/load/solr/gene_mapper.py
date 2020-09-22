@@ -2,8 +2,24 @@
 SOLR module
    Generates the required Solr cores
 """
+import gzip
+
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import collect_set, col, when, count, explode, lit, split
+from pyspark.sql.functions import (
+    collect_set,
+    col,
+    when,
+    count,
+    explode,
+    lit,
+    split,
+    min,
+    struct,
+    expr,
+    sort_array,
+    udf,
+    base64,
+)
 import requests
 import json
 import sys
@@ -108,7 +124,10 @@ def main(argv):
     mgi_homologene_report_parquet_path = argv[3]
     mgi_mrk_list_report_parquet_path = argv[4]
     embryo_data_json_path = argv[5]
-    output_path = argv[6]
+    observations_parquet_path = argv[6]
+    stats_results_parquet_path = argv[7]
+    ontology_metadata_parquet_path = argv[8]
+    output_path = argv[9]
 
     spark = SparkSession.builder.getOrCreate()
     imits_gene_df = spark.read.parquet(imits_gene_parquet_path).select(
@@ -127,6 +146,159 @@ def main(argv):
         ]
     )
     embryo_data_df = spark.read.json(embryo_data_json_path, mode="FAILFAST")
+    observations_df = spark.read.parquet(observations_parquet_path)
+    stats_results_df = spark.read.parquet(stats_results_parquet_path)
+    ontology_metadata_df = spark.read.parquet(ontology_metadata_parquet_path)
+    ontology_metadata_df = ontology_metadata_df.select(
+        col("curie").alias("phenotype_term_id"),
+        col("name").alias("phenotype_term_name"),
+    ).distinct()
+
+    stats_results_df = stats_results_df.withColumnRenamed(
+        "marker_accession_id", "gene_accession_id"
+    )
+    stats_results_df = stats_results_df.withColumnRenamed(
+        "marker_symbol", "gene_symbol"
+    )
+    stats_results_df = stats_results_df.withColumn(
+        "procedure_stable_id", explode("procedure_stable_id")
+    )
+    stats_results_df = stats_results_df.withColumn(
+        "life_stage_acc", explode("life_stage_acc")
+    )
+
+    significance_cols = [
+        "female_ko_effect_p_value",
+        "male_ko_effect_p_value",
+        "genotype_effect_p_value",
+        "p_value",
+        "significant",
+        "full_mp_term",
+    ]
+
+    data_set_cols = [
+        "allele_accession_id",
+        "allele_symbol",
+        "gene_symbol",
+        "gene_accession_id",
+        "parameter_stable_id",
+        "parameter_name",
+        "procedure_stable_id",
+        "pipeline_name",
+        "pipeline_stable_id",
+        "zygosity",
+        "phenotyping_center",
+        "life_stage_acc",
+    ]
+
+    stats_results_df = stats_results_df.select(*(data_set_cols + significance_cols))
+    stats_results_df = stats_results_df.withColumn(
+        "selected_p_value",
+        when(
+            (col("female_ko_effect_p_value") < col("male_ko_effect_p_value"))
+            & (col("female_ko_effect_p_value") < col("genotype_effect_p_value")),
+            col("female_ko_effect_p_value"),
+        )
+        .when(
+            (col("male_ko_effect_p_value") < col("female_ko_effect_p_value"))
+            & (col("male_ko_effect_p_value") < col("genotype_effect_p_value")),
+            col("male_ko_effect_p_value"),
+        )
+        .when(
+            col("genotype_effect_p_value").isNotNull(), col("genotype_effect_p_value")
+        )
+        .otherwise(col("p_value")),
+    )
+    stats_results_df = stats_results_df.withColumn(
+        "selected_phenotype_term",
+        when(
+            (col("female_ko_effect_p_value") < col("male_ko_effect_p_value"))
+            & (col("female_ko_effect_p_value") < col("genotype_effect_p_value")),
+            expr(
+                "transform(filter(full_mp_term, mp -> mp.sex = 'female'), mp -> mp.term_id)"
+            ).getItem(0),
+        )
+        .when(
+            (col("male_ko_effect_p_value") < col("female_ko_effect_p_value"))
+            & (col("male_ko_effect_p_value") < col("genotype_effect_p_value")),
+            expr(
+                "transform(filter(full_mp_term, mp -> mp.sex = 'male'), mp -> mp.term_id)"
+            ).getItem(0),
+        )
+        .otherwise(
+            expr(
+                "transform(filter(full_mp_term, mp -> mp.sex NOT IN ('female', 'male')), mp -> mp.term_id)"
+            ).getItem(0)
+        ),
+    )
+    observations_df = observations_df.select(*data_set_cols).distinct()
+    datasets_df = observations_df.join(stats_results_df, data_set_cols, "left_outer")
+    datasets_df = datasets_df.groupBy(data_set_cols).agg(
+        collect_set(struct(*["selected_p_value", "selected_phenotype_term"])).alias(
+            "stats_data"
+        )
+    )
+    datasets_df = datasets_df.withColumn(
+        "stats_data", sort_array("stats_data").getItem(0)
+    )
+    datasets_df = datasets_df.select(*data_set_cols, "stats_data.*")
+    datasets_df = datasets_df.withColumnRenamed("selected_p_value", "p_value")
+    datasets_df = datasets_df.withColumnRenamed(
+        "selected_phenotype_term", "phenotype_term_id"
+    )
+    datasets_df = datasets_df.join(
+        ontology_metadata_df, "phenotype_term_id", "left_outer"
+    )
+    datasets_df = datasets_df.withColumn(
+        "significance",
+        when(col("phenotype_term_id").isNotNull(), lit("Significant"))
+        .when(col("p_value").isNotNull(), lit("Not significant"))
+        .otherwise(lit("N/A")),
+    )
+    mgi_datasets_df = datasets_df.groupBy("gene_accession_id").agg(
+        collect_set(
+            struct(
+                *(
+                    data_set_cols
+                    + [
+                        "significance",
+                        "p_value",
+                        "phenotype_term_id",
+                        "phenotype_term_name",
+                    ]
+                )
+            )
+        ).alias("datasets_raw_data")
+    )
+
+    mgi_datasets_df = mgi_datasets_df.withColumnRenamed(
+        "gene_accession_id", "mgi_accession_id"
+    )
+    raw_data_cols = data_set_cols + [
+        "significance",
+        "p_value",
+        "phenotype_term_id",
+        "phenotype_term_name",
+    ]
+
+    to_json_udf = udf(
+        lambda row: None
+        if row is None
+        else json.dumps(
+            [
+                {raw_data_cols[int(key)]: value for key, value in item.asDict().items()}
+                for item in row
+            ]
+        ),
+        StringType(),
+    )
+    mgi_datasets_df = mgi_datasets_df.withColumn(
+        "datasets_raw_data", to_json_udf("datasets_raw_data")
+    )
+    compress_and_encode = udf(_compress_and_encode, StringType())
+    mgi_datasets_df = mgi_datasets_df.withColumn(
+        "datasets_raw_data", compress_and_encode("datasets_raw_data")
+    )
 
     grouped_columns = [
         "allele_mgi_accession_id",
@@ -220,6 +392,7 @@ def main(argv):
     gene_df = gene_df.groupBy(
         [col_name for col_name in gene_df.columns if col_name not in grouped_columns]
     ).agg(*[collect_set(col_name).alias(col_name) for col_name in grouped_columns])
+    gene_df = gene_df.join(mgi_datasets_df, "left_outer")
     gene_df.distinct().write.parquet(output_path)
 
 
@@ -241,6 +414,13 @@ def get_embryo_data(spark: SparkSession):
     r = requests.get("")
     df = spark.createDataFrame([json.loads(line) for line in r.iter_lines()])
     return df
+
+
+def _compress_and_encode(json_text):
+    if json_text is None:
+        return None
+    else:
+        return str(base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))), "utf-8")
 
 
 if __name__ == "__main__":
