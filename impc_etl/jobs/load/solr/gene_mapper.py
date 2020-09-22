@@ -2,6 +2,7 @@
 SOLR module
    Generates the required Solr cores
 """
+import base64
 import gzip
 
 from pyspark.sql import DataFrame, SparkSession
@@ -18,7 +19,6 @@ from pyspark.sql.functions import (
     expr,
     sort_array,
     udf,
-    base64,
 )
 import requests
 import json
@@ -274,12 +274,6 @@ def main(argv):
     mgi_datasets_df = mgi_datasets_df.withColumnRenamed(
         "gene_accession_id", "mgi_accession_id"
     )
-    raw_data_cols = data_set_cols + [
-        "significance",
-        "p_value",
-        "phenotype_term_id",
-        "phenotype_term_name",
-    ]
 
     to_json_udf = udf(
         lambda row: None
