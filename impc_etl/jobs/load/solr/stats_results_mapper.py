@@ -1196,9 +1196,7 @@ def _embryo_stats_results(
     )
     print(embryo_stats_results.count())
     embryo_stats_results.printSchema()
-    embryo_stats_results.where(embryo_stats_results.colony_id == "NXNNB").where(
-        embryo_stats_results.parameter_stable_id == "IMPC_GEP_022_001"
-    ).where(embryo_stats_results.zygosity == "homozygote").show(
+    embryo_stats_results.where(embryo_stats_packets["parameter_name"].isNull()).show(
         vertical=True, truncate=False
     )
     raise ValueError
