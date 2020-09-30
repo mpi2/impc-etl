@@ -1194,7 +1194,7 @@ def _embryo_stats_results(
             col_name in embryo_stats_results.columns
             and col_name not in STATS_OBSERVATIONS_JOIN
         ):
-            embryo_stats_packets = embryo_stats_packets.drop()
+            embryo_stats_packets = embryo_stats_packets.drop(col_name)
     embryo_stats_results = embryo_stats_results.join(
         embryo_stats_packets, STATS_OBSERVATIONS_JOIN, "left_outer"
     )
