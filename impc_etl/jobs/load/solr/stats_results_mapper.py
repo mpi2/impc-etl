@@ -1145,7 +1145,9 @@ def _embryo_stats_results(
     )
 
     group_by_cols = [
-        col_name for col_name in required_stats_columns if col_name != "category"
+        col_name
+        for col_name in required_stats_columns
+        if col_name not in ["category", "sex"]
     ]
     group_by_cols += ["data_type", "status", "statistical_method"]
 
