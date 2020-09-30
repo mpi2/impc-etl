@@ -1144,9 +1144,12 @@ def _embryo_stats_results(
         "left_outer",
     )
 
-    embryo_stats_results = embryo_stats_results.groupBy(
-        required_stats_columns + ["data_type", "status", "statistical_method"]
-    ).agg(
+    group_by_cols = [
+        col_name for col_name in required_stats_columns if col_name != "category"
+    ]
+    group_by_cols += ["data_type", "status", "statistical_method"]
+
+    embryo_stats_results = embryo_stats_results.groupBy(group_by_cols).agg(
         collect_set("category").alias("categories"),
         collect_set(
             struct(
@@ -1193,7 +1196,9 @@ def _embryo_stats_results(
     embryo_stats_results.printSchema()
     embryo_stats_results.where(embryo_stats_results.colony_id == "NXNNB").where(
         embryo_stats_results.parameter_stable_id == "IMPC_GEP_022_001"
-    ).where(embryo_stats_results.zygosity == "homozygote").show(vertical=True, truncate=False)
+    ).where(embryo_stats_results.zygosity == "homozygote").show(
+        vertical=True, truncate=False
+    )
     raise ValueError
     return embryo_stats_results
 
