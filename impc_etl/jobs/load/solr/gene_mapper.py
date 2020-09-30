@@ -164,6 +164,9 @@ def main(argv):
         "procedure_stable_id", explode("procedure_stable_id")
     )
     stats_results_df = stats_results_df.withColumn(
+        "procedure_name", explode("procedure_name")
+    )
+    stats_results_df = stats_results_df.withColumn(
         "life_stage_name", explode("life_stage_name")
     )
 
