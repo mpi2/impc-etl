@@ -398,7 +398,7 @@ def main(argv):
     embryo_stats = embryo_stats.select(open_stats_df.columns)
     open_stats_df = open_stats_df.union(embryo_stats)
     open_stats_df.where(col("data_type") == "embryo").where(
-        col("observations_response").isNotNull()
+        col("parameter_stable_id") != "IMPC_GEP_022_001"
     ).show(vertical=True, truncate=False)
     raise ValueError
 
