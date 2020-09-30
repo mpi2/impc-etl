@@ -1198,12 +1198,6 @@ def _embryo_stats_results(
     embryo_stats_results = embryo_stats_results.join(
         embryo_stats_packets, STATS_OBSERVATIONS_JOIN, "left_outer"
     )
-    print(embryo_stats_results.count())
-    embryo_stats_results.printSchema()
-    embryo_stats_results.where(
-        embryo_stats_packets["observations_biological_sample_group"].isNull()
-    ).show(vertical=True, truncate=False)
-    raise ValueError
     return embryo_stats_results
 
 
