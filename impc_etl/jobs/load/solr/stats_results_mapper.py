@@ -672,10 +672,27 @@ def main(argv):
             col("status")
         ),
     )
-    open_stats_df.where(col("data_type") == "embryo").where(
-        col("parameter_stable_id") == "IMPC_GEP_022_001"
-    ).show(vertical=True, truncate=False)
-    raise ValueError
+    open_stats_df = open_stats_df.withColumn(
+        "data_type",
+        when(
+            col("procedure_group").rlike(
+                "|".join(
+                    [
+                        "IMPC_GPL",
+                        "IMPC_GEL",
+                        "IMPC_GPM",
+                        "IMPC_GEM",
+                        "IMPC_GPO",
+                        "IMPC_GEO",
+                        "IMPC_GPP",
+                        "IMPC_GEP",
+                    ]
+                )
+            )
+            & (col("data_type") == "categorical"),
+            lit("embryo"),
+        ).otherwise(col("data_type")),
+    )
     open_stats_df.distinct().write.parquet(output_path)
 
 
@@ -1132,7 +1149,9 @@ def _embryo_stats_results(
         "category", lower(col("category"))
     )
 
-    embryo_stats_results = embryo_stats_results.withColumn("data_type", lit("embryo"))
+    embryo_stats_results = embryo_stats_results.withColumn(
+        "data_type", lit("categorical")
+    )
     embryo_stats_results = embryo_stats_results.withColumn("status", lit("Successful"))
     embryo_stats_results = embryo_stats_results.withColumn(
         "statistical_method", lit("Supplied as data")
