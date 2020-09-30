@@ -392,11 +392,11 @@ def main(argv):
     embryo_stats = _embryo_stats_results(
         observations_df, pipeline_df, embryo_stat_packets
     )
-    embryo_stats.show(vertical=True, truncate=False)
-    raise ValueError
     for col_name in open_stats_df.columns:
         if col_name not in embryo_stats.columns:
             embryo_stats = embryo_stats.withColumn(col_name, lit(None))
+    embryo_stats.show(vertical=True, truncate=False)
+    raise ValueError
     embryo_stats = embryo_stats.select(open_stats_df.columns)
     open_stats_df = open_stats_df.union(embryo_stats)
 
