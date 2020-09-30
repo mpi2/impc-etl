@@ -1040,7 +1040,9 @@ def _fertility_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
     return fertility_stats_results
 
 
-def _embryo_stats_results(observations_df: DataFrame, pipeline_df: DataFrame):
+def _embryo_stats_results(
+    observations_df: DataFrame, pipeline_df: DataFrame, embryo_stats_packets: DataFrame
+):
 
     mp_chooser = pipeline_df.select(
         "pipelineKey",
@@ -1150,6 +1152,23 @@ def _embryo_stats_results(observations_df: DataFrame, pipeline_df: DataFrame):
     embryo_stats_results = embryo_stats_results.withColumn(
         "effect_size", when(col("mp_term").isNull(), lit(0.0)).otherwise(lit(1.0))
     )
+    embryo_stats_results = embryo_stats_results.groupBy(
+        *[
+            col_name
+            for col_name in embryo_stats_results.columns
+            if col_name not in ["sex", "mp_term"]
+        ]
+    ).agg(
+        collect_set("sex").alias("sex"),
+        flatten(collect_set("mp_term")).alias("mp_term"),
+    )
+    embryo_stats_packets = embryo_stats_packets.drop("mp_term")
+    embryo_stats_results = embryo_stats_results.join(
+        embryo_stats_packets, STATS_OBSERVATIONS_JOIN, "left_outer"
+    )
+    print(embryo_stats_results.count())
+    embryo_stats_results.printSchema()
+    raise ValueError
     return embryo_stats_results
 
 
