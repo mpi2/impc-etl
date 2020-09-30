@@ -397,10 +397,7 @@ def main(argv):
             embryo_stats = embryo_stats.withColumn(col_name, lit(None))
     embryo_stats = embryo_stats.select(open_stats_df.columns)
     open_stats_df = open_stats_df.union(embryo_stats)
-    open_stats_df.where(col("data_type") == "embryo").where(
-        col("parameter_stable_id") == "IMPC_GEP_022_001"
-    ).show(vertical=True, truncate=False)
-    raise ValueError
+
 
     observations_metadata_df = observations_df.select(
         STATS_OBSERVATIONS_JOIN + list(set(OBSERVATIONS_STATS_MAP.values()))
@@ -676,6 +673,10 @@ def main(argv):
             col("status")
         ),
     )
+    open_stats_df.where(col("data_type") == "embryo").where(
+        col("parameter_stable_id") == "IMPC_GEP_022_001"
+    ).show(vertical=True, truncate=False)
+    raise ValueError
     open_stats_df.distinct().write.parquet(output_path)
 
 
