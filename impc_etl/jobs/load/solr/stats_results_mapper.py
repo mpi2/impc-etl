@@ -395,9 +395,9 @@ def main(argv):
     for col_name in open_stats_df.columns:
         if col_name not in embryo_stats.columns:
             embryo_stats = embryo_stats.withColumn(col_name, lit(None))
+    embryo_stats = embryo_stats.select(open_stats_df.columns)
     embryo_stats.show(vertical=True, truncate=False)
     raise ValueError
-    embryo_stats = embryo_stats.select(open_stats_df.columns)
     open_stats_df = open_stats_df.union(embryo_stats)
 
     observations_metadata_df = observations_df.select(
