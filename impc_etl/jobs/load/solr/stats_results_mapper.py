@@ -693,6 +693,10 @@ def main(argv):
             lit("embryo"),
         ).otherwise(col("data_type")),
     )
+    open_stats_df.where(col("data_type") == "embryo").where(
+        col("parameter_stable_id") == "IMPC_GEP_022_001"
+    ).show(vertical=True, truncate=False)
+    raise ValueError
     open_stats_df.distinct().write.parquet(output_path)
 
 
