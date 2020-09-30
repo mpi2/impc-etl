@@ -397,9 +397,9 @@ def main(argv):
             embryo_stats = embryo_stats.withColumn(col_name, lit(None))
     embryo_stats = embryo_stats.select(open_stats_df.columns)
     open_stats_df = open_stats_df.union(embryo_stats)
-    open_stats_df.where(col("data_type") == "embryo").show(
-        vertical=True, truncate=False
-    )
+    open_stats_df.where(col("data_type") == "embryo").where(
+        col("observations_response").isNotNull()
+    ).show(vertical=True, truncate=False)
     raise ValueError
 
     observations_metadata_df = observations_df.select(
