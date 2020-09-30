@@ -1152,6 +1152,7 @@ def _embryo_stats_results(
     group_by_cols += ["data_type", "status", "statistical_method"]
 
     embryo_stats_results = embryo_stats_results.groupBy(group_by_cols).agg(
+        collect_set("sex").alias("sex"),
         collect_set("category").alias("categories"),
         collect_set(
             struct(
@@ -1180,10 +1181,9 @@ def _embryo_stats_results(
         *[
             col_name
             for col_name in embryo_stats_results.columns
-            if col_name not in ["sex", "mp_term", "p_value", "effect_size"]
+            if col_name not in ["mp_term", "p_value", "effect_size"]
         ]
     ).agg(
-        collect_set("sex").alias("sex"),
         flatten(collect_set("mp_term")).alias("mp_term"),
         min("p_value").alias("p_value"),
         max("effect_size").alias("effect_size"),
