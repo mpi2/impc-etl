@@ -184,6 +184,7 @@ def main(argv):
         "parameter_stable_id",
         "parameter_name",
         "procedure_stable_id",
+        "procedure_name",
         "pipeline_name",
         "pipeline_stable_id",
         "zygosity",

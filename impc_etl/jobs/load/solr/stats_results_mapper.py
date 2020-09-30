@@ -1118,6 +1118,7 @@ def _embryo_stats_results(
                 )
             )
             & (col("biological_sample_group") == "experimental")
+            & (col("observation_type") == "categorical")
         )
         .withColumnRenamed("gene_accession_id", "marker_accession_id")
         .withColumnRenamed("gene_symbol", "marker_symbol")
@@ -1188,17 +1189,20 @@ def _embryo_stats_results(
         min("p_value").alias("p_value"),
         max("effect_size").alias("effect_size"),
     )
-    embryo_stats_packets = embryo_stats_packets.drop(
-        "mp_term", "p_value", "effect_size", "data_type", "status", "statistical_method"
-    )
+    for col_name in embryo_stats_packets.columns:
+        if (
+            col_name in embryo_stats_results.columns
+            and col_name not in STATS_OBSERVATIONS_JOIN
+        ):
+            embryo_stats_packets = embryo_stats_packets.drop()
     embryo_stats_results = embryo_stats_results.join(
         embryo_stats_packets, STATS_OBSERVATIONS_JOIN, "left_outer"
     )
     print(embryo_stats_results.count())
     embryo_stats_results.printSchema()
-    embryo_stats_results.where(embryo_stats_packets["parameter_name"].isNull()).show(
-        vertical=True, truncate=False
-    )
+    embryo_stats_results.where(
+        embryo_stats_packets["observations_biological_sample_group"].isNull()
+    ).show(vertical=True, truncate=False)
     raise ValueError
     return embryo_stats_results
 
