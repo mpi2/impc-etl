@@ -298,7 +298,30 @@ def main(argv):
     raw_data_in_output = argv[9]
     output_path = argv[10]
     spark = SparkSession.builder.getOrCreate()
-    open_stats_df = spark.read.parquet(open_stats_parquet_path).where(
+    open_stats_df = spark.read.parquet(open_stats_parquet_path)
+    ontology_df = spark.read.parquet(ontology_parquet_path)
+    allele_df = spark.read.parquet(allele_parquet_path)
+    pipeline_df = spark.read.parquet(pipeline_parquet_path)
+    pipeline_core_df = spark.read.parquet(pipeline_core_parquet_path)
+    observations_df = spark.read.parquet(observations_parquet_path)
+    threei_df = spark.read.csv(threei_parquet_path, header=True)
+    threei_df = standardize_threei_schema(threei_df)
+    mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
+
+    embryo_stat_packets = open_stats_df.where(
+        (
+            (col("procedure_stable_id").contains("IMPC_GPL"))
+            | (col("procedure_stable_id").contains("IMPC_GEL"))
+            | (col("procedure_stable_id").contains("IMPC_GPM"))
+            | (col("procedure_stable_id").contains("IMPC_GEM"))
+            | (col("procedure_stable_id").contains("IMPC_GPO"))
+            | (col("procedure_stable_id").contains("IMPC_GEO"))
+            | (col("procedure_stable_id").contains("IMPC_GPP"))
+            | (col("procedure_stable_id").contains("IMPC_GEP"))
+        )
+    )
+
+    open_stats_df = open_stats_df.where(
         ~(
             col("procedure_stable_id").contains("IMPC_FER_001")
             | (col("procedure_stable_id").contains("IMPC_VIA_001"))
@@ -320,14 +343,6 @@ def main(argv):
             | (col("procedure_stable_id").contains("IMPC_GEP"))
         )
     )
-    ontology_df = spark.read.parquet(ontology_parquet_path)
-    allele_df = spark.read.parquet(allele_parquet_path)
-    pipeline_df = spark.read.parquet(pipeline_parquet_path)
-    pipeline_core_df = spark.read.parquet(pipeline_core_parquet_path)
-    observations_df = spark.read.parquet(observations_parquet_path)
-    threei_df = spark.read.csv(threei_parquet_path, header=True)
-    threei_df = standardize_threei_schema(threei_df)
-    mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
 
     fertility_stats = _fertility_stats_results(observations_df, pipeline_df)
 
@@ -372,7 +387,9 @@ def main(argv):
     embryo_viability_stats = embryo_viability_stats.select(open_stats_df.columns)
     open_stats_df = open_stats_df.union(embryo_viability_stats)
 
-    embryo_stats = _embryo_stats_results(observations_df, pipeline_df)
+    embryo_stats = _embryo_stats_results(
+        observations_df, pipeline_df, embryo_stat_packets
+    )
     for col_name in open_stats_df.columns:
         if col_name not in embryo_stats.columns:
             embryo_stats = embryo_stats.withColumn(col_name, lit(None))
