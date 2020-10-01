@@ -141,13 +141,14 @@ def main(argv):
         ]
     )
     mp_df = mp_df.join(mp_ma_df, "mp_id", "left_outer")
-    mp_df = mp_df.withColumn(
-        "doc_id", monotonically_increasing_id().astype(StringType())
-    )
     pipeline_df = pipeline_df.withColumn(
         "mp_id", explode(concat("mp_id", "top_level_mp_id", "intermediate_mp_id"))
     ).select("mp_id", "fully_qualified_name")
     mp_df = mp_df.join(pipeline_df, "mp_id")
+    mp_df = mp_df.select(MP_CORE_COLUMNS).distinct()
+    mp_df = mp_df.withColumn(
+        "doc_id", monotonically_increasing_id().astype(StringType())
+    )
     mp_df.write.parquet(output_path)
 
 
