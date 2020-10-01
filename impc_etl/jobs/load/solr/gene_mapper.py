@@ -19,6 +19,7 @@ from pyspark.sql.functions import (
     expr,
     sort_array,
     udf,
+    size,
 )
 import requests
 import json
@@ -273,7 +274,14 @@ def main(argv):
         ).alias("stats_data")
     )
     datasets_df = datasets_df.withColumn(
-        "stats_data", sort_array("stats_data").getItem(0)
+        "successful_stats_data", expr("filter(stat -> stat.selected_p_value != NULL)")
+    )
+    datasets_df = datasets_df.withColumn(
+        "stats_data",
+        when(
+            size("successful_stats_data"),
+            sort_array("successful_stats_data").getItem(0),
+        ).otherwise(sort_array("stats_data").getItem(0)),
     )
     datasets_df = datasets_df.select(*data_set_cols, "stats_data.*")
     datasets_df = datasets_df.withColumnRenamed("selected_p_value", "p_value")
