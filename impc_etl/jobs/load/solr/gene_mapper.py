@@ -273,6 +273,10 @@ def main(argv):
             )
         ).alias("stats_data")
     )
+    datasets_df.where(col("gene_accession_id") == "MGI:1929293").where(
+        col("parameter_stable_id") == "IMPC_ACS_036_001"
+    ).show(vertical=True, truncate=False)
+    raise ValueError
     datasets_df = datasets_df.withColumn(
         "successful_stats_data",
         expr("filter(stats_data, stat -> stat.selected_p_value != NULL)"),
