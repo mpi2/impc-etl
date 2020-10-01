@@ -48,7 +48,6 @@ ONTOLOGY_MA_MAP = {
 
 
 MP_CORE_COLUMNS = [
-    "doc_id",
     "mp_id",
     "mp_term",
     "mp_definition",
