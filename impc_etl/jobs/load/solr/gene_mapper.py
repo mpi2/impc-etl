@@ -25,7 +25,7 @@ import requests
 import json
 import sys
 
-from pyspark.sql.types import StringType
+from pyspark.sql.types import StringType, DoubleType
 
 from impc_etl.config import Constants
 
@@ -221,6 +221,9 @@ def main(argv):
         .otherwise(col("p_value")),
     )
     stats_results_df = stats_results_df.withColumn(
+        "selected_p_value", col("selected_p_value").cast(DoubleType())
+    )
+    stats_results_df = stats_results_df.withColumn(
         "selected_effect_size",
         when(
             (col("female_ko_effect_p_value") < col("male_ko_effect_p_value"))
@@ -275,7 +278,7 @@ def main(argv):
     )
     datasets_df = datasets_df.withColumn(
         "successful_stats_data",
-        expr("filter(stats_data, stat -> stat.selected_p_value != NULL)"),
+        expr("filter(stats_data, stat -> stat.selected_p_value IS NOT NULL)"),
     )
     datasets_df.where(col("gene_accession_id") == "MGI:1929293").where(
         col("parameter_stable_id") == "IMPC_ACS_036_001"
