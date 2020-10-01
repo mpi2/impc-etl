@@ -274,7 +274,8 @@ def main(argv):
         ).alias("stats_data")
     )
     datasets_df = datasets_df.withColumn(
-        "successful_stats_data", expr("filter(stat -> stat.selected_p_value != NULL)")
+        "successful_stats_data",
+        expr("filter(stats_data, stat -> stat.selected_p_value != NULL)"),
     )
     datasets_df = datasets_df.withColumn(
         "stats_data",
