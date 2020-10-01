@@ -176,6 +176,8 @@ def main(argv):
         "genotype_effect_p_value",
         "p_value",
         "effect_size",
+        "male_effect_size",
+        "female_effect_size",
         "significant",
         "full_mp_term",
         "metadata_group",
