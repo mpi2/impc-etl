@@ -171,6 +171,28 @@ def main(argv):
         "life_stage_name", explode("life_stage_name")
     )
 
+    significant_mp_term = stats_results_df.select(
+        "gene_accession_id", "top_level_mp_term_name", "significant"
+    )
+
+    significant_mp_term = significant_mp_term.withColumn(
+        "top_level_mp_term_name", explode("top_level_mp_term_name")
+    )
+
+    significant_mp_term = significant_mp_term.groupBy("gene_accession_id").agg(
+        collect_set(
+            when(col("significant"), col("top_level_mp_term_name")).otherwise(lit(None))
+        ).alias("significant_top_level_mp_terms"),
+        collect_set(
+            when(~col("significant"), col("top_level_mp_term_name")).otherwise(
+                lit(None)
+            )
+        ).alias("not_significant_top_level_mp_terms"),
+    )
+    significant_mp_term.where(col("gene_accession_id") == "MGI:1929293").show(
+        vertical=True, truncate=False
+    )
+    raise ValueError
     significance_cols = [
         "female_ko_effect_p_value",
         "male_ko_effect_p_value",
