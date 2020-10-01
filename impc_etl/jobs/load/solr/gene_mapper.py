@@ -280,7 +280,7 @@ def main(argv):
     datasets_df = datasets_df.withColumn(
         "stats_data",
         when(
-            size("successful_stats_data"),
+            size("successful_stats_data") > 0,
             sort_array("successful_stats_data").getItem(0),
         ).otherwise(sort_array("stats_data").getItem(0)),
     )
