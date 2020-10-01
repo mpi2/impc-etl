@@ -189,10 +189,9 @@ def main(argv):
             )
         ).alias("not_significant_top_level_mp_terms"),
     )
-    significant_mp_term.where(col("gene_accession_id") == "MGI:1929293").show(
-        vertical=True, truncate=False
+    significant_mp_term = significant_mp_term.withColumnRenamed(
+        "gene_accession_id", "mgi_accession_id"
     )
-    raise ValueError
     significance_cols = [
         "female_ko_effect_p_value",
         "male_ko_effect_p_value",
@@ -457,6 +456,7 @@ def main(argv):
         [col_name for col_name in gene_df.columns if col_name not in grouped_columns]
     ).agg(*[collect_set(col_name).alias(col_name) for col_name in grouped_columns])
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
+    gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
     gene_df.distinct().write.parquet(output_path)
 
 
