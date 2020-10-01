@@ -178,6 +178,9 @@ def main(argv):
         "effect_size",
         "significant",
         "full_mp_term",
+        "metadata_group",
+        "male_mutant_count",
+        "female_mutant_count",
     ]
 
     data_set_cols = [
@@ -189,9 +192,6 @@ def main(argv):
         "parameter_name",
         "procedure_stable_id",
         "procedure_name",
-        "metadata_group",
-        "male_mutant_count",
-        "female_mutant_count",
         "pipeline_name",
         "pipeline_stable_id",
         "zygosity",
@@ -259,7 +259,14 @@ def main(argv):
     datasets_df = datasets_df.groupBy(data_set_cols).agg(
         collect_set(
             struct(
-                *["selected_p_value", "selected_effect_size", "selected_phenotype_term"]
+                *[
+                    "selected_p_value",
+                    "selected_effect_size",
+                    "selected_phenotype_term",
+                    "metadata_group",
+                    "male_mutant_count",
+                    "female_mutant_count",
+                ]
             )
         ).alias("stats_data")
     )
@@ -290,6 +297,9 @@ def main(argv):
                         "significance",
                         "p_value",
                         "effect_size",
+                        "metadata_group",
+                        "male_mutant_count",
+                        "female_mutant_count",
                         "phenotype_term_id",
                         "phenotype_term_name",
                     ]
@@ -301,6 +311,8 @@ def main(argv):
     mgi_datasets_df = mgi_datasets_df.withColumnRenamed(
         "gene_accession_id", "mgi_accession_id"
     )
+    mgi_datasets_df.printSchema()
+    raise ValueError
 
     to_json_udf = udf(
         lambda row: None
