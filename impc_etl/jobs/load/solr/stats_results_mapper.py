@@ -271,6 +271,7 @@ STATS_RESULTS_COLUMNS = [
     "full_mp_term",
     "male_effect_size",
     "female_effect_size",
+    "significant",
 ]
 
 
@@ -650,16 +651,6 @@ def main(argv):
         "metadata",
         expr("transform(metadata, metadata_values -> concat_ws('|', metadata_values))"),
     )
-
-    if raw_data_in_output == "include":
-        open_stats_df = _parse_raw_data(open_stats_df)
-
-    output_columns = (
-        STATS_RESULTS_COLUMNS
-        if raw_data_in_output == "exclude"
-        else STATS_RESULTS_COLUMNS + ["raw_data"]
-    )
-    open_stats_df = open_stats_df.select(*output_columns)
     open_stats_df = open_stats_df.withColumn(
         "significant",
         when(col("data_type") == "time_series", lit(False)).otherwise(
@@ -672,6 +663,8 @@ def main(argv):
             col("status")
         ),
     )
+    if raw_data_in_output == "include":
+        open_stats_df = _parse_raw_data(open_stats_df)
     open_stats_df = open_stats_df.withColumn(
         "data_type",
         when(
@@ -693,7 +686,11 @@ def main(argv):
             lit("embryo"),
         ).otherwise(col("data_type")),
     )
-    open_stats_df.distinct().write.parquet(output_path)
+    if raw_data_in_output == "include":
+        raw_data_df = open_stats_df.select("doc_id", "raw_data")
+        raw_data_df.write(output_path + "_raw_data")
+    stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
+    stats_results_df.distinct().write.parquet(output_path)
 
 
 def _compress_and_encode(json_text):

@@ -197,12 +197,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        if self.raw_data_in_output == "include":
-            return ImpcConfig().get_target(
-                f"{self.output_path}stats_results_parquet_with_raw_data"
-            )
-        else:
-            return ImpcConfig().get_target(f"{self.output_path}stats_results_parquet")
+        return ImpcConfig().get_target(f"{self.output_path}stats_results_parquet")
 
     def app_options(self):
         return [
