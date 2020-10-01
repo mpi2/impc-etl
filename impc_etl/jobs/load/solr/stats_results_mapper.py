@@ -271,7 +271,6 @@ STATS_RESULTS_COLUMNS = [
     "full_mp_term",
     "male_effect_size",
     "female_effect_size",
-    "significant",
 ]
 
 

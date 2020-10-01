@@ -175,6 +175,7 @@ def main(argv):
         "male_ko_effect_p_value",
         "genotype_effect_p_value",
         "p_value",
+        "effect_size",
         "significant",
         "full_mp_term",
     ]
@@ -188,6 +189,9 @@ def main(argv):
         "parameter_name",
         "procedure_stable_id",
         "procedure_name",
+        "metadata_group",
+        "male_mutant_count",
+        "female_mutant_count",
         "pipeline_name",
         "pipeline_stable_id",
         "zygosity",
@@ -214,6 +218,21 @@ def main(argv):
         .otherwise(col("p_value")),
     )
     stats_results_df = stats_results_df.withColumn(
+        "selected_effect_size",
+        when(
+            (col("female_ko_effect_p_value") < col("male_ko_effect_p_value"))
+            & (col("female_ko_effect_p_value") < col("genotype_effect_p_value")),
+            col("female_effect_size"),
+        )
+        .when(
+            (col("male_ko_effect_p_value") < col("female_ko_effect_p_value"))
+            & (col("male_ko_effect_p_value") < col("genotype_effect_p_value")),
+            col("male_effect_size"),
+        )
+        .when(col("genotype_effect_p_value").isNotNull(), col("effect_size"))
+        .otherwise(col("effect_size")),
+    )
+    stats_results_df = stats_results_df.withColumn(
         "selected_phenotype_term",
         when(
             (col("female_ko_effect_p_value") < col("male_ko_effect_p_value"))
@@ -238,15 +257,18 @@ def main(argv):
     observations_df = observations_df.select(*data_set_cols).distinct()
     datasets_df = observations_df.join(stats_results_df, data_set_cols, "left_outer")
     datasets_df = datasets_df.groupBy(data_set_cols).agg(
-        collect_set(struct(*["selected_p_value", "selected_phenotype_term"])).alias(
-            "stats_data"
-        )
+        collect_set(
+            struct(
+                *["selected_p_value", "selected_effect_size", "selected_phenotype_term"]
+            )
+        ).alias("stats_data")
     )
     datasets_df = datasets_df.withColumn(
         "stats_data", sort_array("stats_data").getItem(0)
     )
     datasets_df = datasets_df.select(*data_set_cols, "stats_data.*")
     datasets_df = datasets_df.withColumnRenamed("selected_p_value", "p_value")
+    datasets_df = datasets_df.withColumnRenamed("selected_effect_size", "effect_size")
     datasets_df = datasets_df.withColumnRenamed(
         "selected_phenotype_term", "phenotype_term_id"
     )
@@ -267,6 +289,7 @@ def main(argv):
                     + [
                         "significance",
                         "p_value",
+                        "effect_size",
                         "phenotype_term_id",
                         "phenotype_term_name",
                     ]
