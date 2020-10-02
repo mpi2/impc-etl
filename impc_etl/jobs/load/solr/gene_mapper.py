@@ -71,8 +71,6 @@ GENE_CORE_COLUMNS = [
     "ensembl_gene_id",
     "ccds_id",
     "ncbi_id",
-    "significant_top_level_mp_terms",
-    "not_significant_top_level_mp_terms",
 ]
 
 IMITS_GENE_COLUMNS = [
