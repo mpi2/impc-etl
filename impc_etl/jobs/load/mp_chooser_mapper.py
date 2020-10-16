@@ -3,14 +3,16 @@ import sys
 from pyspark.sql import DataFrame, SparkSession
 import json
 import requests
+import os
 
 
 def main(argv):
     pipeline_core_parquet_path = argv[1]
     output_path = argv[2]
-    ontology_terms_list_url = "http://api.mousephenotype.org/impress/ontologyterm/list"
-    ontology_term_dict = requests.get(ontology_terms_list_url).json()
     spark = SparkSession.builder.getOrCreate()
+    ontology_terms_list_url = "http://api.mousephenotype.org/impress/ontologyterm/list"
+    proxies = {"http": os.environ["http_proxy"], "https": os.environ["https_proxy"]}
+    ontology_term_dict = requests.get(ontology_terms_list_url, proxies=proxies).json()
     impress_df = spark.read.parquet(pipeline_core_parquet_path)
     mp_chooser = (
         impress_df.where(impress_df.parammpterm.isNotNull())
