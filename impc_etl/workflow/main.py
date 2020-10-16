@@ -186,6 +186,7 @@ class ImpcStatPacketLoader(luigi.Task):
     ma_metadata_csv_path = luigi.Parameter()
     mpath_metadata_csv_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
+    http_proxy = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -208,6 +209,7 @@ class ImpcStatPacketLoader(luigi.Task):
                 mpath_metadata_csv_path=self.mpath_metadata_csv_path,
                 threei_stats_results_csv=self.threei_stats_results_csv,
                 raw_data_in_output="include",
+                http_proxy=self.http_proxy,
                 output_path=self.output_path,
             )
         ]
