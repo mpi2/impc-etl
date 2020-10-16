@@ -1777,6 +1777,8 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
 def _select_collapsed_mp_term(
     mp_term_array: List[Dict], pipeline, procedure_group, parameter, mp_chooser
 ):
+    if mp_term_array is None:
+        return None
     mp_term = mp_term_array[0]
     mp_term["sex"] = "not_considered"
     mp_terms = [mp["term_id"] for mp in mp_term_array]
