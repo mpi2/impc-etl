@@ -464,7 +464,7 @@ def main(argv):
         )
     )
     select_collapsed_mp_term_udf = udf(
-        lambda mp_term_array, pipeline, procedure_group, parameter, category: _select_collapsed_mp_term(
+        lambda mp_term_array, pipeline, procedure_group, parameter: _select_collapsed_mp_term(
             mp_term_array, pipeline, procedure_group, parameter, mp_chooser
         ),
         mp_term_schema,
