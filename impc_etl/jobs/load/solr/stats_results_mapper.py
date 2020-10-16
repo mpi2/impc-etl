@@ -1782,12 +1782,18 @@ def _select_collapsed_mp_term(
     mp_term = mp_term_array[0].asDict()
     mp_term["sex"] = "not_considered"
     mp_terms = [mp["term_id"] for mp in mp_term_array]
-    if len(set(mp_terms)) > 1:
-        mp_term["term_id"] = mp_chooser[pipeline][procedure_group][parameter][
-            "UNSPECIFIED"
-        ]["ABNORMAL"]["OVERALL"]["MPTERM"]
-    else:
-        mp_term["term_id"] = mp_term_array[0]["term_id"]
+    try:
+        if len(set(mp_terms)) > 1:
+            mp_term["term_id"] = mp_chooser[pipeline][procedure_group][parameter][
+                "UNSPECIFIED"
+            ]["ABNORMAL"]["OVERALL"]["MPTERM"]
+        else:
+            mp_term["term_id"] = mp_term_array[0]["term_id"]
+    except Exception:
+        print(mp_term_array)
+        print(f"{pipeline} {procedure_group} {parameter}")
+        print("Unexpected error:", sys.exc_info()[0])
+        raise
     return [convert_to_row(mp_term)]
 
 
