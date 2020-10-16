@@ -68,7 +68,7 @@ def main(argv):
             output_dict[pipeline][procedure][parameter][sex][selection_outcome][
                 category
             ] = {"MPTERM": ontology_term_dict[ontology_term_id]}
-    output_df = spark.createDataFrame([(json.dumps(output_dict, indent=2))], ["text"])
+    output_df = spark.createDataFrame([{"text": (json.dumps(output_dict, indent=2))}])
     output_df.coalesce(1).write.format("text").option("header", "false").mode(
         "append"
     ).save(output_path)
