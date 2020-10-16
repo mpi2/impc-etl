@@ -330,7 +330,7 @@ class MGIPhenotypeCoreLoader(SparkSubmitTask):
 
 
 class MPChooserLoader(SparkSubmitTask):
-    name = "IMPC_MGI_Phenotype_Loader"
+    name = "IMPC_MP_Chooser_Mapper"
     app = "impc_etl/jobs/load/solr/mp_chooser_mapper.py"
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
