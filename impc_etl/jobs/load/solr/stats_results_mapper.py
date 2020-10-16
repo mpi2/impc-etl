@@ -298,7 +298,8 @@ def main(argv):
     threei_parquet_path = argv[7]
     mpath_metadata_path = argv[8]
     raw_data_in_output = argv[9]
-    output_path = argv[10]
+    mp_chooser_path = argv[10]
+    output_path = argv[11]
     spark = SparkSession.builder.getOrCreate()
     open_stats_df = spark.read.parquet(open_stats_parquet_path)
     ontology_df = spark.read.parquet(ontology_parquet_path)
@@ -309,6 +310,9 @@ def main(argv):
     threei_df = spark.read.csv(threei_parquet_path, header=True)
     threei_df = standardize_threei_schema(threei_df)
     mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
+    mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path)
+    print(mp_chooser_txt)
+    raise ValueError
 
     embryo_stat_packets = open_stats_df.where(
         (
