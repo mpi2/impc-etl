@@ -1791,7 +1791,7 @@ def _select_collapsed_mp_term(
             ]["ABNORMAL"]["OVERALL"]["MPTERM"]
         else:
             mp_term["term_id"] = mp_term_array[0]["term_id"]
-    except Exception:
+    except KeyError:
         print(mp_term_array)
         print(f"{pipeline} {procedure_group} {parameter}")
         print("Unexpected error:", sys.exc_info()[0])
