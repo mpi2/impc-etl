@@ -453,13 +453,15 @@ def main(argv):
     # lit(None).cast(StringType()).alias("otherPossibilities"),
     # "sex",
     # col("term_id").alias("term_id"),
-    mp_term_schema = StructType(
-        [
-            StructField("event", StringType(), True),
-            StructField("otherPossibilities", StringType(), True),
-            StructField("sex", StringType(), True),
-            StructField("term_id", StringType(), True),
-        ]
+    mp_term_schema = ArrayType(
+        StructType(
+            [
+                StructField("event", StringType(), True),
+                StructField("otherPossibilities", StringType(), True),
+                StructField("sex", StringType(), True),
+                StructField("term_id", StringType(), True),
+            ]
+        )
     )
     select_collapsed_mp_term_udf = udf(
         lambda mp_term_array, pipeline, procedure_group, parameter, category: _select_collapsed_mp_term(
