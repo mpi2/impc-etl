@@ -45,6 +45,7 @@ from pyspark.sql.types import (
     IntegerType,
     DoubleType,
     ArrayType,
+    Row,
 )
 
 from impc_etl.config import Constants
@@ -312,8 +313,6 @@ def main(argv):
     mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
     mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path).collect()[0][1]
     mp_chooser = json.loads(mp_chooser_txt)
-    print(mp_chooser)
-    raise ValueError
     embryo_stat_packets = open_stats_df.where(
         (
             (col("procedure_stable_id").contains("IMPC_GPL"))
@@ -450,14 +449,37 @@ def main(argv):
         ).otherwise(array(col("procedure_stable_id"))),
     )
     open_stats_df = open_stats_df.alias("stats")
-
+    # lit(None).cast(StringType()).alias("event"),
+    # lit(None).cast(StringType()).alias("otherPossibilities"),
+    # "sex",
+    # col("term_id").alias("term_id"),
+    mp_term_schema = StructType(
+        [
+            StructField("event", StringType(), True),
+            StructField("otherPossibilities", StringType(), True),
+            StructField("sex", StringType(), True),
+            StructField("term_id", StringType(), True),
+        ]
+    )
+    select_collapsed_mp_term_udf = udf(
+        lambda mp_term_array, pipeline, procedure_group, parameter, category: _select_collapsed_mp_term(
+            mp_term_array, pipeline, procedure_group, parameter, category, mp_chooser
+        ),
+        mp_term_schema,
+    )
     open_stats_df = open_stats_df.withColumn(
         "collapsed_mp_term",
         when(
             expr(
                 "exists(mp_term.sex, sex -> sex = 'male') AND exists(mp_term.sex, sex -> sex = 'female')"
             ),
-            expr("filter(mp_term, mp -> mp.sex NOT IN ('male', 'female'))"),
+            select_collapsed_mp_term_udf(
+                "mp_term",
+                "pipeline_stable_id",
+                "procedure_group",
+                "parameter_stable_id",
+                "category",
+            ),
         ).otherwise(col("mp_term")),
     )
     open_stats_df = open_stats_df.withColumn(
@@ -1749,6 +1771,27 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
         "data_type", lit("adult-gross-path")
     )
     return gross_pathology_stats_results
+
+
+def _select_collapsed_mp_term(
+    mp_term_array: List[Dict],
+    pipeline,
+    procedure_group,
+    parameter,
+    category,
+    mp_chooser,
+):
+    mp_term = mp_term_array[0]
+    mp_term["sex"] = "not_considered"
+    mp_terms = [mp["term_id"] for mp in mp_term_array]
+    category = category if category is not None else "OVERALL"
+    if len(set(mp_terms)) > 1:
+        mp_term["term_id"] = mp_chooser[pipeline][procedure_group][parameter][
+            "UNSPECIFIED"
+        ][category]["ABNORMAL"]["MPTERM"]
+    else:
+        mp_term["term_id"] = mp_term_array[0]["term_id"]
+    return mp_term
 
 
 def stop_and_count(df):
