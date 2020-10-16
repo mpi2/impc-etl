@@ -463,7 +463,7 @@ def main(argv):
     )
     select_collapsed_mp_term_udf = udf(
         lambda mp_term_array, pipeline, procedure_group, parameter, category: _select_collapsed_mp_term(
-            mp_term_array, pipeline, procedure_group, parameter, category, mp_chooser
+            mp_term_array, pipeline, procedure_group, parameter, mp_chooser
         ),
         mp_term_schema,
     )
@@ -478,7 +478,6 @@ def main(argv):
                 "pipeline_stable_id",
                 "procedure_group",
                 "parameter_stable_id",
-                "category",
             ),
         ).otherwise(col("mp_term")),
     )
@@ -1774,21 +1773,15 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
 
 
 def _select_collapsed_mp_term(
-    mp_term_array: List[Dict],
-    pipeline,
-    procedure_group,
-    parameter,
-    category,
-    mp_chooser,
+    mp_term_array: List[Dict], pipeline, procedure_group, parameter, mp_chooser
 ):
     mp_term = mp_term_array[0]
     mp_term["sex"] = "not_considered"
     mp_terms = [mp["term_id"] for mp in mp_term_array]
-    category = category if category is not None else "OVERALL"
     if len(set(mp_terms)) > 1:
         mp_term["term_id"] = mp_chooser[pipeline][procedure_group][parameter][
             "UNSPECIFIED"
-        ][category]["ABNORMAL"]["MPTERM"]
+        ]["OVERALL"]["ABNORMAL"]["MPTERM"]
     else:
         mp_term["term_id"] = mp_term_array[0]["term_id"]
     return mp_term
