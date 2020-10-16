@@ -359,6 +359,17 @@ class MPChooserLoader(SparkSubmitTask):
             )
         ]
 
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f"{self.output_path}mp_chooser.json")
+
+    def app_options(self):
+        return [self.input()[0].path, self.output().path]
+
 
 class MPCoreLoader(SparkSubmitTask):
     name = "IMPC_MGI_Phenotype_Loader"
