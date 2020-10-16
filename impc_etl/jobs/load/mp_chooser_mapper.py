@@ -8,12 +8,13 @@ import os
 
 def main(argv):
     pipeline_core_parquet_path = argv[1]
-    output_path = argv[2]
+    http_proxy = argv[2]
+    output_path = argv[3]
     spark = SparkSession.builder.getOrCreate()
     ontology_terms_list_url = "http://api.mousephenotype.org/impress/ontologyterm/list"
-    print(os.environ)
-    proxies = {"http": os.environ["HTTP_PROXY"], "https": os.environ["HTTP_PROXY"]}
-    ontology_term_dict = requests.get(ontology_terms_list_url, proxies=proxies).json()
+    ontology_term_dict = requests.get(
+        ontology_terms_list_url, proxies={"http": http_proxy, "https": http_proxy}
+    ).json()
     impress_df = spark.read.parquet(pipeline_core_parquet_path)
     mp_chooser = (
         impress_df.where(impress_df.parammpterm.isNotNull())

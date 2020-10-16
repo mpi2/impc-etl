@@ -148,6 +148,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
     mpath_metadata_csv_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
     raw_data_in_output = luigi.Parameter()
+    http_proxy = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -190,6 +191,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
                 imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
             ),
             MPChooserLoader(
+                http_proxy=self.http_proxy,
                 dcc_xml_path=self.dcc_xml_path,
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 imits_alleles_tsv_path=self.imits_alleles_tsv_path,
@@ -341,6 +343,7 @@ class MPChooserLoader(SparkSubmitTask):
     emap_emapa_csv_path = luigi.Parameter()
     emapa_metadata_csv_path = luigi.Parameter()
     ma_metadata_csv_path = luigi.Parameter()
+    http_proxy = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -368,7 +371,7 @@ class MPChooserLoader(SparkSubmitTask):
         return ImpcConfig().get_target(f"{self.output_path}mp_chooser.json")
 
     def app_options(self):
-        return [self.input()[0].path, self.output().path]
+        return [self.input()[0].path, self.http_proxy, self.output().path]
 
 
 class MPCoreLoader(SparkSubmitTask):
