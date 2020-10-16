@@ -472,7 +472,8 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "collapsed_mp_term",
         when(
-            expr(
+            (col("data_type") != "time_series")
+            & expr(
                 "exists(mp_term.sex, sex -> sex = 'male') AND exists(mp_term.sex, sex -> sex = 'female')"
             ),
             select_collapsed_mp_term_udf(
