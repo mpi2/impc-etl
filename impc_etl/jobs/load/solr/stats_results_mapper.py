@@ -1784,6 +1784,8 @@ def _select_collapsed_mp_term(
     mp_terms = [mp["term_id"] for mp in mp_term_array]
     try:
         if len(set(mp_terms)) > 1:
+            print(mp_term_array)
+            print(f"{pipeline} {procedure_group} {parameter}")
             mp_term["term_id"] = mp_chooser[pipeline][procedure_group][parameter][
                 "UNSPECIFIED"
             ]["ABNORMAL"]["OVERALL"]["MPTERM"]
