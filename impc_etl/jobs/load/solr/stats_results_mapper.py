@@ -295,10 +295,10 @@ def main(argv):
     pipeline_parquet_path = argv[4]
     pipeline_core_parquet_path = argv[5]
     allele_parquet_path = argv[6]
-    threei_parquet_path = argv[7]
-    mpath_metadata_path = argv[8]
-    raw_data_in_output = argv[9]
-    mp_chooser_path = argv[10]
+    mp_chooser_path = argv[7]
+    threei_parquet_path = argv[8]
+    mpath_metadata_path = argv[9]
+    raw_data_in_output = argv[10]
     output_path = argv[11]
     spark = SparkSession.builder.getOrCreate()
     open_stats_df = spark.read.parquet(open_stats_parquet_path)
