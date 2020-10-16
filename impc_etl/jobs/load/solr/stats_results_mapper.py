@@ -1785,10 +1785,10 @@ def _select_collapsed_mp_term(
     if len(set(mp_terms)) > 1:
         mp_term["term_id"] = mp_chooser[pipeline][procedure_group][parameter][
             "UNSPECIFIED"
-        ]["OVERALL"]["ABNORMAL"]["MPTERM"]
+        ]["ABNORMAL"]["OVERALL"]["MPTERM"]
     else:
         mp_term["term_id"] = mp_term_array[0]["term_id"]
-    return convert_to_row(mp_term)
+    return [convert_to_row(mp_term)]
 
 
 def stop_and_count(df):
