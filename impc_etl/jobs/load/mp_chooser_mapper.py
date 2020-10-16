@@ -1,3 +1,5 @@
+import sys
+
 from pyspark.sql import DataFrame, SparkSession
 import json
 import requests
@@ -66,3 +68,7 @@ def main(argv):
     output_df.coalesce(1).write.format("text").option("header", "false").mode(
         "append"
     ).save(output_path)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
