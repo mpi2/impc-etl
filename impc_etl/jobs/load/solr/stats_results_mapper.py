@@ -1788,7 +1788,7 @@ def _select_collapsed_mp_term(
         ]["OVERALL"]["ABNORMAL"]["MPTERM"]
     else:
         mp_term["term_id"] = mp_term_array[0]["term_id"]
-    return mp_term
+    return convert_to_row(mp_term)
 
 
 def stop_and_count(df):
