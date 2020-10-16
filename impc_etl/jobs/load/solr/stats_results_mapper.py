@@ -1795,7 +1795,11 @@ def _select_collapsed_mp_term(
         print(mp_term_array)
         print(f"{pipeline} {procedure_group} {parameter}")
         print("Unexpected error:", sys.exc_info()[0])
-        raise
+        raise Exception(
+            str(mp_term_array)
+            + f" | {pipeline} {procedure_group} {parameter} | "
+            + str(sys.exc_info()[0])
+        )
     return [convert_to_row(mp_term)]
 
 
