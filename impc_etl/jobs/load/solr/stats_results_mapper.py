@@ -464,7 +464,7 @@ def main(argv):
         )
     )
     select_collapsed_mp_term_udf = udf(
-        lambda mp_term_array, pipeline, procedure_group, parameter: _select_collapsed_mp_term(
+        lambda mp_term_array, pipeline, procedure_group, parameter, data_type: _select_collapsed_mp_term(
             mp_term_array, pipeline, procedure_group, parameter, mp_chooser
         ),
         mp_term_schema,
@@ -472,8 +472,7 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "collapsed_mp_term",
         when(
-            ~(col("data_type") == "time_series")
-            & expr(
+            expr(
                 "exists(mp_term.sex, sex -> sex = 'male') AND exists(mp_term.sex, sex -> sex = 'female')"
             ),
             select_collapsed_mp_term_udf(
@@ -481,6 +480,7 @@ def main(argv):
                 "pipeline_stable_id",
                 "procedure_group",
                 "parameter_stable_id",
+                "data_type",
             ),
         ).otherwise(col("mp_term")),
     )
@@ -1776,9 +1776,14 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
 
 
 def _select_collapsed_mp_term(
-    mp_term_array: List[Row], pipeline, procedure_group, parameter, mp_chooser
+    mp_term_array: List[Row],
+    pipeline,
+    procedure_group,
+    parameter,
+    mp_chooser,
+    data_type,
 ):
-    if mp_term_array is None:
+    if mp_term_array is None or data_type == "time_series":
         return None
     mp_term = mp_term_array[0].asDict()
     mp_term["sex"] = "not_considered"
