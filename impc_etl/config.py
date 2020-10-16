@@ -148,6 +148,7 @@ class Constants:
         "ESLIM_012_001_005",
         "ESLIM_013_001_018",
         "ESLIM_022_001_001",
+        # "M-G-P_005_001_001",
         "GMC_916_001_022",
         "GMC_908_001_001",
         "GMC_900_001_001",
@@ -161,6 +162,18 @@ class Constants:
         "GMC_920_001_001",
         "GMC_909_001_002",
         "GMC_914_001_001",
+        # "HRWLLA_IPG_001_001",
+        # "UCDLA_IPG_001_001",
+        # "TCPLA_IPG_001_001",
+        # "HRWLLA_PAT_049_002",
+        # "JAXLA_IPG_001_001",
+        # "UCDLA_PAT_049_002",
+        # "KMPCLA_IPG_001_001",
+        # "ICSLA_IPG_001_001",
+        # "KMPCLA_PAT_049_002"
+        # "HMGULA_PAT_049_002"
+        # "TCPLA_PAT_049_002"
+        # "ICSLA_PAT_049_002",
     ]
 
     BODY_WEIGHT_CURVE_PARAMETERS = {
