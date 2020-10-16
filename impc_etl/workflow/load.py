@@ -189,6 +189,18 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             AlleleExtractor(
                 imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
             ),
+            MPChooserLoader(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            ),
         ]
 
     def output(self):
@@ -207,6 +219,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             self.input()[3].path,
             self.input()[4].path,
             self.input()[5].path,
+            self.input()[6].path,
             self.threei_stats_results_csv,
             self.mpath_metadata_csv_path,
             self.raw_data_in_output,
@@ -313,6 +326,37 @@ class MGIPhenotypeCoreLoader(SparkSubmitTask):
             self.input()[1].path,
             self.input()[2].path,
             self.output().path,
+        ]
+
+
+class MPChooserLoader(SparkSubmitTask):
+    name = "IMPC_MGI_Phenotype_Loader"
+    app = "impc_etl/jobs/load/solr/mp_chooser_mapper.py"
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            PipelineCoreLoader(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            )
         ]
 
 
