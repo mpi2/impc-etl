@@ -310,10 +310,10 @@ def main(argv):
     threei_df = spark.read.csv(threei_parquet_path, header=True)
     threei_df = standardize_threei_schema(threei_df)
     mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
-    mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path)
-    print(mp_chooser_txt)
+    mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path)[0][1]
+    mp_chooser = json.loads(mp_chooser_txt)
+    print(mp_chooser)
     raise ValueError
-
     embryo_stat_packets = open_stats_df.where(
         (
             (col("procedure_stable_id").contains("IMPC_GPL"))
