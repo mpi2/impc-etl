@@ -451,14 +451,15 @@ def main(argv):
     open_stats_df = open_stats_df.alias("stats")
 
     mp_ancestors_df = ontology_df.select(
-        "id", "parent_ids", "intermediate_ids", "top_level_ids"
+        "id",
+        struct("parent_ids", "intermediate_ids", "top_level_ids").alias("ancestors"),
     )
 
     open_stats_df = open_stats_df.join(
         mp_ancestors_df.alias("mp_term_1"),
-        when(
-            size("mp_term") > 1, expr("collapsed_mp_term[0].term_id") == "id"
-        ).otherwise(lit(False)),
+        when(size("mp_term") > 1, expr("mp_term[0].term_id") == "id").otherwise(
+            lit(False)
+        ),
         "left_outer",
     )
 
