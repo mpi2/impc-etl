@@ -1828,9 +1828,9 @@ def _select_collapsed_mp_term(
         ancestor_types = ["parent", "intermediate", "top_level"]
         closest_common_ancestor = None
         for ancestor_type in ancestor_types:
-            ancestor_intersect = set(first_term_ancestors[ancestor_type]) & set(
-                second_term_ancestors[ancestor_type]
-            )
+            ancestor_intersect = set(
+                first_term_ancestors[f"{ancestor_type}_ids"]
+            ) & set(second_term_ancestors[f"{ancestor_type}_ids"])
             if len(ancestor_intersect) > 0:
                 closest_common_ancestor = ancestor_intersect[0]
                 break
