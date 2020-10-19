@@ -457,17 +457,17 @@ def main(argv):
 
     open_stats_df = open_stats_df.join(
         mp_ancestors_df.alias("mp_term_1"),
-        when(size("mp_term") > 1, expr("mp_term[0].term_id") == "id").otherwise(
-            lit(False)
-        ),
+        when(
+            size("mp_term") > 1, expr("mp_term[0].term_id") == "mp_term_1.id"
+        ).otherwise(lit(False)),
         "left_outer",
     )
 
     open_stats_df = open_stats_df.join(
         mp_ancestors_df.alias("mp_term_2"),
-        when(size("mp_term") > 1, expr("mp_term[1].term_id") == "id").otherwise(
-            lit(False)
-        ),
+        when(
+            size("mp_term") > 1, expr("mp_term[1].term_id") == "mp_term_2.id"
+        ).otherwise(lit(False)),
         "left_outer",
     )
 
