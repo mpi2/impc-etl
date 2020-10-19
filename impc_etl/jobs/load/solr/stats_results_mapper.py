@@ -1810,8 +1810,8 @@ def _select_collapsed_mp_term(
     first_term_ancestors,
     second_term_ancestors,
 ):
-    if mp_term_array is None or data_type == "time_series":
-        return None
+    if mp_term_array is None or data_type == "time_series" or len(mp_term_array) == 0:
+        return []
     mp_term = mp_term_array[0].asDict()
     mp_term["sex"] = "not_considered"
     mp_terms = [mp["term_id"] for mp in mp_term_array]
