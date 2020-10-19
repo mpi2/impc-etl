@@ -465,13 +465,11 @@ def main(argv):
 
     open_stats_df = open_stats_df.join(
         mp_ancestors_df.alias("mp_term_2"),
-        when(
-            size("mp_term") > 1, expr("mp_term[1].term_id") == "id"
-        ).otherwise(lit(False)),
+        when(size("mp_term") > 1, expr("mp_term[1].term_id") == "id").otherwise(
+            lit(False)
+        ),
         "left_outer",
     )
-    open_stats_df.printSchema()
-    raise ValueError
 
     mp_term_schema = ArrayType(
         StructType(
@@ -484,8 +482,15 @@ def main(argv):
         )
     )
     select_collapsed_mp_term_udf = udf(
-        lambda mp_term_array, pipeline, procedure_group, parameter, data_type: _select_collapsed_mp_term(
-            mp_term_array, pipeline, procedure_group, parameter, mp_chooser, data_type
+        lambda mp_term_array, pipeline, procedure_group, parameter, data_type, first_term_ancestors, second_term_ancestors: _select_collapsed_mp_term(
+            mp_term_array,
+            pipeline,
+            procedure_group,
+            parameter,
+            mp_chooser,
+            data_type,
+            first_term_ancestors,
+            second_term_ancestors,
         ),
         mp_term_schema,
     )
@@ -501,9 +506,12 @@ def main(argv):
                 "procedure_group",
                 "parameter_stable_id",
                 "data_type",
+                "mp_term_1.ancestors",
+                "mp_term_2.ancestors",
             ),
         ).otherwise(col("mp_term")),
     )
+    open_stats_df = open_stats_df.drop("mp_term_1.*", "mp_term_2.*")
     open_stats_df = open_stats_df.withColumn(
         "collapsed_mp_term", expr("collapsed_mp_term[0]")
     )
@@ -1802,6 +1810,8 @@ def _select_collapsed_mp_term(
     parameter,
     mp_chooser,
     data_type,
+    first_term_ancestors,
+    second_term_ancestors,
 ):
     if mp_term_array is None or data_type == "time_series":
         return None
@@ -1818,14 +1828,27 @@ def _select_collapsed_mp_term(
         else:
             mp_term["term_id"] = mp_term_array[0]["term_id"]
     except KeyError:
-        print(mp_term_array)
-        print(f"{pipeline} {procedure_group} {parameter}")
-        print("Unexpected error:", sys.exc_info()[0])
-        raise Exception(
-            str(mp_term_array)
-            + f" | {pipeline} {procedure_group} {parameter} | "
-            + str(sys.exc_info()[0])
-        )
+        ancestor_types = ["parent", "intermediate", "top_level"]
+        closest_common_ancestor = None
+        for ancestor_type in ancestor_types:
+            ancestor_intersect = set(first_term_ancestors[ancestor_type]) & set(
+                second_term_ancestors[ancestor_type]
+            )
+            if len(ancestor_intersect) > 0:
+                closest_common_ancestor = ancestor_intersect[0]
+                break
+        if closest_common_ancestor is None:
+            print(mp_term_array)
+            print(f"{pipeline} {procedure_group} {parameter}")
+            print("Unexpected error:", sys.exc_info()[0])
+            raise Exception(
+                str(mp_term_array)
+                + f" | {pipeline} {procedure_group} {parameter} | "
+                + f"[{str(first_term_ancestors)}] [{str(second_term_ancestors)}]"
+                + str(sys.exc_info()[0])
+            )
+        else:
+            mp_term["term_id"] = closest_common_ancestor
     return [convert_to_row(mp_term)]
 
 
