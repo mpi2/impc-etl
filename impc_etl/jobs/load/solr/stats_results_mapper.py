@@ -466,7 +466,7 @@ def main(argv):
     open_stats_df = open_stats_df.join(
         mp_ancestors_df.alias("mp_term_2"),
         when(
-            size("mp_term") > 1, expr("collapsed_mp_term[1].term_id") == "id"
+            size("mp_term") > 1, expr("mp_term[1].term_id") == "id"
         ).otherwise(lit(False)),
         "left_outer",
     )
