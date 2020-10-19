@@ -457,11 +457,15 @@ def main(argv):
     mp_ancestors_df_1 = mp_ancestors_df.alias("mp_term_1")
     mp_ancestors_df_2 = mp_ancestors_df.alias("mp_term_2")
     open_stats_df = open_stats_df.join(
-        mp_ancestors_df_1, (expr("mp_term[0].term_id") == "mp_term_1.id"), "left_outer"
+        mp_ancestors_df_1,
+        (expr("mp_term[0].term_id") == col("mp_term_1.id")),
+        "left_outer",
     )
 
     open_stats_df = open_stats_df.join(
-        mp_ancestors_df_2, (expr("mp_term[1].term_id") == "mp_term_2.id"), "left_outer"
+        mp_ancestors_df_2,
+        (expr("mp_term[1].term_id") == col("mp_term_2.id")),
+        "left_outer",
     )
 
     mp_term_schema = ArrayType(
