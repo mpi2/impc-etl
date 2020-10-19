@@ -449,10 +449,29 @@ def main(argv):
         ).otherwise(array(col("procedure_stable_id"))),
     )
     open_stats_df = open_stats_df.alias("stats")
-    # lit(None).cast(StringType()).alias("event"),
-    # lit(None).cast(StringType()).alias("otherPossibilities"),
-    # "sex",
-    # col("term_id").alias("term_id"),
+
+    mp_ancestors_df = ontology_df.select(
+        "id", "parent_ids", "intermediate_ids", "top_level_ids"
+    )
+
+    open_stats_df = open_stats_df.join(
+        mp_ancestors_df.alias("mp_term_1"),
+        when(
+            size("mp_term") > 1, expr("collapsed_mp_term[0].term_id") == "id"
+        ).otherwise(lit(False)),
+        "left_outer",
+    )
+
+    open_stats_df = open_stats_df.join(
+        mp_ancestors_df.alias("mp_term_2"),
+        when(
+            size("mp_term") > 1, expr("collapsed_mp_term[1].term_id") == "id"
+        ).otherwise(lit(False)),
+        "left_outer",
+    )
+    open_stats_df.printSchema()
+    raise ValueError
+
     mp_term_schema = ArrayType(
         StructType(
             [
