@@ -454,9 +454,10 @@ def main(argv):
         "id",
         struct("parent_ids", "intermediate_ids", "top_level_ids").alias("ancestors"),
     )
-
+    mp_ancestors_df_1 = mp_ancestors_df.alias("mp_term_1")
+    mp_ancestors_df_2 = mp_ancestors_df.alias("mp_term_2")
     open_stats_df = open_stats_df.join(
-        mp_ancestors_df.alias("mp_term_1"),
+        mp_ancestors_df_1,
         when(
             size("mp_term") > 1, expr("mp_term[0].term_id") == "mp_term_1.id"
         ).otherwise(lit(False)),
@@ -464,7 +465,7 @@ def main(argv):
     )
 
     open_stats_df = open_stats_df.join(
-        mp_ancestors_df.alias("mp_term_2"),
+        mp_ancestors_df_2,
         when(
             size("mp_term") > 1, expr("mp_term[1].term_id") == "mp_term_2.id"
         ).otherwise(lit(False)),
