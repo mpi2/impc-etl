@@ -1832,7 +1832,7 @@ def _select_collapsed_mp_term(
                 first_term_ancestors[f"{ancestor_type}_ids"]
             ) & set(second_term_ancestors[f"{ancestor_type}_ids"])
             if len(ancestor_intersect) > 0:
-                closest_common_ancestor = ancestor_intersect[0]
+                closest_common_ancestor = list(ancestor_intersect)[0]
                 break
         if closest_common_ancestor is None:
             print(mp_term_array)
