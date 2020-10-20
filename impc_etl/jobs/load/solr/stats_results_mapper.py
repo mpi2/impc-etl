@@ -37,6 +37,8 @@ from pyspark.sql.functions import (
     concat,
     max,
     min,
+    least,
+    greatest,
 )
 from pyspark.sql.types import (
     StructType,
@@ -496,7 +498,8 @@ def main(argv):
         when(
             expr(
                 "exists(mp_term.sex, sex -> sex = 'male') AND exists(mp_term.sex, sex -> sex = 'female')"
-            ),
+            )
+            & (col("data_type").isin(["categorical", "unidimensional"])),
             select_collapsed_mp_term_udf(
                 "mp_term",
                 "pipeline_stable_id",
@@ -690,6 +693,34 @@ def main(argv):
     open_stats_df = open_stats_df.withColumn(
         "significant",
         when(col("mp_term_id").isNotNull(), lit(True)).otherwise(lit(False)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "p_value",
+        when(
+            col("statistical_method").startswith("Reference Range"),
+            least(
+                col("female_pvalue_low_normal_vs_high"),
+                col("female_pvalue_low_vs_normal_high"),
+                col("male_pvalue_low_normal_vs_high"),
+                col("male_pvalue_low_vs_normal_high"),
+                col("genotype_pvalue_low_normal_vs_high"),
+                col("genotype_pvalue_low_vs_normal_high"),
+            ),
+        ).otherwise(col("p_value")),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "effect_size",
+        when(
+            col("statistical_method").startswith("Reference Range"),
+            greatest(
+                col("female_effect_size_low_normal_vs_high"),
+                col("female_effect_size_low_vs_normal_high"),
+                col("male_effect_size_low_normal_vs_high"),
+                col("male_effect_size_low_vs_normal_high"),
+                col("genotype_effect_size_low_normal_vs_high"),
+                col("genotype_effect_size_low_vs_normal_high"),
+            ),
+        ).otherwise(col("effect_size")),
     )
     open_stats_df = map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
     mpath_metadata_df = mpath_metadata_df.select(
@@ -1519,7 +1550,11 @@ def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
     )
 
     viability_stats_results = viability_stats_results.withColumn(
-        "statistical_method", lit("Supplied as data")
+        "statistical_method",
+        when(
+            col("procedure_stable_id") == "IMPC_VIA_002",
+            lit("Binomial distribution probability"),
+        ).otherwise(lit("Supplied as data")),
     )
 
     viability_stats_results = viability_stats_results.withColumn(
