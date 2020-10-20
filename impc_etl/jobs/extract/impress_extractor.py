@@ -30,9 +30,9 @@ def main(argv):
     os.environ["HTTP_PROXY"] = http_proxy
     os.environ["HTTPS_PROXY"] = http_proxy
     spark = SparkSession.builder.getOrCreate()
-    impress_df = extract_impress(spark, impress_api_url, impress_root_type)
-
-    ontology_terms = get_ontology_terms(impress_api_url, spark)
+    proxies = {"http": http_proxy, "https": http_proxy}
+    impress_df = extract_impress(spark, impress_api_url, impress_root_type, proxies)
+    ontology_terms = get_ontology_terms(impress_api_url, spark, proxies)
     impress_df = impress_df.join(
         ontology_terms,
         impress_df["parammpterm.ontologyTermId"] == ontology_terms.termId,
@@ -42,7 +42,7 @@ def main(argv):
 
 
 def extract_impress(
-    spark_session: SparkSession, impress_api_url: str, start_type: str
+    spark_session: SparkSession, impress_api_url: str, start_type: str, proxies
 ) -> DataFrame:
     """
 
@@ -54,9 +54,13 @@ def extract_impress(
     impress_api_url = (
         impress_api_url[:-1] if impress_api_url.endswith("/") else impress_api_url
     )
-    root_index = requests.get("{}/{}/list".format(impress_api_url, start_type)).json()
+    root_index = requests.get(
+        "{}/{}/list".format(impress_api_url, start_type), proxies=proxies
+    ).json()
     root_ids = [key for key in root_index.keys()]
-    return get_entities_dataframe(spark_session, impress_api_url, start_type, root_ids)
+    return get_entities_dataframe(
+        spark_session, impress_api_url, start_type, root_ids, proxies
+    )
 
 
 def get_entities_dataframe(
@@ -64,6 +68,7 @@ def get_entities_dataframe(
     impress_api_url,
     impress_type: str,
     impress_ids: List[str],
+    proxies,
 ) -> DataFrame:
     """
 
@@ -74,7 +79,7 @@ def get_entities_dataframe(
     :return:
     """
     entities = [
-        get_impress_entity_by_id(impress_api_url, impress_type, impress_id)
+        get_impress_entity_by_id(impress_api_url, impress_type, impress_id, proxies)
         for impress_id in impress_ids
     ]
     entity_df = spark_session.createDataFrame(
@@ -85,7 +90,7 @@ def get_entities_dataframe(
     entity_df = process_collection(
         spark_session, impress_api_url, current_schema, current_type, entity_df
     )
-    unit_df = get_impress_units(impress_api_url, spark_session)
+    unit_df = get_impress_units(impress_api_url, spark_session, proxies)
     entity_df = entity_df.join(
         unit_df, entity_df["parameter.unit"] == unit_df["unitID"], "left_outer"
     )
@@ -143,7 +148,7 @@ def process_collection(
 
 
 def get_impress_entity_by_ids(
-    impress_api_url: str, impress_type: str, impress_ids: List[int], retries=0
+    impress_api_url: str, impress_type: str, impress_ids: List[int], proxies, retries=0
 ):
     """
 
@@ -158,7 +163,7 @@ def get_impress_entity_by_ids(
     if impress_ids is None or len(impress_ids) == 0:
         return []
     try:
-        response = requests.post(api_call_url, json=impress_ids)
+        response = requests.post(api_call_url, json=impress_ids, proxies=proxies)
         try:
             entity = response.json()
         except json.decoder.JSONDecodeError:
@@ -183,7 +188,7 @@ def get_impress_entity_by_ids(
 
 
 def get_impress_entity_by_id(
-    impress_api_url: str, impress_type: str, impress_id: str, retries=0
+    impress_api_url: str, impress_type: str, impress_id: str, proxies, retries=0
 ):
     """
 
@@ -198,7 +203,7 @@ def get_impress_entity_by_id(
     if impress_id is None:
         return None
     try:
-        response = requests.get(api_call_url, timeout=(5, 14))
+        response = requests.get(api_call_url, timeout=(5, 14), proxies=proxies)
         try:
             entity = response.json()
         except json.decoder.JSONDecodeError:
@@ -223,7 +228,7 @@ def get_impress_entity_by_id(
 
 
 def get_impress_entity_schema(
-    spark_session: SparkSession, impress_api_url: str, impress_type: str
+    spark_session: SparkSession, impress_api_url: str, impress_type: str, proxies
 ):
     """
 
@@ -236,24 +241,27 @@ def get_impress_entity_schema(
         1 if impress_type not in ["increment", "option", "parammpterm"] else 0
     )
     first_entity = requests.get(
-        "{}/{}/{}".format(impress_api_url, impress_type, schema_example)
+        "{}/{}/{}".format(impress_api_url, impress_type, schema_example),
+        proxies=proxies,
     ).text
     entity_rdd = spark_session.sparkContext.parallelize([first_entity])
     return spark_session.read.json(entity_rdd).schema
 
 
-def get_impress_units(impress_api_url, spark_session):
+def get_impress_units(impress_api_url, spark_session, proxies):
     json_obj: Dict = json.loads(
-        requests.get("{}/{}".format(impress_api_url, "unit/list")).text
+        requests.get("{}/{}".format(impress_api_url, "unit/list"), proxies=proxies).text
     )
     unit_index = [{"unitID": key, "unitName": value} for key, value in json_obj.items()]
     entity_rdd = spark_session.sparkContext.parallelize(unit_index)
     return spark_session.read.json(entity_rdd)
 
 
-def get_ontology_terms(impress_api_url, spark_session):
+def get_ontology_terms(impress_api_url, spark_session, proxies):
     json_obj: Dict = json.loads(
-        requests.get("{}/{}".format(impress_api_url, "ontologyterm/list")).text
+        requests.get(
+            "{}/{}".format(impress_api_url, "ontologyterm/list"), proxies=proxies
+        ).text
     )
     unit_index = [{"termId": key, "termAcc": value} for key, value in json_obj.items()]
     entity_rdd = spark_session.sparkContext.parallelize(unit_index)
