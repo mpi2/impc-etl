@@ -92,6 +92,7 @@ class ImpressExtractor(SparkSubmitTask):
     app = "impc_etl/jobs/extract/impress_extractor.py"
     impress_api_url = luigi.Parameter()
     output_path = luigi.Parameter()
+    http_proxy = luigi.Parameter()
     impress_root_type = luigi.Parameter()
 
     def output(self):
@@ -105,7 +106,12 @@ class ImpressExtractor(SparkSubmitTask):
         )
 
     def app_options(self):
-        return [self.impress_api_url, self.output().path, self.impress_root_type]
+        return [
+            self.impress_api_url,
+            self.output().path,
+            self.impress_root_type,
+            self.http_proxy,
+        ]
 
 
 class MGIExtractor(SparkSubmitTask):

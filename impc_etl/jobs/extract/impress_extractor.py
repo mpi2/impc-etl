@@ -12,6 +12,7 @@ import requests
 from impc_etl.shared.utils import convert_to_row
 from impc_etl import logger
 import sys
+import os
 
 
 def main(argv):
@@ -25,7 +26,9 @@ def main(argv):
     impress_api_url = argv[1]
     output_path = argv[2]
     impress_root_type = argv[3]
-
+    http_proxy = argv[4]
+    os.environ["HTTP_PROXY"] = http_proxy
+    os.environ["HTTPS_PROXY"] = http_proxy
     spark = SparkSession.builder.getOrCreate()
     impress_df = extract_impress(spark, impress_api_url, impress_root_type)
 
