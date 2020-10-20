@@ -7,7 +7,7 @@ import json
 import time
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType, ArrayType
-from pyspark.sql.functions import udf, explode_outer, col
+from pyspark.sql.functions import udf, explode_outer
 import requests
 from impc_etl.shared.utils import convert_to_row
 from impc_etl import logger
@@ -88,7 +88,7 @@ def get_entities_dataframe(
     current_type = ""
     current_schema = entity_df.schema
     entity_df = process_collection(
-        spark_session, impress_api_url, current_schema, current_type, entity_df
+        spark_session, impress_api_url, current_schema, current_type, entity_df, proxies
     )
     unit_df = get_impress_units(impress_api_url, spark_session, proxies)
     entity_df = entity_df.join(
@@ -98,7 +98,7 @@ def get_entities_dataframe(
 
 
 def process_collection(
-    spark_session, impress_api_url, current_schema, current_type, entity_df
+    spark_session, impress_api_url, current_schema, current_type, entity_df, proxies
 ):
     """
 
@@ -117,11 +117,11 @@ def process_collection(
             if current_type != "":
                 column_name = current_type + "." + column_name
             sub_entity_schema = get_impress_entity_schema(
-                spark_session, impress_api_url, impress_subtype
+                spark_session, impress_api_url, impress_subtype, proxies
             )
             get_entities_udf = udf(
                 lambda x: get_impress_entity_by_ids(
-                    impress_api_url, impress_subtype, x
+                    impress_api_url, impress_subtype, x, proxies
                 ),
                 ArrayType(StructType(sub_entity_schema)),
             )
@@ -143,6 +143,7 @@ def process_collection(
             collection_type["schema"],
             collection_type["type"],
             entity_df,
+            proxies,
         )
     return entity_df
 
