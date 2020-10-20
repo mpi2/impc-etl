@@ -535,7 +535,6 @@ def get_derived_parameters(
     else:
         result_return = struct(
             *[
-                lit(None).cast(StringType()).alias("_VALUE"),
                 results_df["parameterKey"].alias("_parameterID"),
                 results_df["unitName"].alias("_unit"),
                 lit(None).cast(StringType()).alias("parameterStatus"),
