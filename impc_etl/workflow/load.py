@@ -249,6 +249,7 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
     ma_metadata_csv_path = luigi.Parameter()
     mpath_metadata_csv_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
+    http_proxy = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):

@@ -83,6 +83,7 @@ class ImpcSolrCores(luigi.Task):
                 mpath_metadata_csv_path=self.mpath_metadata_csv_path,
                 threei_stats_results_csv=self.threei_stats_results_csv,
                 raw_data_in_output="exclude",
+                http_proxy=self.http_proxy,
                 output_path=self.output_path,
             ),
             StatsResultsCoreLoader(
