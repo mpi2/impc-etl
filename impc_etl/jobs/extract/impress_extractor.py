@@ -184,7 +184,10 @@ def get_impress_entity_by_ids(
                 "Max retries for "
                 + "{}/{}/multiple".format(impress_api_url, impress_type)
             )
-            entity = []
+            raise Exception(
+                "Max retries for "
+                + "{}/{}/multiple".format(impress_api_url, impress_type)
+            )
     return entity
 
 
@@ -224,7 +227,10 @@ def get_impress_entity_by_id(
                 "Max retries for "
                 + "{}/{}/{}".format(impress_api_url, impress_type, impress_id)
             )
-            entity = None
+            raise Exception(
+                "Max retries for "
+                + "{}/{}/multiple".format(impress_api_url, impress_type)
+            )
     return entity
 
 
