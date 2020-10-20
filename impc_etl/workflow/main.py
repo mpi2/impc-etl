@@ -48,6 +48,7 @@ class ImpcSolrCores(luigi.Task):
     threei_stats_results_csv = luigi.Parameter()
     embryo_data_json_path = luigi.Parameter()
     omero_ids_csv_path = luigi.Parameter()
+    http_proxy = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -102,6 +103,7 @@ class ImpcSolrCores(luigi.Task):
                 mpath_metadata_csv_path=self.mpath_metadata_csv_path,
                 threei_stats_results_csv=self.threei_stats_results_csv,
                 raw_data_in_output="exclude",
+                http_proxy=self.http_proxy,
                 output_path=self.output_path,
             ),
             MGIPhenotypeCoreLoader(
