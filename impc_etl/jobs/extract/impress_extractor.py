@@ -177,7 +177,7 @@ def get_impress_entity_by_ids(
         if retries < 4:
             time.sleep(1)
             entity = get_impress_entity_by_ids(
-                impress_api_url, impress_type, impress_ids, retries + 1
+                impress_api_url, impress_type, impress_ids, proxies, retries + 1
             )
         else:
             logger.info(
@@ -220,7 +220,7 @@ def get_impress_entity_by_id(
         if retries < 4:
             time.sleep(1)
             entity = get_impress_entity_by_id(
-                impress_api_url, impress_type, impress_id, retries + 1
+                impress_api_url, impress_type, impress_id, proxies, retries + 1
             )
         else:
             logger.info(
