@@ -56,8 +56,15 @@ def extract_impress(
     )
     root_index = requests.get(
         "{}/{}/list".format(impress_api_url, start_type), proxies=proxies
-    ).json()
-    root_ids = [key for key in root_index.keys()]
+    )
+    try:
+        entity = root_index.json()
+    except json.decoder.JSONDecodeError:
+        logger.info("{}/{}/list".format(impress_api_url, start_type))
+        logger.info("         " + root_index.text)
+        if root_index.text == "":
+            raise requests.exceptions.RequestException(response=root_index)
+    root_ids = [key for key in entity.keys()]
     return get_entities_dataframe(
         spark_session, impress_api_url, start_type, root_ids, proxies
     )
