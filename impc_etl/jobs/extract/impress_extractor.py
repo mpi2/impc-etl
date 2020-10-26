@@ -62,8 +62,7 @@ def extract_impress(
     except json.decoder.JSONDecodeError:
         logger.info("{}/{}/list".format(impress_api_url, start_type))
         logger.info("         " + root_index.text)
-        if root_index.text == "":
-            raise requests.exceptions.RequestException(response=root_index)
+        raise requests.exceptions.RequestException(response=root_index)
     root_ids = [key for key in entity.keys()]
     return get_entities_dataframe(
         spark_session, impress_api_url, start_type, root_ids, proxies
@@ -177,9 +176,7 @@ def get_impress_entity_by_ids(
         except json.decoder.JSONDecodeError:
             logger.info("{}/{}/multiple".format(impress_api_url, impress_type))
             logger.info("         " + response.text)
-            if response.text == "":
-                raise requests.exceptions.RequestException(response=response)
-            entity = []
+            raise requests.exceptions.RequestException(response=response)
     except requests.exceptions.RequestException as e:
         if retries < 4:
             time.sleep(1)
@@ -220,9 +217,7 @@ def get_impress_entity_by_id(
         except json.decoder.JSONDecodeError:
             logger.info("{}/{}/{}".format(impress_api_url, impress_type, impress_id))
             logger.info("         " + response.text)
-            if response.text == "":
-                raise requests.exceptions.RequestException(response=response)
-            entity = None
+            raise requests.exceptions.RequestException(response=response)
     except requests.exceptions.RequestException as e:
         if retries < 4:
             time.sleep(1)
