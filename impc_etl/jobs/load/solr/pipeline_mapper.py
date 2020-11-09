@@ -120,8 +120,8 @@ def main(argv):
     pipeline_categories_df = pipeline_df.select(
         "fully_qualified_name",
         when(
-            col("option.name").rlike("^\d+$") & col("options.description").isNotNull(),
-            col("options.description"),
+            col("option.name").rlike("^\d+$") & col("option.description").isNotNull(),
+            col("option.description"),
         )
         .otherwise(col("option.name"))
         .alias("name"),
