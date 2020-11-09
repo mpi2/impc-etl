@@ -117,7 +117,15 @@ def main(argv):
         observations_df, "fully_qualified_name", "left_outer"
     )
 
-    pipeline_categories_df = pipeline_df.select("fully_qualified_name", "option.name")
+    pipeline_categories_df = pipeline_df.select(
+        "fully_qualified_name",
+        when(
+            col("option.name").rlike("^\d+$") & col("options.description").isNotNull(),
+            col("options.description"),
+        )
+        .otherwise(col("option.name"))
+        .alias("name"),
+    )
     pipeline_categories_df = pipeline_categories_df.groupBy("fully_qualified_name").agg(
         collect_set("name").alias("categories")
     )
