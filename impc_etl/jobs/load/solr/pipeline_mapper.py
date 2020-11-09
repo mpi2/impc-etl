@@ -239,6 +239,15 @@ def main(argv):
     pipeline_df = pipeline_df.withColumn(
         "top_level_mouse_anatomy_term", col("top_level_terms")
     )
+    missing_parameter_information_df = pipeline_df.where(
+        col("parameter_stable_id").isNull()
+    )
+    missing_parameter_rows = missing_parameter_information_df.collect()
+    if len(missing_parameter_rows) > 0:
+        print("MISSING PARAMETERS")
+        for missing in missing_parameter_rows:
+            print(missing.asDict())
+    pipeline_df = pipeline_df.where(col("parameter_stable_id").isNotNull())
     pipeline_df = pipeline_df.drop(*ontology_df.columns)
     pipeline_df.write.parquet(output_path)
 
