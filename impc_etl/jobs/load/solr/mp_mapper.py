@@ -117,6 +117,7 @@ def main(argv):
             "impc:hpLabel",
         ),
     )
+    mp_df = mp_df.withColumn("mp_term_synonym", col("oio:hasExactSynonym"))
 
     ma_df = ontology_df.where(
         (~col("id").startswith("MP:")) & (~col("id").startswith("MPATH:"))
