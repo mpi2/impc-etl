@@ -848,7 +848,7 @@ def _parse_raw_data(open_stats_df):
         "time_point",
         when(
             (col("data_type") == "time_series") & (col("time_point").isNotNull()),
-            from_json(col("time_point"), ArrayType(StringType(), True)),
+            col("time_point"),
         ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
     open_stats_df = open_stats_df.withColumn(
