@@ -679,24 +679,6 @@ def main(argv):
         ).otherwise(col("phenotype_sex")),
     )
     open_stats_df = open_stats_df.withColumn(
-        "procedure_stable_id_str", concat_ws(",", "procedure_stable_id")
-    )
-    identifying_cols = [
-        "colony_id",
-        "pipeline_stable_id",
-        "procedure_stable_id_str",
-        "parameter_stable_id",
-        "phenotyping_center",
-        "production_center",
-        "metadata_group",
-        "zygosity",
-    ]
-    identifying_cols = [
-        when(col(col_name).isNotNull(), col(col_name)).otherwise(lit(""))
-        for col_name in identifying_cols
-    ]
-    open_stats_df = open_stats_df.withColumn("doc_id", md5(concat(*identifying_cols)))
-    open_stats_df = open_stats_df.withColumn(
         "zygosity",
         when(col("zygosity") == "homozygous", lit("homozygote")).otherwise(
             col("zygosity")
@@ -762,6 +744,26 @@ def main(argv):
             col("status")
         ),
     )
+
+    open_stats_df = open_stats_df.withColumn(
+        "procedure_stable_id_str", concat_ws(",", "procedure_stable_id")
+    )
+    identifying_cols = [
+        "colony_id",
+        "pipeline_stable_id",
+        "procedure_stable_id_str",
+        "parameter_stable_id",
+        "phenotyping_center",
+        "production_center",
+        "metadata_group",
+        "zygosity",
+        "strain_accession_id",
+    ]
+    identifying_cols = [
+        when(col(col_name).isNotNull(), col(col_name)).otherwise(lit(""))
+        for col_name in identifying_cols
+    ]
+    open_stats_df = open_stats_df.withColumn("doc_id", md5(concat(*identifying_cols)))
     if raw_data_in_output == "include":
         open_stats_df = _parse_raw_data(open_stats_df)
     open_stats_df = open_stats_df.withColumn(
