@@ -792,7 +792,7 @@ def main(argv):
     stats_results_df.distinct().write.parquet(output_path)
     # if raw_data_in_output == "include":
     #     raw_data_df = open_stats_df.select("doc_id", "raw_data")
-    #     raw_data_df.write.parquet(output_path + "_raw_data")
+    #     raw_data_df.distinct().write.parquet(output_path + "_raw_data")
 
 
 def _compress_and_encode(json_text):
@@ -955,6 +955,7 @@ def map_to_stats(
 
 
 def standardize_threei_schema(threei_df: DataFrame):
+    threei_df = threei_df.dropDuplicates()
     for col_name, threei_column in THREEI_STATS_MAP.items():
         threei_df = threei_df.withColumnRenamed(threei_column, col_name)
     threei_df = threei_df.withColumn("resource_name", lit("3i"))
@@ -1816,7 +1817,7 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
         *[
             col_name
             for col_name in required_stats_columns
-            if col_name not in ["sex", "term_id"]
+            if col_name not in ["sex", "sub_term_id", "sub_term_name"]
         ]
     ).agg(
         collect_set(
