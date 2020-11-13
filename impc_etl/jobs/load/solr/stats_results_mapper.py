@@ -790,9 +790,9 @@ def main(argv):
     )
     stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
     stats_results_df.distinct().write.parquet(output_path)
-    # if raw_data_in_output == "include":
-    #     raw_data_df = open_stats_df.select("doc_id", "raw_data")
-    #     raw_data_df.distinct().write.parquet(output_path + "_raw_data")
+    if raw_data_in_output == "include":
+        raw_data_df = open_stats_df.select("doc_id", "raw_data")
+        raw_data_df.distinct().write.parquet(output_path + "_raw_data")
 
 
 def _compress_and_encode(json_text):
