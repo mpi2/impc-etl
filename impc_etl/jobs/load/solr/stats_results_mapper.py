@@ -758,6 +758,7 @@ def main(argv):
         "metadata_group",
         "zygosity",
         "strain_accession_id",
+        "sex",
     ]
     identifying_cols = [
         when(col(col_name).isNotNull(), col(col_name)).otherwise(lit(""))

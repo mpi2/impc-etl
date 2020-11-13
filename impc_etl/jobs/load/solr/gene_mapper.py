@@ -20,6 +20,8 @@ from pyspark.sql.functions import (
     sort_array,
     udf,
     size,
+    array,
+    array_except,
 )
 import requests
 import json
@@ -170,7 +172,14 @@ def main(argv):
     stats_results_df = stats_results_df.withColumn(
         "life_stage_name", explode("life_stage_name")
     )
-
+    stats_results_df = stats_results_df.withColumn(
+        "top_level_mp_term_name",
+        when(
+            (size("top_level_mp_term_name") == 0)
+            | col("top_level_mp_term_name").isNull(),
+            array("mp_term_name"),
+        ).otherwise(col("top_level_mp_term_name")),
+    )
     significant_mp_term = stats_results_df.select(
         "gene_accession_id", "top_level_mp_term_name", "significant"
     )
@@ -188,6 +197,12 @@ def main(argv):
                 lit(None)
             )
         ).alias("not_significant_top_level_mp_terms"),
+    )
+    significant_mp_term = significant_mp_term.withColumn(
+        "not_significant_top_level_mp_terms",
+        array_except(
+            "not_significant_top_level_mp_terms", "significant_top_level_mp_terms"
+        ),
     )
     significant_mp_term = significant_mp_term.withColumnRenamed(
         "gene_accession_id", "mgi_accession_id"
