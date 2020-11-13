@@ -39,6 +39,7 @@ from pyspark.sql.functions import (
     min,
     least,
     greatest,
+    concat_ws,
 )
 from pyspark.sql.types import (
     StructType,
@@ -677,11 +678,13 @@ def main(argv):
             ).otherwise(array(col("mp_term_sex"))),
         ).otherwise(col("phenotype_sex")),
     )
-
+    open_stats_df = open_stats_df.withColumn(
+        "procedure_stable_id_str", concat_ws(",", "procedure_stable_id")
+    )
     identifying_cols = [
         "colony_id",
         "pipeline_stable_id",
-        "procedure_stable_id",
+        "procedure_stable_id_str",
         "parameter_stable_id",
         "phenotyping_center",
         "production_center",
