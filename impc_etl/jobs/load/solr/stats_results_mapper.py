@@ -305,7 +305,7 @@ def main(argv):
     raw_data_in_output = argv[10]
     output_path = argv[11]
     spark = SparkSession.builder.getOrCreate()
-    open_stats_df = spark.read.parquet(open_stats_parquet_path)
+    open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
     ontology_df = spark.read.parquet(ontology_parquet_path)
     allele_df = spark.read.parquet(allele_parquet_path)
     pipeline_df = spark.read.parquet(pipeline_parquet_path)
@@ -316,7 +316,7 @@ def main(argv):
     mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
     mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path).collect()[0][1]
     mp_chooser = json.loads(mp_chooser_txt)
-    embryo_stat_packets = open_stats_df.where(
+    embryo_stat_packets = open_stats_complete_df.where(
         (
             (col("procedure_group").contains("IMPC_GPL"))
             | (col("procedure_group").contains("IMPC_GEL"))
@@ -329,7 +329,7 @@ def main(argv):
         )
     )
 
-    open_stats_df = open_stats_df.where(
+    open_stats_df = open_stats_complete_df.where(
         ~(
             col("procedure_stable_id").contains("IMPC_FER_001")
             | (col("procedure_stable_id").contains("IMPC_VIA_001"))
