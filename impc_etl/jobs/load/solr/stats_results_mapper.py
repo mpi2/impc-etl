@@ -684,6 +684,7 @@ def main(argv):
         "procedure_stable_id",
         "parameter_stable_id",
         "phenotyping_center",
+        "production_center",
         "metadata_group",
         "zygosity",
     ]
