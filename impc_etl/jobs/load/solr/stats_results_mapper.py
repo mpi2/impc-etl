@@ -677,9 +677,21 @@ def main(argv):
             ).otherwise(array(col("mp_term_sex"))),
         ).otherwise(col("phenotype_sex")),
     )
-    open_stats_df = open_stats_df.withColumn(
-        "doc_id", monotonically_increasing_id().astype(StringType())
-    )
+
+    identifying_cols = [
+        "colony_id",
+        "pipeline_stable_id",
+        "procedure_stable_id",
+        "parameter_stable_id",
+        "phenotyping_center",
+        "metadata_group",
+        "zygosity",
+    ]
+    identifying_cols = [
+        when(col(col_name).isNotNull(), col(col_name)).otherwise(lit(""))
+        for col_name in identifying_cols
+    ]
+    open_stats_df = open_stats_df.withColumn("doc_id", md5(concat(*identifying_cols)))
     open_stats_df = open_stats_df.withColumn(
         "zygosity",
         when(col("zygosity") == "homozygous", lit("homozygote")).otherwise(
