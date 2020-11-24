@@ -303,7 +303,8 @@ def main(argv):
     threei_parquet_path = argv[8]
     mpath_metadata_path = argv[9]
     raw_data_in_output = argv[10]
-    output_path = argv[11]
+    extract_windowed_data = argv[11]
+    output_path = argv[12]
     spark = SparkSession.builder.getOrCreate()
     open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
     ontology_df = spark.read.parquet(ontology_parquet_path)
@@ -475,7 +476,7 @@ def main(argv):
         StructType(
             [
                 StructField("event", StringType(), True),
-                StructField("otherPossibilities", StringType(), True),
+                # StructField("otherPossibilities", StringType(), True),
                 StructField("sex", StringType(), True),
                 StructField("term_id", StringType(), True),
             ]
@@ -789,6 +790,12 @@ def main(argv):
         ).otherwise(col("data_type")),
     )
     stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
+    stats_results_df.printSchema()
+    for col_name in stats_results_df.columns:
+        if dict(stats_results_df.dtypes)[col_name] == "null":
+            stats_results_df = stats_results_df.withColumn(
+                col_name, lit(None).astype(StringType())
+            )
     stats_results_df.write.parquet(output_path)
     if raw_data_in_output == "include":
         raw_data_df = open_stats_df.select("doc_id", "raw_data")
@@ -836,15 +843,19 @@ def _parse_raw_data(open_stats_df):
                     col("data_type").isin(
                         ["unidimensional", "time_series", "categorical"]
                     )
+                    & (col(col_name).isNotNull())
                 ),
-                from_json(col(col_name), ArrayType(StringType(), True)),
+                col(col_name),
             ).otherwise(lit(None)),
         )
     open_stats_df = open_stats_df.withColumn(
         "body_weight",
         when(
-            (col("data_type").isin(["unidimensional", "time_series", "categorical"])),
-            from_json(col("body_weight"), ArrayType(DoubleType(), True)),
+            (
+                col("data_type").isin(["unidimensional", "time_series", "categorical"])
+                & (col("body_weight").isNotNull())
+            ),
+            col("body_weight"),
         ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
     open_stats_df = open_stats_df.withColumn(
@@ -852,7 +863,7 @@ def _parse_raw_data(open_stats_df):
         when(
             (col("data_type").isin(["unidimensional", "time_series"]))
             & (col("observations_response").isNotNull()),
-            from_json(col("observations_response"), ArrayType(DoubleType(), True)),
+            col("observations_response"),
         ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
     open_stats_df = open_stats_df.withColumn(
@@ -860,7 +871,7 @@ def _parse_raw_data(open_stats_df):
         when(
             (col("data_type") == "categorical")
             & (col("observations_response").isNotNull()),
-            from_json(col("observations_response"), ArrayType(StringType(), True)),
+            col("observations_response"),
         ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
     open_stats_df = open_stats_df.withColumn(
@@ -874,7 +885,7 @@ def _parse_raw_data(open_stats_df):
         "discrete_point",
         when(
             (col("data_type") == "time_series") & (col("discrete_point").isNotNull()),
-            from_json(col("discrete_point"), ArrayType(DoubleType(), True)),
+            col("discrete_point"),
         ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
     raw_data_cols = [
@@ -980,7 +991,7 @@ def standardize_threei_schema(threei_df: DataFrame):
             (col("mp_id") != "NA") & (col("mp_id").isNotNull()),
             struct(
                 lit(None).cast(StringType()).alias("event"),
-                lit(None).cast(StringType()).alias("otherPossibilities"),
+                # lit(None).cast(StringType()).alias("otherPossibilities"),
                 "sex",
                 col("term_id").alias("term_id"),
             ),
@@ -1157,7 +1168,7 @@ def _fertility_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
         collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
-                lit(None).cast(StringType()).alias("otherPossibilities"),
+                # lit(None).cast(StringType()).alias("otherPossibilities"),
                 "sex",
                 col("termAcc").alias("term_id"),
             )
@@ -1281,7 +1292,7 @@ def _embryo_stats_results(
         collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
-                lit(None).cast(StringType()).alias("otherPossibilities"),
+                # lit(None).cast(StringType()).alias("otherPossibilities"),
                 col("sex"),
                 col("termAcc").alias("term_id"),
             )
@@ -1401,7 +1412,7 @@ def _embryo_viability_stats_results(observations_df: DataFrame, pipeline_df: Dat
         collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
-                lit(None).cast(StringType()).alias("otherPossibilities"),
+                # lit(None).cast(StringType()).alias("otherPossibilities"),
                 lit("not_considered").cast(StringType()).alias("sex"),
                 col("termAcc").alias("term_id"),
             )
@@ -1609,7 +1620,7 @@ def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
         collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
-                lit(None).cast(StringType()).alias("otherPossibilities"),
+                # lit(None).cast(StringType()).alias("otherPossibilities"),
                 lit("not_considered").cast(StringType()).alias("sex"),
                 col("termAcc").alias("term_id"),
             )
@@ -1623,7 +1634,7 @@ def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
             array(
                 struct(
                     lit("ABNORMAL").cast(StringType()).alias("event"),
-                    lit(None).cast(StringType()).alias("otherPossibilities"),
+                    # lit(None).cast(StringType()).alias("otherPossibilities"),
                     when(col("parameter_name").contains(" males "), lit("male"))
                     .when(col("parameter_name").contains(" females "), lit("female"))
                     .otherwise(lit("not_considered"))
@@ -1732,7 +1743,7 @@ def _histopathology_stats_results(observations_df: DataFrame):
         collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
-                lit(None).cast(StringType()).alias("otherPossibilities"),
+                # lit(None).cast(StringType()).alias("otherPossibilities"),
                 col("sex"),
                 col("term_id"),
             )
@@ -1823,7 +1834,7 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
         collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
-                lit(None).cast(StringType()).alias("otherPossibilities"),
+                # lit(None).cast(StringType()).alias("otherPossibilities"),
                 col("sex"),
                 col("term_id"),
             )
