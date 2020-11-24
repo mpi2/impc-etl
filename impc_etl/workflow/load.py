@@ -213,7 +213,12 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return ImpcConfig().get_target(f"{self.output_path}stats_results_parquet")
+        if self.extract_windowed_data == "true":
+            return ImpcConfig().get_target(
+                f"{self.output_path}stats_results_parquet_with_windowing"
+            )
+        else:
+            return ImpcConfig().get_target(f"{self.output_path}stats_results_parquet")
 
     def app_options(self):
         return [
