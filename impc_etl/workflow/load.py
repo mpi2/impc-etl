@@ -148,6 +148,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
     mpath_metadata_csv_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
     raw_data_in_output = luigi.Parameter()
+    extract_windowed_data = luigi.Parameter()
     http_proxy = luigi.Parameter()
     output_path = luigi.Parameter()
 
@@ -159,6 +160,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
                 openstats_db_password=self.openstats_db_password,
                 data_release_version=self.data_release_version,
                 use_cache=self.use_cache,
+                extract_windowed_data=self.extract_windowed_data,
                 raw_data_in_output=self.raw_data_in_output,
                 output_path=self.output_path,
             ),
@@ -225,6 +227,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             self.threei_stats_results_csv,
             self.mpath_metadata_csv_path,
             self.raw_data_in_output,
+            self.extract_windowed_data,
             self.output().path,
         ]
 
@@ -272,6 +275,7 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
                 mpath_metadata_csv_path=self.mpath_metadata_csv_path,
                 threei_stats_results_csv=self.threei_stats_results_csv,
                 raw_data_in_output="exclude",
+                extract_windowed_data="false",
                 http_proxy=self.http_proxy,
                 output_path=self.output_path,
             ),
@@ -461,6 +465,7 @@ class GeneCoreLoader(SparkSubmitTask):
     threei_stats_results_csv = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     imits_alleles_tsv_path = luigi.Parameter()
+    http_proxy = luigi.Parameter()
 
     def output(self):
         self.output_path = (
@@ -512,6 +517,7 @@ class GeneCoreLoader(SparkSubmitTask):
                 mpath_metadata_csv_path=self.mpath_metadata_csv_path,
                 threei_stats_results_csv=self.threei_stats_results_csv,
                 raw_data_in_output="exclude",
+                extract_windowed_data="false",
                 output_path=self.output_path,
             ),
             OntologyMetadataExtractor(

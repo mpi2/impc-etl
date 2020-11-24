@@ -203,6 +203,7 @@ class OpenStatsExtractor(SparkSubmitTask):
     data_release_version = luigi.Parameter()
     use_cache = luigi.Parameter()
     raw_data_in_output = luigi.Parameter()
+    extract_windowed_data = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def output(self):
@@ -215,6 +216,10 @@ class OpenStatsExtractor(SparkSubmitTask):
             return ImpcConfig().get_target(
                 f"{self.output_path}open_stats_parquet_with_raw_data"
             )
+        elif self.extract_windowed_data == "true":
+            return ImpcConfig().get_target(
+                f"{self.output_path}open_stats_parquet_with_windowed_data"
+            )
         else:
             return ImpcConfig().get_target(f"{self.output_path}open_stats_parquet")
 
@@ -226,5 +231,6 @@ class OpenStatsExtractor(SparkSubmitTask):
             self.data_release_version,
             self.use_cache,
             self.raw_data_in_output,
+            self.extract_windowed_data,
             self.output().path,
         ]

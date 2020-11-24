@@ -17,8 +17,9 @@ def main(argv):
     db_password = argv[3]
     data_release_version = argv[4]
     use_cache = argv[5]
-    raw_data_in_output = argv[6]
-    output_path = argv[7]
+    raw_data_in_output = argv[6] == "include"
+    extract_windowed_data = argv[7] == "true"
+    output_path = argv[8]
 
     properties = {
         "user": db_user,
@@ -40,9 +41,14 @@ def main(argv):
         stats_df = stats_df.withColumnRenamed("statpacket", "json")
         stats_df.write.mode("overwrite").parquet(output_path + "_temp")
     stats_df = spark.read.parquet(output_path + "_temp").repartition(10000)
-    dumping_function = (
-        dump_json if raw_data_in_output == "exclude" else dump_json_raw_data
-    )
+    if extract_windowed_data:
+        stats_df = stats_df.where(col("json").contains("Windowed result"))
+
+    dumping_function = dump_json
+    if raw_data_in_output:
+        dumping_function = dump_json_raw_data
+    if extract_windowed_data:
+        dumping_function = dump_json_windowed_data
     stats_df.rdd.map(dumping_function).saveAsTextFile(output_path + "_json_temp")
     json_df = spark.read.json(output_path + "_json_temp", mode="FAILFAST")
     json_df.write.mode("overwrite").parquet(output_path)
@@ -76,6 +82,12 @@ def object_pairs_hook(lit):
     )
 
 
+def dump_json_windowed_data(row):
+    stats_result = _get_stat_result(row, True, True)
+    json_str = json.dumps(stats_result)
+    return json_str
+
+
 def dump_json_raw_data(row):
     stats_result = _get_stat_result(row, True)
     json_str = json.dumps(stats_result)
@@ -88,7 +100,7 @@ def dump_json(row):
     return json_str
 
 
-def _get_stat_result(row, include_raw_data=False):
+def _get_stat_result(row, include_raw_data=False, extract_windowed_data=False):
     packet_result_map = {
         "gene_accession_id": "marker_accession_id",
         "gene_symbol": "marker_symbol",
@@ -105,7 +117,12 @@ def _get_stat_result(row, include_raw_data=False):
 
     if stats_result["status"] == "Successful":
         try:
-            normal_result = stats_packet["Result"]["Vector output"]["Normal result"]
+            if extract_windowed_data:
+                normal_result = stats_packet["Result"]["Vector output"][
+                    "Windowed result"
+                ]
+            else:
+                normal_result = stats_packet["Result"]["Vector output"]["Normal result"]
             stats_result["statistical_method"] = (
                 normal_result["Applied method"]
                 if "Applied method" in normal_result
@@ -162,6 +179,34 @@ def _get_stat_result(row, include_raw_data=False):
             if "Original_sex" in stats_packet_detail
             else []
         )
+        if extract_windowed_data:
+            window_parameters = stats_packet_detail["Window parameters"]
+            stats_result["window_l_value"] = window_parameters["l"]["value"]
+            stats_result["window_l_score"] = window_parameters["l"]["score"]
+            stats_result["window_k_value"] = window_parameters["k"]["value"]
+            stats_result["window_k_score"] = window_parameters["k"]["score"]
+            stats_result["window_doe"] = window_parameters["DOE"]
+            stats_result["window_min_obs_required"] = window_parameters[
+                "Min obs required in the window"
+            ]
+            stats_result["window_total_obs_or_weight"] = window_parameters[
+                "Total obs or weight in the window"
+            ]
+            stats_result["window_threshold"] = window_parameters["Threshold"]
+            stats_result["window_number_of_doe"] = window_parameters[
+                "The number of DOE in the window"
+            ]
+            stats_result["window_doe_note"] = window_parameters["DOE note"]
+            weight_dictionary = dict(
+                zip(
+                    window_parameters["external_sample_id"],
+                    window_parameters["Window weights"],
+                )
+            )
+            stats_result["observations_window_weight"] = [
+                weight_dictionary[sample_id]
+                for sample_id in stats_result["observations_external_sample_id"]
+            ]
     return stats_result
 
 
@@ -526,6 +571,7 @@ def get_calculation_details(normal_result, applied_method):
                 "Gender included in analysis"
             ]
             if "Additional information" in normal_result
+            and "Analysis" in normal_result["Additional information"]
             else None
         )
         calculation_details["weight_effect_p_value"] = (
