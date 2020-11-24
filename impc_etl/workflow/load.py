@@ -461,6 +461,7 @@ class GeneCoreLoader(SparkSubmitTask):
     threei_stats_results_csv = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     imits_alleles_tsv_path = luigi.Parameter()
+    http_proxy = luigi.Parameter()
 
     def output(self):
         self.output_path = (
@@ -512,6 +513,7 @@ class GeneCoreLoader(SparkSubmitTask):
                 mpath_metadata_csv_path=self.mpath_metadata_csv_path,
                 threei_stats_results_csv=self.threei_stats_results_csv,
                 raw_data_in_output="exclude",
+                http_proxy=self.http_proxy,
                 output_path=self.output_path,
             ),
             OntologyMetadataExtractor(
