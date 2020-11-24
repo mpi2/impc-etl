@@ -277,6 +277,20 @@ STATS_RESULTS_COLUMNS = [
     "female_effect_size",
 ]
 
+WINDOW_COLUMNS = [
+    "window_l_value",
+    "window_l_score",
+    "window_k_value",
+    "window_k_score",
+    "window_doe",
+    "window_min_obs_required",
+    "window_total_obs_or_weight",
+    "window_threshold",
+    "window_number_of_doe",
+    "window_doe_note",
+    "observations_window_weight",
+]
+
 
 ##TODO missing strain name and genetic background
 
@@ -303,7 +317,7 @@ def main(argv):
     threei_parquet_path = argv[8]
     mpath_metadata_path = argv[9]
     raw_data_in_output = argv[10]
-    extract_windowed_data = argv[11]
+    extract_windowed_data = argv[11] == "true"
     output_path = argv[12]
     spark = SparkSession.builder.getOrCreate()
     open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
@@ -565,11 +579,14 @@ def main(argv):
         ),
     )
 
-    stats_results_column_list = (
-        STATS_RESULTS_COLUMNS
-        if raw_data_in_output == "exclude"
-        else STATS_RESULTS_COLUMNS + RAW_DATA_COLUMNS
-    )
+    if extract_windowed_data:
+        stats_results_column_list = (
+            STATS_RESULTS_COLUMNS + WINDOW_COLUMNS + RAW_DATA_COLUMNS
+        )
+    elif raw_data_in_output == "exclude":
+        stats_results_column_list = STATS_RESULTS_COLUMNS
+    else:
+        stats_results_column_list = STATS_RESULTS_COLUMNS + RAW_DATA_COLUMNS
 
     for col_name in stats_results_column_list:
         if col_name not in open_stats_df.columns:
@@ -767,7 +784,7 @@ def main(argv):
     ]
     open_stats_df = open_stats_df.withColumn("doc_id", md5(concat(*identifying_cols)))
     if raw_data_in_output == "include":
-        open_stats_df = _parse_raw_data(open_stats_df)
+        open_stats_df = _parse_raw_data(open_stats_df, extract_windowed_data)
     open_stats_df = open_stats_df.withColumn(
         "data_type",
         when(
@@ -789,8 +806,11 @@ def main(argv):
             lit("embryo"),
         ).otherwise(col("data_type")),
     )
-    stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
-    stats_results_df.printSchema()
+    if extract_windowed_data:
+        stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
+    else:
+        stats_results_column_list = STATS_RESULTS_COLUMNS + WINDOW_COLUMNS
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
     for col_name in stats_results_df.columns:
         if dict(stats_results_df.dtypes)[col_name] == "null":
             stats_results_df = stats_results_df.withColumn(
@@ -809,7 +829,7 @@ def _compress_and_encode(json_text):
         return str(base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))), "utf-8")
 
 
-def _parse_raw_data(open_stats_df):
+def _parse_raw_data(open_stats_df, extract_windowed_data):
     compress_and_encode = udf(_compress_and_encode, StringType())
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_biological_sample_group", "biological_sample_group"
@@ -830,6 +850,10 @@ def _parse_raw_data(open_stats_df):
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_discrete_point", "discrete_point"
     )
+    if extract_windowed_data:
+        open_stats_df = open_stats_df.withColumnRenamed(
+            "observations_window_weight", "window_weight"
+        )
     for col_name in [
         "biological_sample_group",
         "date_of_experiment",
@@ -888,6 +912,15 @@ def _parse_raw_data(open_stats_df):
             col("discrete_point"),
         ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
+    if extract_windowed_data:
+        open_stats_df = open_stats_df.withColumn(
+            "window_weight",
+            when(
+                (col("data_type") == "unidimensional")
+                & (col("window_weight").isNotNull()),
+                col("window_weight"),
+            ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
+        )
     raw_data_cols = [
         "biological_sample_group",
         "date_of_experiment",
@@ -899,6 +932,8 @@ def _parse_raw_data(open_stats_df):
         "time_point",
         "discrete_point",
     ]
+    if extract_windowed_data:
+        raw_data_cols.append("window_weight")
     open_stats_df = open_stats_df.withColumn("raw_data", arrays_zip(*raw_data_cols))
 
     to_json_udf = udf(
