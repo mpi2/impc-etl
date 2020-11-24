@@ -189,14 +189,26 @@ def _get_stat_result(row, include_raw_data=False, extract_windowed_data=False):
             stats_result["window_min_obs_required"] = window_parameters[
                 "Min obs required in the window"
             ]
-            stats_result["window_total_obs_or_weight"] = window_parameters[
-                "Total obs or weight in the window"
-            ]
-            stats_result["window_threshold"] = window_parameters["Threshold"]
-            stats_result["window_number_of_doe"] = window_parameters[
-                "The number of DOE in the window"
-            ]
-            stats_result["window_doe_note"] = window_parameters["DOE note"]
+            stats_result["window_total_obs_or_weight"] = (
+                window_parameters["Total obs or weight in the window"]
+                if "Total obs or weight in the window" in window_parameters
+                else None
+            )
+            stats_result["window_threshold"] = (
+                window_parameters["Threshold"]
+                if "Threshold" in window_parameters
+                else None
+            )
+            stats_result["window_number_of_doe"] = (
+                window_parameters["The number of DOE in the window"]
+                if "The number of DOE in the window" in window_parameters
+                else None
+            )
+            stats_result["window_doe_note"] = (
+                window_parameters["DOE note"]
+                if "DOE note" in window_parameters
+                else None
+            )
             weight_dictionary = dict(
                 zip(
                     window_parameters["external_sample_id"],
