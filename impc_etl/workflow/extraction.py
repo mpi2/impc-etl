@@ -212,13 +212,13 @@ class OpenStatsExtractor(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        if self.raw_data_in_output == "include":
+        if self.extract_windowed_data == "true":
+            return ImpcConfig().get_target(
+                f"{self.output_path}open_stats_parquet_with_windowing_data"
+            )
+        elif self.raw_data_in_output == "include":
             return ImpcConfig().get_target(
                 f"{self.output_path}open_stats_parquet_with_raw_data"
-            )
-        elif self.extract_windowed_data == "true":
-            return ImpcConfig().get_target(
-                f"{self.output_path}open_stats_parquet_with_windowed_data"
             )
         else:
             return ImpcConfig().get_target(f"{self.output_path}open_stats_parquet")
