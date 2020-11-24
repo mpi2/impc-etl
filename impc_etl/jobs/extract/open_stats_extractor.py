@@ -203,10 +203,14 @@ def _get_stat_result(row, include_raw_data=False, extract_windowed_data=False):
                     window_parameters["Window weights"],
                 )
             )
-            stats_result["observations_window_weight"] = [
-                weight_dictionary[sample_id]
-                for sample_id in stats_result["observations_external_sample_id"]
-            ]
+            stats_result["observations_window_weight"] = []
+            for sample_id in stats_result["observations_external_sample_id"]:
+                if sample_id in weight_dictionary:
+                    stats_result["observations_window_weight"].append(
+                        weight_dictionary[sample_id]
+                    )
+                else:
+                    stats_result["observations_window_weight"].append(None)
     return stats_result
 
 
