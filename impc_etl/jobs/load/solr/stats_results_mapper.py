@@ -807,7 +807,11 @@ def main(argv):
         ).otherwise(col("data_type")),
     )
     if extract_windowed_data:
-        stats_results_column_list = STATS_RESULTS_COLUMNS + WINDOW_COLUMNS
+        stats_results_column_list = STATS_RESULTS_COLUMNS + [
+            col_name
+            for col_name in WINDOW_COLUMNS
+            if col_name != "observations_window_weight"
+        ]
         stats_results_df = open_stats_df.select(*stats_results_column_list)
     else:
         stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
