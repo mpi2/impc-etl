@@ -807,10 +807,10 @@ def main(argv):
         ).otherwise(col("data_type")),
     )
     if extract_windowed_data:
-        stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
-    else:
         stats_results_column_list = STATS_RESULTS_COLUMNS + WINDOW_COLUMNS
         stats_results_df = open_stats_df.select(*stats_results_column_list)
+    else:
+        stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
     for col_name in stats_results_df.columns:
         if dict(stats_results_df.dtypes)[col_name] == "null":
             stats_results_df = stats_results_df.withColumn(
