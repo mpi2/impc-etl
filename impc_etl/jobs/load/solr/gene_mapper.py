@@ -190,10 +190,12 @@ def main(argv):
 
     significant_mp_term = significant_mp_term.groupBy("gene_accession_id").agg(
         collect_set(
-            when(col("significant"), col("top_level_mp_term_name")).otherwise(lit(None))
+            when(col("significant") == True, col("top_level_mp_term_name")).otherwise(
+                lit(None)
+            )
         ).alias("significant_top_level_mp_terms"),
         collect_set(
-            when(~col("significant"), col("top_level_mp_term_name")).otherwise(
+            when(col("significant") == False, col("top_level_mp_term_name")).otherwise(
                 lit(None)
             )
         ).alias("not_significant_top_level_mp_terms"),
@@ -334,7 +336,7 @@ def main(argv):
     )
     datasets_df = datasets_df.withColumn(
         "significance",
-        when(col("phenotype_term_id").isNotNull(), lit("Significant"))
+        when(col("significant") == True, lit("Significant"))
         .when(col("p_value").isNotNull(), lit("Not significant"))
         .otherwise(lit("N/A")),
     )
