@@ -237,6 +237,7 @@ def main(argv):
         "pipeline_stable_id",
         "zygosity",
         "phenotyping_center",
+        "significant",
         "life_stage_name",
     ]
 
