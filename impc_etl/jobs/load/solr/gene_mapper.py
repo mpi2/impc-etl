@@ -237,7 +237,6 @@ def main(argv):
         "pipeline_stable_id",
         "zygosity",
         "phenotyping_center",
-        "significant",
         "life_stage_name",
     ]
 
@@ -311,6 +310,7 @@ def main(argv):
                     "metadata_group",
                     "male_mutant_count",
                     "female_mutant_count",
+                    "significant",
                 ]
             )
         ).alias("stats_data")
