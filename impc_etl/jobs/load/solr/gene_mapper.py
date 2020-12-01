@@ -222,6 +222,7 @@ def main(argv):
         "metadata_group",
         "male_mutant_count",
         "female_mutant_count",
+        "mp_term_id",
     ]
 
     data_set_cols = [
