@@ -277,26 +277,7 @@ def main(argv):
         .otherwise(col("effect_size")),
     )
     stats_results_df = stats_results_df.withColumn(
-        "selected_phenotype_term",
-        when(
-            (col("female_ko_effect_p_value") < col("male_ko_effect_p_value"))
-            & (col("female_ko_effect_p_value") < col("genotype_effect_p_value")),
-            expr(
-                "transform(filter(full_mp_term, mp -> mp.sex = 'female'), mp -> mp.term_id)"
-            ).getItem(0),
-        )
-        .when(
-            (col("male_ko_effect_p_value") < col("female_ko_effect_p_value"))
-            & (col("male_ko_effect_p_value") < col("genotype_effect_p_value")),
-            expr(
-                "transform(filter(full_mp_term, mp -> mp.sex = 'male'), mp -> mp.term_id)"
-            ).getItem(0),
-        )
-        .otherwise(
-            expr(
-                "transform(filter(full_mp_term, mp -> mp.sex NOT IN ('female', 'male')), mp -> mp.term_id)"
-            ).getItem(0)
-        ),
+        "selected_phenotype_term", col("mp_term_id")
     )
     observations_df = observations_df.select(*data_set_cols).distinct()
     datasets_df = observations_df.join(stats_results_df, data_set_cols, "left_outer")
