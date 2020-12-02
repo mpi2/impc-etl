@@ -65,32 +65,30 @@ def main(argv):
             "datasource_name",
         ],
     )
-    image_observations_df = image_observations_df.withColumn(
-        "parameter_association_stable_id_exp",
-        explode_outer("parameter_association_stable_id"),
-    )
+    parameter_association_fields = [
+        "parameter_association_stable_id",
+        "parameter_association_sequence_id",
+        "parameter_association_name",
+        "parameter_association_value",
+    ]
+    for parameter_association_field in parameter_association_fields:
+        image_observations_df = image_observations_df.withColumn(
+            f"{parameter_association_field}_exp",
+            explode_outer(parameter_association_field),
+        )
     image_observations_df = image_observations_df.withColumn(
         "fully_qualified_name",
         concat_ws(
             "_",
             "pipeline_stable_id",
             "procedure_stable_id",
-            "parameter_association_stable_id",
+            "parameter_association_stable_id_exp",
         ),
     )
     image_observations_df = image_observations_df.join(
         pipeline_core_df, "fully_qualified_name", "left_outer"
     )
-    image_observations_df = image_observations_df.groupBy(
-        [
-            col_name
-            for col_name in image_observations_df.columns
-            if "parameter_association_" not in col_name
-        ]
-    ).agg(
-        collect_set("parameter_association_stable_id_exp").alias(
-            "parameter_association_stable_id"
-        ),
+    group_by_expressions = [
         collect_set(
             when(
                 col("mouse_anatomy_id").isNotNull(), col("mouse_anatomy_id")
@@ -129,7 +127,20 @@ def main(argv):
         flatten(collect_set("impress_intermediate_mp_term")).alias(
             "intermediate_mp_term_set"
         ),
-    )
+    ]
+    group_by_expressions += [
+        collect_set(f"{parameter_association_field}_exp").alias(
+            parameter_association_field
+        )
+        for parameter_association_field in parameter_association_fields
+    ]
+    image_observations_df = image_observations_df.groupBy(
+        [
+            col_name
+            for col_name in image_observations_df.columns
+            if "parameter_association_" not in col_name
+        ]
+    ).agg(*group_by_expressions)
 
     image_observations_df = image_observations_df.withColumn(
         "download_url",
