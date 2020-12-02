@@ -580,6 +580,7 @@ class Constants:
         "time_point": StringType(),
         "download_file_path": StringType(),
         "file_type": StringType(),
+        "increment_value": StringType(),
         "parameter_association_stable_id": ArrayType(StringType()),
         "parameter_association_sequence_id": ArrayType(StringType()),
         "parameter_association_name": ArrayType(StringType()),
