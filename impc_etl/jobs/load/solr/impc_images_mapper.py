@@ -93,12 +93,12 @@ def main(argv):
             when(
                 col("mouse_anatomy_id").isNotNull(), col("mouse_anatomy_id")
             ).otherwise(col("embryo_anatomy_id"))
-        ).alias("embryo_anatomy_id"),
+        ).alias("embryo_anatomy_id_set"),
         collect_set(
             when(
                 col("mouse_anatomy_term").isNotNull(), col("mouse_anatomy_term")
             ).otherwise(col("embryo_anatomy_term"))
-        ).alias("embryo_anatomy_term"),
+        ).alias("embryo_anatomy_term_set"),
         collect_set(
             when(
                 col("mouse_anatomy_id").isNotNull(), col("mouse_anatomy_id")
