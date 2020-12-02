@@ -150,6 +150,7 @@ def main(argv):
             for col_name in image_observations_df.columns
             if "parameter_association_" not in col_name
             and col_name != "fully_qualified_name"
+            and col_name not in ["embryo_anatomy_id", "embryo_anatomy_term"]
         ]
     ).agg(*group_by_expressions)
 
