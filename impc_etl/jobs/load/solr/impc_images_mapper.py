@@ -139,6 +139,7 @@ def main(argv):
             col_name
             for col_name in image_observations_df.columns
             if "parameter_association_" not in col_name
+            and col_name != "fully_qualified_name"
         ]
     ).agg(*group_by_expressions)
 
