@@ -561,6 +561,7 @@ class Constants:
         "time_point",
         "download_file_path",
         "file_type",
+        "increment_value",
         "parameter_association_stable_id",
         "parameter_association_sequence_id",
         "parameter_association_name",

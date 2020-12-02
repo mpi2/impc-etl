@@ -85,7 +85,7 @@ def main(argv):
         [
             col_name
             for col_name in image_observations_df.columns
-            if col_name != "parameter_association_stable_id"
+            if "parameter_association_" not in col_name
         ]
     ).agg(
         collect_set("parameter_association_stable_id_exp").alias(

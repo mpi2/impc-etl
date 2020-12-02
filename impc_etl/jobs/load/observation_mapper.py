@@ -647,6 +647,9 @@ def resolve_image_record_value(image_record_observation_df: DataFrame):
         "file_type", col("seriesMediaParameterValue._fileType")
     )
     image_record_observation_df = image_record_observation_df.withColumn(
+        "increment_value", col("seriesMediaParameterValue._incrementValue")
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
         "observation_type", lit("image_record")
     )
     return image_record_observation_df
