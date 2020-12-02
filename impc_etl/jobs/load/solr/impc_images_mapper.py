@@ -134,23 +134,21 @@ def main(argv):
     image_observations_df = image_observations_df.withColumn(
         "download_url",
         concat(
-            lit(
-                "//wwwdev.ebi.ac.uk/mi/media/omero/webgateway/archived_files/download/"
-            ),
+            lit("//www.ebi.ac.uk/mi/media/omero/webgateway/archived_files/download/"),
             col("omero_id"),
         ),
     )
     image_observations_df = image_observations_df.withColumn(
         "jpeg_url",
         concat(
-            lit("//wwwdev.ebi.ac.uk/mi/media/omero/webgateway/render_image/"),
+            lit("//www.ebi.ac.uk/mi/media/omero/webgateway/render_image/"),
             col("omero_id"),
         ),
     )
     image_observations_df = image_observations_df.withColumn(
         "thumbnail_url",
         concat(
-            lit("//wwwdev.ebi.ac.uk/mi/media/omero/webgateway/render_birds_eye_view/"),
+            lit("//www.ebi.ac.uk/mi/media/omero/webgateway/render_birds_eye_view/"),
             col("omero_id"),
         ),
     )
