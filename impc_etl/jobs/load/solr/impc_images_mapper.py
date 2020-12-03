@@ -6,7 +6,7 @@ from pyspark.sql.functions import (
     col,
     explode,
     concat_ws,
-    collect_set,
+    collect_list,
     when,
     flatten,
     explode_outer,
@@ -48,7 +48,7 @@ def main(argv):
         col("top_level_mp_term").alias("impress_top_level_mp_term"),
         col("intermediate_mp_id").alias("impress_intermediate_mp_id"),
         col("intermediate_mp_term").alias("impress_intermediate_mp_term"),
-    )
+    ).distinct()
     omero_ids_df = spark.read.csv(omero_ids_csv_path, header=True)
     image_observations_df = observations_df.where(
         col("observation_type") == "image_record"
@@ -89,28 +89,28 @@ def main(argv):
         pipeline_core_df, "fully_qualified_name", "left_outer"
     )
     group_by_expressions = [
-        collect_set(
+        collect_list(
             when(
                 col("mouse_anatomy_id").isNotNull(), col("mouse_anatomy_id")
             ).otherwise(col("embryo_anatomy_id"))
         ).alias("embryo_anatomy_id_set"),
-        collect_set(
+        collect_list(
             when(
                 col("mouse_anatomy_term").isNotNull(), col("mouse_anatomy_term")
             ).otherwise(col("embryo_anatomy_term"))
         ).alias("embryo_anatomy_term_set"),
-        collect_set(
+        collect_list(
             when(
                 col("mouse_anatomy_id").isNotNull(), col("mouse_anatomy_id")
             ).otherwise(col("embryo_anatomy_id"))
         ).alias("anatomy_id"),
-        collect_set(
+        collect_list(
             when(
                 col("mouse_anatomy_term").isNotNull(), col("mouse_anatomy_term")
             ).otherwise(col("embryo_anatomy_term"))
         ).alias("anatomy_term"),
         flatten(
-            collect_set(
+            collect_list(
                 when(
                     col("mouse_anatomy_id").isNotNull(),
                     col("top_level_mouse_anatomy_id"),
@@ -118,28 +118,28 @@ def main(argv):
             )
         ).alias("selected_top_level_anatomy_id"),
         flatten(
-            collect_set(
+            collect_list(
                 when(
                     col("mouse_anatomy_id").isNotNull(),
                     col("top_level_mouse_anatomy_term"),
                 ).otherwise(col("top_level_embryo_anatomy_term"))
             )
         ).alias("selected_top_level_anatomy_term"),
-        collect_set("impress_mp_id").alias("mp_id"),
-        collect_set("impress_mp_term").alias("mp_term"),
-        flatten(collect_set("impress_top_level_mp_id")).alias("top_level_mp_id_set"),
-        flatten(collect_set("impress_top_level_mp_term")).alias(
+        collect_list("impress_mp_id").alias("mp_id"),
+        collect_list("impress_mp_term").alias("mp_term"),
+        flatten(collect_list("impress_top_level_mp_id")).alias("top_level_mp_id_set"),
+        flatten(collect_list("impress_top_level_mp_term")).alias(
             "top_level_mp_term_set"
         ),
-        flatten(collect_set("impress_intermediate_mp_id")).alias(
+        flatten(collect_list("impress_intermediate_mp_id")).alias(
             "intermediate_mp_id_set"
         ),
-        flatten(collect_set("impress_intermediate_mp_term")).alias(
+        flatten(collect_list("impress_intermediate_mp_term")).alias(
             "intermediate_mp_term_set"
         ),
     ]
     group_by_expressions += [
-        collect_set(f"{parameter_association_field}_exp").alias(
+        collect_list(f"{parameter_association_field}_exp").alias(
             parameter_association_field
         )
         for parameter_association_field in parameter_association_fields
