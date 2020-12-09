@@ -22,6 +22,7 @@ from pyspark.sql.functions import (
     size,
     array,
     array_except,
+    least,
 )
 import requests
 import json
@@ -213,15 +214,28 @@ def main(argv):
         "female_ko_effect_p_value",
         "male_ko_effect_p_value",
         "genotype_effect_p_value",
+        "male_pvalue_low_vs_normal_high",
+        "male_pvalue_low_normal_vs_high",
+        "female_pvalue_low_vs_normal_high",
+        "female_pvalue_low_normal_vs_high",
+        "male_ko_effect_p_value",
+        "female_ko_effect_p_value",
         "p_value",
         "effect_size",
         "male_effect_size",
         "female_effect_size",
+        "male_effect_size_low_vs_normal_high",
+        "male_effect_size_low_normal_vs_high",
+        "genotype_effect_size_low_vs_normal_high",
+        "genotype_effect_size_low_normal_vs_high",
+        "female_effect_size_low_vs_normal_high",
+        "female_effect_size_low_normal_vs_high",
         "significant",
         "full_mp_term",
         "metadata_group",
         "male_mutant_count",
         "female_mutant_count",
+        "statistical_method",
         "mp_term_id",
     ]
 
@@ -245,37 +259,69 @@ def main(argv):
     stats_results_df = stats_results_df.withColumn(
         "selected_p_value",
         when(
-            (col("female_ko_effect_p_value") < col("male_ko_effect_p_value"))
-            & (col("female_ko_effect_p_value") < col("genotype_effect_p_value")),
-            col("female_ko_effect_p_value"),
+            col("statistical_method").isin(["Manual", "Supplied as data"]),
+            col("p_value"),
         )
         .when(
-            (col("male_ko_effect_p_value") < col("female_ko_effect_p_value"))
-            & (col("male_ko_effect_p_value") < col("genotype_effect_p_value")),
-            col("male_ko_effect_p_value"),
+            col("statistical_method").contains("Reference Range Plus"),
+            when(
+                col("sex") == "male",
+                least(
+                    col("male_pvalue_low_vs_normal_high"),
+                    col("male_pvalue_low_normal_vs_high"),
+                ),
+            )
+            .when(
+                col("sex") == "female",
+                least(
+                    col("female_pvalue_low_vs_normal_high"),
+                    col("female_pvalue_low_normal_vs_high"),
+                ),
+            )
+            .otherwise(col("genotype_effect_p_value")),
         )
-        .when(
-            col("genotype_effect_p_value").isNotNull(), col("genotype_effect_p_value")
-        )
-        .otherwise(col("p_value")),
+        .otherwise(
+            when(col("sex") == "male", col("male_ko_effect_p_value"))
+            .when(col("sex") == "female", col("female_ko_effect_p_value"))
+            .otherwise(
+                when(
+                    col("statistical_method").contains("Fisher Exact Test framework"),
+                    col("p_value"),
+                ).otherwise(col("genotype_effect_p_value"))
+            )
+        ),
     )
     stats_results_df = stats_results_df.withColumn(
         "selected_p_value", col("selected_p_value").cast(DoubleType())
     )
     stats_results_df = stats_results_df.withColumn(
         "selected_effect_size",
-        when(
-            (col("female_ko_effect_p_value") < col("male_ko_effect_p_value"))
-            & (col("female_ko_effect_p_value") < col("genotype_effect_p_value")),
-            col("female_effect_size"),
-        )
+        when(col("statistical_method").isin(["Manual", "Supplied as data"]), lit(1.0))
         .when(
-            (col("male_ko_effect_p_value") < col("female_ko_effect_p_value"))
-            & (col("male_ko_effect_p_value") < col("genotype_effect_p_value")),
-            col("male_effect_size"),
+            ~col("statistical_method").contains("Reference Range Plus"),
+            when(col("sex") == "male", col("male_effect_size"))
+            .when(col("sex") == "female", col("female_effect_size"))
+            .otherwise(col("effect_size")),
         )
-        .when(col("genotype_effect_p_value").isNotNull(), col("effect_size"))
-        .otherwise(col("effect_size")),
+        .otherwise(
+            when(
+                col("sex") == "male",
+                when(
+                    col("male_effect_size_low_vs_normal_high")
+                    <= col("male_effect_size_low_normal_vs_high"),
+                    col("genotype_effect_size_low_vs_normal_high"),
+                ).otherwise(col("genotype_effect_size_low_normal_vs_high")),
+            )
+            .when(
+                col("sex") == "female",
+                when(
+                    col("female_effect_size_low_vs_normal_high")
+                    <= col("female_effect_size_low_normal_vs_high"),
+                    col("genotype_effect_size_low_vs_normal_high"),
+                ).otherwise(col("genotype_effect_size_low_normal_vs_high")),
+            )
+            .otherwise(col("effect_size"))
+        ),
     )
     stats_results_df = stats_results_df.withColumn(
         "selected_phenotype_term", col("mp_term_id")
