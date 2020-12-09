@@ -279,7 +279,12 @@ def main(argv):
                     col("female_pvalue_low_normal_vs_high"),
                 ),
             )
-            .otherwise(col("genotype_effect_p_value")),
+            .otherwise(
+                least(
+                    col("genotype_effect_size_low_vs_normal_high"),
+                    col("genotype_effect_size_low_normal_vs_high"),
+                )
+            ),
         )
         .otherwise(
             when(col("sex") == "male", col("male_ko_effect_p_value"))
