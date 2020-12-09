@@ -237,6 +237,7 @@ def main(argv):
         "female_mutant_count",
         "statistical_method",
         "mp_term_id",
+        "sex",
     ]
 
     data_set_cols = [
