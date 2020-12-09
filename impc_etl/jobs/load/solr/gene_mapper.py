@@ -218,6 +218,8 @@ def main(argv):
         "male_pvalue_low_normal_vs_high",
         "female_pvalue_low_vs_normal_high",
         "female_pvalue_low_normal_vs_high",
+        "genotype_pvalue_low_normal_vs_high",
+        "genotype_pvalue_low_vs_normal_high",
         "male_ko_effect_p_value",
         "female_ko_effect_p_value",
         "p_value",
@@ -281,8 +283,8 @@ def main(argv):
             )
             .otherwise(
                 least(
-                    col("genotype_effect_size_low_vs_normal_high"),
-                    col("genotype_effect_size_low_normal_vs_high"),
+                    col("genotype_pvalue_low_normal_vs_high"),
+                    col("genotype_pvalue_low_vs_normal_high"),
                 )
             ),
         )
