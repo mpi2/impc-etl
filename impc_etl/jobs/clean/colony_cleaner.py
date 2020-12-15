@@ -25,7 +25,7 @@ def clean_colonies(colonies_df: DataFrame) -> DataFrame:
     :rtype: DataFrame
     """
     colonies_df = colonies_df.transform(map_colonies_df_ids)
-    colonies_df = map_strain_names(colonies_df)
+    # colonies_df = map_strain_names(colonies_df)
     colonies_df = colonies_df.transform(generate_genetic_background)
     return colonies_df
 

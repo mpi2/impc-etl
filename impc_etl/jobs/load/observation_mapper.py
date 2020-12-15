@@ -897,14 +897,14 @@ def map_experiments_to_observations(
     mouse_df = mouse_df.withColumn("_stage", lit(None).cast(StringType()))
     mouse_df = mouse_df.withColumn("_stageUnit", lit(None).cast(StringType()))
     specimen_df = mouse_df.union(embryo_df.select(mouse_df.columns))
-    map_strain_name_udf = udf(map_strain_name, StringType())
-    specimen_df = specimen_df.withColumn(
-        "_strainID",
-        when(
-            ((lower(col("_colonyID")) == "baseline") | (col("_isBaseline") == True)),
-            map_strain_name_udf("_strainID"),
-        ).otherwise(col("_strainID")),
-    )
+    # map_strain_name_udf = udf(map_strain_name, StringType())
+    # specimen_df = specimen_df.withColumn(
+    #     "_strainID",
+    #     when(
+    #         ((lower(col("_colonyID")) == "baseline") | (col("_isBaseline") == True)),
+    #         map_strain_name_udf("_strainID"),
+    #     ).otherwise(col("_strainID")),
+    # )
     specimen_df = specimen_df.withColumnRenamed("_sourceFile", "specimen_source_file")
     specimen_df = specimen_df.withColumnRenamed("unique_id", "specimen_id")
     specimen_df = specimen_df.alias("specimen")
