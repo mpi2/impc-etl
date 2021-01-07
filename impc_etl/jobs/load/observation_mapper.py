@@ -689,7 +689,7 @@ def resolve_image_record_parameter_association(
     )
     window = Window.partitionBy(
         "image.observation_id", "parameterAsc._parameterID"
-    ).orderBy("parameter.name")
+    ).orderBy("parameterAsc._parameterID")
 
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
         col("image.observation_id"), col("image.parameter_stable_id")
