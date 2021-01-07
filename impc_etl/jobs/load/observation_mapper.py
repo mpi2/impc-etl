@@ -10,7 +10,7 @@ from pyspark.sql.functions import (
     regexp_replace,
     regexp_extract,
     collect_list,
-    collect_set,
+    max,
     md5,
     unix_timestamp,
     from_unixtime,
@@ -722,6 +722,12 @@ def resolve_image_record_parameter_association(
         "paramNames",
         "paramSeqs",
         "paramValues",
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy("image.observation_id", "image.parameter_stable_id").agg(
+        max("paramIDs").alias("paramIDs"),
+        max("paramNames").alias("paramNames"),
+        max("paramSeqs").alias("paramSeqs"),
+        max("paramValues").alias("paramValues")
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df \
         .withColumnRenamed("observation_id", "img_observation_id") \
