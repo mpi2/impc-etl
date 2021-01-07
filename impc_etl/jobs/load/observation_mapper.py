@@ -678,7 +678,7 @@ def resolve_image_record_parameter_association(
         "paramName", col("simple.parameter_name")
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-        "paramSeq", col("_sequenceID")
+        "paramSeq", col("image._sequenceID")
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
         "paramValue",
