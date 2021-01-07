@@ -668,7 +668,7 @@ def resolve_image_record_parameter_association(
     image_df = image_record_observation_df.alias("image").withColumn(
         "parameterAsc", explode("image.seriesMediaParameterValue.parameterAssociation")
     )
-    image_df = image_df.select("parameterAsc.*, *")
+    image_df = image_df.select("parameterAsc.*", "*")
     image_vs_simple_parameters_df = image_df.join(
         simple_df,
         (col("simple.experiment_id") == col("image.experiment_id"))
