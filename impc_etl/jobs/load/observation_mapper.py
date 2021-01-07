@@ -668,16 +668,17 @@ def resolve_image_record_parameter_association(
     image_df = image_record_observation_df.alias("image").withColumn(
         "parameterAsc", explode("image.seriesMediaParameterValue.parameterAssociation")
     )
+    image_df = image_df.select("parameterAsc.*, *")
     image_vs_simple_parameters_df = image_df.join(
         simple_df,
         (col("simple.experiment_id") == col("image.experiment_id"))
-        & (col("simple.parameter_stable_id") == col("parameterAsc._parameterID")),
+        & (col("simple.parameter_stable_id") == col("_parameterID")),
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
         "paramName", col("simple.parameter_name")
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-        "paramSeq", col("parameterAsc._sequenceID")
+        "paramSeq", col("_sequenceID")
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
         "paramValue",
@@ -689,16 +690,15 @@ def resolve_image_record_parameter_association(
     )
     window = Window.partitionBy(
         "image.observation_id"
-    ).orderBy("parameterAsc._parameterID")
+    ).orderBy("_parameterID")
 
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
         col("image.observation_id"), col("image.parameter_stable_id")
     ).agg(
-        collect_list("parameterAsc._parameterID").over(window).alias("paramIDs"),
+        collect_list("_parameterID").over(window).alias("paramIDs"),
         collect_list("paramName").over(window).alias("paramNames"),
         collect_set("paramSeq").over(window).alias("paramSeqs"),
-        collect_set("paramValue").over(window).alias("paramValues"),
-        first("parameterAsc")
+        collect_set("paramValue").over(window).alias("paramValues")
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumnRenamed(
         "observation_id", "img_observation_id"
