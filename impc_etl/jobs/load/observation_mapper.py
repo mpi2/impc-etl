@@ -1,5 +1,5 @@
 import sys
-from pyspark.sql import DataFrame, SparkSession, Column
+from pyspark.sql import DataFrame, SparkSession, Column, Window
 from pyspark.sql.functions import (
     concat,
     col,
@@ -240,8 +240,9 @@ def map_experiment_columns(exp_df: DataFrame):
         "strain_name",
         when(
             (col("colony_id") == "baseline")
-            | (col("specimen._isBaseline") == True)
-            | (col("datasource_name").isin(["EuroPhenome", "MGP"])),
+            | (col("specimen._isBaseline") == True),
+            #TODO add strain managemend for all legacy data and not only for baselines
+            # | (col("datasource_name").isin(["EuroPhenome", "MGP"])),
             when(
                 col("strain.strainName").isNotNull(), col("strain.strainName")
             ).otherwise(col("specimen._strainID")),
@@ -652,6 +653,9 @@ def resolve_image_record_value(image_record_observation_df: DataFrame):
         "increment_value", col("seriesMediaParameterValue._incrementValue")
     )
     image_record_observation_df = image_record_observation_df.withColumn(
+        "image_link", col("seriesMediaParameterValue._link")
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
         "observation_type", lit("image_record")
     )
     return image_record_observation_df
@@ -683,13 +687,17 @@ def resolve_image_record_parameter_association(
             )
         ),
     )
+    window = Window.partitionBy(
+        "observation_id", "parameterAsc._parameterID"
+    ).orderBy("parameter.name")
+
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
         col("image.observation_id"), col("image.parameter_stable_id")
     ).agg(
-        collect_set("parameterAsc._parameterID").alias("paramIDs"),
-        collect_set("paramName").alias("paramNames"),
-        collect_set("paramSeq").alias("paramSeqs"),
-        collect_set("paramValue").alias("paramValues"),
+        collect_list("parameterAsc._parameterID").over(window).alias("paramIDs"),
+        collect_list("paramName").over(window).alias("paramNames"),
+        collect_set("paramSeq").over(window).alias("paramSeqs"),
+        collect_set("paramValue").over(window).alias("paramValues"),
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumnRenamed(
         "observation_id", "img_observation_id"
@@ -899,14 +907,15 @@ def map_experiments_to_observations(
     mouse_df = mouse_df.withColumn("_stage", lit(None).cast(StringType()))
     mouse_df = mouse_df.withColumn("_stageUnit", lit(None).cast(StringType()))
     specimen_df = mouse_df.union(embryo_df.select(mouse_df.columns))
-    # map_strain_name_udf = udf(map_strain_name, StringType())
-    # specimen_df = specimen_df.withColumn(
-    #     "_strainID",
-    #     when(
-    #         ((lower(col("_colonyID")) == "baseline") | (col("_isBaseline") == True)),
-    #         map_strain_name_udf("_strainID"),
-    #     ).otherwise(col("_strainID")),
-    # )
+    # TODO remove strain mapping for legacy phenotype data
+    map_strain_name_udf = udf(map_strain_name, StringType())
+    specimen_df = specimen_df.withColumn(
+        "_strainID",
+        when(
+            ((lower(col("_colonyID")) == "baseline") | (col("_isBaseline") == True)),
+            map_strain_name_udf("_strainID"),
+        ).otherwise(col("_strainID")),
+    )
     specimen_df = specimen_df.withColumnRenamed("_sourceFile", "specimen_source_file")
     specimen_df = specimen_df.withColumnRenamed("unique_id", "specimen_id")
     specimen_df = specimen_df.alias("specimen")
