@@ -707,6 +707,7 @@ def resolve_image_record_parameter_association(
         "paramNames",
         collect_list("paramName").over(window)
     )
+    image_vs_simple_parameters_df.printSchema()
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
         "paramSeqs",
         collect_list("paramSeq").over(window)
