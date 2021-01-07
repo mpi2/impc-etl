@@ -723,6 +723,9 @@ def resolve_image_record_parameter_association(
         "paramSeqs",
         "paramValues",
     )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df \
+        .withColumnRenamed("observation_id", "img_observation_id") \
+        .withColumnRenamed("parameter_stable_id", "img_parameter_stable_id")
     image_record_observation_df = image_record_observation_df.join(
         image_vs_simple_parameters_df,
         (
