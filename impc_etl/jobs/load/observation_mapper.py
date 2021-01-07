@@ -17,7 +17,7 @@ from pyspark.sql.functions import (
     udf,
     array,
     substring,
-    upper,
+    upper, first,
 )
 from pyspark.sql.types import StringType, IntegerType, LongType, ArrayType
 from impc_etl.config import Constants
@@ -677,7 +677,7 @@ def resolve_image_record_parameter_association(
         "paramName", col("simple.parameter_name")
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-        "paramSeq", lit("0")
+        "paramSeq", col("parameterAsc._sequenceID")
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
         "paramValue",
@@ -688,7 +688,7 @@ def resolve_image_record_parameter_association(
         ),
     )
     window = Window.partitionBy(
-        "image.observation_id", "parameterAsc._parameterID"
+        "image.observation_id"
     ).orderBy("parameterAsc._parameterID")
 
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
@@ -698,6 +698,7 @@ def resolve_image_record_parameter_association(
         collect_list("paramName").over(window).alias("paramNames"),
         collect_set("paramSeq").over(window).alias("paramSeqs"),
         collect_set("paramValue").over(window).alias("paramValues"),
+        first("parameterAsc")
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumnRenamed(
         "observation_id", "img_observation_id"
