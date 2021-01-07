@@ -715,13 +715,9 @@ def resolve_image_record_parameter_association(
         "paramValues",
         collect_list("paramValue").over(window)
     )
-    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumnRenamed(
-        "image.observation_id", "img_observation_id"
-    ).withColumnRenamed("image.parameter_stable_id", "img_parameter_stable_id")
-    image_vs_simple_parameters_df.printSchema()
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.select(
-        "img_observation_id",
-        "img_parameter_stable_id",
+        "image.observation_id",
+        "image.parameter_stable_id",
         "paramIDs",
         "paramNames",
         "paramSeqs",
