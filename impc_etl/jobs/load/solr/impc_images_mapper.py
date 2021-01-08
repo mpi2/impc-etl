@@ -72,12 +72,7 @@ def main(argv):
         "parameter_association_name",
         "parameter_association_value",
     ]
-    for parameter_association_field in parameter_association_fields:
-        image_observations_df = image_observations_df.withColumn(
-            f"{parameter_association_field}_exp",
-            explode_outer(parameter_association_field),
-        )
-    image_observations_df = image_observations_df.withColumn(
+    image_observations_x_impress_df = image_observations_df.withColumn(
         "fully_qualified_name",
         concat_ws(
             "_",
@@ -86,7 +81,13 @@ def main(argv):
             "parameter_association_stable_id_exp",
         ),
     )
-    image_observations_df = image_observations_df.join(
+    for parameter_association_field in parameter_association_fields:
+        image_observations_x_impress_df = image_observations_x_impress_df.withColumn(
+            f"{parameter_association_field}_exp",
+            explode_outer(parameter_association_field),
+        )
+
+    image_observations_x_impress_df = image_observations_x_impress_df.join(
         pipeline_core_df,
         (
             image_observations_df["fully_qualified_name"]
@@ -145,21 +146,30 @@ def main(argv):
             "intermediate_mp_term_set"
         ),
     ]
-    group_by_expressions += [
-        collect_list(f"{parameter_association_field}_exp").alias(
-            parameter_association_field
-        )
-        for parameter_association_field in parameter_association_fields
-    ]
-    image_observations_df = image_observations_df.groupBy(
+    image_observations_x_impress_df = image_observations_x_impress_df.select(
         [
-            col_name
-            for col_name in image_observations_df.columns
-            if "parameter_association_" not in col_name
-            and col_name != "fully_qualified_name"
-            and "anatomy" not in col_name
+            "observation_id",
+            "embryo_anatomy_id_set",
+            "embryo_anatomy_term_set",
+            "anatomy_id",
+            "anatomy_term",
+            "selected_top_level_anatomy_id",
+            "selected_top_level_anatomy_term",
+            "mp_id",
+            "mp_term",
+            "top_level_mp_id_set",
+            "top_level_mp_term_set",
+            "intermediate_mp_id_set",
+            "intermediate_mp_term_set",
         ]
+    )
+    image_observations_x_impress_df = image_observations_x_impress_df.groupBy(
+        "observation_id"
     ).agg(*group_by_expressions)
+
+    image_observations_df = image_observations_df.join(
+        image_observations_x_impress_df, "observation_id"
+    )
 
     image_observations_df = image_observations_df.withColumn(
         "download_url",
