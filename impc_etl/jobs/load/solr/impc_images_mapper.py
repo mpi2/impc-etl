@@ -86,7 +86,13 @@ def main(argv):
         ),
     )
     image_observations_df = image_observations_df.join(
-        pipeline_core_df, "fully_qualified_name", "left_outer"
+        pipeline_core_df,
+        (
+            image_observations_df["fully_qualified_name"]
+            == pipeline_core_df["fully_qualified_name"]
+        )
+        & (image_observations_df["mp_id"] == pipeline_core_df["impress_mp_id"]),
+        "left_outer",
     )
     group_by_expressions = [
         collect_set(
