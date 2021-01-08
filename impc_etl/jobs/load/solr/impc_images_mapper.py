@@ -12,6 +12,7 @@ from pyspark.sql.functions import (
     explode_outer,
     concat,
     lit,
+    collect_list,
 )
 from pyspark.sql import DataFrame, SparkSession
 import sys
@@ -145,7 +146,7 @@ def main(argv):
         ),
     ]
     group_by_expressions += [
-        collect_set(f"{parameter_association_field}_exp").alias(
+        collect_list(f"{parameter_association_field}_exp").alias(
             parameter_association_field
         )
         for parameter_association_field in parameter_association_fields
