@@ -153,18 +153,20 @@ def main(argv):
     image_observations_x_impress_df = image_observations_x_impress_df.select(
         [
             "observation_id",
-            "embryo_anatomy_id_set",
-            "embryo_anatomy_term_set",
-            "anatomy_id",
-            "anatomy_term",
-            "selected_top_level_anatomy_id",
-            "selected_top_level_anatomy_term",
-            "mp_id",
-            "mp_term",
-            "top_level_mp_id_set",
-            "top_level_mp_term_set",
-            "intermediate_mp_id_set",
-            "intermediate_mp_term_set",
+            "mouse_anatomy_id",
+            "embryo_anatomy_id",
+            "mouse_anatomy_term",
+            "embryo_anatomy_term",
+            "top_level_mouse_anatomy_id",
+            "top_level_embryo_anatomy_id",
+            "top_level_mouse_anatomy_term",
+            "top_level_embryo_anatomy_term",
+            "impress_mp_id",
+            "impress_mp_term",
+            "impress_top_level_mp_id",
+            "impress_top_level_mp_term",
+            "impress_intermediate_mp_id",
+            "impress_intermediate_mp_term",
         ]
     )
     image_observations_x_impress_df = image_observations_x_impress_df.groupBy(
