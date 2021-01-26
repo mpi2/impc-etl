@@ -93,10 +93,6 @@ def main(argv):
         (
             image_observations_x_impress_df["fully_qualified_name"]
             == pipeline_core_df["fully_qualified_name"]
-        )
-        & (
-            image_observations_x_impress_df["sub_term_id"]
-            == pipeline_core_df["impress_mp_id"]
         ),
         "left_outer",
     )
