@@ -2,8 +2,6 @@
 SOLR module
    Generates the required Solr cores
 """
-from typing import List
-
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import ArrayType, StringType
 import sys
@@ -119,7 +117,15 @@ def main(argv):
         observations_df, "fully_qualified_name", "left_outer"
     )
 
-    pipeline_categories_df = pipeline_df.select("fully_qualified_name", "option.name")
+    pipeline_categories_df = pipeline_df.select(
+        "fully_qualified_name",
+        when(
+            col("option.name").rlike("^\d+$") & col("option.description").isNotNull(),
+            col("option.description"),
+        )
+        .otherwise(col("option.name"))
+        .alias("name"),
+    )
     pipeline_categories_df = pipeline_categories_df.groupBy("fully_qualified_name").agg(
         collect_set("name").alias("categories")
     )
@@ -233,13 +239,23 @@ def main(argv):
     pipeline_df = pipeline_df.withColumn(
         "top_level_mouse_anatomy_term", col("top_level_terms")
     )
+    missing_parameter_information_df = pipeline_df.where(
+        col("parameter_stable_id").isNull()
+    )
+    missing_parameter_rows = missing_parameter_information_df.collect()
+    if len(missing_parameter_rows) > 0:
+        print("MISSING PARAMETERS")
+        for missing in missing_parameter_rows:
+            print(missing.asDict())
+    pipeline_df = pipeline_df.where(col("parameter_stable_id").isNotNull())
     pipeline_df = pipeline_df.drop(*ontology_df.columns)
     pipeline_df.write.parquet(output_path)
 
 
-def _uniquify(array: List):
-    return list(set(array))
+def _uniquify(list_col):
+    return list(set(list_col))
 
 
 if __name__ == "__main__":
+    print(sys.version)
     sys.exit(main(sys.argv))

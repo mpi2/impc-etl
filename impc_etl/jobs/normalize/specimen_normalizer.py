@@ -49,7 +49,10 @@ def normalize_specimens(
     specimen_df = specimen_df.withColumn(
         "_productionCentre",
         when(
-            col("_productionCentre").isNull(), col("colony.production_centre")
+            col("_productionCentre").isNull(),
+            when(
+                col("_phenotypingCentre").isNotNull(), col("_phenotypingCentre")
+            ).otherwise(col("colony.production_centre")),
         ).otherwise(col("_productionCentre")),
     )
     specimen_df = specimen_df.select(

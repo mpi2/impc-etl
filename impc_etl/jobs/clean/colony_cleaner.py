@@ -3,6 +3,7 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import udf, col, lit, concat
 from pyspark.sql.types import StringType
 from impc_etl.shared import utils
+from impc_etl.config import Constants
 
 
 def main(argv):
@@ -24,7 +25,7 @@ def clean_colonies(colonies_df: DataFrame) -> DataFrame:
     :rtype: DataFrame
     """
     colonies_df = colonies_df.transform(map_colonies_df_ids)
-    colonies_df = map_strain_names(colonies_df)
+    # colonies_df = map_strain_names(colonies_df)
     colonies_df = colonies_df.transform(generate_genetic_background)
     return colonies_df
 
@@ -79,8 +80,14 @@ def map_strain_name(strain_name: str) -> str:
         intermediate_backgrounds = "C57BL/6J;C57BL/6N".split(";")
     else:
         intermediate_backgrounds = [strain_name]
+    intermediate_backgrounds = [
+        Constants.BACKGROUND_STRAIN_MAPPER[strain]
+        if strain in Constants.BACKGROUND_STRAIN_MAPPER.keys()
+        else strain
+        for strain in intermediate_backgrounds
+    ]
 
-    return " * ".join(intermediate_backgrounds)
+    return ";".join(intermediate_backgrounds)
 
 
 if __name__ == "__main__":

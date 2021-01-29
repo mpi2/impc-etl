@@ -9,6 +9,7 @@ from pyspark.sql.functions import (
     least,
     monotonically_increasing_id,
     expr,
+    regexp_replace,
 )
 from pyspark.sql.types import StringType
 
@@ -21,7 +22,17 @@ ONTOLOGY_STATS_MAP = {
     "intermediate_mp_term_name": "intermediate_terms",
 }
 
+BAD_MP_MAP = {
+    '["MP:0000592","MP:0000592"]': "MP:0000592",
+    '["MP:0003956","MP:0003956"]': "MP:0003956",
+    '["MP:0000589","MP:0000589"]': "MP:0000589",
+    '["MP:0010101","MP:0004649"]': "MP:0004649",
+    '["MP:0004650","MP:0004647"]': "MP:0004650",
+}
+
 GENOTYPE_PHENOTYPE_COLUMNS = [
+    "mpath_term_id",
+    "mpath_term_name",
     "marker_symbol",
     "marker_accession_id",
     "colony_id",
@@ -54,6 +65,8 @@ GENOTYPE_PHENOTYPE_COLUMNS = [
 
 STATS_RESULTS_COLUMNS = [
     "full_mp_term",
+    "mpath_term_id",
+    "mpath_term_name",
     "genotype_effect_p_value",
     "female_pvalue_low_vs_normal_high",
     "female_pvalue_low_normal_vs_high",
@@ -99,6 +112,16 @@ def main(argv):
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
         "mp_term_id", col("mp_term.term_id")
     )
+    genotype_phenotype_df = genotype_phenotype_df.withColumn(
+        "mp_term_id", regexp_replace("mp_term_id", " ", "")
+    )
+    for bad_mp in BAD_MP_MAP.keys():
+        genotype_phenotype_df = genotype_phenotype_df.withColumn(
+            "mp_term_id",
+            when(col("mp_term_id") == bad_mp, lit(BAD_MP_MAP[bad_mp])).otherwise(
+                col("mp_term_id")
+            ),
+        )
 
     genotype_phenotype_df = genotype_phenotype_df.join(
         ontology_df, col("mp_term_id") == col("id"), "left_outer"
@@ -113,7 +136,7 @@ def main(argv):
         "p_value",
         when(
             col("statistical_method").isin(["Manual", "Supplied as data"]),
-            col("genotype_effect_p_value"),
+            col("p_value"),
         )
         .when(
             col("statistical_method").contains("Reference Range Plus"),

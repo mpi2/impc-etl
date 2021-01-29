@@ -92,6 +92,7 @@ class ImpressExtractor(SparkSubmitTask):
     app = "impc_etl/jobs/extract/impress_extractor.py"
     impress_api_url = luigi.Parameter()
     output_path = luigi.Parameter()
+    http_proxy = luigi.Parameter()
     impress_root_type = luigi.Parameter()
 
     def output(self):
@@ -105,7 +106,12 @@ class ImpressExtractor(SparkSubmitTask):
         )
 
     def app_options(self):
-        return [self.impress_api_url, self.output().path, self.impress_root_type]
+        return [
+            self.impress_api_url,
+            self.output().path,
+            self.impress_root_type,
+            self.http_proxy,
+        ]
 
 
 class MGIExtractor(SparkSubmitTask):
@@ -196,6 +202,8 @@ class OpenStatsExtractor(SparkSubmitTask):
     openstats_db_password = luigi.Parameter()
     data_release_version = luigi.Parameter()
     use_cache = luigi.Parameter()
+    raw_data_in_output = luigi.Parameter()
+    extract_windowed_data = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def output(self):
@@ -204,7 +212,16 @@ class OpenStatsExtractor(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return ImpcConfig().get_target(f"{self.output_path}open_stats_parquet")
+        if self.extract_windowed_data == "true":
+            return ImpcConfig().get_target(
+                f"{self.output_path}open_stats_parquet_with_windowing_data"
+            )
+        elif self.raw_data_in_output == "include":
+            return ImpcConfig().get_target(
+                f"{self.output_path}open_stats_parquet_with_raw_data"
+            )
+        else:
+            return ImpcConfig().get_target(f"{self.output_path}open_stats_parquet")
 
     def app_options(self):
         return [
@@ -213,5 +230,7 @@ class OpenStatsExtractor(SparkSubmitTask):
             self.openstats_db_password,
             self.data_release_version,
             self.use_cache,
+            self.raw_data_in_output,
+            self.extract_windowed_data,
             self.output().path,
         ]

@@ -48,7 +48,6 @@ ONTOLOGY_MA_MAP = {
 
 
 MP_CORE_COLUMNS = [
-    "doc_id",
     "mp_id",
     "mp_term",
     "mp_definition",
@@ -70,6 +69,7 @@ MP_CORE_COLUMNS = [
     "inferred_intermediate_ma_term",
     "inferred_selected_top_level_ma_id",
     "inferred_selected_top_level_ma_term",
+    "hp_id",
     "hp_term",
 ]
 
@@ -82,7 +82,7 @@ def main(argv):
                     [2]: Output Path
     """
     ontology_parquet_path = argv[1]
-    ontology_metadata_parquet_path = argv[2]
+    observations_parquet_path = argv[2]
     pipeline_core_parquet_path = argv[3]
     impc_search_index_csv_path = argv[4]
     mp_relation_augmented_metadata_table_csv_path = argv[5]
@@ -91,7 +91,7 @@ def main(argv):
     spark = SparkSession.builder.getOrCreate()
     ontology_df = spark.read.parquet(ontology_parquet_path)
     pipeline_df = spark.read.parquet(pipeline_core_parquet_path)
-    ontology_metadata_df = spark.read.parquet(ontology_metadata_parquet_path)
+    observations_df = spark.read.parquet(observations_parquet_path)
     impc_search_index_df = spark.read.csv(impc_search_index_csv_path, header=True)
     mp_ext_df = spark.read.csv(
         mp_relation_augmented_metadata_table_csv_path, header=True
@@ -110,6 +110,15 @@ def main(argv):
         impc_search_index_df, col("mp_id") == col("phenotype"), "left_outer"
     )
     mp_df = mp_df.withColumn(
+        "hp_id",
+        concat(
+            "impc:childOneLabel",
+            "impc:childTwoLabel",
+            "impc:hpExactSynonym",
+            "impc:hpLabel",
+        ),
+    )
+    mp_df = mp_df.withColumn(
         "hp_term",
         concat(
             "impc:childOneLabel",
@@ -118,6 +127,7 @@ def main(argv):
             "impc:hpLabel",
         ),
     )
+    mp_df = mp_df.withColumn("mp_term_synonym", col("oio:hasExactSynonym"))
 
     ma_df = ontology_df.where(
         (~col("id").startswith("MP:")) & (~col("id").startswith("MPATH:"))
@@ -141,13 +151,20 @@ def main(argv):
         ]
     )
     mp_df = mp_df.join(mp_ma_df, "mp_id", "left_outer")
+    tested_ontology_terms = pipeline_df.withColumn(
+        "mp_id", explode(concat("mp_id", "top_level_mp_id", "intermediate_mp_id"))
+    ).select("mp_id", "fully_qualified_name")
+    ontological_obs_df = observations_df.where(col("observation_type") == "ontological")
+    ontological_obs_df = ontological_obs_df.withColumn("mp_id", explode("sub_term_id"))
+    ontological_obs_df = ontological_obs_df.where(col("mp_id").startswith("MP:"))
+    ontological_obs_df = ontological_obs_df.withColumn("fully_qualified_name", concat("pipeline_stable_id", "procedure_stable_id", "parameter_stable_id"))
+    ontological_obs_df = ontological_obs_df.select("mp_id", "fully_qualified_name").distinct()
+    tested_ontology_terms = tested_ontology_terms.union(ontological_obs_df).distinct()
+    mp_df = mp_df.join(tested_ontology_terms, "mp_id")
+    mp_df = mp_df.select(MP_CORE_COLUMNS).distinct()
     mp_df = mp_df.withColumn(
         "doc_id", monotonically_increasing_id().astype(StringType())
     )
-    pipeline_df = pipeline_df.withColumn(
-        "mp_id", explode(concat("mp_id", "top_level_mp_id", "intermediate_mp_id"))
-    ).select("mp_id", "fully_qualified_name")
-    mp_df = mp_df.join(pipeline_df, "mp_id")
     mp_df.write.parquet(output_path)
 
 

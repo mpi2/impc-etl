@@ -16,6 +16,7 @@ from luigi.contrib.hdfs.target import HdfsTarget
 import unicodedata
 
 ONTOLOGIES = [
+    {"id": "mpath", "format": "obo", "top_level_terms": []},
     {
         "id": "mp",
         "format": "obo",
@@ -72,7 +73,6 @@ ONTOLOGIES = [
             "MA:0002405",
         ],
     },
-    # {"id": "mpath", "format": "obo", "top_level_terms": []},
     {
         "id": "emapa",
         "format": "obo",
@@ -129,14 +129,15 @@ def main(argv):
                     [1]: Input Path
                     [2]: Output Path
     """
+    input_path = argv[1]
     output_path = argv[2]
 
     spark = SparkSession.builder.getOrCreate()
-    ontology_df = extract_ontology_terms(spark)
+    ontology_df = extract_ontology_terms(spark, input_path)
     ontology_df.write.mode("overwrite").parquet(output_path)
 
 
-def extract_ontology_terms(spark_session: SparkSession) -> DataFrame:
+def extract_ontology_terms(spark_session: SparkSession, input_path) -> DataFrame:
     """
 
     :param spark_session:
@@ -147,9 +148,12 @@ def extract_ontology_terms(spark_session: SparkSession) -> DataFrame:
     if ImpcConfig().deploy_mode in ["local", "client"]:
         for ontology_desc in ONTOLOGIES:
             print(f"Processing {ontology_desc['id']}.{ontology_desc['format']}")
-            ontology: Ontology = pronto.Ontology.from_obo_library(
-                f"{ontology_desc['id']}.{ontology_desc['format']}"
-            )
+            if ontology_desc["id"] == "mpath":
+                ontology: Ontology = Ontology(input_path + "mpath.obo")
+            else:
+                ontology: Ontology = pronto.Ontology.from_obo_library(
+                    f"{ontology_desc['id']}.{ontology_desc['format']}"
+                )
 
             part_of_rel: Relationship = None
             for rel in ontology.relationships():

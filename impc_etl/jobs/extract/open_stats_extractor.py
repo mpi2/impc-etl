@@ -17,7 +17,9 @@ def main(argv):
     db_password = argv[3]
     data_release_version = argv[4]
     use_cache = argv[5]
-    output_path = argv[6]
+    raw_data_in_output = argv[6] == "include"
+    extract_windowed_data = argv[7] == "true"
+    output_path = argv[8]
 
     properties = {
         "user": db_user,
@@ -29,41 +31,25 @@ def main(argv):
     if use_cache != "true":
         stats_df = spark.read.jdbc(
             jdbc_connection_str,
-            table="(SELECT CAST(id AS BIGINT) AS numericId, * FROM dr12withmptermsv2) AS tmp",
+            table="(SELECT CAST(id AS BIGINT) AS numericId, * FROM dr12window10092020_22) AS tmp",
             properties=properties,
             numPartitions=5000,
             column="numericId",
             lowerBound=0,
-            upperBound=9999999210,
+            upperBound=99999986070243,
         )
         stats_df = stats_df.withColumnRenamed("statpacket", "json")
         stats_df.write.mode("overwrite").parquet(output_path + "_temp")
     stats_df = spark.read.parquet(output_path + "_temp").repartition(10000)
-    # stats_df = (
-    #     stats_df.where(col("status") == "NotProcessed")
-    #     .limit(1)
-    #     .union(stats_df.where(col("json").contains("Mixed Model")).limit(10))
-    #     .union(
-    #         stats_df.where(
-    #             col("json").contains("MPTERM") & col("json").contains("Mixed Model")
-    #         ).limit(10)
-    #     )
-    #     .union(stats_df.where(col("json").contains("Reference Range")).limit(10))
-    #     .union(
-    #         stats_df.where(
-    #             col("json").contains("MPTERM") & col("json").contains("Reference Range")
-    #         ).limit(10)
-    #     )
-    #     .union(stats_df.where(col("json").contains("Fisher Exact")).limit(10))
-    #     .union(
-    #         stats_df.where(
-    #             col("json").contains("MPTERM") & col("json").contains("Fisher Exact")
-    #         ).limit(10)
-    #     )
-    #     .union(stats_df.where(col("json").contains("MPTERM")).limit(1))
-    # )
-    # stats_df.limit(100).rdd.map(dump_json).saveAsTextFile(output_path + "_json_temp")
-    stats_df.rdd.map(dump_json).saveAsTextFile(output_path + "_json_temp")
+    if extract_windowed_data:
+        stats_df = stats_df.where(col("json").contains("Windowed result"))
+
+    dumping_function = dump_json
+    if raw_data_in_output:
+        dumping_function = dump_json_raw_data
+    if extract_windowed_data:
+        dumping_function = dump_json_windowed_data
+    stats_df.rdd.map(dumping_function).saveAsTextFile(output_path + "_json_temp")
     json_df = spark.read.json(output_path + "_json_temp", mode="FAILFAST")
     json_df.write.mode("overwrite").parquet(output_path)
 
@@ -96,7 +82,25 @@ def object_pairs_hook(lit):
     )
 
 
+def dump_json_windowed_data(row):
+    stats_result = _get_stat_result(row, True, True)
+    json_str = json.dumps(stats_result)
+    return json_str
+
+
+def dump_json_raw_data(row):
+    stats_result = _get_stat_result(row, True)
+    json_str = json.dumps(stats_result)
+    return json_str
+
+
 def dump_json(row):
+    stats_result = _get_stat_result(row)
+    json_str = json.dumps(stats_result)
+    return json_str
+
+
+def _get_stat_result(row, include_raw_data=False, extract_windowed_data=False):
     packet_result_map = {
         "gene_accession_id": "marker_accession_id",
         "gene_symbol": "marker_symbol",
@@ -113,7 +117,12 @@ def dump_json(row):
 
     if stats_result["status"] == "Successful":
         try:
-            normal_result = stats_packet["Result"]["Vector output"]["Normal result"]
+            if extract_windowed_data:
+                normal_result = stats_packet["Result"]["Vector output"][
+                    "Windowed result"
+                ]
+            else:
+                normal_result = stats_packet["Result"]["Vector output"]["Normal result"]
             stats_result["statistical_method"] = (
                 normal_result["Applied method"]
                 if "Applied method" in normal_result
@@ -129,8 +138,92 @@ def dump_json(row):
         stats_result["mp_term"] = (
             stats_packet_detail["MPTERM"] if "MPTERM" in stats_packet_detail else None
         )
-    json_str = json.dumps(stats_result)
-    return json_str
+    if include_raw_data:
+        stats_result["observations_biological_sample_group"] = (
+            stats_packet_detail["Original_biological_sample_group"]
+            if "Original_biological_sample_group" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_body_weight"] = (
+            stats_packet_detail["Original_body_weight"]
+            if "Original_body_weight" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_date_of_experiment"] = (
+            stats_packet_detail["Original_date_of_experiment"]
+            if "Original_date_of_experiment" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_external_sample_id"] = (
+            stats_packet_detail["Original_external_sample_id"]
+            if "Original_external_sample_id" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_response"] = (
+            stats_packet_detail["Original_response"]
+            if "Original_response" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_time_point"] = (
+            stats_packet_detail["Original_time_point"]
+            if "Original_time_point" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_discrete_point"] = (
+            stats_packet_detail["Original_discrete_point"]
+            if "Original_discrete_point" in stats_packet_detail
+            else []
+        )
+        stats_result["observations_sex"] = (
+            stats_packet_detail["Original_sex"]
+            if "Original_sex" in stats_packet_detail
+            else []
+        )
+        if extract_windowed_data:
+            window_parameters = stats_packet_detail["Window parameters"]
+            stats_result["window_l_value"] = window_parameters["l"]["value"]
+            stats_result["window_l_score"] = window_parameters["l"]["score"]
+            stats_result["window_k_value"] = window_parameters["k"]["value"]
+            stats_result["window_k_score"] = window_parameters["k"]["score"]
+            stats_result["window_doe"] = window_parameters["DOE"]
+            stats_result["window_min_obs_required"] = window_parameters[
+                "Min obs required in the window"
+            ]
+            stats_result["window_total_obs_or_weight"] = (
+                window_parameters["Total obs or weight in the window"]
+                if "Total obs or weight in the window" in window_parameters
+                else None
+            )
+            stats_result["window_threshold"] = (
+                window_parameters["Threshold"]
+                if "Threshold" in window_parameters
+                else None
+            )
+            stats_result["window_number_of_doe"] = (
+                window_parameters["The number of DOE in the window"]
+                if "The number of DOE in the window" in window_parameters
+                else None
+            )
+            stats_result["window_doe_note"] = (
+                window_parameters["DOE note"]
+                if "DOE note" in window_parameters
+                else None
+            )
+            weight_dictionary = dict(
+                zip(
+                    window_parameters["external_sample_id"],
+                    window_parameters["Window weights"],
+                )
+            )
+            stats_result["observations_window_weight"] = []
+            for sample_id in stats_result["observations_external_sample_id"]:
+                if sample_id in weight_dictionary:
+                    stats_result["observations_window_weight"].append(
+                        weight_dictionary[sample_id]
+                    )
+                else:
+                    stats_result["observations_window_weight"].append(None)
+    return stats_result
 
 
 def get_raw_data_details(stats_packet_detail) -> Dict:
@@ -494,6 +587,7 @@ def get_calculation_details(normal_result, applied_method):
                 "Gender included in analysis"
             ]
             if "Additional information" in normal_result
+            and "Analysis" in normal_result["Additional information"]
             else None
         )
         calculation_details["weight_effect_p_value"] = (

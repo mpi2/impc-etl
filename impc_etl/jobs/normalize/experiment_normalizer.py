@@ -201,15 +201,6 @@ def override_europhenome_datasource(dcc_df: DataFrame) -> DataFrame:
 def generate_metadata_group(
     experiment_specimen_df: DataFrame, impress_df: DataFrame, exp_type="experiment"
 ) -> DataFrame:
-    TEST_ID = None
-    TEST_ID_LIST = (
-        experiment_specimen_df.where(col("_experimentID") == "177182_16783")
-        .select("unique_id")
-        .collect()
-    )
-    if len(TEST_ID_LIST) > 0:
-        TEST_ID = TEST_ID_LIST[0]["unique_id"]
-
     experiment_metadata = experiment_specimen_df.withColumn(
         "procedureMetadata", explode("procedureMetadata")
     )
@@ -285,18 +276,6 @@ def generate_metadata_group(
             experiment_specimen_df["metadataGroup"]
         ),
     )
-    if TEST_ID is not None:
-        TEST_METADATA_GROUP = experiment_specimen_df.where(
-            col("unique_id") == TEST_ID
-        ).collect()[0]["metadataGroup"]
-
-        if TEST_METADATA_GROUP != "c0d04946009ff863da92165975d6bed3":
-            raise ValueError
-        else:
-            print("Everything is fine")
-            experiment_specimen_df.where(col("unique_id") == TEST_ID).show(
-                vertical=True, truncate=False
-            )
     return experiment_specimen_df
 
 
@@ -556,7 +535,6 @@ def get_derived_parameters(
     else:
         result_return = struct(
             *[
-                lit(None).cast(StringType()).alias("_VALUE"),
                 results_df["parameterKey"].alias("_parameterID"),
                 results_df["unitName"].alias("_unit"),
                 lit(None).cast(StringType()).alias("parameterStatus"),
@@ -588,7 +566,9 @@ def get_derived_parameters(
         when(
             (col("results").isNotNull() & col("simpleParameter").isNotNull()),
             merge_simple_parameters(col("simpleParameter"), col("results")),
-        ).otherwise(col("simpleParameter")),
+        )
+        .when(col("simpleParameter").isNull(), col("results"))
+        .otherwise(col("simpleParameter")),
     )
     dcc_experiment_df = dcc_experiment_df.drop(
         "complete_derivations.unique_id",

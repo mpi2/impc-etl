@@ -2,13 +2,33 @@
 SOLR module
    Generates the required Solr cores
 """
+import base64
+import gzip
+
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import collect_set, col, when, count, explode, lit, split
+from pyspark.sql.functions import (
+    collect_set,
+    col,
+    when,
+    count,
+    explode,
+    lit,
+    split,
+    min,
+    struct,
+    expr,
+    sort_array,
+    udf,
+    size,
+    array,
+    array_except,
+    least,
+)
 import requests
 import json
 import sys
 
-from pyspark.sql.types import StringType
+from pyspark.sql.types import StringType, DoubleType
 
 from impc_etl.config import Constants
 
@@ -108,7 +128,10 @@ def main(argv):
     mgi_homologene_report_parquet_path = argv[3]
     mgi_mrk_list_report_parquet_path = argv[4]
     embryo_data_json_path = argv[5]
-    output_path = argv[6]
+    observations_parquet_path = argv[6]
+    stats_results_parquet_path = argv[7]
+    ontology_metadata_parquet_path = argv[8]
+    output_path = argv[9]
 
     spark = SparkSession.builder.getOrCreate()
     imits_gene_df = spark.read.parquet(imits_gene_parquet_path).select(
@@ -127,6 +150,272 @@ def main(argv):
         ]
     )
     embryo_data_df = spark.read.json(embryo_data_json_path, mode="FAILFAST")
+    observations_df = spark.read.parquet(observations_parquet_path)
+    stats_results_df = spark.read.parquet(stats_results_parquet_path)
+    ontology_metadata_df = spark.read.parquet(ontology_metadata_parquet_path)
+    ontology_metadata_df = ontology_metadata_df.select(
+        col("curie").alias("phenotype_term_id"),
+        col("name").alias("phenotype_term_name"),
+    ).distinct()
+
+    stats_results_df = stats_results_df.withColumnRenamed(
+        "marker_accession_id", "gene_accession_id"
+    )
+    stats_results_df = stats_results_df.withColumnRenamed(
+        "marker_symbol", "gene_symbol"
+    )
+    stats_results_df = stats_results_df.withColumn(
+        "procedure_stable_id", explode("procedure_stable_id")
+    )
+    stats_results_df = stats_results_df.withColumn(
+        "procedure_name", explode("procedure_name")
+    )
+    stats_results_df = stats_results_df.withColumn(
+        "life_stage_name", explode("life_stage_name")
+    )
+    stats_results_df = stats_results_df.withColumn(
+        "top_level_mp_term_name",
+        when(
+            (size("top_level_mp_term_name") == 0)
+            | col("top_level_mp_term_name").isNull(),
+            array("mp_term_name"),
+        ).otherwise(col("top_level_mp_term_name")),
+    )
+    significant_mp_term = stats_results_df.select(
+        "gene_accession_id", "top_level_mp_term_name", "significant"
+    )
+
+    significant_mp_term = significant_mp_term.withColumn(
+        "top_level_mp_term_name", explode("top_level_mp_term_name")
+    )
+
+    significant_mp_term = significant_mp_term.groupBy("gene_accession_id").agg(
+        collect_set(
+            when(col("significant") == True, col("top_level_mp_term_name")).otherwise(
+                lit(None)
+            )
+        ).alias("significant_top_level_mp_terms"),
+        collect_set(
+            when(col("significant") == False, col("top_level_mp_term_name")).otherwise(
+                lit(None)
+            )
+        ).alias("not_significant_top_level_mp_terms"),
+    )
+    significant_mp_term = significant_mp_term.withColumn(
+        "not_significant_top_level_mp_terms",
+        array_except(
+            "not_significant_top_level_mp_terms", "significant_top_level_mp_terms"
+        ),
+    )
+    significant_mp_term = significant_mp_term.withColumnRenamed(
+        "gene_accession_id", "mgi_accession_id"
+    )
+    significance_cols = [
+        "female_ko_effect_p_value",
+        "male_ko_effect_p_value",
+        "genotype_effect_p_value",
+        "male_pvalue_low_vs_normal_high",
+        "male_pvalue_low_normal_vs_high",
+        "female_pvalue_low_vs_normal_high",
+        "female_pvalue_low_normal_vs_high",
+        "genotype_pvalue_low_normal_vs_high",
+        "genotype_pvalue_low_vs_normal_high",
+        "male_ko_effect_p_value",
+        "female_ko_effect_p_value",
+        "p_value",
+        "effect_size",
+        "male_effect_size",
+        "female_effect_size",
+        "male_effect_size_low_vs_normal_high",
+        "male_effect_size_low_normal_vs_high",
+        "genotype_effect_size_low_vs_normal_high",
+        "genotype_effect_size_low_normal_vs_high",
+        "female_effect_size_low_vs_normal_high",
+        "female_effect_size_low_normal_vs_high",
+        "significant",
+        "full_mp_term",
+        "metadata_group",
+        "male_mutant_count",
+        "female_mutant_count",
+        "statistical_method",
+        "mp_term_id",
+        "sex",
+    ]
+
+    data_set_cols = [
+        "allele_accession_id",
+        "allele_symbol",
+        "gene_symbol",
+        "gene_accession_id",
+        "parameter_stable_id",
+        "parameter_name",
+        "procedure_stable_id",
+        "procedure_name",
+        "pipeline_name",
+        "pipeline_stable_id",
+        "zygosity",
+        "phenotyping_center",
+        "life_stage_name",
+    ]
+
+    stats_results_df = stats_results_df.select(*(data_set_cols + significance_cols))
+    stats_results_df = stats_results_df.withColumn(
+        "selected_p_value",
+        when(
+            col("statistical_method").isin(["Manual", "Supplied as data"]),
+            col("p_value"),
+        )
+        .when(
+            col("statistical_method").contains("Reference Range Plus"),
+            when(
+                col("sex") == "male",
+                least(
+                    col("male_pvalue_low_vs_normal_high"),
+                    col("male_pvalue_low_normal_vs_high"),
+                ),
+            )
+            .when(
+                col("sex") == "female",
+                least(
+                    col("female_pvalue_low_vs_normal_high"),
+                    col("female_pvalue_low_normal_vs_high"),
+                ),
+            )
+            .otherwise(
+                least(
+                    col("genotype_pvalue_low_normal_vs_high"),
+                    col("genotype_pvalue_low_vs_normal_high"),
+                )
+            ),
+        )
+        .otherwise(
+            when(col("sex") == "male", col("male_ko_effect_p_value"))
+            .when(col("sex") == "female", col("female_ko_effect_p_value"))
+            .otherwise(
+                when(
+                    col("statistical_method").contains("Fisher Exact Test framework"),
+                    col("p_value"),
+                ).otherwise(col("genotype_effect_p_value"))
+            )
+        ),
+    )
+    stats_results_df = stats_results_df.withColumn(
+        "selected_p_value", col("selected_p_value").cast(DoubleType())
+    )
+    stats_results_df = stats_results_df.withColumn(
+        "selected_effect_size",
+        when(col("statistical_method").isin(["Manual", "Supplied as data"]), lit(1.0))
+        .when(
+            ~col("statistical_method").contains("Reference Range Plus"),
+            when(col("sex") == "male", col("male_effect_size"))
+            .when(col("sex") == "female", col("female_effect_size"))
+            .otherwise(col("effect_size")),
+        )
+        .otherwise(
+            when(
+                col("sex") == "male",
+                when(
+                    col("male_effect_size_low_vs_normal_high")
+                    <= col("male_effect_size_low_normal_vs_high"),
+                    col("genotype_effect_size_low_vs_normal_high"),
+                ).otherwise(col("genotype_effect_size_low_normal_vs_high")),
+            )
+            .when(
+                col("sex") == "female",
+                when(
+                    col("female_effect_size_low_vs_normal_high")
+                    <= col("female_effect_size_low_normal_vs_high"),
+                    col("genotype_effect_size_low_vs_normal_high"),
+                ).otherwise(col("genotype_effect_size_low_normal_vs_high")),
+            )
+            .otherwise(col("effect_size"))
+        ),
+    )
+    stats_results_df = stats_results_df.withColumn(
+        "selected_phenotype_term", col("mp_term_id")
+    )
+    observations_df = observations_df.select(*data_set_cols).distinct()
+    datasets_df = observations_df.join(stats_results_df, data_set_cols, "left_outer")
+    datasets_df = datasets_df.groupBy(data_set_cols).agg(
+        collect_set(
+            struct(
+                *[
+                    "selected_p_value",
+                    "selected_effect_size",
+                    "selected_phenotype_term",
+                    "metadata_group",
+                    "male_mutant_count",
+                    "female_mutant_count",
+                    "significant",
+                ]
+            )
+        ).alias("stats_data")
+    )
+    datasets_df = datasets_df.withColumn(
+        "successful_stats_data",
+        expr("filter(stats_data, stat -> stat.selected_p_value IS NOT NULL)"),
+    )
+    datasets_df = datasets_df.withColumn(
+        "stats_data",
+        when(
+            size("successful_stats_data") > 0,
+            sort_array("successful_stats_data").getItem(0),
+        ).otherwise(sort_array("stats_data").getItem(0)),
+    )
+    datasets_df = datasets_df.select(*data_set_cols, "stats_data.*")
+    datasets_df = datasets_df.withColumnRenamed("selected_p_value", "p_value")
+    datasets_df = datasets_df.withColumnRenamed("selected_effect_size", "effect_size")
+    datasets_df = datasets_df.withColumnRenamed(
+        "selected_phenotype_term", "phenotype_term_id"
+    )
+    datasets_df = datasets_df.join(
+        ontology_metadata_df, "phenotype_term_id", "left_outer"
+    )
+    datasets_df = datasets_df.withColumn(
+        "significance",
+        when(col("significant") == True, lit("Significant"))
+        .when(col("p_value").isNotNull(), lit("Not significant"))
+        .otherwise(lit("N/A")),
+    )
+    mgi_datasets_df = datasets_df.groupBy("gene_accession_id").agg(
+        collect_set(
+            struct(
+                *(
+                    data_set_cols
+                    + [
+                        "significance",
+                        "p_value",
+                        "effect_size",
+                        "metadata_group",
+                        "male_mutant_count",
+                        "female_mutant_count",
+                        "phenotype_term_id",
+                        "phenotype_term_name",
+                    ]
+                )
+            )
+        ).alias("datasets_raw_data")
+    )
+
+    mgi_datasets_df = mgi_datasets_df.withColumnRenamed(
+        "gene_accession_id", "mgi_accession_id"
+    )
+
+    to_json_udf = udf(
+        lambda row: None
+        if row is None
+        else json.dumps(
+            [{key: value for key, value in item.asDict().items()} for item in row]
+        ),
+        StringType(),
+    )
+    mgi_datasets_df = mgi_datasets_df.withColumn(
+        "datasets_raw_data", to_json_udf("datasets_raw_data")
+    )
+    compress_and_encode = udf(_compress_and_encode, StringType())
+    mgi_datasets_df = mgi_datasets_df.withColumn(
+        "datasets_raw_data", compress_and_encode("datasets_raw_data")
+    )
 
     grouped_columns = [
         "allele_mgi_accession_id",
@@ -220,6 +509,8 @@ def main(argv):
     gene_df = gene_df.groupBy(
         [col_name for col_name in gene_df.columns if col_name not in grouped_columns]
     ).agg(*[collect_set(col_name).alias(col_name) for col_name in grouped_columns])
+    gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
+    gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
     gene_df.distinct().write.parquet(output_path)
 
 
@@ -241,6 +532,13 @@ def get_embryo_data(spark: SparkSession):
     r = requests.get("")
     df = spark.createDataFrame([json.loads(line) for line in r.iter_lines()])
     return df
+
+
+def _compress_and_encode(json_text):
+    if json_text is None:
+        return None
+    else:
+        return str(base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))), "utf-8")
 
 
 if __name__ == "__main__":

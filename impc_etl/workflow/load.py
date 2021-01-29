@@ -145,7 +145,11 @@ class StatsResultsCoreLoader(SparkSubmitTask):
     emap_emapa_csv_path = luigi.Parameter()
     emapa_metadata_csv_path = luigi.Parameter()
     ma_metadata_csv_path = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
+    raw_data_in_output = luigi.Parameter()
+    extract_windowed_data = luigi.Parameter()
+    http_proxy = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -156,6 +160,8 @@ class StatsResultsCoreLoader(SparkSubmitTask):
                 openstats_db_password=self.openstats_db_password,
                 data_release_version=self.data_release_version,
                 use_cache=self.use_cache,
+                extract_windowed_data=self.extract_windowed_data,
+                raw_data_in_output=self.raw_data_in_output,
                 output_path=self.output_path,
             ),
             ObservationsMapper(
@@ -170,6 +176,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
             ),
+            ImpressExtractor(output_path=self.output_path),
             PipelineCoreLoader(
                 dcc_xml_path=self.dcc_xml_path,
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
@@ -185,6 +192,19 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             AlleleExtractor(
                 imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
             ),
+            MPChooserLoader(
+                http_proxy=self.http_proxy,
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            ),
         ]
 
     def output(self):
@@ -193,7 +213,12 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             if not self.output_path.endswith("/")
             else self.output_path
         )
-        return ImpcConfig().get_target(f"{self.output_path}stats_results_parquet")
+        if self.extract_windowed_data == "true":
+            return ImpcConfig().get_target(
+                f"{self.output_path}stats_results_parquet_with_windowing"
+            )
+        else:
+            return ImpcConfig().get_target(f"{self.output_path}stats_results_parquet")
 
     def app_options(self):
         return [
@@ -202,7 +227,12 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             self.input()[2].path,
             self.input()[3].path,
             self.input()[4].path,
+            self.input()[5].path,
+            self.input()[6].path,
             self.threei_stats_results_csv,
+            self.mpath_metadata_csv_path,
+            self.raw_data_in_output,
+            self.extract_windowed_data,
             self.output().path,
         ]
 
@@ -215,6 +245,7 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
     openstats_db_password = luigi.Parameter()
     data_release_version = luigi.Parameter()
     use_cache = luigi.Parameter()
+    raw_data_in_output = luigi.Parameter()
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     imits_alleles_tsv_path = luigi.Parameter()
@@ -224,7 +255,9 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
     emap_emapa_csv_path = luigi.Parameter()
     emapa_metadata_csv_path = luigi.Parameter()
     ma_metadata_csv_path = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
+    http_proxy = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -244,7 +277,11 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
                 emap_emapa_csv_path=self.emap_emapa_csv_path,
                 emapa_metadata_csv_path=self.emapa_metadata_csv_path,
                 ma_metadata_csv_path=self.ma_metadata_csv_path,
+                mpath_metadata_csv_path=self.mpath_metadata_csv_path,
                 threei_stats_results_csv=self.threei_stats_results_csv,
+                raw_data_in_output="exclude",
+                extract_windowed_data="false",
+                http_proxy=self.http_proxy,
                 output_path=self.output_path,
             ),
             OntologyExtractor(
@@ -305,6 +342,49 @@ class MGIPhenotypeCoreLoader(SparkSubmitTask):
         ]
 
 
+class MPChooserLoader(SparkSubmitTask):
+    name = "IMPC_MP_Chooser_Mapper"
+    app = "impc_etl/jobs/load/mp_chooser_mapper.py"
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    http_proxy = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            PipelineCoreLoader(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            )
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f"{self.output_path}mp_chooser.json")
+
+    def app_options(self):
+        return [self.input()[0].path, self.http_proxy, self.output().path]
+
+
 class MPCoreLoader(SparkSubmitTask):
     name = "IMPC_MGI_Phenotype_Loader"
     app = "impc_etl/jobs/load/solr/mp_mapper.py"
@@ -328,9 +408,13 @@ class MPCoreLoader(SparkSubmitTask):
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
             ),
-            OntologyMetadataExtractor(
-                ontology_input_path=self.ontology_input_path,
+            ObservationsMapper(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
             ),
             PipelineCoreLoader(
                 dcc_xml_path=self.dcc_xml_path,
@@ -374,6 +458,24 @@ class GeneCoreLoader(SparkSubmitTask):
     embryo_data_json_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
+    dcc_xml_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    openstats_jdbc_connection = luigi.Parameter()
+    openstats_db_user = luigi.Parameter()
+    openstats_db_password = luigi.Parameter()
+    data_release_version = luigi.Parameter()
+    use_cache = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
+    threei_stats_results_csv = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    http_proxy = luigi.Parameter()
+
     def output(self):
         self.output_path = (
             self.output_path + "/"
@@ -398,6 +500,40 @@ class GeneCoreLoader(SparkSubmitTask):
                 mgi_input_path=self.mgi_mrk_list_input_path,
                 output_path=self.output_path,
             ),
+            ObservationsMapper(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+            ),
+            StatsResultsCoreLoader(
+                openstats_jdbc_connection=self.openstats_jdbc_connection,
+                openstats_db_user=self.openstats_db_user,
+                openstats_db_password=self.openstats_db_password,
+                data_release_version=self.data_release_version,
+                use_cache=self.use_cache,
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+                mpath_metadata_csv_path=self.mpath_metadata_csv_path,
+                threei_stats_results_csv=self.threei_stats_results_csv,
+                raw_data_in_output="exclude",
+                http_proxy=self.http_proxy,
+                extract_windowed_data="false",
+                output_path=self.output_path,
+            ),
+            OntologyMetadataExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
         ]
 
     def app_options(self):
@@ -407,6 +543,9 @@ class GeneCoreLoader(SparkSubmitTask):
             self.input()[2].path,
             self.input()[3].path,
             self.embryo_data_json_path,
+            self.input()[4].path,
+            self.input()[5].path,
+            self.input()[6].path,
             self.output().path,
         ]
 

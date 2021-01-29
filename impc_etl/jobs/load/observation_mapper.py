@@ -1,5 +1,5 @@
 import sys
-from pyspark.sql import DataFrame, SparkSession, Column
+from pyspark.sql import DataFrame, SparkSession, Column, Window
 from pyspark.sql.functions import (
     concat,
     col,
@@ -10,18 +10,21 @@ from pyspark.sql.functions import (
     regexp_replace,
     regexp_extract,
     collect_list,
-    collect_set,
+    max,
     md5,
     unix_timestamp,
     from_unixtime,
     udf,
     array,
     substring,
+    upper,
+    first,
 )
 from pyspark.sql.types import StringType, IntegerType, LongType, ArrayType
 from impc_etl.config import Constants
 import datetime
 
+from impc_etl.jobs.clean.colony_cleaner import map_strain_name
 from impc_etl.shared.utils import has_column
 
 
@@ -76,6 +79,12 @@ def main(argv):
     observations_df = observations_df.where(
         col("category").isNull() | (col("category") != "INCOMPLETE_INPUT_STR")
     )
+    observations_df = observations_df.where(
+        col("strain_name").isNotNull() | (col("biological_sample_group") == "control")
+    )
+    observations_df = observations_df.where(
+        (~col("text_value").like('%outcome": null%')) | col("text_value").isNull()
+    )
     observations_df.write.mode("overwrite").parquet(output_path)
 
 
@@ -86,7 +95,6 @@ def map_line_columns(line_df: DataFrame):
         else:
             line_df = line_df.withColumn(field, lit(None))
     line_df = line_df.withColumn("biological_sample_group", lit("experimental"))
-    line_df = line_df.withColumn("zygosity", lit("homozygote"))
     line_df = line_df.withColumn(
         "datasource_name",
         when(col("_dataSource") == "impc", lit("IMPC")).otherwise(
@@ -106,6 +114,15 @@ def map_line_columns(line_df: DataFrame):
                 ),
             ).otherwise(col("allele.mgiAlleleID"))
         ),
+    )
+    line_df = line_df.withColumn(
+        "strain_accession_id",
+        when(
+            col("strain_accession_id").isNull(),
+            concat(
+                lit("IMPC-CURATE-"), upper(substring(md5(line_df["strain_name"]), 0, 5))
+            ),
+        ).otherwise(col("strain_accession_id")),
     )
     return line_df
 
@@ -223,16 +240,35 @@ def map_experiment_columns(exp_df: DataFrame):
     exp_df = exp_df.withColumn(
         "strain_name",
         when(
-            (col("colony_id") == "baseline") | (col("specimen._isBaseline") == True),
-            col("strain.strainName"),
-        ).otherwise(col("colony.colony_background_strain")),
+            (col("colony_id") == "baseline") | (col("specimen._isBaseline") == True)
+            # TODO add strain managemend for all legacy data and not only for baselines
+            | (col("datasource_name").isin(["EuroPhenome", "MGP"])),
+            when(
+                col("strain.strainName").isNotNull(), col("strain.strainName")
+            ).otherwise(col("specimen._strainID")),
+        ).otherwise(
+            when(
+                col("strain.strainName").isNotNull(), col("strain.strainName")
+            ).otherwise(col("specimen._strainID"))
+        ),
     )
+
     exp_df = exp_df.withColumn(
         "genetic_background",
         when(
             (col("colony_id") == "baseline") | (col("specimen._isBaseline") == True),
             concat(lit("involves: "), col("strain.strainName")),
         ).otherwise(col("colony.genetic_background")),
+    )
+
+    exp_df = exp_df.withColumn(
+        "strain_accession_id",
+        when(
+            col("strain_accession_id").isNull(),
+            concat(
+                lit("IMPC-CURATE-"), upper(substring(md5(exp_df["strain_name"]), 0, 5))
+            ),
+        ).otherwise(col("strain_accession_id")),
     )
 
     return exp_df
@@ -311,6 +347,26 @@ def add_impress_info(
                 )
                 .otherwise(lit("both")),
             ).otherwise(col("sex")),
+        )
+        experiments_df = experiments_df.withColumn(
+            "zygosity",
+            when(
+                col("parameter_stable_id").isin(Constants.HET_LINE_PARAMETERS),
+                lit("heterozygote"),
+            )
+            .when(
+                col("parameter_stable_id").isin(Constants.HEM_LINE_PARAMETERS),
+                lit("hemizygote"),
+            )
+            .when(
+                col("parameter_stable_id").isin(Constants.ANZ_LINE_PARAMETERS),
+                lit("anzygote"),
+            )
+            .when(
+                col("parameter_stable_id").isin(Constants.ZYG_NA_LINE_PARAMETERS),
+                lit("not_applicable"),
+            )
+            .otherwise(lit("homozygote")),
         )
     return experiments_df
 
@@ -395,36 +451,38 @@ def resolve_simple_value(exp_df, pipeline_df):
 
 
 def resolve_ontology_value(ontological_observation_df, ontology_df):
-    ontology_df = ontology_df.alias("onto")
+    ontology_df = ontology_df.distinct().alias("onto")
+    if has_column(ontology_df, "ontologyParameter._sequenceID"):
+        ontology_df = ontology_df.withColumn(
+            "sequence_id", col("ontologyParameter._sequenceID")
+        )
     id_vs_terms_df = (
         ontological_observation_df.withColumn("term", explode("ontologyParameter.term"))
         .withColumnRenamed("pos", "ontologyPos")
-        .select("observation_id", "ontologyParameter._parameterID", "term")
+        .select(
+            "observation_id",
+            "ontologyParameter._parameterID",
+            "ontologyParameter._sequenceID",
+            "term",
+        )
         .alias("temp")
     )
     id_vs_terms_df = id_vs_terms_df.join(
         ontology_df,
-        (regexp_extract(col("temp.term"), "(.+:.+):.+", 1) == col("onto.curie")),
+        (regexp_extract(col("temp.term"), "([A-Z]+:\d+)[\s:]*", 1) == col("onto.acc")),
     )
-    id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_id", col("onto.curie"))
+    id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_id", col("onto.acc"))
     id_vs_terms_df = id_vs_terms_df.withColumn("sub_term_name", col("onto.name"))
     id_vs_terms_df = id_vs_terms_df.withColumn(
         "sub_term_description", col("onto.description")
     ).dropDuplicates()
     id_vs_terms_df = id_vs_terms_df.groupBy(
-        col("observation_id"), col("temp._parameterID")
+        col("observation_id"), col("temp._parameterID"), col("temp._sequenceID")
     ).agg(
         collect_list("sub_term_id").alias("sub_term_id"),
         collect_list("sub_term_name").alias("sub_term_name"),
         collect_list("sub_term_description").alias("sub_term_description"),
     )
-    # id_vs_terms_df = id_vs_terms_df.withColumn(
-    #     "sub_term_description",
-    #     udf(
-    #         lambda l: [item for sublist in l for item in sublist],
-    #         ArrayType(StringType()),
-    #     )("sub_term_description"),
-    # )
     ontological_observation_df = ontological_observation_df.join(
         id_vs_terms_df, "observation_id", "left_outer"
     )
@@ -518,13 +576,13 @@ def resolve_time_series_value(time_series_observation_df: DataFrame):
             col("time_point").isNull(), col("seriesParameterValue._incrementValue")
         ).otherwise((col("measured_at") - col("lights_out")) / 3600),
     )
-
-    time_series_observation_df = time_series_observation_df.withColumn(
-        "time_point",
-        when(col("time_point").isNull(), col("_dateOfExperiment")).otherwise(
-            col("time_point")
-        ),
-    )
+    if has_column(time_series_observation_df, "_dateOfExperiment"):
+        time_series_observation_df = time_series_observation_df.withColumn(
+            "time_point",
+            when(col("time_point").isNull(), col("_dateOfExperiment")).otherwise(
+                col("time_point")
+            ),
+        )
     time_series_observation_df = time_series_observation_df.withColumn(
         "observation_type", lit("time_series")
     )
@@ -592,6 +650,12 @@ def resolve_image_record_value(image_record_observation_df: DataFrame):
         "file_type", col("seriesMediaParameterValue._fileType")
     )
     image_record_observation_df = image_record_observation_df.withColumn(
+        "increment_value", col("seriesMediaParameterValue._incrementValue")
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        "image_link", col("seriesMediaParameterValue._link")
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
         "observation_type", lit("image_record")
     )
     return image_record_observation_df
@@ -604,16 +668,17 @@ def resolve_image_record_parameter_association(
     image_df = image_record_observation_df.alias("image").withColumn(
         "parameterAsc", explode("image.seriesMediaParameterValue.parameterAssociation")
     )
+    image_df = image_df.select("parameterAsc.*", "*")
     image_vs_simple_parameters_df = image_df.join(
         simple_df,
         (col("simple.experiment_id") == col("image.experiment_id"))
-        & (col("simple.parameter_stable_id") == col("parameterAsc._parameterID")),
+        & (col("simple.parameter_stable_id") == col("_parameterID")),
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
         "paramName", col("simple.parameter_name")
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-        "paramSeq", lit("0")
+        "paramSeq", col("image._sequenceID")
     )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
         "paramValue",
@@ -623,25 +688,49 @@ def resolve_image_record_parameter_association(
             )
         ),
     )
-    image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
-        col("image.observation_id"), col("image.parameter_stable_id")
-    ).agg(
-        collect_set("parameterAsc._parameterID").alias("paramIDs"),
-        collect_set("paramName").alias("paramNames"),
-        collect_set("paramSeq").alias("paramSeqs"),
-        collect_set("paramValue").alias("paramValues"),
+    window = Window.partitionBy(
+        "image.observation_id", "image.parameter_stable_id"
+    ).orderBy("_parameterID")
+
+    # image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
+    #     col("image.observation_id"), col("image.parameter_stable_id")
+    # ).agg(
+    #     collect_list("_parameterID").over(window).alias("paramIDs"),
+    #     collect_list("paramName").over(window).alias("paramNames"),
+    #     collect_set("paramSeq").over(window).alias("paramSeqs"),
+    #     collect_set("paramValue").over(window).alias("paramValues")
+    # )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        "paramIDs", collect_list("_parameterID").over(window)
     )
-    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumnRenamed(
-        "observation_id", "img_observation_id"
-    ).withColumnRenamed("parameter_stable_id", "img_parameter_stable_id")
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        "paramNames", collect_list("paramName").over(window)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        "paramSeqs", collect_list("paramSeq").over(window)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        "paramValues", collect_list("paramValue").over(window)
+    )
     image_vs_simple_parameters_df = image_vs_simple_parameters_df.select(
-        "img_observation_id",
-        "img_parameter_stable_id",
+        "image.observation_id",
+        "image.parameter_stable_id",
         "paramIDs",
         "paramNames",
         "paramSeqs",
         "paramValues",
     )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
+        "image.observation_id", "image.parameter_stable_id"
+    ).agg(
+        max("paramIDs").alias("paramIDs"),
+        max("paramNames").alias("paramNames"),
+        max("paramSeqs").alias("paramSeqs"),
+        max("paramValues").alias("paramValues"),
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumnRenamed(
+        "observation_id", "img_observation_id"
+    ).withColumnRenamed("parameter_stable_id", "img_parameter_stable_id")
     image_record_observation_df = image_record_observation_df.join(
         image_vs_simple_parameters_df,
         (
@@ -839,7 +928,15 @@ def map_experiments_to_observations(
     mouse_df = mouse_df.withColumn("_stage", lit(None).cast(StringType()))
     mouse_df = mouse_df.withColumn("_stageUnit", lit(None).cast(StringType()))
     specimen_df = mouse_df.union(embryo_df.select(mouse_df.columns))
-
+    # TODO remove strain mapping for legacy phenotype data
+    # map_strain_name_udf = udf(map_strain_name, StringType())
+    # specimen_df = specimen_df.withColumn(
+    #     "_strainID",
+    #     when(
+    #         ((lower(col("_colonyID")) == "baseline") | (col("_isBaseline") == True)),
+    #         map_strain_name_udf("_strainID"),
+    #     ).otherwise(col("_strainID")),
+    # )
     specimen_df = specimen_df.withColumnRenamed("_sourceFile", "specimen_source_file")
     specimen_df = specimen_df.withColumnRenamed("unique_id", "specimen_id")
     specimen_df = specimen_df.alias("specimen")
@@ -861,6 +958,13 @@ def map_experiments_to_observations(
         (observation_df["specimen._colonyID"] == colony_df["colony.colony_name"]),
         "left_outer",
     )
+    observation_df = observation_df.where(
+        col("colony.colony_name").isNotNull()
+        | (
+            (lower(col("specimen._colonyID")) == "baseline")
+            | (col("specimen._isBaseline") == True)
+        )
+    )
     observation_df = observation_df.join(
         allele_df,
         observation_df["colony.allele_symbol"] == allele_df["allele.alleleSymbol"],
@@ -872,7 +976,9 @@ def map_experiments_to_observations(
         & (col("specimen._isBaseline") != True)
     ).join(
         strain_df,
-        col("colony.colony_background_strain") == col("strain.strainName"),
+        (col("colony.colony_background_strain") == col("strain.strainName"))
+        | (concat(lit("MGI:"), col("specimen._strainID")) == col("strain.mgiStrainID"))
+        | (col("specimen._strainID") == col("strain.strainName")),
         "left_outer",
     )
 
@@ -881,10 +987,8 @@ def map_experiments_to_observations(
         | (col("specimen._isBaseline") == True)
     ).join(
         strain_df,
-        when(
-            concat(lit("MGI:"), col("specimen._strainID")) == col("strain.mgiStrainID"),
-            concat(lit("MGI:"), col("specimen._strainID")) == col("strain.mgiStrainID"),
-        ).otherwise(col("specimen._strainID") == col("strain.strainName")),
+        (concat(lit("MGI:"), col("specimen._strainID")) == col("strain.mgiStrainID"))
+        | (col("specimen._strainID") == col("strain.strainName")),
         "left_outer",
     )
 
@@ -913,7 +1017,9 @@ def map_experiments_to_observations(
     )
 
     line_observation_df = line_observation_df.join(
-        strain_df, col("colony.colony_background_strain") == col("strain.strainName")
+        strain_df,
+        col("colony.colony_background_strain") == col("strain.strainName"),
+        "left_outer",
     )
 
     line_observation_df = line_observation_df.join(
@@ -970,6 +1076,23 @@ def map_experiments_to_observations(
         Constants.OBSERVATION_COLUMNS
     )
 
+    line_time_series_observation_df = process_parameter_values(
+        line_observation_df, pipeline_df, "seriesParameter", exp_type="line"
+    )
+    if line_time_series_observation_df is not None:
+        line_time_series_observation_df = resolve_time_series_value(
+            line_time_series_observation_df
+        )
+        line_time_series_observation_df = line_time_series_observation_df.withColumn(
+            "specimen_id", lit(None)
+        )
+        line_time_series_observation_df = unify_schema(
+            line_time_series_observation_df
+        ).select(Constants.OBSERVATION_COLUMNS)
+        time_series_observation_df = time_series_observation_df.union(
+            line_time_series_observation_df
+        )
+
     image_record_observation_df = process_parameter_values(
         observation_df, pipeline_df, "seriesMediaParameter"
     )
@@ -1012,9 +1135,7 @@ def map_experiments_to_observations(
                 when(
                     (
                         col("procedure_stable_id").rlike(
-                            "|".join(
-                                [f"({ proc })" for proc in life_stage["procedures"]]
-                            )
+                            "|".join([f"({proc})" for proc in life_stage["procedures"]])
                         )
                         | (col("developmental_stage_name") == life_stage_name)
                     ),
@@ -1029,9 +1150,7 @@ def map_experiments_to_observations(
                 when(
                     (
                         col("procedure_stable_id").rlike(
-                            "|".join(
-                                [f"({ proc })" for proc in life_stage["procedures"]]
-                            )
+                            "|".join([f"({proc})" for proc in life_stage["procedures"]])
                         )
                         | (col("developmental_stage_name") == life_stage_name)
                     ),
