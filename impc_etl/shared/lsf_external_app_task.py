@@ -3,6 +3,7 @@ import os
 import subprocess
 import logging
 import shutil
+import random
 
 LOGGER = logging.getLogger("luigi-interface")
 
@@ -78,4 +79,21 @@ class LSFExternalJobTask(LSFJobTask):
         pass
 
     def _init_local(self):
-        pass
+
+        base_tmp_dir = self.shared_tmp_dir
+
+        random_id = "%016x" % random.getrandbits(64)
+        task_name = random_id + self.task_id
+        # If any parameters are directories, if we don't
+        # replace the separators on *nix, it'll create a weird nested directory
+        task_name = task_name.replace("/", "::")
+
+        # Max filename length
+        max_filename_length = os.fstatvfs(0).f_namemax
+        self.tmp_dir = os.path.join(base_tmp_dir, task_name[:max_filename_length])
+
+        LOGGER.info("Tmp dir: %s", self.tmp_dir)
+        os.makedirs(self.tmp_dir)
+
+        # Now, pass onto the class's specified init_local() method.
+        self.init_local()
