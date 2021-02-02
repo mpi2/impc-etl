@@ -699,4 +699,4 @@ class ImpcMergeIndex(LSFExternalJobTask):
         return luigi.LocalTarget(f"{self.local_path}{self.solr_core_name}_merged")
 
     def app_options(self):
-        return [self.output().path, self.input()[0].path + "/*/*/data/index/*"]
+        return [self.output().path, self.input()[0].path + "/*/data/index/*"]
