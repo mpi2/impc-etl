@@ -697,5 +697,7 @@ class ImpcMergeIndex(LSFJobTask):
         return luigi.LocalTarget(f"{self.local_path}{self.solr_core_name}_merged")
 
     def work(self):
-        os.system("java -jar lib/impc-merge-index-1.0-SNAPSHOT.jar ")
+        os.system(
+            f"java -jar lib/impc-merge-index-1.0-SNAPSHOT.jar {self.output().path} {self.input()[0]}/*/*/data/index/*"
+        )
         return
