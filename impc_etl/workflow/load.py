@@ -1,8 +1,10 @@
+from luigi.contrib.hdfs import HdfsTarget
 from luigi.contrib.lsf import LSFJobTask
 
 from impc_etl.workflow.normalization import *
 from impc_etl.workflow.config import ImpcConfig
 import os
+from luigi.contrib.webhdfs import WebHdfsClient
 
 
 class ObservationsMapper(SparkSubmitTask):
@@ -660,11 +662,8 @@ class ImpcCopyIndexParts(luigi.Task):
             if not self.local_path.endswith("/")
             else self.local_path
         )
-        self.solr_core_name = os.path.basename(os.path.normpath(self.input()[0]))
         return luigi.LocalTarget(f"{self.local_path}{self.solr_core_name}")
 
     def run(self):
-        os.system(
-            'scp -R "%s:%s/*" "%s" '
-            % (self.remote_host, self.input()[0], self.output_path)
-        )
+        client = WebHdfsClient()
+        client.download(self.input()[0].path, self.output().path)
