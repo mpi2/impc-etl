@@ -679,7 +679,7 @@ class ImpcMergeIndex(LSFExternalJobTask):
     solr_core_name = ""
 
     def init_local(self):
-        self.app = os.getcwd() + "/lib/impc-merge-index-1.0-SNAPSHOT.jar"
+        self.app = "java -jar " + os.getcwd() + "/lib/impc-merge-index-1.0-SNAPSHOT.jar"
 
     def requires(self):
         return [
