@@ -27,7 +27,7 @@ def track_job(job_id):
 
 
 class LSFExternalJobTask(LSFJobTask):
-    app = "lib/impc-merge-index-1.0-SNAPSHOT.jar"
+    app = ""
     input_args = []
 
     def _run_job(self):

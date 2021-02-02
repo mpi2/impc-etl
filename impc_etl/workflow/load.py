@@ -673,6 +673,7 @@ class ImpcCopyIndexParts(luigi.Task):
 
 
 class ImpcMergeIndex(LSFExternalJobTask):
+    app = "./lib/impc-merge-index-1.0-SNAPSHOT.jar"
     remote_host = luigi.Parameter()
     parquet_path = luigi.Parameter()
     solr_path = luigi.Parameter()
