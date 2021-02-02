@@ -301,17 +301,17 @@ class ImpcDataDrivenAnnotationLoader(SparkSubmitTask):
 class ImpcIndexDaily(luigi.Task):
     name = "IMPC_Index_Daily"
     imits_product_tsv_path = luigi.Parameter()
-    output_path = luigi.Parameter()
+    parquet_path = luigi.Parameter()
+    solr_path = luigi.Parameter()
 
     def requires(self):
         return [
             ProductExtractor(
-                imits_tsv_path=self.imits_product_tsv_path, output_path=self.output_path
+                imits_tsv_path=self.imits_product_tsv_path,
+                output_path=self.parquet_path,
             ),
         ]
 
     def run(self):
         for dependency in self.input():
-            yield (
-                Parquet2Solr(input_path=dependency.path, output_path=self.output_path)
-            )
+            yield (Parquet2Solr(input_path=dependency.path, output_path=self.solr_path))
