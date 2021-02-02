@@ -1,12 +1,11 @@
-from luigi.contrib.external_program import ExternalProgramTask
-from luigi.contrib.hdfs import HdfsTarget
-from luigi.contrib.lsf import LSFJobTask
+import os
+import sys
+
+from luigi.contrib.webhdfs import WebHdfsClient
 
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
-from impc_etl.workflow.normalization import *
 from impc_etl.workflow.config import ImpcConfig
-import os
-from luigi.contrib.webhdfs import WebHdfsClient
+from impc_etl.workflow.normalization import *
 
 
 class ObservationsMapper(SparkSubmitTask):
@@ -673,12 +672,14 @@ class ImpcCopyIndexParts(luigi.Task):
 
 
 class ImpcMergeIndex(LSFExternalJobTask):
-    app = "./lib/impc-merge-index-1.0-SNAPSHOT.jar"
     remote_host = luigi.Parameter()
     parquet_path = luigi.Parameter()
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
     solr_core_name = ""
+
+    def init_local(self):
+        self.app = sys.path + "lib/impc-merge-index-1.0-SNAPSHOT.jar"
 
     def requires(self):
         return [
