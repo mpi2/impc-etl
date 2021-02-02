@@ -59,7 +59,7 @@ class LSFExternalJobTask(LSFJobTask):
         # So get the number in those first brackets.
         # I cannot think of a better workaround that leaves logic on the Task side of things.
         LOGGER.info("### JOB SUBMISSION OUTPUT: %s", str(output))
-        self.job_id = int(output.split("<")[1].split(">")[0])
+        self.job_id = int(str(output).split("<")[1].split(">")[0])
         LOGGER.info(
             "Job %ssubmitted as job %s", self.job_name_flag + " ", str(self.job_id)
         )
