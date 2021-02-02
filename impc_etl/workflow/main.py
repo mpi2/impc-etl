@@ -317,7 +317,7 @@ class ImpcIndexDaily(luigi.Task):
     def run(self):
         for dependency in self.input():
             yield (
-                ImpcCopyIndexParts(
+                ImpcMergeIndex(
                     remote_host=self.remote_host,
                     parquet_path=dependency.path,
                     solr_path=self.solr_path,

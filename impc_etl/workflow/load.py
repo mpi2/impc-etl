@@ -668,3 +668,34 @@ class ImpcCopyIndexParts(luigi.Task):
     def run(self):
         client = WebHdfsClient()
         client.download(self.input()[0].path, self.output().path)
+
+
+class ImpcMergeIndex(LSFJobTask):
+    remote_host = luigi.Parameter()
+    parquet_path = luigi.Parameter()
+    solr_path = luigi.Parameter()
+    local_path = luigi.Parameter()
+    solr_core_name = ""
+
+    def requires(self):
+        return [
+            ImpcCopyIndexParts(
+                remote_host=self.remote_host,
+                parquet_path=self.parquet_path,
+                solr_path=self.solr_path,
+                local_path=self.local_path,
+            ),
+        ]
+
+    def output(self):
+        self.local_path = (
+            self.local_path + "/"
+            if not self.local_path.endswith("/")
+            else self.local_path
+        )
+        self.solr_core_name = os.path.basename(os.path.normpath(self.input()[0].path))
+        return luigi.LocalTarget(f"{self.local_path}{self.solr_core_name}_merged")
+
+    def work(self):
+        os.system("java -jar lib/impc-merge-index-1.0-SNAPSHOT.jar ")
+        return
