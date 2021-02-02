@@ -304,6 +304,7 @@ class ImpcIndexDaily(luigi.Task):
     parquet_path = luigi.Parameter()
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
+    remote_host = luigi.Parameter()
 
     def requires(self):
         return [
