@@ -4,8 +4,26 @@ import subprocess
 import logging
 import shutil
 import random
+from luigi.task_status import PENDING, FAILED, DONE, RUNNING, UNKNOWN
+import time
 
 LOGGER = logging.getLogger("luigi-interface")
+
+
+def track_job(job_id):
+    """
+    Tracking is done by requesting each job and then searching for whether the job
+    has one of the following states:
+    - "RUN",
+    - "PEND",
+    - "SSUSP",
+    - "EXIT"
+    based on the LSF documentation
+    """
+    cmd = "bjobs -noheader -o stat {}".format(job_id)
+    track_job_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    status = str(track_job_proc.communicate()[0]).strip("\n")
+    return status
 
 
 class LSFExternalJobTask(LSFJobTask):
@@ -99,3 +117,56 @@ class LSFExternalJobTask(LSFJobTask):
 
         # Now, pass onto the class's specified init_local() method.
         self.init_local()
+
+    def _track_job(self):
+        time0 = 0
+        while True:
+            # Sleep for a little bit
+            time.sleep(self.poll_time)
+
+            # See what the job's up to
+            # ASSUMPTION
+            lsf_status = track_job(self.job_id)
+            if lsf_status == "RUN":
+                self.job_status = RUNNING
+                LOGGER.info("Job is running...")
+                if time0 == 0:
+                    time0 = int(round(time.time()))
+            elif lsf_status == "PEND":
+                self.job_status = PENDING
+                LOGGER.info("Job is pending...")
+            elif lsf_status == "DONE" or lsf_status == "EXIT":
+                # Then the job could either be failed or done.
+                errors = self.fetch_task_failures()
+                if not errors:
+                    self.job_status = DONE
+                    LOGGER.info("Job is done")
+                    time1 = int(round(time.time()))
+
+                    # Return a near estimate of the run time to with +/- the
+                    # self.poll_time
+                    job_name = str(self.job_id)
+                    if self.job_name_flag:
+                        job_name = "%s %s" % (self.job_name_flag, job_name)
+                    LOGGER.info(
+                        "### JOB COMPLETED: %s in %s seconds",
+                        job_name,
+                        str(time1 - time0),
+                    )
+                else:
+                    self.job_status = FAILED
+                    LOGGER.error("Job has FAILED")
+                    LOGGER.error("\n\n")
+                    LOGGER.error("Traceback: ")
+                    for error in errors:
+                        LOGGER.error(error)
+                break
+            elif lsf_status == "SSUSP":
+                self.job_status = PENDING
+                LOGGER.info("Job is suspended (basically, pending)...")
+
+            else:
+                self.job_status = UNKNOWN
+                LOGGER.info("Job status is UNKNOWN!")
+                LOGGER.info("Status is : %s", lsf_status)
+                break
