@@ -24,7 +24,9 @@ class LSFExternalJobTask(LSFJobTask):
         else:
             log_output = os.path.split(self.output().path)
 
-        args += ["bsub", "-q", self.queue_flag]
+        args += ["bsub"]
+        if self.queue_flag != "queue_name":
+            args += ["-q", self.queue_flag]
         args += ["-n", str(self.n_cpu_flag)]
         args += ["-M", str(self.memory_flag)]
         args += ["-R", "rusage[%s]" % self.resource_flag]
