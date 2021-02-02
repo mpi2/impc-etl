@@ -629,7 +629,7 @@ class Parquet2Solr(SparkSubmitTask):
         self.solr_core_name = self.parquet_solr_map[self.parquet_name]
         return ImpcConfig().get_target(f"{self.output_path}{self.solr_core_name}_index")
 
-    # COMMAND: /homes/federico/impc-etl/spark-2.4.6-bin-hadoop2.7/bin/spark-submit --master yarn --deploy-mode cluster --name Parquet2Solr --jars lib/phenodcc-derived-parameters-2020.06.04.jar --packages com.databricks:spark-xml_2.11:0.7.0,mysql:mysql-connector-java:8.0.20,org.postgresql:postgresql:42.2.12 --py-files dist/impc_etl.zip,dist/libs.zip --conf spark.yarn.maxAppAttempts=1  --conf  yarn.nodemanager.vmem-check-enabled=false  --conf  spark.executor.memoryOverhead=5g  --conf  spark.driver.memoryOverhead=5g  --conf  spark.blacklist.enabled=true  --conf  spark.executorEnv.PYSPARK_PYTHON=/usr/bin/python36  --conf  spark.yarn.appMasterEnv.PYSPARK_PYTHON=/usr/bin/python36  --conf  spark.yarn.appMasterEnv.PYSPARK_DRIVER_PYTHON=/usr/bin/python36  --conf  spark.yarn.appMasterEnv.HTTP_PROXY=hh-wwwcache.ebi.ac.uk:3128  --conf  spark.sql.session.timeZone=UTC  --conf  spark.local.dir=/scratch --driver-memory 20G --driver-class-path lib/phenodcc-derived-parameters-2020.06.04.jar --executor-memory 64G --executor-cores 5 --num-executors 64 lib/parquet2solr-08012021.jar lib/parquet2solr-08012021.jar data/dr13.0/solr/imits_product_raw_parquet imits_product_raw_parquet false true data/dr13.0/solr//imits_product_raw_parquet_index
+    # COMMAND: /homes/federico/impc-etl/spark-2.4.6-bin-hadoop2.7/bin/spark-submit --master yarn --deploy-mode cluster --name Parquet2Solr --jars lib/phenodcc-derived-parameters-2020.06.04.jar --packages com.databricks:spark-xml_2.11:0.7.0,mysql:mysql-connector-java:8.0.20,org.postgresql:postgresql:42.2.12 --py-files dist/impc_etl.zip,dist/libs.zip --conf spark.yarn.maxAppAttempts=1  --conf  yarn.nodemanager.vmem-check-enabled=false  --conf  spark.executor.memoryOverhead=5g  --conf  spark.driver.memoryOverhead=5g  --conf  spark.blacklist.enabled=true  --conf  spark.executorEnv.PYSPARK_PYTHON=/usr/bin/python36  --conf  spark.yarn.appMasterEnv.PYSPARK_PYTHON=/usr/bin/python36  --conf  spark.yarn.appMasterEnv.PYSPARK_DRIVER_PYTHON=/usr/bin/python36  --conf  spark.yarn.appMasterEnv.HTTP_PROXY=hh-wwwcache.ebi.ac.uk:3128  --conf  spark.sql.session.timeZone=UTC  --conf  spark.local.dir=/scratch --driver-memory 20G --driver-class-path lib/phenodcc-derived-parameters-2020.06.04.jar --executor-memory 64G --executor-cores 5 --num-executors 64 lib/parquet2solr-08012021.jar lib/parquet2solr-08012021.jar data/dr13.0/parquet/imits_product_raw_parquet product false true data/dr13.0/solr/product_index
 
     # ExperimentCoreIndexer /Users/federico/git/impc-etl/tests/data/parquet/observations_parquet experiment false true /Users/federico/git/impc-etl/tests/data/solr 10
     def app_options(self):
@@ -638,6 +638,6 @@ class Parquet2Solr(SparkSubmitTask):
             self.input_path,
             self.solr_core_name,
             "false",
-            "true",
+            "false",
             self.output().path,
         ]
