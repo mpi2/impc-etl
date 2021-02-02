@@ -76,3 +76,6 @@ class LSFExternalJobTask(LSFJobTask):
 
     def app_options(self):
         pass
+
+    def _init_local(self):
+        pass
