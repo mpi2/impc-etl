@@ -296,3 +296,22 @@ class ImpcDataDrivenAnnotationLoader(SparkSubmitTask):
         return ImpcConfig().get_target(
             f"{self.output_path}annotated_observations_parquet"
         )
+
+
+class ImpcIndexDaily(luigi.Task):
+    name = "IMPC_Index_Daily"
+    imits_product_tsv_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            ProductExtractor(
+                imits_tsv_path=self.imits_product_tsv_path, output_path=self.output_path
+            ),
+        ]
+
+    def run(self):
+        for dependency in self.input():
+            yield (
+                Parquet2Solr(input_path=dependency.path, output_path=self.output_path)
+            )

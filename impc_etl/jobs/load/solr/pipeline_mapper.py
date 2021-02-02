@@ -2,7 +2,7 @@
 SOLR module
    Generates the required Solr cores
 """
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import SparkSession
 from pyspark.sql.types import ArrayType, StringType
 import sys
 
@@ -16,7 +16,6 @@ from pyspark.sql.functions import (
     flatten,
     collect_list,
     udf,
-    size,
 )
 
 COLUMN_MAPPER = {

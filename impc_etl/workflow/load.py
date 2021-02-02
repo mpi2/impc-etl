@@ -1,5 +1,6 @@
 from impc_etl.workflow.normalization import *
 from impc_etl.workflow.config import ImpcConfig
+import os
 
 
 class ObservationsMapper(SparkSubmitTask):
@@ -602,5 +603,35 @@ class ImpcImagesCoreLoader(SparkSubmitTask):
             self.input()[0].path,
             self.input()[1].path,
             self.omero_ids_csv_path,
+            self.output().path,
+        ]
+
+
+class Parquet2Solr(SparkSubmitTask):
+    app = "lib/parquet2solr-08012021.jar"
+    name = "Parquet2Solr"
+    input_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+    solr_core_name = ""
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        self.solr_core_name = os.path.basename(os.path.normpath(self.input_path))
+        return ImpcConfig().get_target(
+            f"{self.output_path}/{self.solr_core_name}_index"
+        )
+
+    # ExperimentCoreIndexer /Users/federico/git/impc-etl/tests/data/parquet/observations_parquet experiment false true /Users/federico/git/impc-etl/tests/data/solr 10
+    def app_options(self):
+        return [
+            self.app,
+            self.input_path,
+            self.solr_core_name,
+            "false",
+            "true",
             self.output().path,
         ]
