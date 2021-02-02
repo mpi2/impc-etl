@@ -1,6 +1,8 @@
+from luigi.contrib.external_program import ExternalProgramTask
 from luigi.contrib.hdfs import HdfsTarget
 from luigi.contrib.lsf import LSFJobTask
 
+from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
 from impc_etl.workflow.normalization import *
 from impc_etl.workflow.config import ImpcConfig
 import os
@@ -670,7 +672,7 @@ class ImpcCopyIndexParts(luigi.Task):
         client.download(self.input()[0].path, self.output().path)
 
 
-class ImpcMergeIndex(LSFJobTask):
+class ImpcMergeIndex(LSFExternalJobTask):
     remote_host = luigi.Parameter()
     parquet_path = luigi.Parameter()
     solr_path = luigi.Parameter()
@@ -696,8 +698,5 @@ class ImpcMergeIndex(LSFJobTask):
         self.solr_core_name = os.path.basename(os.path.normpath(self.input()[0].path))
         return luigi.LocalTarget(f"{self.local_path}{self.solr_core_name}_merged")
 
-    def work(self):
-        os.system(
-            f"java -jar lib/impc-merge-index-1.0-SNAPSHOT.jar {self.output().path} {self.input()[0]}/*/*/data/index/*"
-        )
-        return
+    def app_options(self):
+        return [self.output().path, self.input()[0] + "/*/*/data/index/*"]
