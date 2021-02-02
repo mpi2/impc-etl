@@ -649,7 +649,7 @@ class ImpcCopyIndexParts(luigi.Task):
     parquet_path = luigi.Parameter()
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
-    solr_core_name = ""
+    solr_core_name = "product"
 
     def requires(self):
         return [
