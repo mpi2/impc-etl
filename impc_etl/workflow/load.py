@@ -647,6 +647,7 @@ class ImpcCopyIndexParts(luigi.Task):
     parquet_path = luigi.Parameter()
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
+    solr_core_name = ""
 
     def requires(self):
         return [
@@ -654,10 +655,16 @@ class ImpcCopyIndexParts(luigi.Task):
         ]
 
     def output(self):
-        return luigi.LocalTarget(self.local_path)
+        self.local_path = (
+            self.local_path + "/"
+            if not self.local_path.endswith("/")
+            else self.local_path
+        )
+        self.solr_core_name = os.path.basename(os.path.normpath(self.input()[0]))
+        return luigi.LocalTarget(f"{self.local_path}{self.solr_core_name}")
 
     def run(self):
         os.system(
-            'scp -R "%s:%s" "%s" '
+            'scp -R "%s:%s/*" "%s" '
             % (self.remote_host, self.input()[0], self.output_path)
         )
