@@ -303,6 +303,7 @@ class ImpcIndexDaily(luigi.Task):
     imits_product_tsv_path = luigi.Parameter()
     parquet_path = luigi.Parameter()
     solr_path = luigi.Parameter()
+    local_path = luigi.Parameter()
 
     def requires(self):
         return [
@@ -314,4 +315,11 @@ class ImpcIndexDaily(luigi.Task):
 
     def run(self):
         for dependency in self.input():
-            yield (Parquet2Solr(input_path=dependency.path, output_path=self.solr_path))
+            yield (
+                ImpcCopyIndexParts(
+                    remote_host=self.remote_host,
+                    parquet_path=dependency.path(),
+                    solr_path=self.solr_path,
+                    local_path=self.local_path,
+                )
+            )

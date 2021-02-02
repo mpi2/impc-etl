@@ -1,3 +1,5 @@
+from luigi.contrib.lsf import LSFJobTask
+
 from impc_etl.workflow.normalization import *
 from impc_etl.workflow.config import ImpcConfig
 import os
@@ -629,9 +631,6 @@ class Parquet2Solr(SparkSubmitTask):
         self.solr_core_name = self.parquet_solr_map[self.parquet_name]
         return ImpcConfig().get_target(f"{self.output_path}{self.solr_core_name}_index")
 
-    # COMMAND: /homes/federico/impc-etl/spark-2.4.6-bin-hadoop2.7/bin/spark-submit --master yarn --deploy-mode cluster --name Parquet2Solr --jars lib/phenodcc-derived-parameters-2020.06.04.jar --packages com.databricks:spark-xml_2.11:0.7.0,mysql:mysql-connector-java:8.0.20,org.postgresql:postgresql:42.2.12 --py-files dist/impc_etl.zip,dist/libs.zip --conf spark.yarn.maxAppAttempts=1  --conf  yarn.nodemanager.vmem-check-enabled=false  --conf  spark.executor.memoryOverhead=5g  --conf  spark.driver.memoryOverhead=5g  --conf  spark.blacklist.enabled=true  --conf  spark.executorEnv.PYSPARK_PYTHON=/usr/bin/python36  --conf  spark.yarn.appMasterEnv.PYSPARK_PYTHON=/usr/bin/python36  --conf  spark.yarn.appMasterEnv.PYSPARK_DRIVER_PYTHON=/usr/bin/python36  --conf  spark.yarn.appMasterEnv.HTTP_PROXY=hh-wwwcache.ebi.ac.uk:3128  --conf  spark.sql.session.timeZone=UTC  --conf  spark.local.dir=/scratch --driver-memory 20G --driver-class-path lib/phenodcc-derived-parameters-2020.06.04.jar --executor-memory 64G --executor-cores 5 --num-executors 64 lib/parquet2solr-08012021.jar lib/parquet2solr-08012021.jar data/dr13.0/parquet/imits_product_raw_parquet product false true data/dr13.0/solr/product_index
-
-    # ExperimentCoreIndexer /Users/federico/git/impc-etl/tests/data/parquet/observations_parquet experiment false true /Users/federico/git/impc-etl/tests/data/solr 10
     def app_options(self):
         return [
             self.app,
@@ -641,3 +640,24 @@ class Parquet2Solr(SparkSubmitTask):
             "false",
             self.output().path,
         ]
+
+
+class ImpcCopyIndexParts(luigi.Task):
+    remote_host = luigi.Parameter()
+    parquet_path = luigi.Parameter()
+    solr_path = luigi.Parameter()
+    local_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            Parquet2Solr(input_path=self.parquet_path, output_path=self.solr_path),
+        ]
+
+    def output(self):
+        return luigi.LocalTarget(self.local_path)
+
+    def run(self):
+        os.system(
+            'scp -R "%s:%s" "%s" '
+            % (self.remote_host, self.input()[0], self.output_path)
+        )
