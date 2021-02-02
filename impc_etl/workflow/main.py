@@ -319,7 +319,7 @@ class ImpcIndexDaily(luigi.Task):
             yield (
                 ImpcCopyIndexParts(
                     remote_host=self.remote_host,
-                    parquet_path=dependency,
+                    parquet_path=dependency.path,
                     solr_path=self.solr_path,
                     local_path=self.local_path,
                 )
