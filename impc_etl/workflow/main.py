@@ -349,8 +349,8 @@ class ImpcCleanDaily(luigi.Task):
                 solr_path=self.solr_path,
                 local_path=self.local_path,
             )
-            impc_copy_index_task = impc_merge_index_task.input()[0]
-            impc_parquet_to_solr_task = impc_copy_index_task.input()[0]
+            impc_copy_index_task = impc_merge_index_task.requires()[0]
+            impc_parquet_to_solr_task = impc_copy_index_task.requires()[0]
 
             index_daily_dependency.remove()
             impc_copy_index_task.output().remove()
