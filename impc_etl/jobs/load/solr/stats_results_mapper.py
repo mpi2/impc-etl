@@ -381,6 +381,13 @@ def main(argv):
         if col_name not in viability_stats.columns:
             viability_stats = viability_stats.withColumn(col_name, lit(None))
     viability_stats = viability_stats.select(open_stats_df.columns)
+    viability_stats = viability_stats.withColumn(
+        "",
+        when(
+            col("procedure_stable_id") == "IMPC_VIA_002",
+            lit(["MP:0011100", "MP:0011110"]),
+        ),
+    )
     open_stats_df = open_stats_df.union(viability_stats)
 
     gross_pathology_stats = _gross_pathology_stats_results(observations_df)
@@ -637,6 +644,9 @@ def main(argv):
     pipeline_core_df = pipeline_core_df.withColumn(
         "procedure_stable_id", array(col("proc_id"))
     )
+    # Fix for VIA_002 missing mp terms
+    pipeline_core_df = _add_via_002_mp_term_options(pipeline_core_df)
+
     open_stats_df = map_to_stats(
         open_stats_df,
         pipeline_core_df,
@@ -1956,6 +1966,41 @@ def _select_collapsed_mp_term(
         else:
             mp_term["term_id"] = closest_common_ancestor
     return [convert_to_row(mp_term)]
+
+
+def _add_via_002_mp_term_options(pipeline_core_df):
+    pipeline_core_df = pipeline_core_df.withColumn(
+        "top_level_mp_term_id",
+        when(
+            col("procedure_stable_id") == "IMPC_VIA_002", lit(["MP:0010768"])
+        ).otherwise(col("top_level_mp_term_id")),
+    )
+    pipeline_core_df = pipeline_core_df.withColumn(
+        "top_level_mp_term_name",
+        when(
+            col("procedure_stable_id") == "IMPC_VIA_002", lit(["mortality/aging"])
+        ).otherwise(col("top_level_mp_term_name")),
+    )
+    pipeline_core_df = pipeline_core_df.withColumn(
+        "mp_term_id_options",
+        when(
+            col("procedure_stable_id") == "IMPC_VIA_002",
+            lit(["MP:0011100", "MP:0011110"]),
+        ).otherwise(col("mp_term_id_options")),
+    )
+    pipeline_core_df = pipeline_core_df.withColumn(
+        "mp_term_name_options",
+        when(
+            col("procedure_stable_id") == "IMPC_VIA_002",
+            lit(
+                [
+                    "preweaning lethality, complete penetrance",
+                    "preweaning lethality, incomplete penetrance",
+                ]
+            ),
+        ).otherwise(col("mp_term_name_options")),
+    )
+    return pipeline_core_df
 
 
 def stop_and_count(df):
