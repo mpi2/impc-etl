@@ -345,13 +345,13 @@ class ImpcCleanDaily(luigi.Task):
         for index_daily_dependency in index_daily_task.input():
             impc_merge_index_task = ImpcMergeIndex(
                 remote_host=self.remote_host,
-                parquet_path=index_daily_dependency.output().path,
+                parquet_path=index_daily_dependency.path,
                 solr_path=self.solr_path,
                 local_path=self.local_path,
             )
             impc_copy_index_task = impc_merge_index_task.input()[0]
             impc_parquet_to_solr_task = impc_copy_index_task.input()[0]
 
-            index_daily_dependency.output().remove()
+            index_daily_dependency.remove()
             impc_copy_index_task.output().remove()
             impc_parquet_to_solr_task.output().remove()
