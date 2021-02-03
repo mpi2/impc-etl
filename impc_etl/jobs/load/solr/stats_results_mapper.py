@@ -1965,26 +1965,28 @@ def _add_via_002_mp_term_options(pipeline_core_df):
     pipeline_core_df = pipeline_core_df.withColumn(
         "top_level_mp_term_id",
         when(
-            col("procedure_stable_id") == "IMPC_VIA_002", array(lit("MP:0010768"))
+            col("procedure_stable_id").contains("IMPC_VIA_002"),
+            array(lit("MP:0010768")),
         ).otherwise(col("top_level_mp_term_id")),
     )
     pipeline_core_df = pipeline_core_df.withColumn(
         "top_level_mp_term_name",
         when(
-            col("procedure_stable_id") == "IMPC_VIA_002", array(lit("mortality/aging"))
+            col("procedure_stable_id").contains("IMPC_VIA_002"),
+            array(lit("mortality/aging")),
         ).otherwise(col("top_level_mp_term_name")),
     )
     pipeline_core_df = pipeline_core_df.withColumn(
         "mp_term_id_options",
         when(
-            col("procedure_stable_id") == "IMPC_VIA_002",
+            col("procedure_stable_id").contains("IMPC_VIA_002"),
             array(lit("MP:0011100"), lit("MP:0011110")),
         ).otherwise(col("mp_term_id_options")),
     )
     pipeline_core_df = pipeline_core_df.withColumn(
         "mp_term_name_options",
         when(
-            col("procedure_stable_id") == "IMPC_VIA_002",
+            col("procedure_stable_id").contains("IMPC_VIA_002"),
             array(
                 lit("preweaning lethality, complete penetrance"),
                 lit("preweaning lethality, incomplete penetrance"),
