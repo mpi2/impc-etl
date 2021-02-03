@@ -336,7 +336,7 @@ class ImpcCleanDaily(luigi.Task):
 
     def run(self):
         index_daily_task = ImpcIndexDaily(
-            imits_tsv_path=self.imits_product_tsv_path,
+            imits_product_tsv_path=self.imits_product_tsv_path,
             remote_host=self.remote_host,
             parquet_path=self.parquet_path,
             solr_path=self.solr_path,
