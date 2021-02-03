@@ -497,7 +497,7 @@ def main(argv):
         StructType(
             [
                 StructField("event", StringType(), True),
-                # StructField("otherPossibilities", StringType(), True),
+                StructField("otherPossibilities", StringType(), True),
                 StructField("sex", StringType(), True),
                 StructField("term_id", StringType(), True),
             ]
@@ -1040,7 +1040,7 @@ def standardize_threei_schema(threei_df: DataFrame):
             (col("mp_id") != "NA") & (col("mp_id").isNotNull()),
             struct(
                 lit(None).cast(StringType()).alias("event"),
-                # lit(None).cast(StringType()).alias("otherPossibilities"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
                 "sex",
                 col("term_id").alias("term_id"),
             ),
@@ -1217,7 +1217,7 @@ def _fertility_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
         collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
-                # lit(None).cast(StringType()).alias("otherPossibilities"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
                 "sex",
                 col("termAcc").alias("term_id"),
             )
@@ -1341,7 +1341,7 @@ def _embryo_stats_results(
         collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
-                # lit(None).cast(StringType()).alias("otherPossibilities"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
                 col("sex"),
                 col("termAcc").alias("term_id"),
             )
@@ -1461,7 +1461,7 @@ def _embryo_viability_stats_results(observations_df: DataFrame, pipeline_df: Dat
         collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
-                # lit(None).cast(StringType()).alias("otherPossibilities"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
                 lit("not_considered").cast(StringType()).alias("sex"),
                 col("termAcc").alias("term_id"),
             )
@@ -1669,7 +1669,7 @@ def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
         collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
-                # lit(None).cast(StringType()).alias("otherPossibilities"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
                 lit("not_considered").cast(StringType()).alias("sex"),
                 col("termAcc").alias("term_id"),
             )
@@ -1683,7 +1683,7 @@ def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
             array(
                 struct(
                     lit("ABNORMAL").cast(StringType()).alias("event"),
-                    # lit(None).cast(StringType()).alias("otherPossibilities"),
+                    lit(None).cast(StringType()).alias("otherPossibilities"),
                     when(col("parameter_name").contains(" males "), lit("male"))
                     .when(col("parameter_name").contains(" females "), lit("female"))
                     .otherwise(lit("not_considered"))
@@ -1792,7 +1792,7 @@ def _histopathology_stats_results(observations_df: DataFrame):
         collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
-                # lit(None).cast(StringType()).alias("otherPossibilities"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
                 col("sex"),
                 col("term_id"),
             )
@@ -1883,7 +1883,7 @@ def _gross_pathology_stats_results(observations_df: DataFrame):
         collect_set(
             struct(
                 lit("ABNORMAL").cast(StringType()).alias("event"),
-                # lit(None).cast(StringType()).alias("otherPossibilities"),
+                lit(None).cast(StringType()).alias("otherPossibilities"),
                 col("sex"),
                 col("term_id"),
             )
