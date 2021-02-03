@@ -1,9 +1,8 @@
+import json
 import sys
 
-from pyspark.sql import DataFrame, SparkSession
-import json
 import requests
-import os
+from pyspark.sql import SparkSession
 
 
 def main(argv):

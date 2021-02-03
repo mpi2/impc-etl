@@ -1,13 +1,6 @@
-import os
 import sys
-from impc_etl.workflow.config import ImpcConfig
-from io import BytesIO
 from pyspark.sql import DataFrame, SparkSession
-from impc_etl.config import OntologySchema, Constants
-from typing import List, Dict, Iterable
-from impc_etl.shared.utils import convert_to_row
 from luigi.contrib.hdfs.hadoopcli_clients import HdfsClient
-from luigi.contrib.hdfs.target import HdfsTarget
 
 
 def main(argv):

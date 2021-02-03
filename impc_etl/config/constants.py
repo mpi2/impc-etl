@@ -1,29 +1,4 @@
-"""
-Config file
-"""
 from pyspark.sql.types import StringType, ArrayType
-
-
-class SparkConfig:
-    SPARK_JAR_PACKAGES = "com.databricks:spark-xml_2.11:0.7.0"
-
-
-class OntologySchema:
-    LABEL_ANNOTATION = ""
-    ALT_ID = ""
-    X_REF = ""
-    REPLACEMENT = ""
-    CONSIDER = ""
-    TERM_REPLACED_BY = ""
-    IS_OBSOLETE = ""
-    SYNONYM_ANNOTATIONS = [
-        "http://www.geneontology.org/formats/oboInOwl#hasExactSynonym",
-        "http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym",
-        "http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym",
-        "http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym",
-    ]
-    DEFINITION_ANNOTATION = "http://purl.obolibrary.org/obo/IAO_0000115"
-    PART_OF = ""
 
 
 class Constants:
@@ -270,14 +245,6 @@ class Constants:
             "parameter_name": "Body weight curve",
         },
         "ESLIM_022_001_701": {
-            # "parameters": [
-            #     "ESLIM_022_001_703",
-            #     "ESLIM_022_001_704",
-            #     "ESLIM_022_001_705",
-            #     "ESLIM_022_001_706",
-            #     "ESLIM_022_001_707",
-            #     "ESLIM_022_001_708",
-            # ],
             "parameters": [
                 "ESLIM_001_001_001",
                 "ESLIM_002_001_001",
@@ -292,14 +259,6 @@ class Constants:
             "parameter_name": "Body Weight Curve Pipeline One",
         },
         "ESLIM_022_001_702": {
-            # "parameters": [
-            #     "ESLIM_022_001_709",
-            #     "ESLIM_022_001_710",
-            #     "ESLIM_022_001_711",
-            #     "ESLIM_022_001_712",
-            #     "ESLIM_022_001_713",
-            #     "ESLIM_022_001_001",
-            # ],
             "parameters": [
                 "ESLIM_009_001_003",
                 "ESLIM_010_001_003",

@@ -1,11 +1,13 @@
-from typing import Dict, List
 import json
+from threading import Thread
+from typing import Dict, List
+
 from pysolr import Solr
-from impc_etl import logger
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import sort_array, col, size, when, lit, count
-from threading import Thread
+from pyspark.sql.functions import sort_array, col, size, when, lit
+
+from impc_etl import logger
 
 CSV_FIELDS = [
     "allele_accession_id",
@@ -70,7 +72,8 @@ def get_solr_core(
             sort="id asc",
             rows=250000,
             cursorMark=cursor_mark,
-            fl="id,phenotyping_center,procedure_group,parameter_stable_id,strain_accession_id,zygosity,metadata_group,colony_id,biological_sample_group",
+            fl="id,phenotyping_center,procedure_group,parameter_stable_id,strain_accession_id,zygosity,"
+            "metadata_group,colony_id,biological_sample_group",
         )
         next_cursor_mark = current_results.nextCursorMark
         done = cursor_mark == next_cursor_mark
@@ -214,7 +217,3 @@ if __name__ == "__main__":
         json_path,
     )
     generate_parquet(json_path, parquet_path)
-    # compare(
-    #     "tests/data/parquet/experiment_core",
-    #     "tests/data/parquet/impc_stats_input_parquet",
-    # )

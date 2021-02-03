@@ -7,7 +7,7 @@ from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 from impc_etl.workflow.config import ImpcConfig
 from io import BytesIO
 from pyspark.sql import DataFrame, SparkSession
-from impc_etl.config import OntologySchema, Constants
+from impc_etl.config.ontology_schema import OntologySchema, Constants
 from typing import List, Dict, Iterable
 from impc_etl.shared.utils import convert_to_row
 import pronto

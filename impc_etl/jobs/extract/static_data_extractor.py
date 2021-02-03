@@ -19,7 +19,7 @@ from owlready2 import (
 )
 from impc_etl.shared import utils
 from impc_etl.shared.utils import convert_to_row
-from impc_etl.config import OntologySchema
+from impc_etl.config.ontology_schema import OntologySchema
 
 
 def extract_human_gene_orthologues(

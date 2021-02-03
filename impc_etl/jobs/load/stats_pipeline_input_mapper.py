@@ -1,5 +1,5 @@
+from pyspark.sql import SparkSession
 from pyspark.sql.functions import concat_ws, col, lit, when
-from pyspark.sql import DataFrame, SparkSession
 
 
 def main(argv):

@@ -1,11 +1,10 @@
 import base64
 import gzip
 import json
-from typing import Dict, List
+import sys
+from typing import List
 
 from pyspark.sql import DataFrame, SparkSession
-import sys
-
 from pyspark.sql.functions import (
     array_contains,
     col,
@@ -21,19 +20,13 @@ from pyspark.sql.functions import (
     size,
     array,
     regexp_extract,
-    count,
     flatten,
     array_distinct,
     first,
-    monotonically_increasing_id,
     from_json,
-    explode,
     explode_outer,
     md5,
     arrays_zip,
-    array_repeat,
-    to_json,
-    coalesce,
     concat,
     max,
     min,
@@ -51,7 +44,6 @@ from pyspark.sql.types import (
     Row,
 )
 
-from impc_etl.config import Constants
 from impc_etl.shared.utils import convert_to_row
 
 ONTOLOGY_STATS_MAP = {

@@ -1,10 +1,8 @@
 import os
-import sys
 
 from luigi.contrib.webhdfs import WebHdfsClient
 
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
-from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.normalization import *
 
 
