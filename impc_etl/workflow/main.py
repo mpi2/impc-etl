@@ -327,7 +327,7 @@ class ImpcIndexDaily(luigi.Task):
 
 
 class ImpcCleanDaily(luigi.Task):
-    name = "IMPC_Index_Daily"
+    name = "IMPC_Clean_Daily"
     imits_product_tsv_path = luigi.Parameter()
     parquet_path = luigi.Parameter()
     solr_path = luigi.Parameter()
@@ -357,3 +357,5 @@ class ImpcCleanDaily(luigi.Task):
                 impc_copy_index_task.output().remove()
             if impc_parquet_to_solr_task.output().exists():
                 impc_parquet_to_solr_task.output().remove(skip_trash=True)
+            if impc_merge_index_task.output().exists():
+                impc_parquet_to_solr_task.output().remove()
