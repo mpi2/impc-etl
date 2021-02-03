@@ -324,3 +324,34 @@ class ImpcIndexDaily(luigi.Task):
                     local_path=self.local_path,
                 )
             )
+
+
+class ImpcCleanDaily(luigi.Task):
+    name = "IMPC_Index_Daily"
+    imits_product_tsv_path = luigi.Parameter()
+    parquet_path = luigi.Parameter()
+    solr_path = luigi.Parameter()
+    local_path = luigi.Parameter()
+    remote_host = luigi.Parameter()
+
+    def run(self):
+        index_daily_task = ImpcIndexDaily(
+            imits_tsv_path=self.imits_product_tsv_path,
+            remote_host=self.remote_host,
+            parquet_path=self.parquet_path,
+            solr_path=self.solr_path,
+            local_path=self.local_path,
+        )
+        for index_daily_dependency in index_daily_task.input():
+            impc_merge_index_task = ImpcMergeIndex(
+                remote_host=self.remote_host,
+                parquet_path=index_daily_dependency.output().path,
+                solr_path=self.solr_path,
+                local_path=self.local_path,
+            )
+            impc_copy_index_task = impc_merge_index_task.input()[0]
+            impc_parquet_to_solr_task = impc_copy_index_task.input()[0]
+
+            index_daily_dependency.output().remove()
+            impc_copy_index_task.output().remove()
+            impc_parquet_to_solr_task.output().remove()
