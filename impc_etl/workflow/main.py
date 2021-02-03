@@ -338,10 +338,15 @@ class ImpcCleanDaily(luigi.Task):
     local_path = luigi.Parameter()
     remote_host = luigi.Parameter()
 
-    def _delele_target_if_exists(self, target: Union[luigi.LocalTarget, HdfsTarget]):
+    def _delele_target_if_exists(
+        self, target: Union[luigi.LocalTarget, HdfsTarget], hdfs=False
+    ):
         if target.exists():
             print(target.path)
-            target.remove(skip_trash=True)
+            if hdfs:
+                target.remove(skip_trash=True)
+            else:
+                target.remove()
 
     def run(self):
         index_daily_task = ImpcIndexDaily(
@@ -361,7 +366,7 @@ class ImpcCleanDaily(luigi.Task):
             impc_copy_index_task = impc_merge_index_task.requires()[0]
             impc_parquet_to_solr_task = impc_copy_index_task.requires()[0]
 
-            self._delele_target_if_exists(index_daily_dependency.output())
+            self._delele_target_if_exists(index_daily_dependency.output(), hdfs=True)
             self._delele_target_if_exists(impc_merge_index_task.output())
-            self._delele_target_if_exists(impc_copy_index_task)
-            self._delele_target_if_exists(impc_parquet_to_solr_task)
+            self._delele_target_if_exists(impc_copy_index_task.output())
+            self._delele_target_if_exists(impc_parquet_to_solr_task.output(), hdfs=True)
