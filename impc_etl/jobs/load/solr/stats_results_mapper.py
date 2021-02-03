@@ -1963,35 +1963,35 @@ def _select_collapsed_mp_term(
 
 def _add_via_002_mp_term_options(pipeline_core_df):
     pipeline_core_df = pipeline_core_df.withColumn(
-        "top_level_mp_term_id",
+        "top_level_mp_id",
         when(
             array_contains(col("procedure_stable_id"), "IMPC_VIA_002"),
             array(lit("MP:0010768")),
-        ).otherwise(col("top_level_mp_term_id")),
+        ).otherwise(col("top_level_mp_id")),
     )
     pipeline_core_df = pipeline_core_df.withColumn(
-        "top_level_mp_term_name",
+        "top_level_mp_term",
         when(
             array_contains(col("procedure_stable_id"), "IMPC_VIA_002"),
             array(lit("mortality/aging")),
-        ).otherwise(col("top_level_mp_term_name")),
+        ).otherwise(col("top_level_mp_term")),
     )
     pipeline_core_df = pipeline_core_df.withColumn(
-        "mp_term_id_options",
+        "mp_id",
         when(
             array_contains(col("procedure_stable_id"), "IMPC_VIA_002"),
             array(lit("MP:0011100"), lit("MP:0011110")),
-        ).otherwise(col("mp_term_id_options")),
+        ).otherwise(col("mp_id")),
     )
     pipeline_core_df = pipeline_core_df.withColumn(
-        "mp_term_name_options",
+        "mp_term",
         when(
             array_contains(col("procedure_stable_id"), "IMPC_VIA_002"),
             array(
                 lit("preweaning lethality, complete penetrance"),
                 lit("preweaning lethality, incomplete penetrance"),
             ),
-        ).otherwise(col("mp_term_name_options")),
+        ).otherwise(col("mp_term")),
     )
     return pipeline_core_df
 
