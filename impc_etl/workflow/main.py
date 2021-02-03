@@ -358,4 +358,4 @@ class ImpcCleanDaily(luigi.Task):
             if impc_parquet_to_solr_task.output().exists():
                 impc_parquet_to_solr_task.output().remove(skip_trash=True)
             if impc_merge_index_task.output().exists():
-                impc_parquet_to_solr_task.output().remove()
+                impc_merge_index_task.output().remove()
