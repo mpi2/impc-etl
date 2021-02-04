@@ -317,7 +317,6 @@ class ImpcIndexDaily(luigi.Task):
                 output_path=self.parquet_path,
             ),
             GeneCoreLoader(),
-            StatsResultsCoreLoader(),
         ]
 
     def run(self):
