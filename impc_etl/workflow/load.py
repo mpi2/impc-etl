@@ -621,6 +621,7 @@ class Parquet2Solr(SparkSubmitTask):
         "imits_product_raw_parquet": "product",
         "observations_parquet": "experiment",
         "gene_core_parquet": "gene",
+        "stats_results_parquet": "statistical-result",
     }
 
     def output(self):
