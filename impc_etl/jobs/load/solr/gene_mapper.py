@@ -11,7 +11,7 @@ import requests
 from pyspark.sql import SparkSession, functions
 from pyspark.sql.types import StringType, DoubleType
 
-from impc_etl.config import Constants
+from impc_etl.config.constants import Constants
 
 GENE_CORE_COLUMNS = [
     "mgi_accession_id",

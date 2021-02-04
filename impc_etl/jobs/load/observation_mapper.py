@@ -23,7 +23,7 @@ from pyspark.sql.functions import (
 )
 from pyspark.sql.types import StringType, IntegerType, LongType
 
-from impc_etl.config import Constants
+from impc_etl.config.constants import Constants
 from impc_etl.shared.utils import has_column
 
 

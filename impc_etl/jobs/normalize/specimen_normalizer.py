@@ -2,7 +2,7 @@ import sys
 from pyspark.sql.functions import col, concat, lit, udf, when
 from pyspark.sql.types import StringType
 from pyspark.sql import DataFrame, SparkSession
-from impc_etl.config import Constants
+from impc_etl.config.constants import Constants
 from impc_etl.jobs.normalize.experiment_normalizer import (
     override_europhenome_datasource,
 )

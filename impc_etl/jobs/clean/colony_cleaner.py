@@ -3,7 +3,7 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import udf, col, lit, concat
 from pyspark.sql.types import StringType
 from impc_etl.shared import utils
-from impc_etl.config import Constants
+from impc_etl.config.constants import Constants
 
 
 def main(argv):

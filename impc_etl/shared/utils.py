@@ -9,7 +9,7 @@ from pyspark.sql.functions import col
 from pyspark import SparkContext
 import re
 from datetime import datetime
-from impc_etl.config import Constants
+from impc_etl.config.constants import Constants
 from pyspark.sql.utils import AnalysisException
 
 

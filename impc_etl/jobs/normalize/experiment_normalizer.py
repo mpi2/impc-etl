@@ -38,7 +38,7 @@ from pyspark.sql.types import (
     Row,
     LongType,
 )
-from impc_etl.config import Constants
+from impc_etl.config.constants import Constants
 from impc_etl.shared.utils import (
     unix_time_millis,
     extract_parameters_from_derivation,
@@ -372,24 +372,31 @@ def get_derived_parameters(
     ]
 
     # Filter impress DataFrame to get only the derived parameters, filtering out archive and unimplemented
-    derived_parameters: DataFrame = impress_df.where(
-        (
-            (impress_df["parameter.isDerived"] == True)
-            & (impress_df["parameter.isDeprecated"] == False)
-            & (~impress_df["parameter.derivation"].contains("archived"))
-            & (~impress_df["parameter.derivation"].contains("unimplemented"))
+    derived_parameters: DataFrame = (
+        impress_df.where(
+            (
+                (impress_df["parameter.isDerived"] == True)
+                & (impress_df["parameter.isDeprecated"] == False)
+                & (~impress_df["parameter.derivation"].contains("archived"))
+                & (~impress_df["parameter.derivation"].contains("unimplemented"))
+            )
+            | (impress_df["parameter.parameterKey"].isin(europhenome_parameters))
         )
-        | (impress_df["parameter.parameterKey"].isin(europhenome_parameters))
-    ).where(
-        ~impress_df["parameter.parameterKey"].isin(Constants.DERIVED_PARAMETER_BANLIST)
-    ).select(
-        "pipelineKey",
-        "procedure.procedureKey",
-        "parameter.parameterKey",
-        "parameter.derivation",
-        "parameter.type",
-        "unitName",
-    ).dropDuplicates()
+        .where(
+            ~impress_df["parameter.parameterKey"].isin(
+                Constants.DERIVED_PARAMETER_BANLIST
+            )
+        )
+        .select(
+            "pipelineKey",
+            "procedure.procedureKey",
+            "parameter.parameterKey",
+            "parameter.derivation",
+            "parameter.type",
+            "unitName",
+        )
+        .dropDuplicates()
+    )
 
     derived_parameters = derived_parameters.join(
         europhenome_derivations_df,
