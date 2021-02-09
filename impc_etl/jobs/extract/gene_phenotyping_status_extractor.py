@@ -205,7 +205,7 @@ class GenePhenotypingStatusExtractor(PySparkTask):
                 lower(col(status_col)) == lower(col("src_production_status")),
                 "left_outer",
             )
-            gene_status_df.withColumn(
+            gene_status_df = gene_status_df.withColumn(
                 target_status_col,
                 when(
                     col(target_status_col).isNull()
@@ -214,10 +214,12 @@ class GenePhenotypingStatusExtractor(PySparkTask):
                 )
                 .when(
                     get_status_hierarchy_udf("dst_production_status")
-                    > get_status_hierarchy_udf("mouse_production_status"),
+                    > get_status_hierarchy_udf(target_status_col),
                     col("dst_production_status"),
                 )
                 .otherwise(col(target_status_col)),
             )
-            gene_status_df.drop("src_production_status", "dst_production_status")
+            gene_status_df = gene_status_df.drop(
+                "src_production_status", "dst_production_status"
+            )
         return gene_status_df
