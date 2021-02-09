@@ -67,7 +67,6 @@ class GenePhenotypingStatusExtractor(PySparkTask):
             "crispr_allele_production_status",
             "es_cell_production_status",
             "mouse_production_status",
-            "phenotyping_status",
         ]
 
         gene_status_df = self._resolve_assigment_status(gene_status_df)
