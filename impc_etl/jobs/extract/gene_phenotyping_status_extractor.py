@@ -36,11 +36,12 @@ class GenePhenotypingStatusExtractor(PySparkTask):
             gentar_gene_status_df = gentar_gene_status_df.withColumnRenamed(
                 col_name, gentar_column_map[col_name]
             )
-
+        imits_gene_status_df = imits_gene_status_df.alias("imits")
+        gentar_gene_status_df = gentar_gene_status_df.alias("gentar")
         gene_status_df = imits_gene_status_df.join(
             gentar_gene_status_df,
             ["gene_mgi_accession_id", "gene_marker_symbol"],
             "full",
         )
         gene_status_df.printSchema()
-        gene_status_df.select(gentar_gene_status_df.columns).show(truncate=False)
+        gene_status_df.show(truncate=False)
