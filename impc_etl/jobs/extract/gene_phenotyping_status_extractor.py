@@ -219,5 +219,5 @@ class GenePhenotypingStatusExtractor(PySparkTask):
                 )
                 .otherwise(col(target_status_col)),
             )
-            gene_status_df.drop(["src_production_status", "dst_production_status"])
+            gene_status_df.drop("src_production_status", "dst_production_status")
         return gene_status_df
