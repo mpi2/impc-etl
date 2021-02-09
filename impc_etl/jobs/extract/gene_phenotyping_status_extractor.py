@@ -187,7 +187,9 @@ class GenePhenotypingStatusExtractor(PySparkTask):
             ]
         )
         status_map_df = spark.read.json(status_map_df_json)
-        gene_status_df.withColumn(target_status_col, lit(None).astype(StringType()))
+        gene_status_df = gene_status_df.withColumn(
+            target_status_col, lit(None).astype(StringType())
+        )
         get_status_hierarchy_udf = udf(
             lambda x: list(status_map_dict.values()).index(x),
             IntegerType(),
