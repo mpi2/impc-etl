@@ -62,20 +62,6 @@ IMITS_GENE_COLUMNS = [
     "latest_project_status_legacy",
 ]
 
-CELL_MOUSE_STATUS_MAP = {
-    "Chimeras obtained": "Assigned for Mouse Production and Phenotyping",
-    "Cre Excision Complete": "Mice Produced",
-    "Cre Excision Started": "Mice Produced",
-    "ES Cell Production in Progress": "Assigned for ES Cell Production",
-    "ES Cell Targeting Confirmed": "ES Cells Produced",
-    "Genotype confirmed": "Mice Produced",
-    "Micro-injection in progress": "Assigned for Mouse Production and Phenotyping",
-    "No ES Cell Production": "Not Assigned for ES Cell Production",
-    "Phenotype Attempt Registered": "Mice Produced",
-    "Rederivation Complete": "Mice Produced",
-    "Rederivation Started": "Mice Produced",
-}
-
 IMITS_GENE_MAP = {
     "mgi_accession_id": "marker_mgi_accession_id",
     "imits_phenotype_started": "latest_phenotype_started",
@@ -106,13 +92,6 @@ def main(argv):
     output_path = argv[10]
 
     spark = SparkSession.builder.getOrCreate()
-    status_map_df_json = spark.sparkContext.parallelize(
-        [
-            {"old_status": key, "new_status": value}
-            for key, value in CELL_MOUSE_STATUS_MAP.items()
-        ]
-    )
-    status_map_df = spark.read.json(status_map_df_json)
     imits_gene_df = spark.read.parquet(imits_gene_parquet_path).select(
         IMITS_GENE_COLUMNS
     )
@@ -136,6 +115,10 @@ def main(argv):
         functions.col("curie").alias("phenotype_term_id"),
         functions.col("name").alias("phenotype_term_name"),
     ).distinct()
+
+    phenotyping_tracking_status_df = spark.read.parquet(
+        phenotyping_tracking_status_path
+    )
 
     stats_results_df = stats_results_df.withColumnRenamed(
         "marker_accession_id", "gene_accession_id"
@@ -179,8 +162,6 @@ def main(argv):
         & functions.col("feature_type").isNotNull()
         & (functions.col("allele_design_project") == "IMPC")
     ).join(gene_df, "marker_mgi_accession_id", "left_outer")
-
-    gene_df = _map_phenotyping_tracking_status(gene_df, status_map_df)
 
     gene_df = gene_df.withColumn(
         "is_umass_gene", functions.col("marker_symbol").isin(Constants.UMASS_GENES)
@@ -262,23 +243,10 @@ def main(argv):
     )
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
-    gene_df.distinct().write.parquet(output_path)
-
-
-def map_status(gene_df, status_map_df, status_col):
     gene_df = gene_df.join(
-        status_map_df,
-        functions.col(status_col) == functions.col("old_status"),
-        "left_outer",
+        phenotyping_tracking_status_df, "mgi_accession_id", "left_outer"
     )
-    gene_df = gene_df.withColumn(
-        status_col,
-        functions.when(
-            functions.col("new_status").isNotNull(), functions.col("new_status")
-        ).otherwise(functions.col(status_col)),
-    )
-    gene_df = gene_df.drop("old_status", "new_status")
-    return gene_df
+    gene_df.distinct().write.parquet(output_path)
 
 
 def get_embryo_data(spark: SparkSession):
@@ -551,19 +519,6 @@ def _get_significance_fields_by_gene(stats_results_df):
         "gene_accession_id", "mgi_accession_id"
     )
     return significant_mp_term
-
-
-def _map_phenotyping_tracking_status(gene_df, status_map_df):
-    for status_col in [
-        "mouse_status",
-        "es_cell_status",
-        "latest_mouse_status",
-        "latest_es_cell_status",
-    ]:
-        gene_df = map_status(gene_df, status_map_df, status_col)
-    for gene_core_field, imits_col_name in IMITS_GENE_MAP.items():
-        gene_df = gene_df.withColumn(gene_core_field, functions.col(imits_col_name))
-    return gene_df
 
 
 if __name__ == "__main__":
