@@ -190,7 +190,7 @@ class GenePhenotypingStatusExtractor(PySparkTask):
             target_status_col, lit(None).astype(StringType())
         )
         get_status_hierarchy_udf = udf(
-            lambda x: list(status_map_dict.values()).index(x),
+            lambda x: list(status_map_dict.values()).index(x) if x is not None else 0,
             IntegerType(),
         )
 
