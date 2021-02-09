@@ -47,7 +47,7 @@ class GenePhenotypingStatusExtractor(PySparkTask):
         for col_name in gentar_gene_status_df.columns:
             new_col_name = (
                 "gentar_" + gentar_column_map[col_name]
-                if "mgi_accession_id" not in col_name
+                if "mgi_accession_id" not in gentar_column_map[col_name]
                 else gentar_column_map[col_name]
             )
             gentar_gene_status_df = gentar_gene_status_df.withColumnRenamed(
