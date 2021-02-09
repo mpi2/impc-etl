@@ -150,7 +150,7 @@ class GenePhenotypingStatusExtractor(PySparkTask):
             )
             .when(
                 col("gentar_assignment_status").startswith("Inspect")
-                & ~col("imits_assignment_~status").startswith("Assigned"),
+                & ~col("imits_assignment_status").startswith("Assigned"),
                 lit("data_issue"),
             )
             .when(
