@@ -478,6 +478,8 @@ class GeneCoreLoader(SparkSubmitTask):
     threei_stats_results_csv = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     imits_alleles_tsv_path = luigi.Parameter()
+    imits_gene_status_path = luigi.Parameter()
+    gentar_gene_status_path = luigi.Parameter()
     http_proxy = luigi.Parameter()
 
     def output(self):
@@ -538,6 +540,10 @@ class GeneCoreLoader(SparkSubmitTask):
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
             ),
+            GenePhenotypingStatusExtractor(
+                imits_gene_status_path=self.imits_gene_status_path,
+                gentar_gene_status_path=self.gentar_gene_status_path,
+            ),
         ]
 
     def app_options(self):
@@ -550,6 +556,7 @@ class GeneCoreLoader(SparkSubmitTask):
             self.input()[4].path,
             self.input()[5].path,
             self.input()[6].path,
+            self.input()[7].path,
             self.output().path,
         ]
 

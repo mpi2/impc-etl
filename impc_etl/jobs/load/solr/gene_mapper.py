@@ -20,27 +20,17 @@ GENE_CORE_COLUMNS = [
     "marker_name",
     "marker_synonym",
     "marker_type",
-    "latest_es_cell_status",
-    "latest_mouse_status",
-    "latest_phenotype_status",
-    "latest_project_status",
-    "latest_phenotyping_centre",
-    "latest_production_centre",
+    "es_cell_production_status",
+    "null_allele_production_status",
+    "conditional_allele_production_status",
+    "crispr_allele_production_status",
+    "mouse_production_status",
+    "phenotype_status",
+    "project_status",
+    "assignment_status",
+    "phenotyping_data_available",
     "allele_mgi_accession_id",
     "allele_name",
-    "es_cell_status",
-    "mouse_status",
-    "phenotype_status",
-    "production_centre",
-    "phenotyping_centre",
-    "latest_phenotype_started",
-    "latest_phenotype_complete",
-    "imits_phenotype_started",
-    "imits_phenotype_complete",
-    "imits_phenotype_status",
-    "imits_es_cell_status",
-    "imits_mouse_status",
-    "status",
     "is_umass_gene",
     "is_idg_gene",
     "embryo_data_available",
@@ -112,9 +102,17 @@ def main(argv):
     observations_parquet_path = argv[6]
     stats_results_parquet_path = argv[7]
     ontology_metadata_parquet_path = argv[8]
-    output_path = argv[9]
+    phenotyping_tracking_status_path = argv[9]
+    output_path = argv[10]
 
     spark = SparkSession.builder.getOrCreate()
+    status_map_df_json = spark.sparkContext.parallelize(
+        [
+            {"old_status": key, "new_status": value}
+            for key, value in CELL_MOUSE_STATUS_MAP.items()
+        ]
+    )
+    status_map_df = spark.read.json(status_map_df_json)
     imits_gene_df = spark.read.parquet(imits_gene_parquet_path).select(
         IMITS_GENE_COLUMNS
     )
@@ -162,37 +160,141 @@ def main(argv):
             functions.array("mp_term_name"),
         ).otherwise(functions.col("top_level_mp_term_name")),
     )
-    significant_mp_term = stats_results_df.select(
-        "gene_accession_id", "top_level_mp_term_name", "significant"
+
+    significant_mp_term = _get_significance_fields_by_gene(stats_results_df)
+    mgi_datasets_df = _get_datasets_by_gene(
+        stats_results_df, observations_df, ontology_metadata_df
     )
 
-    significant_mp_term = significant_mp_term.withColumn(
-        "top_level_mp_term_name", functions.explode("top_level_mp_term_name")
+    gene_df = imits_allele_df.select(
+        [
+            col_name
+            for col_name in imits_allele_df.columns
+            if col_name not in IMITS_GENE_COLUMNS
+            or col_name == "marker_mgi_accession_id"
+        ]
+    )
+    gene_df = imits_gene_df.where(
+        functions.col("latest_project_status").isNotNull()
+        & functions.col("feature_type").isNotNull()
+        & (functions.col("allele_design_project") == "IMPC")
+    ).join(gene_df, "marker_mgi_accession_id", "left_outer")
+
+    gene_df = _map_phenotyping_tracking_status(gene_df, status_map_df)
+
+    gene_df = gene_df.withColumn(
+        "is_umass_gene", functions.col("marker_symbol").isin(Constants.UMASS_GENES)
+    )
+    gene_df = gene_df.withColumn(
+        "is_idg_gene", functions.col("mgi_accession_id").isin(Constants.IDG_GENES)
     )
 
-    significant_mp_term = significant_mp_term.groupBy("gene_accession_id").agg(
-        functions.collect_set(
-            functions.when(
-                functions.col("significant") == True,
-                functions.col("top_level_mp_term_name"),
-            ).otherwise(functions.lit(None))
-        ).alias("significant_top_level_mp_terms"),
-        functions.collect_set(
-            functions.when(
-                functions.col("significant") == False,
-                functions.col("top_level_mp_term_name"),
-            ).otherwise(functions.lit(None))
-        ).alias("not_significant_top_level_mp_terms"),
+    embryo_data_df = embryo_data_df.withColumn(
+        "colonies", functions.explode("colonies")
     )
-    significant_mp_term = significant_mp_term.withColumn(
-        "not_significant_top_level_mp_terms",
-        functions.array_except(
-            "not_significant_top_level_mp_terms", "significant_top_level_mp_terms"
-        ),
+    embryo_data_df = embryo_data_df.select("colonies.*")
+    embryo_data_df = embryo_data_df.withColumn(
+        "embryo_analysis_view_name",
+        functions.when(
+            functions.col("analysis_view_url").isNotNull(),
+            functions.lit("volumetric analysis"),
+        ).otherwise(functions.lit(None).cast(StringType())),
     )
-    significant_mp_term = significant_mp_term.withColumnRenamed(
-        "gene_accession_id", "mgi_accession_id"
+    embryo_data_df = embryo_data_df.withColumnRenamed(
+        "analysis_view_url", "embryo_analysis_view_url"
     )
+    embryo_data_df = embryo_data_df.withColumn(
+        "embryo_modalities", functions.col("procedures_parameters.modality")
+    )
+    embryo_data_df = embryo_data_df.alias("embryo")
+    gene_df = gene_df.join(
+        embryo_data_df,
+        functions.col("mgi_accession_id") == functions.col("mgi"),
+        "left_outer",
+    )
+    gene_df = gene_df.withColumn(
+        "embryo_data_available", functions.col("embryo.mgi").isNotNull()
+    )
+
+    gene_df = gene_df.join(mgi_mrk_list_df, "mgi_accession_id", "left_outer")
+    gene_df = gene_df.withColumn("seq_region_id", functions.col("chr"))
+    gene_df = gene_df.withColumnRenamed("chr", "chr_name")
+    gene_df = gene_df.withColumnRenamed("genome_coordinate_start", "seq_region_start")
+    gene_df = gene_df.withColumnRenamed("genome_coordinate_end", "seq_region_end")
+    gene_df = gene_df.withColumnRenamed("strand", "chr_strand")
+
+    mgi_homologene_df = mgi_homologene_df.select(
+        ["mgi_accession_id", "entrezgene_id", "ensembl_gene_id", "ccds_ids"]
+    )
+    gene_df = gene_df.join(mgi_homologene_df, "mgi_accession_id", "left_outer")
+    gene_df = gene_df.withColumn(
+        "ensembl_gene_id", functions.split(functions.col("ensembl_gene_id"), r"\|")
+    )
+    gene_df = gene_df.withColumn(
+        "ccds_id", functions.split(functions.col("ccds_ids"), ",")
+    )
+    gene_df = gene_df.withColumn("ncbi_id", functions.col("entrezgene_id"))
+
+    gene_df = gene_df.withColumn(
+        "marker_synonym", functions.split(functions.col("marker_synonym"), r"\|")
+    )
+
+    grouped_columns = [
+        "allele_mgi_accession_id",
+        "allele_name",
+        "phenotype_status",
+        "es_cell_status",
+        "mouse_status",
+        "production_centre",
+        "phenotyping_centre",
+        "latest_production_centre",
+        "latest_phenotyping_centre",
+    ]
+
+    gene_df = gene_df.select(*GENE_CORE_COLUMNS)
+    gene_df = gene_df.groupBy(
+        [col_name for col_name in gene_df.columns if col_name not in grouped_columns]
+    ).agg(
+        *[
+            functions.collect_set(col_name).alias(col_name)
+            for col_name in grouped_columns
+        ]
+    )
+    gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
+    gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
+    gene_df.distinct().write.parquet(output_path)
+
+
+def map_status(gene_df, status_map_df, status_col):
+    gene_df = gene_df.join(
+        status_map_df,
+        functions.col(status_col) == functions.col("old_status"),
+        "left_outer",
+    )
+    gene_df = gene_df.withColumn(
+        status_col,
+        functions.when(
+            functions.col("new_status").isNotNull(), functions.col("new_status")
+        ).otherwise(functions.col(status_col)),
+    )
+    gene_df = gene_df.drop("old_status", "new_status")
+    return gene_df
+
+
+def get_embryo_data(spark: SparkSession):
+    r = requests.get("")
+    df = spark.createDataFrame([json.loads(line) for line in r.iter_lines()])
+    return df
+
+
+def _compress_and_encode(json_text):
+    if json_text is None:
+        return None
+    else:
+        return str(base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))), "utf-8")
+
+
+def _get_datasets_by_gene(stats_results_df, observations_df, ontology_metadata_df):
     significance_cols = [
         "female_ko_effect_p_value",
         "male_ko_effect_p_value",
@@ -413,39 +515,45 @@ def main(argv):
     mgi_datasets_df = mgi_datasets_df.withColumn(
         "datasets_raw_data", compress_and_encode("datasets_raw_data")
     )
+    return mgi_datasets_df
 
-    grouped_columns = [
-        "allele_mgi_accession_id",
-        "allele_name",
-        "phenotype_status",
-        "es_cell_status",
-        "mouse_status",
-        "production_centre",
-        "phenotyping_centre",
-        "latest_production_centre",
-        "latest_phenotyping_centre",
-    ]
-    gene_df = imits_allele_df.select(
-        [
-            col_name
-            for col_name in imits_allele_df.columns
-            if col_name not in IMITS_GENE_COLUMNS
-            or col_name == "marker_mgi_accession_id"
-        ]
-    )
-    gene_df = imits_gene_df.where(
-        functions.col("latest_project_status").isNotNull()
-        & functions.col("feature_type").isNotNull()
-        & (functions.col("allele_design_project") == "IMPC")
-    ).join(gene_df, "marker_mgi_accession_id", "left_outer")
 
-    status_map_df_json = spark.sparkContext.parallelize(
-        [
-            {"old_status": key, "new_status": value}
-            for key, value in CELL_MOUSE_STATUS_MAP.items()
-        ]
+def _get_significance_fields_by_gene(stats_results_df):
+    significant_mp_term = stats_results_df.select(
+        "gene_accession_id", "top_level_mp_term_name", "significant"
     )
-    status_map_df = spark.read.json(status_map_df_json)
+
+    significant_mp_term = significant_mp_term.withColumn(
+        "top_level_mp_term_name", functions.explode("top_level_mp_term_name")
+    )
+
+    significant_mp_term = significant_mp_term.groupBy("gene_accession_id").agg(
+        functions.collect_set(
+            functions.when(
+                functions.col("significant") == True,
+                functions.col("top_level_mp_term_name"),
+            ).otherwise(functions.lit(None))
+        ).alias("significant_top_level_mp_terms"),
+        functions.collect_set(
+            functions.when(
+                functions.col("significant") == False,
+                functions.col("top_level_mp_term_name"),
+            ).otherwise(functions.lit(None))
+        ).alias("not_significant_top_level_mp_terms"),
+    )
+    significant_mp_term = significant_mp_term.withColumn(
+        "not_significant_top_level_mp_terms",
+        functions.array_except(
+            "not_significant_top_level_mp_terms", "significant_top_level_mp_terms"
+        ),
+    )
+    significant_mp_term = significant_mp_term.withColumnRenamed(
+        "gene_accession_id", "mgi_accession_id"
+    )
+    return significant_mp_term
+
+
+def _map_phenotyping_tracking_status(gene_df, status_map_df):
     for status_col in [
         "mouse_status",
         "es_cell_status",
@@ -455,105 +563,7 @@ def main(argv):
         gene_df = map_status(gene_df, status_map_df, status_col)
     for gene_core_field, imits_col_name in IMITS_GENE_MAP.items():
         gene_df = gene_df.withColumn(gene_core_field, functions.col(imits_col_name))
-
-    gene_df = gene_df.withColumn(
-        "is_umass_gene", functions.col("marker_symbol").isin(Constants.UMASS_GENES)
-    )
-    gene_df = gene_df.withColumn(
-        "is_idg_gene", functions.col("mgi_accession_id").isin(Constants.IDG_GENES)
-    )
-
-    embryo_data_df = embryo_data_df.withColumn(
-        "colonies", functions.explode("colonies")
-    )
-    embryo_data_df = embryo_data_df.select("colonies.*")
-    embryo_data_df = embryo_data_df.withColumn(
-        "embryo_analysis_view_name",
-        functions.when(
-            functions.col("analysis_view_url").isNotNull(),
-            functions.lit("volumetric analysis"),
-        ).otherwise(functions.lit(None).cast(StringType())),
-    )
-    embryo_data_df = embryo_data_df.withColumnRenamed(
-        "analysis_view_url", "embryo_analysis_view_url"
-    )
-    embryo_data_df = embryo_data_df.withColumn(
-        "embryo_modalities", functions.col("procedures_parameters.modality")
-    )
-    embryo_data_df = embryo_data_df.alias("embryo")
-    gene_df = gene_df.join(
-        embryo_data_df,
-        functions.col("mgi_accession_id") == functions.col("mgi"),
-        "left_outer",
-    )
-    gene_df = gene_df.withColumn(
-        "embryo_data_available", functions.col("embryo.mgi").isNotNull()
-    )
-
-    gene_df = gene_df.join(mgi_mrk_list_df, "mgi_accession_id", "left_outer")
-    gene_df = gene_df.withColumn("seq_region_id", functions.col("chr"))
-    gene_df = gene_df.withColumnRenamed("chr", "chr_name")
-    gene_df = gene_df.withColumnRenamed("genome_coordinate_start", "seq_region_start")
-    gene_df = gene_df.withColumnRenamed("genome_coordinate_end", "seq_region_end")
-    gene_df = gene_df.withColumnRenamed("strand", "chr_strand")
-
-    mgi_homologene_df = mgi_homologene_df.select(
-        ["mgi_accession_id", "entrezgene_id", "ensembl_gene_id", "ccds_ids"]
-    )
-    gene_df = gene_df.join(mgi_homologene_df, "mgi_accession_id", "left_outer")
-    gene_df = gene_df.withColumn(
-        "ensembl_gene_id", functions.split(functions.col("ensembl_gene_id"), r"\|")
-    )
-    gene_df = gene_df.withColumn(
-        "ccds_id", functions.split(functions.col("ccds_ids"), ",")
-    )
-    gene_df = gene_df.withColumn("ncbi_id", functions.col("entrezgene_id"))
-
-    gene_df = gene_df.withColumn(
-        "marker_synonym", functions.split(functions.col("marker_synonym"), r"\|")
-    )
-
-    gene_df = gene_df.select(*GENE_CORE_COLUMNS)
-    gene_df = gene_df.groupBy(
-        [col_name for col_name in gene_df.columns if col_name not in grouped_columns]
-    ).agg(
-        *[
-            functions.collect_set(col_name).alias(col_name)
-            for col_name in grouped_columns
-        ]
-    )
-    gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
-    gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
-    gene_df.distinct().write.parquet(output_path)
-
-
-def map_status(gene_df, status_map_df, status_col):
-    gene_df = gene_df.join(
-        status_map_df,
-        functions.col(status_col) == functions.col("old_status"),
-        "left_outer",
-    )
-    gene_df = gene_df.withColumn(
-        status_col,
-        functions.when(
-            functions.col("new_status").isNotNull(), functions.col("new_status")
-        ).otherwise(functions.col(status_col)),
-    )
-    gene_df = gene_df.drop("old_status", "new_status")
     return gene_df
-
-
-def get_embryo_data(spark: SparkSession):
-    r = requests.get("")
-    df = spark.createDataFrame([json.loads(line) for line in r.iter_lines()])
-    return df
-
-
-def _compress_and_encode(json_text):
-    if json_text is None:
-        return None
-    else:
-        return str(base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))), "utf-8")
 
 
 if __name__ == "__main__":
