@@ -2,6 +2,9 @@ import os
 
 from luigi.contrib.webhdfs import WebHdfsClient
 
+from impc_etl.jobs.extract.gene_phenotyping_status_extractor import (
+    GenePhenotypingStatusExtractor,
+)
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
 from impc_etl.workflow.normalization import *
 
@@ -478,8 +481,6 @@ class GeneCoreLoader(SparkSubmitTask):
     threei_stats_results_csv = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     imits_alleles_tsv_path = luigi.Parameter()
-    imits_gene_status_path = luigi.Parameter()
-    gentar_gene_status_path = luigi.Parameter()
     http_proxy = luigi.Parameter()
 
     def output(self):
@@ -540,10 +541,7 @@ class GeneCoreLoader(SparkSubmitTask):
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
             ),
-            GenePhenotypingStatusExtractor(
-                imits_gene_status_path=self.imits_gene_status_path,
-                gentar_gene_status_path=self.gentar_gene_status_path,
-            ),
+            GenePhenotypingStatusExtractor(),
         ]
 
     def app_options(self):
