@@ -17,9 +17,11 @@ class GenePhenotypingStatusExtractor(PySparkTask):
 
     def main(self, sc, *args):
         spark = SparkSession(sc)
-        imits_gene_status_df = spark.read.csv(self.imits_gene_status_path, header=True)
+        imits_gene_status_df = spark.read.csv(
+            self.imits_gene_status_path, header=True, sep="\t"
+        )
         gentar_gene_status_df = spark.read.csv(
-            self.gentar_gene_status_path, header=True
+            self.gentar_gene_status_path, header=True, sep="\t"
         )
         # Renaming gentar TSV columns to match both imits and the gene core
         gentar_column_map = {
