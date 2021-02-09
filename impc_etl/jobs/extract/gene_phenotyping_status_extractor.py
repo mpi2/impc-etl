@@ -123,7 +123,7 @@ class GenePhenotypingStatusExtractor(PySparkTask):
             "es_cell_production_status",
         )
         gene_status_df.printSchema()
-        gene_status_df.show(100, truncate=False)
+        gene_status_df.select(gene_statuses_cols).show(100, truncate=False)
 
     def _resolve_assigment_status(self, gene_status_df):
         gene_status_df = gene_status_df.withColumn(
@@ -171,7 +171,7 @@ class GenePhenotypingStatusExtractor(PySparkTask):
                 ),
                 col("gentar_assignment_status"),
             )
-            .otherwise(lit("data_issue")),
+            .otherwise(lit(None)),
         )
         return gene_status_df
 
