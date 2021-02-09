@@ -113,19 +113,19 @@ class GenePhenotypingStatusExtractor(PySparkTask):
             "Rederivation Started": "Mice Produced",
         }
 
-        status_map_df_json = spark.sparkContext.parallelize(
-            [
-                {"allele_production_status": key, "mice_production_status": value}
-                for key, value in ALLELE_MOUSE_PROD_STATUS_MAP.items()
-            ]
-        )
-        status_map_df = spark.read.json(status_map_df_json)
-
-        for status_col in [
-            "null_allele_production_status",
-            "conditional_allele_production_status",
-        ]:
-            gene_status_df = gene_status_df.withColumn(status_col)
+        # status_map_df_json = spark.sparkContext.parallelize(
+        #     [
+        #         {"allele_production_status": key, "mice_production_status": value}
+        #         for key, value in ALLELE_MOUSE_PROD_STATUS_MAP.items()
+        #     ]
+        # )
+        # status_map_df = spark.read.json(status_map_df_json)
+        #
+        # for status_col in [
+        #     "null_allele_production_status",
+        #     "conditional_allele_production_status",
+        # ]:
+        #     gene_status_df = gene_status_df.withColumn(status_col)
 
         gene_status_df.printSchema()
         gene_status_df.select(gene_statuses_cols).show(truncate=False)
