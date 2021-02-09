@@ -122,8 +122,9 @@ class GenePhenotypingStatusExtractor(PySparkTask):
             allele_es_cells_prod_status_map,
             "es_cell_production_status",
         )
-        gene_status_df.printSchema()
-        gene_status_df.select(gene_statuses_cols).show(100, truncate=False)
+        gene_status_df.select(gene_statuses_cols).distinct().write.parquet(
+            self.output().path
+        )
 
     def _resolve_assigment_status(self, gene_status_df):
         gene_status_df = gene_status_df.withColumn(
