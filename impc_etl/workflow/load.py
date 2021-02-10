@@ -1,9 +1,10 @@
 import os
 
 from luigi.contrib.webhdfs import WebHdfsClient
+from luigi.task import flatten
 
-from impc_etl.jobs.extract.gene_phenotyping_status_extractor import (
-    GenePhenotypingStatusExtractor,
+from impc_etl.jobs.extract.gene_production_status_extractor import (
+    GeneProductionStatusExtractor,
 )
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
 from impc_etl.workflow.normalization import *
@@ -541,8 +542,14 @@ class GeneCoreLoader(SparkSubmitTask):
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
             ),
-            GenePhenotypingStatusExtractor(),
+            GeneProductionStatusExtractor(),
         ]
+
+    def complete(self):
+        outputs = flatten(self.output())
+        gene_production_status_task = self.input()[-1]
+        gene_production_status_task.output().remove()
+        return all(map(lambda output: output.exists(), outputs))
 
     def app_options(self):
         return [

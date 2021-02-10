@@ -88,7 +88,7 @@ def main(argv):
     observations_parquet_path = argv[6]
     stats_results_parquet_path = argv[7]
     ontology_metadata_parquet_path = argv[8]
-    phenotyping_tracking_status_path = argv[9]
+    gene_production_status_path = argv[9]
     output_path = argv[10]
 
     spark = SparkSession.builder.getOrCreate()
@@ -116,9 +116,7 @@ def main(argv):
         functions.col("name").alias("phenotype_term_name"),
     ).distinct()
 
-    phenotyping_tracking_status_df = spark.read.parquet(
-        phenotyping_tracking_status_path
-    )
+    gene_production_status_df = spark.read.parquet(gene_production_status_path)
 
     stats_results_df = stats_results_df.withColumnRenamed(
         "marker_accession_id", "gene_accession_id"
@@ -243,9 +241,7 @@ def main(argv):
     )
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
-    gene_df = gene_df.join(
-        phenotyping_tracking_status_df, "mgi_accession_id", "left_outer"
-    )
+    gene_df = gene_df.join(gene_production_status_df, "mgi_accession_id", "left_outer")
     gene_df.distinct().write.parquet(output_path)
 
 

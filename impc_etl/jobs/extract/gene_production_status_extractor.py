@@ -7,8 +7,8 @@ from pyspark.sql.types import StringType, IntegerType
 from impc_etl.workflow.config import ImpcConfig
 
 
-class GenePhenotypingStatusExtractor(PySparkTask):
-    name = "IMPC_Gene_Statuses_Extractor"
+class GeneProductionStatusExtractor(PySparkTask):
+    name = "IMPC_Gene_Production_Statuses_Extractor"
 
     imits_gene_status_path = luigi.Parameter()
     gentar_gene_status_path = luigi.Parameter()
@@ -103,7 +103,7 @@ class GenePhenotypingStatusExtractor(PySparkTask):
             "Rederivation Started": "Mice Produced",
         }
 
-        gene_status_df = self.map_status(
+        gene_status_df = self.collapse_production_status(
             spark,
             gene_status_df,
             allele_mouse_prod_status_map,
@@ -116,12 +116,62 @@ class GenePhenotypingStatusExtractor(PySparkTask):
             "ES Cell Targeting Confirmed": "ES Cells Produced",
         }
 
-        gene_status_df = self.map_status(
+        gene_status_df = self.collapse_production_status(
             spark,
             gene_status_df,
             allele_es_cells_prod_status_map,
             "es_cell_production_status",
         )
+
+        imits_gene_prod_status_map = {
+            "Aborted - ES Cell QC Failed": "Selected for production and phenotyping",
+            "Assigned - ES Cell QC Complete": "Selected for production and phenotyping",
+            "Assigned - ES Cell QC In Progress": "Selected for production and phenotyping",
+            "Assigned": "Selected for production and phenotyping",
+            "Conflict": "Selected for production and phenotyping",
+            "Inspect - Conflict": "Selected for production and phenotyping",
+            "Inspect - GLT Mouse": "Selected for production and phenotyping",
+            "Inspect - MI Attempt": "Selected for production and phenotyping",
+            "Interest": "Selected for production and phenotyping",
+            "Chimeras obtained": "Started",
+            "Chimeras/Founder obtained": "Started",
+            "Cre Excision Started": "Started",
+            "Founder obtained": "Started",
+            "Micro-injection aborted": "Started",
+            "Micro-injection in progress": "Started",
+            "Cre Excision Complete": "Genotype confirmed mice",
+            "Genotype confirmed": "Genotype confirmed mice",
+            "Inactive": "Withdrawn",
+            "Withdrawn": "Withdrawn",
+        }
+
+        for status_col in gene_statuses_cols:
+            if status_col != "mgi_accession_id":
+                gene_status_df = self.map_status(
+                    spark, gene_status_df, imits_gene_prod_status_map, status_col
+                )
+
+        gentar_gene_prod_status_map = {
+            "Attempt In Progress": "Started",
+            "Embryos Obtained": "Started",
+            "Founder Obtained": "Started",
+            "Genotype In Progress": "Started",
+            "Genotype Not Confirmed": "Started",
+            "Genotype Confirmed": "Genotype Confirmed Mice",
+            "Abandoned": "Withdrawn",
+            "Attempt Aborted": "Withdrawn",
+            "Colony Aborted": "Withdrawn",
+            "Genotype Extinct": "Withdrawn",
+            "Inactive": "Withdrawn",
+            "Plan Abandoned": "Withdrawn",
+        }
+
+        for status_col in gene_statuses_cols:
+            if status_col != "mgi_accession_id":
+                gene_status_df = self.map_status(
+                    spark, gene_status_df, gentar_gene_prod_status_map, status_col
+                )
+
         gene_status_df.select(gene_statuses_cols).distinct().write.parquet(
             self.output().path
         )
@@ -176,7 +226,7 @@ class GenePhenotypingStatusExtractor(PySparkTask):
         )
         return gene_status_df
 
-    def map_status(self, spark, gene_status_df, status_map_dict, target_status_col):
+    def _create_status_map(self, spark, status_map_dict):
         status_map_df_json = spark.sparkContext.parallelize(
             [
                 {
@@ -187,6 +237,31 @@ class GenePhenotypingStatusExtractor(PySparkTask):
             ]
         )
         status_map_df = spark.read.json(status_map_df_json)
+        return status_map_df
+
+    def map_status(self, spark, gene_status_df, status_map_dict, status_col_to_map):
+        status_map_df = self._create_status_map(spark, status_map_dict)
+        gene_status_df = gene_status_df.join(
+            status_map_df,
+            lower(col(status_col_to_map)) == lower(col("src_production_status")),
+            "left_outer",
+        )
+        gene_status_df = gene_status_df.withColumn(
+            status_col_to_map,
+            when(
+                col("dst_production_status").isNotNull(), col("dst_production_status")
+            ).otherwise(col(status_col_to_map)),
+        )
+        gene_status_df = gene_status_df.drop(
+            "src_production_status", "dst_production_status"
+        )
+        return gene_status_df
+
+    def collapse_production_status(
+        self, spark, gene_status_df, status_map_dict, target_status_col
+    ):
+        status_map_df = self._create_status_map(spark, status_map_dict)
+
         gene_status_df = gene_status_df.withColumn(
             target_status_col, lit(None).astype(StringType())
         )
