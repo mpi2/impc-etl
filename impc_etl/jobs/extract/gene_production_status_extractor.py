@@ -157,6 +157,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             "Founder Obtained": "Started",
             "Genotype In Progress": "Started",
             "Genotype Not Confirmed": "Started",
+            "Plan Created": "Selected for production and phenotyping",
             "Genotype Confirmed": "Genotype Confirmed Mice",
             "Abandoned": "Withdrawn",
             "Attempt Aborted": "Withdrawn",
