@@ -118,8 +118,10 @@ def main(argv):
     phenotyping_data_availability_df = phenotyping_data_availability_df.drop(
         "data_points"
     )
-    phenotyping_data_availability_df = phenotyping_data_availability_df.withColumn(
-        "gene_accession_id", "mgi_accession_id"
+    phenotyping_data_availability_df = (
+        phenotyping_data_availability_df.withColumnRenamed(
+            "gene_accession_id", "mgi_accession_id"
+        )
     )
     stats_results_df = spark.read.parquet(stats_results_parquet_path)
     ontology_metadata_df = spark.read.parquet(ontology_metadata_parquet_path)
