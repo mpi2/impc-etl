@@ -181,7 +181,9 @@ class GeneProductionStatusExtractor(PySparkTask):
                     spark, gene_status_df, gentar_gene_prod_status_map, status_col
                 )
 
-        gene_status_df.distinct().write.parquet(self.output().path)
+        gene_status_df.select(gene_statuses_cols).distinct().write.parquet(
+            self.output().path
+        )
 
     def _resolve_assigment_status(self, gene_status_df):
         gene_status_df = gene_status_df.withColumn(

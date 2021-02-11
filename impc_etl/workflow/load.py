@@ -548,7 +548,7 @@ class GeneCoreLoader(SparkSubmitTask):
     def complete(self):
         outputs = flatten(self.output())
         gene_production_status_task = self.input()[-1]
-        gene_production_status_task.output().remove()
+        gene_production_status_task.remove()
         return all(map(lambda output: output.exists(), outputs))
 
     def app_options(self):
