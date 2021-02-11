@@ -9,6 +9,7 @@ import sys
 
 import requests
 from pyspark.sql import SparkSession, functions
+from pyspark.sql.functions import count, col
 from pyspark.sql.types import StringType, DoubleType
 
 from impc_etl.config.constants import Constants
@@ -108,6 +109,18 @@ def main(argv):
     )
     embryo_data_df = spark.read.json(embryo_data_json_path, mode="FAILFAST")
     observations_df = spark.read.parquet(observations_parquet_path)
+    phenotyping_data_availability_df = observations_df.groupBy("gene_accession_id").agg(
+        count("*").alias("data_points")
+    )
+    phenotyping_data_availability_df = phenotyping_data_availability_df.withColumn(
+        "phenotyping_data_available", col("data_points") > 0
+    )
+    phenotyping_data_availability_df = phenotyping_data_availability_df.drop(
+        "data_points"
+    )
+    phenotyping_data_availability_df = phenotyping_data_availability_df.withColumn(
+        "gene_accession_id", "mgi_accession_id"
+    )
     stats_results_df = spark.read.parquet(stats_results_parquet_path)
     ontology_metadata_df = spark.read.parquet(ontology_metadata_parquet_path)
     ontology_metadata_df = ontology_metadata_df.select(
@@ -229,6 +242,9 @@ def main(argv):
         "latest_phenotyping_centre",
     ]
     gene_df = gene_df.join(gene_production_status_df, "mgi_accession_id", "left_outer")
+    gene_df = gene_df.join(
+        phenotyping_data_availability_df, "mgi_accession_id", "left_outer"
+    )
 
     gene_df = gene_df.select(*GENE_CORE_COLUMNS)
     gene_df = gene_df.groupBy(
