@@ -548,7 +548,10 @@ class GeneCoreLoader(SparkSubmitTask):
     def complete(self):
         outputs = flatten(self.output())
         gene_production_status_task = self.input()[-1]
-        gene_production_status_task.remove()
+        if ImpcConfig.deploy_mode not in ["local", "client"]:
+            gene_production_status_task.remove(skipTrash=True)
+        else:
+            gene_production_status_task.remove()
         return all(map(lambda output: output.exists(), outputs))
 
     def app_options(self):
