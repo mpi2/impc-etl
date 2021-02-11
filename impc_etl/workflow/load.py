@@ -549,7 +549,7 @@ class GeneCoreLoader(SparkSubmitTask):
         outputs = flatten(self.output())
         gene_production_status_task = self.input()[-1]
         if ImpcConfig.deploy_mode not in ["local", "client"]:
-            gene_production_status_task.remove(skipTrash=True)
+            gene_production_status_task.remove(skip_trash=True)
         else:
             gene_production_status_task.remove()
         return all(map(lambda output: output.exists(), outputs))
