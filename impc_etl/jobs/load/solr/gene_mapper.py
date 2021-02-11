@@ -26,7 +26,6 @@ GENE_CORE_COLUMNS = [
     "crispr_allele_production_status",
     "mouse_production_status",
     "phenotype_status",
-    "project_status",
     "assignment_status",
     "phenotyping_data_available",
     "allele_mgi_accession_id",
