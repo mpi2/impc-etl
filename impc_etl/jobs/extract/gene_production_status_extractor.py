@@ -92,6 +92,12 @@ class GeneProductionStatusExtractor(PySparkTask):
             col("gentar_crispr_allele_production_status"),
         )
 
+        mice_production_status_cols = [
+            "null_allele_production_status",
+            "conditional_allele_production_status",
+            "crispr_allele_production_status",
+        ]
+
         allele_mouse_prod_status_map = {
             "Chimeras obtained": "Assigned for Mouse Production and Phenotyping",
             "Micro-injection in progress": "Assigned for Mouse Production and Phenotyping",
@@ -107,6 +113,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             spark,
             gene_status_df,
             allele_mouse_prod_status_map,
+            mice_production_status_cols,
             "mouse_production_status",
         )
 
@@ -120,6 +127,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             spark,
             gene_status_df,
             allele_es_cells_prod_status_map,
+            ["assignment_status"],
             "es_cell_production_status",
         )
 
@@ -259,7 +267,7 @@ class GeneProductionStatusExtractor(PySparkTask):
         return gene_status_df
 
     def collapse_production_status(
-        self, spark, gene_status_df, status_map_dict, target_status_col
+        self, spark, gene_status_df, status_map_dict, src_status_list, target_status_col
     ):
         status_map_df = self._create_status_map(spark, status_map_dict)
 
@@ -271,11 +279,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             IntegerType(),
         )
 
-        for status_col in [
-            "null_allele_production_status",
-            "conditional_allele_production_status",
-            "crispr_allele_production_status",
-        ]:
+        for status_col in src_status_list:
             gene_status_df = gene_status_df.join(
                 status_map_df,
                 lower(col(status_col)) == lower(col("src_production_status")),
