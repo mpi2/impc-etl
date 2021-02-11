@@ -118,9 +118,9 @@ class GeneProductionStatusExtractor(PySparkTask):
         )
 
         allele_es_cells_prod_status_map = {
-            "No ES Cell Production": "Not Assigned for ES Cell Production",
-            "ES Cell Production in Progress": "Assigned for ES Cell Production",
-            "ES Cell Targeting Confirmed": "ES Cells Produced",
+            "Aborted - ES Cell QC Failed": "Not Assigned for ES Cell Production",
+            "Assigned - ES Cell QC In Progress": "Assigned for ES Cell Production",
+            "Assigned - ES Cell QC Complete": "ES Cells Produced",
         }
 
         gene_status_df = self.collapse_production_status(
