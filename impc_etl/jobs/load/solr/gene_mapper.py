@@ -255,6 +255,9 @@ def main(argv):
             for col_name in grouped_columns
         ]
     )
+    gene_df.printSchema()
+    gene_df.show()
+    raise TypeError
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
     gene_df.distinct().write.parquet(output_path)
