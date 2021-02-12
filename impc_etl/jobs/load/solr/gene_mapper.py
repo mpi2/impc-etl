@@ -234,7 +234,9 @@ def main(argv):
         "ccds_id", functions.split(functions.col("ccds_ids"), ",")
     )
     gene_df = gene_df.withColumn("ncbi_id", functions.col("entrezgene_id"))
-
+    gene_df.printSchema()
+    gene_df.show()
+    raise TypeError
     gene_df = gene_df.withColumn(
         "marker_synonym", functions.split(functions.col("marker_synonym"), r"\|")
     )
@@ -244,9 +246,7 @@ def main(argv):
     )
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
-    gene_df.printSchema()
-    gene_df.show()
-    raise TypeError
+
     gene_df.select(*GENE_CORE_COLUMNS).distinct().write.parquet(output_path)
 
 
