@@ -181,6 +181,9 @@ def main(argv):
         "marker_mgi_accession_id",
         "left_outer",
     )
+    gene_df.printSchema()
+    gene_df.show()
+    raise TypeError
     gene_df = gene_df.withColumnRenamed("marker_mgi_accession_id", "mgi_accession_id")
     gene_df = gene_df.withColumn(
         "is_umass_gene", functions.col("marker_symbol").isin(Constants.UMASS_GENES)
@@ -234,9 +237,6 @@ def main(argv):
         "ccds_id", functions.split(functions.col("ccds_ids"), ",")
     )
     gene_df = gene_df.withColumn("ncbi_id", functions.col("entrezgene_id"))
-    gene_df.printSchema()
-    gene_df.show()
-    raise TypeError
     gene_df = gene_df.withColumn(
         "marker_synonym", functions.split(functions.col("marker_synonym"), r"\|")
     )
