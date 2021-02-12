@@ -94,9 +94,8 @@ def extract_imits_tsv(spark_session: SparkSession, file_path, entity_type) -> Da
         for col_name in PRODUCT_MULTIVALUED:
             imits_df = imits_df.withColumn(
                 col_name,
-                when(
-                    col(col_name).contains("|"),
-                    split(col_name, r"\|").otherwise(array(col_name)),
+                when(col(col_name).contains("|"), split(col_name, r"\|")).otherwise(
+                    array(col_name),
                 ),
             )
     return imits_df
@@ -133,8 +132,8 @@ def extract_imits_tsv_by_entity_type(
             col_name,
             when(
                 col(col_name).contains("|"),
-                split(col_name, r"\|").otherwise(array(col_name)),
-            ),
+                split(col_name, r"\|"),
+            ).otherwise(array(col_name)),
         )
     return imtis_entity_df
 
@@ -164,7 +163,7 @@ def extract_imits_tsv_allele_2(spark_session: SparkSession, file_path):
             when(
                 col(col_name).contains("|"),
                 split(col_name, r"\|").otherwise(array(col_name)),
-            ),
+            ).otherwise(array(col_name)),
         )
     return imits_df
 
