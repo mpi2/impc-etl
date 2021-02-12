@@ -157,7 +157,8 @@ def main(argv):
         [
             col_name
             for col_name in imits_allele_df.columns
-            if col_name not in IMITS_GENE_COLUMNS or col_name == "mgi_accession_id"
+            if col_name not in IMITS_GENE_COLUMNS
+            or col_name == "marker_mgi_accession_id"
         ]
     )
 
@@ -174,6 +175,10 @@ def main(argv):
         & (functions.col("allele_design_project") == "IMPC")
     )
     gene_df = gene_df.join(gene_allele_info_df, "marker_mgi_accession_id", "left_outer")
+    gene_df = gene_df.withColumnRenamed("marker_mgi_accession_id", "mgi_accession_id")
+    gene_df.printSchema()
+    gene_df.show()
+    raise Exception
     gene_df = gene_df.withColumn(
         "is_umass_gene", functions.col("marker_symbol").isin(Constants.UMASS_GENES)
     )
