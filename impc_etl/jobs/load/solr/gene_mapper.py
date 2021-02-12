@@ -21,11 +21,11 @@ GENE_CORE_COLUMNS = [
     "marker_name",
     "marker_synonym",
     "marker_type",
-    # "es_cell_production_status",
-    # "null_allele_production_status",
-    # "conditional_allele_production_status",
-    # "crispr_allele_production_status",
-    # "mouse_production_status",
+    "es_cell_production_status",
+    "null_allele_production_status",
+    "conditional_allele_production_status",
+    "crispr_allele_production_status",
+    "mouse_production_status",
     "phenotype_status",
     "assignment_status",
     "phenotyping_data_available",
@@ -184,7 +184,9 @@ def main(argv):
     )
     gene_df = gene_df.withColumnRenamed(
         "marker_mgi_accession_id", "mgi_accession_id"
-    ).select(*GENE_CORE_COLUMNS)
+    ).select(
+        *[col_name for col_name in gene_df.columns if col_name in GENE_CORE_COLUMNS]
+    )
     gene_df = gene_df.withColumn(
         "is_umass_gene", functions.col("marker_symbol").isin(Constants.UMASS_GENES)
     )
