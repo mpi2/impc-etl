@@ -51,7 +51,6 @@ GENE_CORE_COLUMNS = [
 
 IMITS_GENE_COLUMNS = [
     "marker_symbol",
-    "marker_synonym",
     "allele_design_project",
     "marker_mgi_accession_id",
     "latest_es_cell_status",
