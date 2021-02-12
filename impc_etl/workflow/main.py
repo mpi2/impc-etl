@@ -319,6 +319,7 @@ class ImpcIndexDaily(luigi.Task):
                 imits_tsv_path=self.imits_product_tsv_path,
                 output_path=self.parquet_path,
             ),
+            GeneCoreLoader(),
         ]
 
     def run(self):
