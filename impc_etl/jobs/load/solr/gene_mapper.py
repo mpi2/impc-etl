@@ -244,6 +244,9 @@ def main(argv):
         "latest_phenotyping_centre",
     ]
     gene_df = gene_df.join(gene_production_status_df, "mgi_accession_id", "left_outer")
+    gene_df.printSchema()
+    gene_df.show()
+    raise TypeError
     gene_df = gene_df.join(
         phenotyping_data_availability_df, "mgi_accession_id", "left_outer"
     )
