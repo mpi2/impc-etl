@@ -157,8 +157,7 @@ def main(argv):
         [
             col_name
             for col_name in imits_allele_df.columns
-            if col_name not in IMITS_GENE_COLUMNS
-            or col_name == "marker_mgi_accession_id"
+            if col_name not in IMITS_GENE_COLUMNS or col_name == "mgi_accession_id"
         ]
     )
 
