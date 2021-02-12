@@ -178,9 +178,6 @@ def main(argv):
         col("mgi_accession_id") == col("marker_mgi_accession_id"),
         "left_outer",
     )
-    gene_df.printSchema()
-    gene_df.show()
-    raise TypeError
     gene_df = gene_df.withColumn(
         "is_umass_gene", functions.col("marker_symbol").isin(Constants.UMASS_GENES)
     )
