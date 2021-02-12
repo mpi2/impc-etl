@@ -121,6 +121,8 @@ def extract_imits_tsv_by_entity_type(
         imtis_entity_df = imtis_entity_df.withColumn(
             "allele2_id", monotonically_increasing_id().astype(StringType())
         )
+    for col_name in ALLELE2_MULTIVALUED:
+        imits_df = imits_df.withColumn(col_name, split(col_name, r"\|"))
     return imtis_entity_df
 
 
