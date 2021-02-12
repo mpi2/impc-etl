@@ -158,17 +158,19 @@ def main(argv):
         [
             col_name
             for col_name in imits_allele_df.columns
-            if col_name not in IMITS_GENE_COLUMNS or col_name == "mgi_accession_id"
+            if col_name not in IMITS_GENE_COLUMNS
+            or col_name == "marker_mgi_accession_id"
         ]
     )
 
-    gene_allele_info_df = gene_allele_info_df.groupBy("mgi_accession_id").agg(
+    gene_allele_info_df = gene_allele_info_df.groupBy("marker_mgi_accession_id").agg(
         *[
             collect_set(col_name).alias(col_name)
             for col_name in gene_allele_info_df.columns
-            if col_name != "mgi_accession_id"
+            if col_name != "marker_mgi_accession_id"
         ]
     )
+    gene_allele_info_df = gene_allele_info_df.drop("mgi_accession_id")
     gene_df = imits_gene_df.where(
         functions.col("latest_project_status").isNotNull()
         & functions.col("feature_type").isNotNull()
@@ -176,12 +178,10 @@ def main(argv):
     )
     gene_df = gene_df.join(
         gene_allele_info_df,
-        col("mgi_accession_id") == col("marker_mgi_accession_id"),
+        "marker_mgi_accession_id",
         "left_outer",
     )
-    gene_df.printSchema()
-    gene_df.show()
-    raise TypeError
+    gene_df = gene_df.withColumnRenamed("marker_mgi_accession_id", "mgi_accession_id")
     gene_df = gene_df.withColumn(
         "is_umass_gene", functions.col("marker_symbol").isin(Constants.UMASS_GENES)
     )
@@ -244,6 +244,9 @@ def main(argv):
     )
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
+    gene_df.printSchema()
+    gene_df.show()
+    raise TypeError
     gene_df.select(*GENE_CORE_COLUMNS).distinct().write.parquet(output_path)
 
 
