@@ -240,12 +240,6 @@ def main(argv):
         "latest_production_centre",
         "latest_phenotyping_centre",
     ]
-    gene_df = gene_df.join(gene_production_status_df, "mgi_accession_id", "left_outer")
-
-    gene_df = gene_df.join(
-        phenotyping_data_availability_df, "mgi_accession_id", "left_outer"
-    )
-
     gene_df = gene_df.select(*GENE_CORE_COLUMNS)
     gene_df = gene_df.groupBy(
         [col_name for col_name in gene_df.columns if col_name not in grouped_columns]
@@ -254,6 +248,11 @@ def main(argv):
             functions.collect_set(col_name).alias(col_name)
             for col_name in grouped_columns
         ]
+    )
+    gene_df = gene_df.join(gene_production_status_df, "mgi_accession_id", "left_outer")
+
+    gene_df = gene_df.join(
+        phenotyping_data_availability_df, "mgi_accession_id", "left_outer"
     )
     gene_df.printSchema()
     gene_df.show()
