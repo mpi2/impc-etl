@@ -175,9 +175,6 @@ def main(argv):
         & (functions.col("allele_design_project") == "IMPC")
     )
     gene_df = gene_df.join(gene_allele_info_df, "marker_mgi_accession_id", "left_outer")
-    gene_df.printSchema()
-    gene_df.show()
-    raise TypeError
     gene_df = gene_df.withColumn(
         "is_umass_gene", functions.col("marker_symbol").isin(Constants.UMASS_GENES)
     )
@@ -240,7 +237,7 @@ def main(argv):
     )
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
-    gene_df.distinct().write.parquet(output_path)
+    gene_df.select(*GENE_CORE_COLUMNS).distinct().write.parquet(output_path)
 
 
 def get_embryo_data(spark: SparkSession):
