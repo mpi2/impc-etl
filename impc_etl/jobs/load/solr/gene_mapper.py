@@ -157,16 +157,15 @@ def main(argv):
         [
             col_name
             for col_name in imits_allele_df.columns
-            if col_name not in IMITS_GENE_COLUMNS
-            or col_name == "marker_mgi_accession_id"
+            if col_name not in IMITS_GENE_COLUMNS or col_name == "mgi_accession_id"
         ]
     )
 
-    gene_allele_info_df = gene_allele_info_df.groupBy("marker_mgi_accession_id").agg(
+    gene_allele_info_df = gene_allele_info_df.groupBy("mgi_accession_id").agg(
         *[
             collect_set(col_name).alias(col_name)
             for col_name in gene_allele_info_df.columns
-            if col_name != "marker_mgi_accession_id"
+            if col_name != "mgi_accession_id"
         ]
     )
     gene_df = imits_gene_df.where(
@@ -174,7 +173,7 @@ def main(argv):
         & functions.col("feature_type").isNotNull()
         & (functions.col("allele_design_project") == "IMPC")
     )
-    gene_df = gene_df.join(gene_allele_info_df, "marker_mgi_accession_id", "left_outer")
+    gene_df = gene_df.join(gene_allele_info_df, "mgi_accession_id", "left_outer")
     gene_df.printSchema()
     gene_df.show()
     raise TypeError
