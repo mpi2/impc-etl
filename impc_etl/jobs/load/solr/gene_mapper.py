@@ -244,7 +244,7 @@ def main(argv):
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
     gene_df.printSchema()
-    gene_df.show()
+    gene_df.select(*GENE_CORE_COLUMNS).distinct().show()
     raise TypeError
     gene_df.select(*GENE_CORE_COLUMNS).distinct().write.parquet(output_path)
 
