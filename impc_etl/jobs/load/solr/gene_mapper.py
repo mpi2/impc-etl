@@ -173,7 +173,11 @@ def main(argv):
         & functions.col("feature_type").isNotNull()
         & (functions.col("allele_design_project") == "IMPC")
     )
-    gene_df = gene_df.join(gene_allele_info_df, "mgi_accession_id", "left_outer")
+    gene_df = gene_df.join(
+        gene_allele_info_df,
+        col("mgi_accession_id") == col("marker_mgi_accession_id"),
+        "left_outer",
+    )
     gene_df.printSchema()
     gene_df.show()
     raise TypeError
