@@ -238,6 +238,14 @@ def main(argv):
         "marker_synonym",
         functions.split(functions.col("marker_synonym").getItem(0), r"\|"),
     )
+    gene_df = gene_df.withColumn(
+        "latest_production_centre",
+        functions.split(functions.col("latest_production_centre"), r"\|"),
+    )
+    gene_df = gene_df.withColumn(
+        "latest_phenotyping_centre",
+        functions.split(functions.col("latest_phenotyping_centre"), r"\|"),
+    )
     gene_df = gene_df.join(gene_production_status_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(
         phenotyping_data_availability_df, "mgi_accession_id", "left_outer"
