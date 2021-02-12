@@ -180,9 +180,6 @@ def main(argv):
         "marker_mgi_accession_id",
         "left_outer",
     )
-    gene_df.printSchema()
-    gene_df.show()
-    raise TypeError
     gene_df = gene_df.withColumnRenamed("marker_mgi_accession_id", "mgi_accession_id")
     gene_df = gene_df.withColumn(
         "is_umass_gene", functions.col("marker_symbol").isin(Constants.UMASS_GENES)
@@ -237,7 +234,8 @@ def main(argv):
     )
     gene_df = gene_df.withColumn("ncbi_id", functions.col("entrezgene_id"))
     gene_df = gene_df.withColumn(
-        "marker_synonym", functions.split(functions.col("marker_synonym"), r"\|")
+        "marker_synonym",
+        functions.split(functions.col("marker_synonym").getItem(0), r"\|"),
     )
     gene_df = gene_df.join(gene_production_status_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(
@@ -245,7 +243,9 @@ def main(argv):
     )
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
-
+    gene_df.printSchema()
+    gene_df.show()
+    raise TypeError
     gene_df.select(*GENE_CORE_COLUMNS).distinct().write.parquet(output_path)
 
 
