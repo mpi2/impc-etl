@@ -235,18 +235,11 @@ def main(argv):
     grouped_columns = [
         "allele_mgi_accession_id",
         "allele_name",
-        "phenotype_status",
-        "es_cell_production_status",
-        "mouse_production_status",
-        "production_centre",
-        "phenotyping_centre",
         "latest_production_centre",
         "latest_phenotyping_centre",
     ]
     gene_df = gene_df.join(gene_production_status_df, "mgi_accession_id", "left_outer")
-    gene_df.printSchema()
-    gene_df.show()
-    raise TypeError
+
     gene_df = gene_df.join(
         phenotyping_data_availability_df, "mgi_accession_id", "left_outer"
     )
@@ -260,6 +253,9 @@ def main(argv):
             for col_name in grouped_columns
         ]
     )
+    gene_df.printSchema()
+    gene_df.show()
+    raise TypeError
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
     gene_df.distinct().write.parquet(output_path)
