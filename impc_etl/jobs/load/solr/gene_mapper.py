@@ -87,9 +87,6 @@ def main(argv):
     imits_gene_df = spark.read.parquet(imits_gene_parquet_path).select(
         IMITS_GENE_COLUMNS
     )
-    imits_gene_df.printSchema()
-    imits_gene_df.show(truncate=False)
-    raise TypeError
     imits_allele_df = spark.read.parquet(imits_allele_parquet_path)
     mgi_homologene_df = spark.read.parquet(mgi_homologene_report_parquet_path)
     mgi_mrk_list_df = spark.read.parquet(mgi_mrk_list_report_parquet_path)
