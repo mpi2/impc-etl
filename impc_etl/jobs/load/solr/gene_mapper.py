@@ -182,9 +182,8 @@ def main(argv):
         "marker_mgi_accession_id",
         "left_outer",
     )
-    gene_df = gene_df.withColumnRenamed(
-        "marker_mgi_accession_id", "mgi_accession_id"
-    ).select(
+    gene_df = gene_df.withColumnRenamed("marker_mgi_accession_id", "mgi_accession_id")
+    gene_df = gene_df.select(
         *[col_name for col_name in gene_df.columns if col_name in GENE_CORE_COLUMNS]
     )
     gene_df = gene_df.withColumn(
