@@ -9,7 +9,7 @@ import sys
 
 import requests
 from pyspark.sql import SparkSession, functions
-from pyspark.sql.functions import count, col
+from pyspark.sql.functions import count, col, collect_set
 from pyspark.sql.types import StringType, DoubleType
 
 from impc_etl.config.constants import Constants
@@ -63,16 +63,6 @@ IMITS_GENE_COLUMNS = [
     "latest_phenotype_complete",
     "latest_project_status_legacy",
 ]
-
-IMITS_GENE_MAP = {
-    "mgi_accession_id": "marker_mgi_accession_id",
-    "imits_phenotype_started": "latest_phenotype_started",
-    "imits_phenotype_complete": "latest_phenotype_complete",
-    "imits_phenotype_status": "latest_project_status",
-    "imits_es_cell_status": "latest_es_cell_status",
-    "imits_mouse_status": "latest_mouse_status",
-    "status": "latest_project_status_legacy",
-}
 
 
 def main(argv):
@@ -163,7 +153,7 @@ def main(argv):
         stats_results_df, observations_df, ontology_metadata_df
     )
 
-    gene_df = imits_allele_df.select(
+    gene_allele_info_df = imits_allele_df.select(
         [
             col_name
             for col_name in imits_allele_df.columns
@@ -171,12 +161,23 @@ def main(argv):
             or col_name == "marker_mgi_accession_id"
         ]
     )
+
+    gene_allele_info_df = gene_allele_info_df.groupBy("marker_mgi_accession_id").agg(
+        *[
+            collect_set(col_name).alias(col_name)
+            for col_name in gene_allele_info_df.columns
+            if col_name != "marker_mgi_accession_id"
+        ]
+    )
     gene_df = imits_gene_df.where(
         functions.col("latest_project_status").isNotNull()
         & functions.col("feature_type").isNotNull()
         & (functions.col("allele_design_project") == "IMPC")
-    ).join(gene_df, "marker_mgi_accession_id", "left_outer")
-
+    )
+    gene_df.printSchema()
+    gene_df.show()
+    raise TypeError
+    gene_df = gene_df.join(gene_allele_info_df, "marker_mgi_accession_id", "left_outer")
     gene_df = gene_df.withColumn(
         "is_umass_gene", functions.col("marker_symbol").isin(Constants.UMASS_GENES)
     )
@@ -233,30 +234,10 @@ def main(argv):
     gene_df = gene_df.withColumn(
         "marker_synonym", functions.split(functions.col("marker_synonym"), r"\|")
     )
-
-    grouped_columns = [
-        "allele_mgi_accession_id",
-        "allele_name",
-        "latest_production_centre",
-        "latest_phenotyping_centre",
-    ]
-    gene_df = gene_df.select(*GENE_CORE_COLUMNS)
-    gene_df = gene_df.groupBy(
-        [col_name for col_name in gene_df.columns if col_name not in grouped_columns]
-    ).agg(
-        *[
-            functions.collect_set(col_name).alias(col_name)
-            for col_name in grouped_columns
-        ]
-    )
     gene_df = gene_df.join(gene_production_status_df, "mgi_accession_id", "left_outer")
-
     gene_df = gene_df.join(
         phenotyping_data_availability_df, "mgi_accession_id", "left_outer"
     )
-    gene_df.printSchema()
-    gene_df.show()
-    raise TypeError
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
     gene_df.distinct().write.parquet(output_path)
