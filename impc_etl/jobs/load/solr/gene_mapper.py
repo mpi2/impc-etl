@@ -9,7 +9,7 @@ import sys
 
 import requests
 from pyspark.sql import SparkSession, functions
-from pyspark.sql.functions import count, col, collect_set
+from pyspark.sql.functions import count, col, collect_set, lit, when
 from pyspark.sql.types import StringType, DoubleType
 
 from impc_etl.config.constants import Constants
@@ -26,7 +26,6 @@ GENE_CORE_COLUMNS = [
     "conditional_allele_production_status",
     "crispr_allele_production_status",
     "mouse_production_status",
-    "phenotype_status",
     "assignment_status",
     "phenotyping_data_available",
     "allele_mgi_accession_id",
@@ -107,7 +106,10 @@ def main(argv):
         count("*").alias("data_points")
     )
     phenotyping_data_availability_df = phenotyping_data_availability_df.withColumn(
-        "phenotyping_data_available", col("data_points") > 0
+        "phenotype_status",
+        when(col("data_points") > 0, lit("Phenotyping data available")).otherwise(
+            lit("Phenotyping data not available")
+        ),
     )
     phenotyping_data_availability_df = phenotyping_data_availability_df.drop(
         "data_points"
@@ -183,7 +185,9 @@ def main(argv):
         "left_outer",
     )
     gene_df = gene_df.withColumnRenamed("marker_mgi_accession_id", "mgi_accession_id")
-    gene_df = gene_df.withColumnRenamed("marker_mgi_accession_id", "mgi_accession_id")
+    gene_df = gene_df.withColumnRenamed(
+        "allele_mgi_accession_id", "allele_accession_id"
+    )
     gene_df = gene_df.select(
         *[col_name for col_name in gene_df.columns if col_name in GENE_CORE_COLUMNS]
     )
