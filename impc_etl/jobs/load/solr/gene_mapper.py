@@ -324,6 +324,8 @@ def _get_datasets_by_gene(stats_results_df, observations_df, ontology_metadata_d
         "zygosity",
         "phenotyping_center",
         "life_stage_name",
+        "top_level_mp_term_id",
+        "top_level_mp_term_name",
     ]
 
     stats_results_df = stats_results_df.select(*(data_set_cols + significance_cols))
@@ -447,6 +449,12 @@ def _get_datasets_by_gene(stats_results_df, observations_df, ontology_metadata_d
     datasets_df = datasets_df.withColumnRenamed("selected_effect_size", "effect_size")
     datasets_df = datasets_df.withColumnRenamed(
         "selected_phenotype_term", "phenotype_term_id"
+    )
+    datasets_df = datasets_df.withColumnRenamed(
+        "top_level_mp_term_id", "top_level_phenotype_term_id"
+    )
+    datasets_df = datasets_df.withColumnRenamed(
+        "top_level_mp_term_name", "top_level_phenotype_term_name"
     )
     datasets_df = datasets_df.join(
         ontology_metadata_df, "phenotype_term_id", "left_outer"
