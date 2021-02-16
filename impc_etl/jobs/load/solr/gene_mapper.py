@@ -483,8 +483,8 @@ def _get_datasets_by_gene(stats_results_df, observations_df, ontology_metadata_d
                         "female_mutant_count",
                         "phenotype_term_id",
                         "phenotype_term_name",
-                        "top_level_mp_term_id",
-                        "top_level_mp_term_name",
+                        "top_level_phenotype_term_id",
+                        "top_level_phenotype_term_name",
                     ]
                 )
             )
