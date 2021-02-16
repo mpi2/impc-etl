@@ -307,6 +307,8 @@ def _get_datasets_by_gene(stats_results_df, observations_df, ontology_metadata_d
         "female_mutant_count",
         "statistical_method",
         "mp_term_id",
+        "top_level_mp_term_id",
+        "top_level_mp_term_name",
         "sex",
     ]
 
@@ -324,8 +326,6 @@ def _get_datasets_by_gene(stats_results_df, observations_df, ontology_metadata_d
         "zygosity",
         "phenotyping_center",
         "life_stage_name",
-        "top_level_mp_term_id",
-        "top_level_mp_term_name",
     ]
 
     stats_results_df = stats_results_df.select(*(data_set_cols + significance_cols))
@@ -429,6 +429,8 @@ def _get_datasets_by_gene(stats_results_df, observations_df, ontology_metadata_d
                     "male_mutant_count",
                     "female_mutant_count",
                     "significant",
+                    "top_level_mp_term_id",
+                    "top_level_mp_term_name",
                 ]
             )
         ).alias("stats_data")
