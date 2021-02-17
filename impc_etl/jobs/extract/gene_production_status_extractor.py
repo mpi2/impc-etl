@@ -180,10 +180,6 @@ class GeneProductionStatusExtractor(PySparkTask):
                 gene_status_df = self.map_status(
                     spark, gene_status_df, gentar_gene_prod_status_map, status_col
                 )
-        gene_status_df.distinct().where(
-            col("assignment_status") == "data_issue"
-        ).repartition(1).write.csv(self.output().path + "_data_issue.csv", header=True)
-
         gene_status_df.select(gene_statuses_cols).distinct().write.parquet(
             self.output().path
         )
