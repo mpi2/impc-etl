@@ -1,5 +1,7 @@
 import luigi
-from luigi.contrib.spark import SparkSubmitTask
+from luigi.contrib.spark import SparkSubmitTask, PySparkTask
+from pyspark.sql import SparkSession
+
 from impc_etl.workflow.config import ImpcConfig
 
 

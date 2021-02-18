@@ -2,21 +2,17 @@
 SOLR module
    Generates the required Solr cores
 """
-from pyspark.sql import DataFrame, SparkSession
+import sys
+
+from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col,
     explode,
-    when,
-    lit,
-    split,
     collect_set,
     concat,
-    concat_ws,
     flatten,
     monotonically_increasing_id,
 )
-import sys
-
 from pyspark.sql.types import StringType
 
 ONTOLOGY_MP_MAP = {
@@ -157,8 +153,13 @@ def main(argv):
     ontological_obs_df = observations_df.where(col("observation_type") == "ontological")
     ontological_obs_df = ontological_obs_df.withColumn("mp_id", explode("sub_term_id"))
     ontological_obs_df = ontological_obs_df.where(col("mp_id").startswith("MP:"))
-    ontological_obs_df = ontological_obs_df.withColumn("fully_qualified_name", concat("pipeline_stable_id", "procedure_stable_id", "parameter_stable_id"))
-    ontological_obs_df = ontological_obs_df.select("mp_id", "fully_qualified_name").distinct()
+    ontological_obs_df = ontological_obs_df.withColumn(
+        "fully_qualified_name",
+        concat("pipeline_stable_id", "procedure_stable_id", "parameter_stable_id"),
+    )
+    ontological_obs_df = ontological_obs_df.select(
+        "mp_id", "fully_qualified_name"
+    ).distinct()
     tested_ontology_terms = tested_ontology_terms.union(ontological_obs_df).distinct()
     mp_df = mp_df.join(tested_ontology_terms, "mp_id")
     mp_df = mp_df.select(MP_CORE_COLUMNS).distinct()

@@ -11,7 +11,7 @@ from pyspark.sql.functions import (
     regexp_extract,
 )
 from pyspark.sql.types import BooleanType, StringType
-from impc_etl.config import Constants
+from impc_etl.config.constants import Constants
 from impc_etl.shared import utils
 
 

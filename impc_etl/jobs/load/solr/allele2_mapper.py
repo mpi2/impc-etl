@@ -2,8 +2,9 @@
 SOLR module
    Generates the required Solr cores
 """
-from pyspark.sql import DataFrame, SparkSession
 import sys
+
+from pyspark.sql import SparkSession
 
 
 def main(argv):

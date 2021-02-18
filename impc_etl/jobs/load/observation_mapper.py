@@ -1,5 +1,7 @@
+import datetime
 import sys
-from pyspark.sql import DataFrame, SparkSession, Column, Window
+
+from pyspark.sql import DataFrame, SparkSession, Window
 from pyspark.sql.functions import (
     concat,
     col,
@@ -18,13 +20,10 @@ from pyspark.sql.functions import (
     array,
     substring,
     upper,
-    first,
 )
-from pyspark.sql.types import StringType, IntegerType, LongType, ArrayType
-from impc_etl.config import Constants
-import datetime
+from pyspark.sql.types import StringType, IntegerType, LongType
 
-from impc_etl.jobs.clean.colony_cleaner import map_strain_name
+from impc_etl.config.constants import Constants
 from impc_etl.shared.utils import has_column
 
 

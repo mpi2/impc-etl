@@ -2,9 +2,11 @@
 SOLR module
    Generates the required Solr cores
 """
+import sys
+
+from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col,
-    explode,
     concat_ws,
     collect_set,
     when,
@@ -12,10 +14,7 @@ from pyspark.sql.functions import (
     explode_outer,
     concat,
     lit,
-    collect_list,
 )
-from pyspark.sql import DataFrame, SparkSession
-import sys
 
 
 def main(argv):

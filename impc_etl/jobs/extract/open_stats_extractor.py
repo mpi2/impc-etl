@@ -1,10 +1,10 @@
+import json
+import re
 import sys
 from typing import Dict
 
-from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import from_json, col
-import json
-import re
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col
 
 
 def main(argv):

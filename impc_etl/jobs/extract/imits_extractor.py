@@ -16,6 +16,7 @@ from pyspark.sql.functions import (
     md5,
     monotonically_increasing_id,
     split,
+    array,
 )
 from pyspark.sql.types import StringType
 
@@ -91,7 +92,13 @@ def extract_imits_tsv(spark_session: SparkSession, file_path, entity_type) -> Da
     )
     if entity_type == "Product":
         for col_name in PRODUCT_MULTIVALUED:
-            imits_df = imits_df.withColumn(col_name, split(col_name, r"\|"))
+            imits_df = imits_df.withColumn(
+                col_name,
+                when(
+                    col(col_name).contains("|"),
+                    split(col_name, r"\|"),
+                ).otherwise(array(col_name)),
+            )
     return imits_df
 
 
@@ -121,6 +128,14 @@ def extract_imits_tsv_by_entity_type(
         imtis_entity_df = imtis_entity_df.withColumn(
             "allele2_id", monotonically_increasing_id().astype(StringType())
         )
+    for col_name in ALLELE2_MULTIVALUED:
+        imits_df = imits_df.withColumn(
+            col_name,
+            when(
+                col(col_name).contains("|"),
+                split(col_name, r"\|"),
+            ).otherwise(array(col_name)),
+        )
     return imtis_entity_df
 
 
@@ -144,7 +159,13 @@ def extract_imits_tsv_allele_2(spark_session: SparkSession, file_path):
         "allele2_id", monotonically_increasing_id().astype(StringType())
     )
     for col_name in ALLELE2_MULTIVALUED:
-        imits_df = imits_df.withColumn(col_name, split(col_name, r"\|"))
+        imits_df = imits_df.withColumn(
+            col_name,
+            when(
+                col(col_name).contains("|"),
+                split(col_name, r"\|"),
+            ).otherwise(array(col_name)),
+        )
     return imits_df
 
 

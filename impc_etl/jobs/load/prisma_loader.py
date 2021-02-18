@@ -3,9 +3,9 @@ Prisma GRAPHQL module
    Generates the JSON files consumed by prisma.io in order to expose a GrahpQL endpoint
 """
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, concat, lit, collect_set, md5, explode
+from pyspark.sql.functions import col, explode
+
 from impc_etl.shared.utils import flatten_struct
-import json
 
 
 def generate_nodes():

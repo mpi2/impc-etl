@@ -1,6 +1,6 @@
-from pyspark.sql import DataFrame, SparkSession
 import sys
 
+from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col,
     explode_outer,
@@ -8,7 +8,6 @@ from pyspark.sql.functions import (
     lit,
     least,
     monotonically_increasing_id,
-    expr,
     regexp_replace,
 )
 from pyspark.sql.types import StringType

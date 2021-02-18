@@ -1,4 +1,11 @@
+from typing import Union
+
+from luigi.contrib.hdfs import HdfsTarget
+
 from impc_etl.workflow.load import *
+from impc_etl.jobs.extract.gene_production_status_extractor import (
+    GeneProductionStatusExtractor,
+)
 
 
 class ImpcEtl(luigi.Task):
@@ -296,3 +303,74 @@ class ImpcDataDrivenAnnotationLoader(SparkSubmitTask):
         return ImpcConfig().get_target(
             f"{self.output_path}annotated_observations_parquet"
         )
+
+
+class ImpcIndexDaily(luigi.Task):
+    name = "IMPC_Index_Daily"
+    imits_product_tsv_path = luigi.Parameter()
+    parquet_path = luigi.Parameter()
+    solr_path = luigi.Parameter()
+    local_path = luigi.Parameter()
+    remote_host = luigi.Parameter()
+
+    def requires(self):
+        return [
+            ProductExtractor(
+                imits_tsv_path=self.imits_product_tsv_path,
+                output_path=self.parquet_path,
+            ),
+            GeneCoreLoader(),
+        ]
+
+    def run(self):
+        for dependency in self.input():
+            yield (
+                ImpcMergeIndex(
+                    remote_host=self.remote_host,
+                    parquet_path=dependency.path,
+                    solr_path=self.solr_path,
+                    local_path=self.local_path,
+                )
+            )
+
+
+class ImpcCleanDaily(luigi.Task):
+    name = "IMPC_Clean_Daily"
+    imits_product_tsv_path = luigi.Parameter()
+    parquet_path = luigi.Parameter()
+    solr_path = luigi.Parameter()
+    local_path = luigi.Parameter()
+    remote_host = luigi.Parameter()
+
+    def _delele_target_if_exists(
+        self, target: Union[luigi.LocalTarget, HdfsTarget], hdfs=False
+    ):
+        if target.exists():
+            print(target.path)
+            if hdfs:
+                target.remove(skip_trash=True)
+            else:
+                target.remove()
+
+    def run(self):
+        index_daily_task = ImpcIndexDaily(
+            imits_product_tsv_path=self.imits_product_tsv_path,
+            remote_host=self.remote_host,
+            parquet_path=self.parquet_path,
+            solr_path=self.solr_path,
+            local_path=self.local_path,
+        )
+        for index_daily_dependency in index_daily_task.requires():
+            impc_merge_index_task = ImpcMergeIndex(
+                remote_host=self.remote_host,
+                parquet_path=index_daily_dependency.output().path,
+                solr_path=self.solr_path,
+                local_path=self.local_path,
+            )
+            impc_copy_index_task = impc_merge_index_task.requires()[0]
+            impc_parquet_to_solr_task = impc_copy_index_task.requires()[0]
+
+            self._delele_target_if_exists(index_daily_dependency.output(), hdfs=True)
+            self._delele_target_if_exists(impc_merge_index_task.output())
+            self._delele_target_if_exists(impc_copy_index_task.output())
+            self._delele_target_if_exists(impc_parquet_to_solr_task.output(), hdfs=True)
