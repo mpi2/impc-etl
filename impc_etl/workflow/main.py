@@ -323,8 +323,9 @@ class ImpcIndexDaily(luigi.Task):
         ]
 
     def run(self):
+        tasks = []
         for dependency in self.input():
-            yield (
+            tasks.append(
                 ImpcMergeIndex(
                     remote_host=self.remote_host,
                     parquet_path=dependency.path,
@@ -332,6 +333,7 @@ class ImpcIndexDaily(luigi.Task):
                     local_path=self.local_path,
                 )
             )
+        yield tasks
 
 
 class ImpcCleanDaily(luigi.Task):
