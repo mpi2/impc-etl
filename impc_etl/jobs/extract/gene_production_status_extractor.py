@@ -151,6 +151,10 @@ class GeneProductionStatusExtractor(PySparkTask):
             StringType(),
         )
 
+        gene_status_df.where(col("mgi_accession_id") == "MGI:1929293").show(
+            truncate=False
+        )
+
         gene_status_df = gene_status_df.withColumn(
             "es_cell_production_status",
             when(
@@ -160,6 +164,10 @@ class GeneProductionStatusExtractor(PySparkTask):
                     map_allele_es_cells_udf("conditional_allele_production_status"),
                 ).otherwise(lit("Assigned - ES Cell QC In Progress")),
             ).otherwise(col("es_cell_production_status")),
+        )
+
+        gene_status_df.where(col("mgi_accession_id") == "MGI:1929293").show(
+            truncate=False
         )
 
         imits_gene_prod_status_map = {
