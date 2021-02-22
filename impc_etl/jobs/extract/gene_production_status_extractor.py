@@ -169,6 +169,7 @@ class GeneProductionStatusExtractor(PySparkTask):
         gene_status_df.where(col("mgi_accession_id") == "MGI:1929293").show(
             truncate=False
         )
+        raise TypeError
 
         imits_gene_prod_status_map = {
             "Aborted - ES Cell QC Failed": "Selected for production and phenotyping",
