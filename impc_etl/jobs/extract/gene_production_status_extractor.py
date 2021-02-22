@@ -151,10 +151,6 @@ class GeneProductionStatusExtractor(PySparkTask):
             StringType(),
         )
 
-        gene_status_df.where(col("mgi_accession_id") == "MGI:1929293").show(
-            truncate=False
-        )
-
         gene_status_df = gene_status_df.withColumn(
             "es_cell_production_status",
             when(
@@ -165,12 +161,6 @@ class GeneProductionStatusExtractor(PySparkTask):
                 ).otherwise(lit("Assigned - ES Cell QC In Progress")),
             ).otherwise(col("es_cell_production_status")),
         )
-
-        gene_status_df.where(col("mgi_accession_id") == "MGI:1929293").show(
-            truncate=False
-        )
-        raise TypeError
-
         imits_gene_prod_status_map = {
             "Aborted - ES Cell QC Failed": "Selected for production and phenotyping",
             "Assigned - ES Cell QC Complete": "Selected for production and phenotyping",
