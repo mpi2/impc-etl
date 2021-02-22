@@ -8,7 +8,7 @@ from impc_etl.workflow.config import ImpcConfig
 
 
 class GeneProductionStatusExtractor(PySparkTask):
-    name = "IMPC_Gene_Production_Statuses_Extractor"
+    name = "IMPC_Gene_Production_Status_Extractor"
 
     imits_gene_status_path = luigi.Parameter()
     gentar_gene_status_path = luigi.Parameter()
