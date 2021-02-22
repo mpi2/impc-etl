@@ -138,9 +138,10 @@ class GeneProductionStatusExtractor(PySparkTask):
         # "Micro-injection aborted" => "Aborted - ES Cell QC Failed"
 
         allele_es_cells_prod_status_map = {
-            "Aborted - ES Cell QC Failed": "Not Assigned for ES Cell Production",
-            "Assigned - ES Cell QC In Progress": "Assigned for ES Cell Production",
-            "Assigned - ES Cell QC Complete": "ES Cells Produced",
+            "Micro-injection in progress": "Assigned for ES Cell Production",
+            "Chimeras obtained": "ES Cells Produced",
+            "Genotype confirmed": "ES Cells Produced",
+            "Micro-injection aborted": "Not Assigned for ES Cell Production",
         }
 
         map_allele_es_cells_udf = udf(
