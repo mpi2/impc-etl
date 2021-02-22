@@ -141,7 +141,6 @@ class GeneProductionStatusExtractor(PySparkTask):
             "Micro-injection in progress": "Assigned for ES Cell Production",
             "Chimeras obtained": "ES Cells Produced",
             "Genotype confirmed": "ES Cells Produced",
-            "Genotype confirmed mice": "ES Cells Produced",
             "Micro-injection aborted": "Not Assigned for ES Cell Production",
         }
 
