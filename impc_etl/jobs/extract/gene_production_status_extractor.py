@@ -117,7 +117,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             "mouse_production_status",
         )
 
-        allele_es_cells_prod_status_map = {
+        assignment_status_es_cells_prod_status_map = {
             "Aborted - ES Cell QC Failed": "Not Assigned for ES Cell Production",
             "Assigned - ES Cell QC In Progress": "Assigned for ES Cell Production",
             "Assigned - ES Cell QC Complete": "ES Cells Produced",
@@ -126,9 +126,39 @@ class GeneProductionStatusExtractor(PySparkTask):
         gene_status_df = self.collapse_production_status(
             spark,
             gene_status_df,
-            allele_es_cells_prod_status_map,
+            assignment_status_es_cells_prod_status_map,
             ["assignment_status"],
             "es_cell_production_status",
+        )
+
+        # Blanks, "Micro-injection in progress" => "Assigned - ES Cell QC In Progress"
+
+        # "Chimeras obtained", "Genotype confirmed" => "Assigned - ES Cell QC Complete"
+
+        # "Micro-injection aborted" => "Aborted - ES Cell QC Failed"
+
+        allele_es_cells_prod_status_map = {
+            "Aborted - ES Cell QC Failed": "Not Assigned for ES Cell Production",
+            "Assigned - ES Cell QC In Progress": "Assigned for ES Cell Production",
+            "Assigned - ES Cell QC Complete": "ES Cells Produced",
+        }
+
+        map_allele_es_cells_udf = udf(
+            lambda x: allele_es_cells_prod_status_map[x]
+            if x in allele_es_cells_prod_status_map
+            else None,
+            StringType(),
+        )
+
+        gene_status_df = gene_status_df.withColumn(
+            "es_cell_production_status",
+            when(
+                col("assignment_status") == "Assigned",
+                when(
+                    col("conditional_allele_production_status").isNotNull(),
+                    map_allele_es_cells_udf("conditional_allele_production_status"),
+                ).otherwise(lit("Assigned - ES Cell QC In Progress")),
+            ).otherwise(col("es_cell_production_status")),
         )
 
         imits_gene_prod_status_map = {
