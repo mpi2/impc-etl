@@ -37,6 +37,7 @@ def main(argv):
     spark = SparkSession.builder.getOrCreate()
     dcc_df = extract_dcc_xml_files(spark, input_path, file_type)
     spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
+    spark.sql("set spark.sql.legacy.parquet.datetimeRebaseModeInWrite=LEGACY")
 
     entities_df = None
 
