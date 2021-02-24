@@ -131,12 +131,6 @@ class GeneProductionStatusExtractor(PySparkTask):
             "es_cell_production_status",
         )
 
-        # Blanks, "Micro-injection in progress" => "Assigned - ES Cell QC In Progress"
-
-        # "Chimeras obtained", "Genotype confirmed" => "Assigned - ES Cell QC Complete"
-
-        # "Micro-injection aborted" => "Aborted - ES Cell QC Failed"
-
         allele_es_cells_prod_status_map = {
             "Micro-injection in progress": "Assigned for ES Cell Production",
             "Chimeras obtained": "ES Cells Produced",
