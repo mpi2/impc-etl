@@ -15,7 +15,7 @@ from pyspark.sql.functions import (
     md5,
     explode,
     concat_ws,
-    collect_list,
+    datediff,
     collect_list,
     sort_array,
     collect_set,
@@ -37,6 +37,7 @@ from pyspark.sql.types import (
     StringType,
     Row,
     LongType,
+    DateType,
 )
 from impc_etl.config.constants import Constants
 from impc_etl.shared.utils import (
@@ -614,7 +615,7 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
         & (weight_observations["_centreID"] == mice_df["_centreID"]),
     )
     weight_observations = weight_observations.withColumn(
-        "weightDaysOld", udf(calculate_age_in_days, StringType())("weightDate", "_DOB")
+        "weightDaysOld", datediff("weightDate", "_DOB")
     )
     weight_observations = weight_observations.groupBy("specimenID").agg(
         collect_set(
@@ -640,10 +641,10 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
     output_weight_schema = StructType(
         [
             StructField("sourceExperimentId", StringType()),
-            StructField("weightDate", StringType()),
+            StructField("weightDate", DateType()),
             StructField("weightParameterID", StringType()),
             StructField("weightValue", StringType()),
-            StructField("weightDaysOld", StringType()),
+            StructField("weightDaysOld", IntegerType()),
             StructField("error", ArrayType(StringType())),
         ]
     )
@@ -677,9 +678,7 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "ageInDays",
-        udf(calculate_age_in_days, IntegerType())(
-            col("exp._dateOfExperiment"), col("mice._DOB")
-        ),
+        datediff(col("exp._dateOfExperiment"), col("mice._DOB")),
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "ageInWeeks",
@@ -690,16 +689,8 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
     return dcc_experiment_df.select("exp.*", "ageInWeeks", "ageInDays")
 
 
-def calculate_age_in_days(experiment_date: str, dob: str) -> int:
-    if dob is None or experiment_date is None:
-        return None
-    experiment_date = datetime.strptime(experiment_date, "%Y-%m-%d")
-    dob = datetime.strptime(dob, "%Y-%m-%d")
-    return (experiment_date - dob).days
-
-
 def _get_closest_weight(
-    experiment_date: str, procedure_group: str, specimen_weights: List[Row]
+    experiment_date: datetime.date, procedure_group: str, specimen_weights: List[Row]
 ) -> Dict:
     if specimen_weights is None or len(specimen_weights) == 0:
         return {
@@ -709,7 +700,6 @@ def _get_closest_weight(
             "weightParameterID": None,
             "weightDaysOld": None,
         }
-    experiment_date = datetime.strptime(experiment_date, "%Y-%m-%d")
     nearest_weight = None
     nearest_diff = None
     errors = []
@@ -719,9 +709,7 @@ def _get_closest_weight(
             or candidate_weight["weightDate"] == "null"
         ):
             continue
-        candidate_weight_date = datetime.strptime(
-            candidate_weight["weightDate"], "%Y-%m-%d"
-        )
+        candidate_weight_date = candidate_weight["weightDate"]
         candidate_diff = abs(
             unix_time_millis(experiment_date) - unix_time_millis(candidate_weight_date)
         )
