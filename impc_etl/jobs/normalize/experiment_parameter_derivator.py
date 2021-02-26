@@ -53,6 +53,7 @@ class ExperimentParameterDerivator(PySparkTask):
                     entity_type="experiment",
                     dcc_xml_path=self.dcc_xml_path,
                     imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                    output_path=self.output_path,
                 )
             )
         else:
@@ -61,6 +62,7 @@ class ExperimentParameterDerivator(PySparkTask):
                     entity_type="line",
                     dcc_xml_path=self.dcc_xml_path,
                     imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                    output_path=self.output_path,
                 )
             )
         requirements.append(ImpressExtractor())
