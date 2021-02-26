@@ -248,8 +248,8 @@ class ParameterDerivator(PySparkTask):
             result_schema_fields.insert(
                 1, lit(None).cast(LongType()).alias("_sequenceID")
             )
-        else:
-            result_schema_fields.insert(0, lit(None).cast(StringType()).alias("_VALUE"))
+        # else:
+        #     result_schema_fields.insert(0, lit(None).cast(StringType()).alias("_VALUE"))
         result_struct = struct(*result_schema_fields)
         results_df = results_df.groupBy("unique_id", "pipelineKey", "procedureKey").agg(
             collect_list(result_struct).alias("results")
