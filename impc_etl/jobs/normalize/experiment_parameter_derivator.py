@@ -374,13 +374,15 @@ def _get_inputs_by_parameter_type(
 
 class ExperimentParameterDerivator(ParameterDerivator):
     name = "IMPC_Experiment_Parameter_Derivator"
+    experiment_level = "experiment"
 
     def requires(self):
         return [ExperimentNormalizer(entity_type="experiment"), ImpressExtractor()]
 
 
 class LineParameterDerivator(ParameterDerivator):
-    name = "IMPC_Experiment_Parameter_Derivator"
+    name = "IMPC_Line_Parameter_Derivator"
+    experiment_level = "line"
 
     def requires(self):
         return [LineExperimentNormalizer(entity_type="experiment"), ImpressExtractor()]
