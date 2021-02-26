@@ -238,26 +238,21 @@ class ParameterDerivator(PySparkTask):
             derived_parameters, ["pipelineKey", "procedureKey", "parameterKey"]
         )
 
+        result_schema_fields = [
+            results_df["parameterKey"].alias("_parameterID"),
+            results_df["unitName"].alias("_unit"),
+            lit(None).cast(StringType()).alias("parameterStatus"),
+            results_df["result"].alias("value"),
+        ]
         if self.experiment_level == "experiment":
-            result_return = struct(
-                results_df["parameterKey"].alias("_parameterID"),
-                lit(None).cast(LongType()).alias("_sequenceID"),
-                results_df["unitName"].alias("_unit"),
-                lit(None).cast(StringType()).alias("parameterStatus"),
-                results_df["result"].alias("value"),
+            result_schema_fields.insert(
+                1, lit(None).cast(LongType()).alias("_sequenceID")
             )
         else:
-            result_return = struct(
-                *[
-                    lit(None).cast(StringType()).alias("_VALUE"),
-                    results_df["parameterKey"].alias("_parameterID"),
-                    results_df["unitName"].alias("_unit"),
-                    lit(None).cast(StringType()).alias("parameterStatus"),
-                    results_df["result"].alias("value"),
-                ]
-            )
+            result_schema_fields.insert(0, lit(None).cast(StringType()).alias("_VALUE"))
+        result_struct = struct(*result_schema_fields)
         results_df = results_df.groupBy("unique_id", "pipelineKey", "procedureKey").agg(
-            collect_list(result_return).alias("results")
+            collect_list(result_struct).alias("results")
         )
         results_df = results_df.withColumnRenamed("unique_id", "unique_id_result")
 
