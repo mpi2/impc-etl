@@ -385,4 +385,4 @@ class LineParameterDerivator(ParameterDerivator):
     experiment_level = "line"
 
     def requires(self):
-        return [LineExperimentNormalizer(entity_type="experiment"), ImpressExtractor()]
+        return [LineExperimentNormalizer(entity_type="line"), ImpressExtractor()]
