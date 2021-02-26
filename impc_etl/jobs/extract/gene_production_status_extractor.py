@@ -58,6 +58,9 @@ class GeneProductionStatusExtractor(PySparkTask):
             "mgi_accession_id",
             "full",
         )
+        gene_status_df = imits_gene_status_df.withColumnRenamed(
+            "imits_phenotyping_status", "phenotyping_status"
+        )
 
         gene_statuses_cols = [
             "mgi_accession_id",
@@ -67,6 +70,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             "crispr_allele_production_status",
             "es_cell_production_status",
             "mouse_production_status",
+            "phenotyping_status",
         ]
 
         gene_status_df = self._resolve_assigment_status(gene_status_df)

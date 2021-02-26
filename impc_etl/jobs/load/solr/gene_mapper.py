@@ -107,9 +107,9 @@ def main(argv):
     )
     phenotyping_data_availability_df = phenotyping_data_availability_df.withColumn(
         "phenotype_status",
-        when(col("data_points") > 0, lit("Phenotyping data available")).otherwise(
-            lit("Phenotyping data not available")
-        ),
+        when(col("phenotyping_status").isNotNull(), col("phenotyping_status"))
+        .when(col("data_points") > 0, lit("Phenotyping data available"))
+        .otherwise(lit("Phenotyping data not available")),
     )
     phenotyping_data_availability_df = phenotyping_data_availability_df.drop(
         "data_points"
