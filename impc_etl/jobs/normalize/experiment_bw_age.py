@@ -185,10 +185,11 @@ def _get_closest_weight(
         ):
             continue
         candidate_weight_date = candidate_weight["weightDate"]
+        candidate_weight_time = datetime.combine(candidate_weight_date, min_time)
         # TODO: TypeError: unsupported operand type(s) for -: 'datetime.date' and 'datetime.datetime'
         candidate_diff = abs(
             unix_time_millis(experiment_date_time)
-            - unix_time_millis(candidate_weight_date)
+            - unix_time_millis(candidate_weight_time)
         )
         if nearest_weight is None:
             nearest_weight = candidate_weight
