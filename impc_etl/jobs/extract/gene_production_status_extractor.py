@@ -289,7 +289,13 @@ class GeneProductionStatusExtractor(PySparkTask):
         )
         gene_status_df = gene_status_df.withColumn(
             status_col_to_map,
-            when(col("dst_production_status").isNotNull(), col("dst_production_status"))
+            when(
+                (
+                    col("dst_production_status").isNotNull()
+                    & (col("dst_production_status") != "NULL")
+                ),
+                col("dst_production_status"),
+            )
             .when(col("dst_production_status") == "NULL", lit(None))
             .otherwise(col(status_col_to_map)),
         )
