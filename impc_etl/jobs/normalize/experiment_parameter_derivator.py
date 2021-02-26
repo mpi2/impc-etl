@@ -49,10 +49,14 @@ class ParameterDerivator(PySparkTask):
             f"{self.output_path}{self.experiment_level}_derived_parquet"
         )
 
+    def app_options(self):
+        return [self.input()[0].path, self.input()[1].path, self.output().path]
+
     def main(self, sc, *args):
         spark = SparkSession(sc)
-        experiment_parquet_path = self.input()[0].path
-        pipeline_parquet_path = self.input()[1].path
+        experiment_parquet_path = args[0]
+        pipeline_parquet_path = args[1]
+        output_path = args[2]
         dcc_experiment_df = spark.read.parquet(experiment_parquet_path)
         impress_df = spark.read.parquet(pipeline_parquet_path)
         europhenome_derivations_json = spark.sparkContext.parallelize(
@@ -290,7 +294,7 @@ class ParameterDerivator(PySparkTask):
             "parameterKey",
             "results",
         )
-        dcc_experiment_df.write.mode("overwrite").parquet(self.output().path)
+        dcc_experiment_df.write.mode("overwrite").parquet(output_path)
 
 
 def _merge_simple_parameters(simple_parameters: List[Dict], results: [Dict]):
