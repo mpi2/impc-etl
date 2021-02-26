@@ -40,15 +40,29 @@ from impc_etl.workflow.normalization import (
 class ExperimentParameterDerivator(PySparkTask):
     name = "IMPC_Parameter_Derivator"
     experiment_level = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
     output_path = luigi.Parameter()
     jars = "lib/phenodcc-derived-parameters-2020.06.14.jar"
 
     def requires(self):
         requirements = []
         if self.experiment_level == "experiment":
-            requirements.append(ExperimentNormalizer(entity_type="experiment"))
+            requirements.append(
+                ExperimentNormalizer(
+                    entity_type="experiment",
+                    dcc_xml_path=self.dcc_xml_path,
+                    imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                )
+            )
         else:
-            requirements.append(LineExperimentNormalizer(entity_type="line"))
+            requirements.append(
+                LineExperimentNormalizer(
+                    entity_type="line",
+                    dcc_xml_path=self.dcc_xml_path,
+                    imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                )
+            )
         requirements.append(ImpressExtractor())
         return requirements
 
