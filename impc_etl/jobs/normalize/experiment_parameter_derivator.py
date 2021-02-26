@@ -42,7 +42,6 @@ class ParameterDerivator(PySparkTask):
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     output_path = luigi.Parameter()
-    jars = "lib/phenodcc-derived-parameters-2020.06.14.jar"
 
     def output(self):
         return ImpcConfig().get_target(
