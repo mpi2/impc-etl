@@ -107,9 +107,9 @@ def main(argv):
     )
     phenotyping_data_availability_df = phenotyping_data_availability_df.withColumn(
         "phenotype_status",
-        when(col("phenotyping_status").isNotNull(), col("phenotyping_status"))
-        .when(col("data_points") > 0, lit("Phenotyping data available"))
-        .otherwise(lit("Phenotyping data not available")),
+        when(col("data_points") > 0, lit("Phenotyping data available")).otherwise(
+            lit("Phenotyping data not available")
+        ),
     )
     phenotyping_data_availability_df = phenotyping_data_availability_df.drop(
         "data_points"
@@ -258,6 +258,12 @@ def main(argv):
     gene_df = gene_df.join(gene_production_status_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(
         phenotyping_data_availability_df, "mgi_accession_id", "left_outer"
+    )
+    gene_df = gene_df.withColumn(
+        "phenotype_status",
+        when(
+            col("phenotyping_status").isNotNull(), col("phenotyping_status")
+        ).otherwise(col("phenotype_status")),
     )
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
