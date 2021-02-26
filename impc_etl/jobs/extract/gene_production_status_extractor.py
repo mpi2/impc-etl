@@ -58,7 +58,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             "mgi_accession_id",
             "full",
         )
-        gene_status_df = imits_gene_status_df.withColumnRenamed(
+        gene_status_df = gene_status_df.withColumnRenamed(
             "imits_phenotyping_status", "phenotyping_status"
         )
 
