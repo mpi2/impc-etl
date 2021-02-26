@@ -202,7 +202,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             "Inactive": "Withdrawn",
             "Plan Abandoned": "Withdrawn",
             "Phenotype Attempt Registered": "Phenotype attempt registered",
-            "Phenotype Production Aborted": None,
+            "Phenotype Production Aborted": "NULL",
             "Phenotyping Complete": "Phenotyping data available",
             "Rederivation Complete": "Phenotping started",
             "Phenotyping Started": "Phenotyping started",
@@ -289,9 +289,9 @@ class GeneProductionStatusExtractor(PySparkTask):
         )
         gene_status_df = gene_status_df.withColumn(
             status_col_to_map,
-            when(
-                col("dst_production_status").isNotNull(), col("dst_production_status")
-            ).otherwise(col(status_col_to_map)),
+            when(col("dst_production_status").isNotNull(), col("dst_production_status"))
+            .when(col("dst_production_status") == "NULL", lit(None))
+            .otherwise(col(status_col_to_map)),
         )
         gene_status_df = gene_status_df.drop(
             "src_production_status", "dst_production_status"
