@@ -6,6 +6,10 @@ from luigi.task import flatten
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
 )
+from impc_etl.jobs.normalize.experiment_bw_age import ExperimentBWAgeProcessor
+from impc_etl.jobs.normalize.experiment_parameter_derivator import (
+    ExperimentParameterDerivator,
+)
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
 from impc_etl.workflow.normalization import *
 
@@ -22,17 +26,9 @@ class ObservationsMapper(SparkSubmitTask):
 
     def requires(self):
         return [
-            ExperimentNormalizer(
-                dcc_xml_path=self.dcc_xml_path,
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                entity_type="experiment",
-                output_path=self.output_path,
-            ),
-            LineExperimentNormalizer(
-                dcc_xml_path=self.dcc_xml_path,
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                entity_type="line",
-                output_path=self.output_path,
+            ExperimentBWAgeProcessor(),
+            ExperimentParameterDerivator(
+                experiment_level="line",
             ),
             MouseNormalizer(
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,

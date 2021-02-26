@@ -63,7 +63,6 @@ class ExperimentNormalizer(SparkSubmitTask):
     imits_colonies_tsv_path = luigi.Parameter()
     entity_type = luigi.Parameter()
     output_path = luigi.Parameter()
-    resources = {"overwrite_resource": 1}
 
     def requires(self):
         return [
