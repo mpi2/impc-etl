@@ -37,36 +37,12 @@ from impc_etl.workflow.normalization import (
 )
 
 
-class ExperimentParameterDerivator(PySparkTask):
-    name = "IMPC_Parameter_Derivator"
+class ParameterDerivator(PySparkTask):
     experiment_level = luigi.Parameter()
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     output_path = luigi.Parameter()
     jars = "lib/phenodcc-derived-parameters-2020.06.14.jar"
-
-    def requires(self):
-        requirements = []
-        if self.experiment_level == "experiment":
-            requirements.append(
-                ExperimentNormalizer(
-                    entity_type="experiment",
-                    dcc_xml_path=self.dcc_xml_path,
-                    imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                    output_path=self.output_path,
-                )
-            )
-        else:
-            requirements.append(
-                LineExperimentNormalizer(
-                    entity_type="line",
-                    dcc_xml_path=self.dcc_xml_path,
-                    imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                    output_path=self.output_path,
-                )
-            )
-        requirements.append(ImpressExtractor())
-        return requirements
 
     def output(self):
         return ImpcConfig().get_target(f"{self.output_path}experiment_derived_parquet")
@@ -394,3 +370,17 @@ def _get_inputs_by_parameter_type(
             "value", "_parameterID", "_procedureID", "_pipeline"
         )
     )
+
+
+class ExperimentParameterDerivator(ParameterDerivator):
+    name = "IMPC_Experiment_Parameter_Derivator"
+
+    def requires(self):
+        return [ExperimentNormalizer(entity_type="experiment"), ImpressExtractor()]
+
+
+class LineParameterDerivator(ParameterDerivator):
+    name = "IMPC_Experiment_Parameter_Derivator"
+
+    def requires(self):
+        return [LineExperimentNormalizer(entity_type="experiment"), ImpressExtractor()]
