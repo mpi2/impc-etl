@@ -288,7 +288,7 @@ class ParameterDerivator(PySparkTask):
             "parameterKey",
             "results",
         )
-        dcc_experiment_df.write.mode("overwrite").parquet(output_path)
+        dcc_experiment_df.write.parquet(output_path)
 
 
 def _merge_simple_parameters(simple_parameters: List[Dict], results: [Dict]):
