@@ -46,11 +46,11 @@ class ExperimentBWAgeProcessor(PySparkTask):
             MouseNormalizer(),
         ]
 
-    def app_options(self):
-        return [self.input()[0].path, self.input()[1].path, self.output().path]
-
     def output(self):
         return ImpcConfig().get_target(f"{self.output_path}experiment_full_parquet")
+
+    def app_options(self):
+        return [self.input()[0].path, self.input()[1].path, self.output().path]
 
     def main(self, sc, *args):
         spark = SparkSession(sc)
