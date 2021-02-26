@@ -42,7 +42,7 @@ class ExperimentBWAgeProcessor(PySparkTask):
 
     def requires(self):
         return [
-            ExperimentParameterDerivator(experiment_level="experiment"),
+            ExperimentParameterDerivator(),
             MouseNormalizer(),
         ]
 
