@@ -45,12 +45,14 @@ class ParameterDerivator(PySparkTask):
     jars = "lib/phenodcc-derived-parameters-2020.06.14.jar"
 
     def output(self):
-        return ImpcConfig().get_target(f"{self.output_path}experiment_derived_parquet")
+        return ImpcConfig().get_target(
+            f"{self.output_path}{self.experiment_level}_derived_parquet"
+        )
 
     def main(self, sc, *args):
         spark = SparkSession(sc)
-        experiment_parquet_path = self.input()[0]
-        pipeline_parquet_path = self.input()[1]
+        experiment_parquet_path = self.input()[0].path
+        pipeline_parquet_path = self.input()[1].path
         dcc_experiment_df = spark.read.parquet(experiment_parquet_path)
         impress_df = spark.read.parquet(pipeline_parquet_path)
         europhenome_derivations_json = spark.sparkContext.parallelize(
