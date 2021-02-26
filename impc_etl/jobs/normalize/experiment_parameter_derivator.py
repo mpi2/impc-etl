@@ -46,9 +46,9 @@ class ExperimentParameterDerivator(PySparkTask):
     def requires(self):
         requirements = []
         if self.experiment_level == "experiment":
-            requirements.append(ExperimentNormalizer())
+            requirements.append(ExperimentNormalizer(entity_type="experiment"))
         else:
-            requirements.append(LineExperimentNormalizer())
+            requirements.append(LineExperimentNormalizer(entity_type="line"))
         requirements.append(ImpressExtractor())
         return requirements
 

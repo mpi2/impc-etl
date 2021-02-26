@@ -38,7 +38,6 @@ from impc_etl.workflow.normalization import (
 
 class ExperimentBWAgeProcessor(PySparkTask):
     name = "IMPC_Experiment_BW_AGE_Processor"
-    experiment_level = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
