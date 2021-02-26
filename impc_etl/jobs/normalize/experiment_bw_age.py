@@ -46,18 +46,22 @@ class ExperimentBWAgeProcessor(PySparkTask):
             MouseNormalizer(),
         ]
 
+    def app_options(self):
+        return [self.input()[0].path, self.input()[1].path, self.output().path]
+
     def output(self):
         return ImpcConfig().get_target(f"{self.output_path}experiment_full_parquet")
 
     def main(self, sc, *args):
         spark = SparkSession(sc)
-        experiment_parquet_path = self.input()[0]
-        pipeline_parquet_path = self.input()[1]
+        experiment_parquet_path = args[0]
+        pipeline_parquet_path = args[1]
+        output_path = args[2]
         experiment_df = spark.read.parquet(experiment_parquet_path)
         mouse_df = spark.read.parquet(pipeline_parquet_path)
         experiment_df = get_associated_body_weight(experiment_df, mouse_df)
         experiment_df = generate_age_information(experiment_df, mouse_df)
-        experiment_df.write.mode("overwrite").parquet(self.output().path)
+        experiment_df.write.parquet(output_path)
 
 
 def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame):
