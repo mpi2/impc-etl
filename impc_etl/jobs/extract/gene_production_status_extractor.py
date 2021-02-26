@@ -201,6 +201,11 @@ class GeneProductionStatusExtractor(PySparkTask):
             "Genotype Extinct": "Withdrawn",
             "Inactive": "Withdrawn",
             "Plan Abandoned": "Withdrawn",
+            "Phenotype Attempt Registered": "Phenotype attempt registered",
+            "Phenotype Production Aborted": None,
+            "Phenotyping Complete": "Phenotyping data available",
+            "Rederivation Complete": "Phenotping started",
+            "Phenotyping Started": "Phenotyping started",
         }
 
         for status_col in gene_statuses_cols:
