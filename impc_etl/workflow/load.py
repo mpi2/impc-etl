@@ -692,7 +692,7 @@ class ImpcMergeIndex(LSFExternalJobTask):
     n_cpu_flag = 32
     shared_tmp_dir = "/scratch"
     memory_flag = "180000"
-    resource_flag = "span[ptile=4]"
+    resource_flag = "mem=180000"
 
     def init_local(self):
         self.app = (
