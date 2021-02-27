@@ -248,7 +248,7 @@ class ParameterDerivator(PySparkTask):
             result_schema_fields.insert(
                 1, lit(None).cast(LongType()).alias("_sequenceID")
             )
-        elif has_column("simpleParameter._VALUE"):
+        elif has_column(dcc_experiment_df, "simpleParameter._VALUE"):
             result_schema_fields.insert(0, lit(None).cast(StringType()).alias("_VALUE"))
         result_struct = struct(*result_schema_fields)
         results_df = results_df.groupBy("unique_id", "pipelineKey", "procedureKey").agg(
