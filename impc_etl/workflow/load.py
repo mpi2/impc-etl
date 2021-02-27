@@ -689,9 +689,17 @@ class ImpcMergeIndex(LSFExternalJobTask):
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
     solr_core_name = ""
+    n_cpu_flag = 32
+    shared_tmp_dir = "/scratch"
+    memory_flag = "180000"
+    resource_flag = "span[ptile=4]"
 
     def init_local(self):
-        self.app = "java -jar " + os.getcwd() + "/lib/impc-merge-index-1.0-SNAPSHOT.jar"
+        self.app = (
+            "java -jar -Xmx182000m "
+            + os.getcwd()
+            + "/lib/impc-merge-index-1.0-SNAPSHOT.jar"
+        )
 
     def requires(self):
         return [
