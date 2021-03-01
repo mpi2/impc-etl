@@ -152,7 +152,7 @@ class GeneProductionStatusExtractor(PySparkTask):
         gene_status_df = gene_status_df.withColumn(
             "es_cell_production_status",
             when(
-                col("assignment_status") == "Assigned",
+                col("imits_assignment_status") == "Assigned",
                 when(
                     col("conditional_allele_production_status").isNotNull(),
                     map_allele_es_cells_udf("conditional_allele_production_status"),
