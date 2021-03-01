@@ -131,7 +131,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             spark,
             gene_status_df,
             assignment_status_es_cells_prod_status_map,
-            ["assignment_status"],
+            ["imits_assignment_status"],
             "es_cell_production_status",
         )
 
