@@ -1,10 +1,19 @@
 import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import when, col, lit, lower, udf
+from pyspark.sql.functions import (
+    when,
+    col,
+    lit,
+    lower,
+    udf,
+    collect_set,
+    array_contains,
+)
 from pyspark.sql.types import StringType, IntegerType
 
 from impc_etl.workflow.config import ImpcConfig
+from impc_etl.workflow.extraction import ProductExtractor
 
 
 class GeneProductionStatusExtractor(PySparkTask):
@@ -17,6 +26,12 @@ class GeneProductionStatusExtractor(PySparkTask):
     def output(self):
         return ImpcConfig().get_target(f"{self.output_path}gene_status_parquet")
 
+    def requires(self):
+        [ProductExtractor()]
+
+    def app_options(self):
+        return [self.input()[0]]
+
     def main(self, sc, *args):
         spark = SparkSession(sc)
         imits_gene_status_df = spark.read.csv(
@@ -25,6 +40,13 @@ class GeneProductionStatusExtractor(PySparkTask):
         gentar_gene_status_df = spark.read.csv(
             self.gentar_gene_status_path, header=True, sep="\t"
         )
+        product_parquet_path = args[0]
+        product_df = spark.read.parquet(product_parquet_path)
+        product_df = product_df.select("mgi_accession_id", "type").distinct()
+        has_products = product_df.groupBy("mgi_accession_id").agg(
+            collect_set("type").alias("product_types")
+        )
+
         # Renaming imits TSV columns to match the gene core
         for col_name in imits_gene_status_df.columns:
             new_col_name = (
@@ -157,6 +179,17 @@ class GeneProductionStatusExtractor(PySparkTask):
                     col("conditional_allele_production_status").isNotNull(),
                     map_allele_es_cells_udf("conditional_allele_production_status"),
                 ).otherwise(lit("Assigned - ES Cell QC In Progress")),
+            ).otherwise(col("es_cell_production_status")),
+        )
+        gene_status_df = gene_status_df.join(
+            product_df, "mgi_accession_id", "left_outer"
+        )
+        gene_status_df = gene_status_df.withColumn(
+            "es_cell_production_status",
+            when(
+                (col("es_cell_production_status") != "ES Cells Produced")
+                & (array_contains("product_types", "es_cell")),
+                lit("ES Cells Produced"),
             ).otherwise(col("es_cell_production_status")),
         )
         imits_gene_prod_status_map = {
