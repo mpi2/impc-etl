@@ -262,131 +262,127 @@ class GeneProductionStatusExtractor(PySparkTask):
                 )
         gene_status_df.select(gene_statuses_cols).distinct().write.parquet(output_path)
 
-
-def _resolve_assigment_status(gene_status_df):
-    gene_status_df = gene_status_df.withColumn(
-        "assignment_status",
-        when(
-            col("imits_assignment_status").isNull()
-            & col("gentar_assignment_status").isNotNull(),
-            col("gentar_assignment_status"),
-        )
-        .when(
-            col("imits_assignment_status").isNotNull()
-            & col("gentar_assignment_status").isNull(),
-            col("imits_assignment_status"),
-        )
-        .when(
-            col("gentar_assignment_status").startswith("Assigned"),
-            col("gentar_assignment_status"),
-        )
-        .when(
-            col("gentar_assignment_status").startswith("Inspect")
-            & col("imits_assignment_status").startswith("Assigned"),
-            col("imits_assignment_status"),
-        )
-        .when(
-            col("gentar_assignment_status").startswith("Inspect")
-            & ~col("imits_assignment_status").startswith("Assigned"),
-            lit("data_issue"),
-        )
-        .when(
-            (
-                col("gentar_assignment_status").startswith("Inactive")
-                | col("gentar_assignment_status").startswith("Abandoned")
+    def _resolve_assigment_status(self, gene_status_df):
+        gene_status_df = gene_status_df.withColumn(
+            "assignment_status",
+            when(
+                col("imits_assignment_status").isNull()
+                & col("gentar_assignment_status").isNotNull(),
+                col("gentar_assignment_status"),
             )
-            & col("imits_assignment_status").startswith("Assigned"),
-            col("imits_assignment_status"),
-        )
-        .when(
-            (
-                col("gentar_assignment_status").startswith("Inactive")
-                | col("gentar_assignment_status").startswith("Abandoned")
+            .when(
+                col("imits_assignment_status").isNotNull()
+                & col("gentar_assignment_status").isNull(),
+                col("imits_assignment_status"),
             )
-            & (
-                col("imits_assignment_status").startswith("Inactive")
-                | col("imits_assignment_status").startswith("Withdrawn")
-            ),
-            col("gentar_assignment_status"),
+            .when(
+                col("gentar_assignment_status").startswith("Assigned"),
+                col("gentar_assignment_status"),
+            )
+            .when(
+                col("gentar_assignment_status").startswith("Inspect")
+                & col("imits_assignment_status").startswith("Assigned"),
+                col("imits_assignment_status"),
+            )
+            .when(
+                col("gentar_assignment_status").startswith("Inspect")
+                & ~col("imits_assignment_status").startswith("Assigned"),
+                lit("data_issue"),
+            )
+            .when(
+                (
+                    col("gentar_assignment_status").startswith("Inactive")
+                    | col("gentar_assignment_status").startswith("Abandoned")
+                )
+                & col("imits_assignment_status").startswith("Assigned"),
+                col("imits_assignment_status"),
+            )
+            .when(
+                (
+                    col("gentar_assignment_status").startswith("Inactive")
+                    | col("gentar_assignment_status").startswith("Abandoned")
+                )
+                & (
+                    col("imits_assignment_status").startswith("Inactive")
+                    | col("imits_assignment_status").startswith("Withdrawn")
+                ),
+                col("gentar_assignment_status"),
+            )
+            .otherwise(lit(None)),
         )
-        .otherwise(lit(None)),
-    )
-    return gene_status_df
+        return gene_status_df
 
-
-def _create_status_map(spark, status_map_dict):
-    status_map_df_json = spark.sparkContext.parallelize(
-        [
-            {
-                "src_production_status": key,
-                "dst_production_status": value,
-            }
-            for key, value in status_map_dict.items()
-        ]
-    )
-    status_map_df = spark.read.json(status_map_df_json)
-    return status_map_df
-
-
-def map_status(spark, gene_status_df, status_map_dict, status_col_to_map):
-    status_map_df = _create_status_map(spark, status_map_dict)
-    gene_status_df = gene_status_df.join(
-        status_map_df,
-        lower(col(status_col_to_map)) == lower(col("src_production_status")),
-        "left_outer",
-    )
-    gene_status_df = gene_status_df.withColumn(
-        status_col_to_map,
-        when(
-            (
-                col("dst_production_status").isNotNull()
-                & (col("dst_production_status") != "NULL")
-            ),
-            col("dst_production_status"),
+    def _create_status_map(self, spark, status_map_dict):
+        status_map_df_json = spark.sparkContext.parallelize(
+            [
+                {
+                    "src_production_status": key,
+                    "dst_production_status": value,
+                }
+                for key, value in status_map_dict.items()
+            ]
         )
-        .when(col("dst_production_status") == "NULL", lit(None))
-        .otherwise(col(status_col_to_map)),
-    )
-    gene_status_df = gene_status_df.drop(
-        "src_production_status", "dst_production_status"
-    )
-    return gene_status_df
+        status_map_df = spark.read.json(status_map_df_json)
+        return status_map_df
 
-
-def collapse_production_status(
-    spark, gene_status_df, status_map_dict, src_status_list, target_status_col
-):
-    status_map_df = _create_status_map(spark, status_map_dict)
-
-    gene_status_df = gene_status_df.withColumn(
-        target_status_col, lit(None).astype(StringType())
-    )
-    get_status_hierarchy_udf = udf(
-        lambda x: list(status_map_dict.values()).index(x) if x is not None else 0,
-        IntegerType(),
-    )
-
-    for status_col in src_status_list:
+    def map_status(self, spark, gene_status_df, status_map_dict, status_col_to_map):
+        status_map_df = self._create_status_map(spark, status_map_dict)
         gene_status_df = gene_status_df.join(
             status_map_df,
-            lower(col(status_col)) == lower(col("src_production_status")),
+            lower(col(status_col_to_map)) == lower(col("src_production_status")),
             "left_outer",
         )
         gene_status_df = gene_status_df.withColumn(
-            target_status_col,
+            status_col_to_map,
             when(
-                col(target_status_col).isNull()
-                & col("dst_production_status").isNotNull(),
+                (
+                    col("dst_production_status").isNotNull()
+                    & (col("dst_production_status") != "NULL")
+                ),
                 col("dst_production_status"),
             )
-            .when(
-                get_status_hierarchy_udf("dst_production_status")
-                > get_status_hierarchy_udf(target_status_col),
-                col("dst_production_status"),
-            )
-            .otherwise(col(target_status_col)),
+            .when(col("dst_production_status") == "NULL", lit(None))
+            .otherwise(col(status_col_to_map)),
         )
         gene_status_df = gene_status_df.drop(
             "src_production_status", "dst_production_status"
         )
-    return gene_status_df
+        return gene_status_df
+
+    def collapse_production_status(
+        self, spark, gene_status_df, status_map_dict, src_status_list, target_status_col
+    ):
+        status_map_df = self._create_status_map(spark, status_map_dict)
+
+        gene_status_df = gene_status_df.withColumn(
+            target_status_col, lit(None).astype(StringType())
+        )
+        get_status_hierarchy_udf = udf(
+            lambda x: list(status_map_dict.values()).index(x) if x is not None else 0,
+            IntegerType(),
+        )
+
+        for status_col in src_status_list:
+            gene_status_df = gene_status_df.join(
+                status_map_df,
+                lower(col(status_col)) == lower(col("src_production_status")),
+                "left_outer",
+            )
+            gene_status_df = gene_status_df.withColumn(
+                target_status_col,
+                when(
+                    col(target_status_col).isNull()
+                    & col("dst_production_status").isNotNull(),
+                    col("dst_production_status"),
+                )
+                .when(
+                    get_status_hierarchy_udf("dst_production_status")
+                    > get_status_hierarchy_udf(target_status_col),
+                    col("dst_production_status"),
+                )
+                .otherwise(col(target_status_col)),
+            )
+            gene_status_df = gene_status_df.drop(
+                "src_production_status", "dst_production_status"
+            )
+        return gene_status_df
