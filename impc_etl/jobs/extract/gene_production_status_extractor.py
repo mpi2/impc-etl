@@ -27,7 +27,7 @@ class GeneProductionStatusExtractor(PySparkTask):
         return ImpcConfig().get_target(f"{self.output_path}gene_status_parquet")
 
     def requires(self):
-        [ProductExtractor()]
+        return [ProductExtractor()]
 
     def app_options(self):
         return [self.input()[0]]
@@ -182,7 +182,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             ).otherwise(col("es_cell_production_status")),
         )
         gene_status_df = gene_status_df.join(
-            product_df, "mgi_accession_id", "left_outer"
+            has_products, "mgi_accession_id", "left_outer"
         )
         gene_status_df = gene_status_df.withColumn(
             "es_cell_production_status",
