@@ -30,7 +30,7 @@ class GeneProductionStatusExtractor(PySparkTask):
         return [ProductExtractor()]
 
     def app_options(self):
-        return [self.input()[0]]
+        return [self.input()[0].path]
 
     def main(self, sc, *args):
         spark = SparkSession(sc)
