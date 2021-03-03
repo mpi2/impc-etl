@@ -30,17 +30,27 @@ class GeneProductionStatusExtractor(PySparkTask):
         return [ProductExtractor()]
 
     def app_options(self):
-        return [self.input()[0].path]
+        return [
+            self.input()[0].path,
+            self.imits_gene_status_path,
+            self.gentar_gene_status_path,
+            self.output().path,
+        ]
 
     def main(self, sc, *args):
         spark = SparkSession(sc)
+        product_parquet_path = args[0]
+        imits_gene_status_path = args[1]
+        gentar_gene_status_path = args[2]
+        output_path = args[3]
+
         imits_gene_status_df = spark.read.csv(
-            self.imits_gene_status_path, header=True, sep="\t"
+            imits_gene_status_path, header=True, sep="\t"
         )
         gentar_gene_status_df = spark.read.csv(
-            self.gentar_gene_status_path, header=True, sep="\t"
+            gentar_gene_status_path, header=True, sep="\t"
         )
-        product_parquet_path = args[0]
+
         product_df = spark.read.parquet(product_parquet_path)
         product_df = product_df.select("mgi_accession_id", "type").distinct()
         has_products = product_df.groupBy("mgi_accession_id").agg(
@@ -246,9 +256,7 @@ class GeneProductionStatusExtractor(PySparkTask):
                 gene_status_df = self.map_status(
                     spark, gene_status_df, gentar_gene_prod_status_map, status_col
                 )
-        gene_status_df.select(gene_statuses_cols).distinct().write.parquet(
-            self.output().path
-        )
+        gene_status_df.select(gene_statuses_cols).distinct().write.parquet(output_path)
 
     def _resolve_assigment_status(self, gene_status_df):
         gene_status_df = gene_status_df.withColumn(
