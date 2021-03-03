@@ -197,7 +197,10 @@ class GeneProductionStatusExtractor(PySparkTask):
         gene_status_df = gene_status_df.withColumn(
             "es_cell_production_status",
             when(
-                (col("es_cell_production_status") != "ES Cells Produced")
+                (
+                    col("es_cell_production_status").isNull()
+                    | (col("es_cell_production_status") != "ES Cells Produced")
+                )
                 & (array_contains("product_types", "es_cell")),
                 lit("ES Cells Produced"),
             ).otherwise(col("es_cell_production_status")),
