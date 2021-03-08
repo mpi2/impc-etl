@@ -1126,11 +1126,6 @@ def map_three_i(open_stats_df):
     return open_stats_df
 
 
-def map_manual_annotations(observations_df: DataFrame):
-
-    return observations_df
-
-
 def _fertility_stats_results(observations_df: DataFrame, pipeline_df: DataFrame):
     fertility_condition = col("parameter_stable_id").isin(
         ["IMPC_FER_001_001", "IMPC_FER_019_001"]
@@ -1708,9 +1703,11 @@ def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
 
 
 def _histopathology_stats_results(observations_df: DataFrame):
-    histopathology_significance_scores = observations_df.where(
-        col("parameter_name").endswith("Significance score")
-    ).where(col("category") == "1")
+    histopathology_significance_scores = (
+        observations_df.where(col("parameter_name").endswith("Significance score"))
+        .where(col("biological_sample_group") == "experimental")
+        .where(col("category") == "1")
+    )
 
     histopathology_significance_scores = histopathology_significance_scores.withColumn(
         "tissue_name", regexp_extract("parameter_name", "(.*)( - .*)", 1)
