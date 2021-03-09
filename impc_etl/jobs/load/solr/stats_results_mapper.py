@@ -33,6 +33,7 @@ from pyspark.sql.functions import (
     least,
     greatest,
     concat_ws,
+    collect_list,
 )
 from pyspark.sql.types import (
     StructType,
@@ -1324,16 +1325,30 @@ def _embryo_stats_results(
                 lit(None).cast(StringType()).alias("otherPossibilities"),
                 col("sex"),
                 col("termAcc").alias("term_id"),
-            )
+            ),
         ).alias("mp_term"),
+        collect_list(col("termAcc")).alias("abnormalCalls"),
     )
 
     embryo_stats_results = embryo_stats_results.withColumn(
         "mp_term", expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)")
     )
     embryo_stats_results = embryo_stats_results.withColumn(
+        "abnormalCallsCount",
+        size(expr("filter(abnormalCalls, mp -> mp.term_id IS NOT NULL)")),
+    )
+    embryo_stats_results = embryo_stats_results.withColumn(
         "mp_term",
-        when(size(col("mp_term.term_id")) == 0, lit(None)).otherwise(col("mp_term")),
+        when(
+            ((col("zygosity") == "homozygote") | (col("zygosity") == "hemizygote"))
+            & (col("abnormalCallsCount") >= 2),
+            col("mp_term"),
+        )
+        .when(
+            (col("zygosity") == "heterozygote") & (col("abnormalCallsCount") >= 4),
+            col("mp_term"),
+        )
+        .otherwise(lit(None)),
     )
     embryo_stats_results = embryo_stats_results.withColumn(
         "p_value", when(col("mp_term").isNull(), lit(1.0)).otherwise(lit(0.0))
