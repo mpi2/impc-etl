@@ -1335,7 +1335,7 @@ def _embryo_stats_results(
     )
     embryo_stats_results = embryo_stats_results.withColumn(
         "abnormalCallsCount",
-        size(expr("filter(abnormalCalls, mp -> mp.term_id IS NOT NULL)")),
+        size(expr("filter(abnormalCalls, mp -> mp IS NOT NULL)")),
     )
     embryo_stats_results = embryo_stats_results.withColumn(
         "mp_term",
