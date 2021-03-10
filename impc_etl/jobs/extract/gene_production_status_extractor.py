@@ -75,6 +75,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             "ES Null Production Status": "null_allele_production_status",
             "ES Conditional Production Status": "conditional_allele_production_status",
             "Crispr Production Status": "crispr_allele_production_status",
+            "Early Adult Phenotyping Status": "phenotyping_status",
         }
         for col_name in gentar_gene_status_df.columns:
             new_col_name = (
@@ -89,9 +90,6 @@ class GeneProductionStatusExtractor(PySparkTask):
             gentar_gene_status_df,
             "mgi_accession_id",
             "full",
-        )
-        gene_status_df = gene_status_df.withColumnRenamed(
-            "imits_phenotyping_status", "phenotyping_status"
         )
 
         gene_statuses_cols = [
@@ -247,18 +245,55 @@ class GeneProductionStatusExtractor(PySparkTask):
             "Genotype Extinct": "Withdrawn",
             "Inactive": "Withdrawn",
             "Plan Abandoned": "Withdrawn",
-            "Phenotype Attempt Registered": "Phenotype attempt registered",
-            "Phenotype Production Aborted": "NULL",
-            "Phenotyping Complete": "Phenotyping data available",
-            "Rederivation Complete": "Phenotyping started",
-            "Phenotyping Started": "Phenotyping started",
         }
 
         for status_col in gene_statuses_cols:
-            if status_col != "mgi_accession_id":
+            if status_col not in ["mgi_accession_id", "phenotyping_status"]:
                 gene_status_df = self.map_status(
                     spark, gene_status_df, gentar_gene_prod_status_map, status_col
                 )
+        phenotyping_status_map = {
+            "Phenotype Production Aborted": "NULL",
+            "Phenotype Attempt Registered": "Phenotype attempt registered",
+            "Phenotyping Registered": "Phenotype attempt registered",
+            "Rederivation Complete": "Phenotyping started",
+            "Phenotyping Started": "Phenotyping started",
+            "Phenotyping All Data Processed": "Phenotyping started",
+            "Phenotyping Complete": "Phenotyping data available",
+        }
+
+        get_status_hierarchy_udf = udf(
+            lambda x: list(phenotyping_status_map.values()).index(x)
+            if x is not None
+            else 0,
+            IntegerType(),
+        )
+        gene_status_df = gene_status_df.withColumn(
+            "phenotyping_status",
+            when(
+                col("imits_phenotyping_status").isNull()
+                & col("gentar_phenotyping_status").isNotNull(),
+                col("gentar_phenotyping_status"),
+            )
+            .when(
+                col("imits_phenotyping_status").isNotNull()
+                & col("gentar_phenotyping_status").isNull(),
+                col("gentar_phenotyping_status"),
+            )
+            .when(
+                col("imits_phenotyping_status").isNotNull()
+                & col("gentar_phenotyping_status").isNotNull(),
+                when(
+                    get_status_hierarchy_udf("imits_phenotyping_status")
+                    > get_status_hierarchy_udf("gentar_phenotyping_status"),
+                    col("imits_phenotyping_status"),
+                ).otherwise(col("gentar_phenotyping_status")),
+            )
+            .otherwise(lit(None)),
+        )
+        gene_status_df = self.map_status(
+            spark, gene_status_df, phenotyping_status_map, "phenotyping_status"
+        )
         gene_status_df.select(gene_statuses_cols).distinct().write.parquet(output_path)
 
     def _resolve_assigment_status(self, gene_status_df):
