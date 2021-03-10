@@ -260,6 +260,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             "Phenotyping Started": "Phenotyping started",
             "Phenotyping All Data Processed": "Phenotyping started",
             "Phenotyping Complete": "Phenotyping data available",
+            "Phenotyping Finished": "Phenotyping finished",
         }
 
         get_status_hierarchy_udf = udf(
