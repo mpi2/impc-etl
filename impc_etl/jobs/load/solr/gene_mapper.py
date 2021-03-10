@@ -262,7 +262,9 @@ def main(argv):
     gene_df = gene_df.withColumn(
         "phenotype_status",
         when(
-            col("phenotyping_status").isNotNull(), col("phenotyping_status")
+            col("phenotyping_status").isNotNull()
+            & (col("phenotype_status") != "Phenotyping data available"),
+            col("phenotyping_status"),
         ).otherwise(col("phenotype_status")),
     )
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
