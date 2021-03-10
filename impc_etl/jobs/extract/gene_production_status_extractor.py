@@ -263,7 +263,9 @@ class GeneProductionStatusExtractor(PySparkTask):
         }
 
         get_status_hierarchy_udf = udf(
-            lambda x: list(phenotyping_status_map.values()).index(x)
+            lambda x: list(phenotyping_status_map.values()).index(
+                phenotyping_status_map[x]
+            )
             if x is not None
             else 0,
             IntegerType(),
