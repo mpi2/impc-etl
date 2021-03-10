@@ -226,7 +226,7 @@ class GeneProductionStatusExtractor(PySparkTask):
         }
 
         for status_col in gene_statuses_cols:
-            if status_col != "mgi_accession_id":
+            if status_col not in ["mgi_accession_id", "phenotyping_status"]:
                 gene_status_df = self.map_status(
                     spark, gene_status_df, imits_gene_prod_status_map, status_col
                 )
