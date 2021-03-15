@@ -33,6 +33,7 @@ from impc_etl.shared.utils import (
     unix_time_millis,
 )
 from impc_etl.workflow.config import ImpcConfig
+from impc_etl.workflow.extraction import ImpressExtractor
 from impc_etl.workflow.normalization import (
     MouseNormalizer,
 )
@@ -43,25 +44,29 @@ class ExperimentBWAgeProcessor(PySparkTask):
     output_path = luigi.Parameter()
 
     def requires(self):
-        return [
-            ExperimentParameterDerivator(),
-            MouseNormalizer(),
-        ]
+        return [ExperimentParameterDerivator(), MouseNormalizer(), ImpressExtractor()]
 
     def output(self):
         return ImpcConfig().get_target(f"{self.output_path}experiment_full_parquet")
 
     def app_options(self):
-        return [self.input()[0].path, self.input()[1].path, self.output().path]
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.output().path,
+        ]
 
     def main(self, sc, *args):
         spark = SparkSession(sc)
         experiment_parquet_path = args[0]
-        pipeline_parquet_path = args[1]
-        output_path = args[2]
+        mouse_parquet_path = args[1]
+        pipeline_parquet_path = args[2]
+        output_path = args[3]
         experiment_df = spark.read.parquet(experiment_parquet_path)
-        mouse_df = spark.read.parquet(pipeline_parquet_path)
-        experiment_df = get_associated_body_weight(experiment_df, mouse_df)
+        mouse_df = spark.read.parquet(mouse_parquet_path)
+        pipeline_df = spark.read.parquet(pipeline_parquet_path)
+        experiment_df = get_associated_body_weight(experiment_df, mouse_df, pipeline_df)
         experiment_df = generate_age_information(experiment_df, mouse_df)
         experiment_df.write.parquet(output_path)
 
