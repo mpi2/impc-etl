@@ -134,6 +134,7 @@ def override_3i_specimen_data(dcc_specimen_df: DataFrame) -> DataFrame:
         dcc_specimen_df_b,
         (dcc_specimen_df_a["_specimenID"] == dcc_specimen_df_b["_specimenID"])
         & (dcc_specimen_df_a["_centreID"] == dcc_specimen_df_b["_centreID"])
+        & (dcc_specimen_df_a["_pipeline"] == dcc_specimen_df_b["_pipeline"])
         & (dcc_specimen_df_a["_dataSource"] != dcc_specimen_df_b["_dataSource"]),
         "left_outer",
     )
