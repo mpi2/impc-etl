@@ -172,15 +172,15 @@ def get_associated_body_weight(
         not_use_body_weight_parameters,
         (
             (
-                dcc_experiment_df["experiment._pipeline"]
+                dcc_experiment_df["exp._pipeline"]
                 == not_use_body_weight_parameters["pipelineKey"]
             )
             & (
-                dcc_experiment_df["experiment._procedureID"]
+                dcc_experiment_df["exp._procedureID"]
                 == not_use_body_weight_parameters["procedureKey"]
             )
             & (
-                dcc_experiment_df["experiment.simpleParameter._parameterID"]
+                dcc_experiment_df["exp.simpleParameter._parameterID"]
                 == not_use_body_weight_parameters["parameterKey"]
             )
         ),
