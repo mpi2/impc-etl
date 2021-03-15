@@ -132,7 +132,7 @@ def main(argv):
                 lit(None)
             ),
         )
-    observations_df = observations_df.select("obs.*")
+    observations_df = observations_df.select("obs.*", *weight_columns)
     observations_df.write.mode("overwrite").parquet(output_path)
 
 
@@ -903,37 +903,40 @@ def get_body_weight_curve_observations(
         parameter_stable_id,
         parameter_data,
     ) in Constants.BODY_WEIGHT_CURVE_PARAMETERS.items():
+        parameters = pipeline_df.select(
+            "pipelineKey",
+            "procedure.procedureKey",
+            "parameter.parameterKey",
+            "parameter.analysisWithBodyweight",
+        ).distinct()
+        body_weight_parameters = parameters.where(
+            col("analysisWithBodyweight") == "is_body_weight"
+        )
         if "ESLIM" in parameter_stable_id:
-            bwt_observations = unidimensional_observations_df.where(
-                col("parameter_stable_id").isin(parameter_data["parameters"])
+            body_weight_parameters = body_weight_parameters.where(
+                col("pipelineKey") == parameter_data["pipeline_stable_id"]
             )
         else:
-            parameters = pipeline_df.select(
-                "pipelineKey",
-                "procedure.procedureKey",
-                "parameter.parameterKey",
-                "parameter.analysisWithBodyweight",
-            ).distinct()
-            body_weight_parameters = parameters.where(
-                col("analysisWithBodyweight") == "is_body_weight"
+            body_weight_parameters = body_weight_parameters.where(
+                ~col("pipelineKey").contains("ESLIM")
             )
-            bwt_observations = bwt_observations.join(
-                body_weight_parameters,
+        bwt_observations = unidimensional_observations_df.join(
+            body_weight_parameters,
+            (
                 (
-                    (
-                        bwt_observations["pipeline_stable_id"]
-                        == body_weight_parameters["pipelineKey"]
-                    )
-                    & (
-                        bwt_observations["procedure_stable_id"]
-                        == body_weight_parameters["procedureKey"]
-                    )
-                    & (
-                        bwt_observations["parameter_stable_id"]
-                        == body_weight_parameters["parameterKey"]
-                    )
-                ),
-            )
+                    bwt_observations["pipeline_stable_id"]
+                    == body_weight_parameters["pipelineKey"]
+                )
+                & (
+                    bwt_observations["procedure_stable_id"]
+                    == body_weight_parameters["procedureKey"]
+                )
+                & (
+                    bwt_observations["parameter_stable_id"]
+                    == body_weight_parameters["parameterKey"]
+                )
+            ),
+        )
         bwt_observations = bwt_observations.withColumn(
             "procedure_stable_id", lit(parameter_data["procedure_stable_id"])
         )

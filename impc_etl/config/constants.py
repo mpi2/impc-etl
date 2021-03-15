@@ -257,6 +257,7 @@ class Constants:
             "procedure_group": "ESLIM_022",
             "procedure_name": "Body Weight",
             "parameter_name": "Body Weight Curve Pipeline One",
+            "pipeline_stable_id": "ESLIM_001",
         },
         "ESLIM_022_001_702": {
             "parameters": [
@@ -271,6 +272,7 @@ class Constants:
             "procedure_group": "ESLIM_022",
             "procedure_name": "Body Weight",
             "parameter_name": "Body Weight Curve Pipeline Two",
+            "pipeline_stable_id": "ESLIM_002",
         },
     }
 
