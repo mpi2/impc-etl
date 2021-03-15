@@ -84,6 +84,55 @@ def main(argv):
     observations_df = observations_df.where(
         (~col("text_value").like('%outcome": null%')) | col("text_value").isNull()
     )
+    weight_columns = [
+        "weight",
+        "weight_date",
+        "weight_days_old",
+        "weight_parameter_stable_id",
+    ]
+    parameters = pipeline_df.select(
+        "pipelineKey",
+        "procedure.procedureKey",
+        "parameter.parameterKey",
+        "parameter.analysisWithBodyweight",
+    ).distinct()
+    not_use_body_weight_parameters = parameters.where(
+        col("analysisWithBodyweight").isin(
+            [
+                "do_not_use_body_weight_covariate",
+                "is_body_weight",
+                "is_fasted_body_weight",
+            ]
+        )
+    )
+    not_use_body_weight_parameters = not_use_body_weight_parameters.alias("bw")
+    observations_df = observations_df.alias("obs")
+    observations_df = observations_df.join(
+        not_use_body_weight_parameters,
+        (
+            (
+                observations_df["pipeline_stable_id"]
+                == not_use_body_weight_parameters["pipelineKey"]
+            )
+            & (
+                observations_df["procedure_stable_id"]
+                == not_use_body_weight_parameters["procedureKey"]
+            )
+            & (
+                observations_df["parameter_stable_id"]
+                == not_use_body_weight_parameters["parameterKey"]
+            )
+        ),
+        "left_outer",
+    )
+    for weight_column in weight_columns:
+        observations_df = observations_df.withColumn(
+            weight_column,
+            when(col("analysisWithBodyweight").isNull(), col(weight_column)).otherwise(
+                lit(None)
+            ),
+        )
+    observations_df = observations_df.select("obs.*")
     observations_df.write.mode("overwrite").parquet(output_path)
 
 

@@ -159,43 +159,13 @@ def get_associated_body_weight(
         "left_outer",
     )
     get_associated_body_weight_udf = udf(_get_closest_weight, output_weight_schema)
-    not_use_body_weight_parameters = parameters.where(
-        col("analysisWithBodyweight").isin(
-            [
-                "do_not_use_body_weight_covariate",
-                "is_body_weight",
-                "is_fasted_body_weight",
-            ]
-        )
-    )
-    dcc_experiment_df = dcc_experiment_df.join(
-        not_use_body_weight_parameters,
-        (
-            (
-                dcc_experiment_df["exp._pipeline"]
-                == not_use_body_weight_parameters["pipelineKey"]
-            )
-            & (
-                dcc_experiment_df["exp._procedureID"]
-                == not_use_body_weight_parameters["procedureKey"]
-            )
-            & (
-                dcc_experiment_df["exp.simpleParameter._parameterID"]
-                == not_use_body_weight_parameters["parameterKey"]
-            )
-        ),
-        "left_outer",
-    )
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "weight",
-        when(
-            col("analysisWithBodyweight").isNull(),
-            get_associated_body_weight_udf(
-                col("_dateOfExperiment"),
-                col("procedureGroup"),
-                col("weight_observations"),
-            ),
-        ).otherwise(lit(None).astype(output_weight_schema)),
+        get_associated_body_weight_udf(
+            col("_dateOfExperiment"),
+            col("procedureGroup"),
+            col("weight_observations"),
+        ),
     )
     dcc_experiment_df = dcc_experiment_df.select("exp.*", "weight")
     return dcc_experiment_df
