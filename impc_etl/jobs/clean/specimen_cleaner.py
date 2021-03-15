@@ -12,7 +12,9 @@ def main(argv):
     spark_session = SparkSession.builder.getOrCreate()
     specimen_df = spark_session.read.parquet(input_path)
     specimen_clean_df = clean_specimens(specimen_df)
-    specimen_clean_df = specimen_clean_df.dropDuplicates(["_specimenID", "_centreID"])
+    specimen_clean_df = specimen_clean_df.dropDuplicates(
+        ["_specimenID", "_centreID", "_pipeline"]
+    )
     specimen_clean_df.write.mode("overwrite").parquet(output_path)
 
 
@@ -38,11 +40,7 @@ def clean_specimens(specimen_df: DataFrame) -> DataFrame:
     specimen_df = specimen_df.drop_duplicates(
         [col_name for col_name in specimen_df.columns if col_name != "_sourceFile"]
     )
-    logger.info("JUST ENTER")
-    specimen_df.where(col("_specimenID").contains("654659")).show(
-        vertical=True, truncate=False
-    )
-    return
+    return specimen_df
 
 
 def map_centre_ids(dcc_df: DataFrame) -> DataFrame:
