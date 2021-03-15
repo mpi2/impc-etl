@@ -12,6 +12,8 @@ from pyspark.sql.functions import (
     collect_set,
     struct,
     udf,
+    when,
+    lit,
 )
 from pyspark.sql.types import (
     ArrayType,
@@ -64,14 +66,31 @@ class ExperimentBWAgeProcessor(PySparkTask):
         experiment_df.write.parquet(output_path)
 
 
-def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame):
+def get_associated_body_weight(
+    dcc_experiment_df: DataFrame, mice_df: DataFrame, pipeline_df: DataFrame
+):
     weight_observations: DataFrame = dcc_experiment_df.withColumn(
         "simpleParameter", explode_outer("simpleParameter")
     )
-    weight_observations = weight_observations.where(
-        weight_observations["simpleParameter._parameterID"].isin(
-            Constants.WEIGHT_PARAMETERS
-        )
+    parameters = pipeline_df.select(
+        "pipelineKey",
+        "procedure.procedureKey",
+        "parameter.parameterKey",
+        "analysisWithBodyweight",
+    ).distinct()
+    weight_parameters = parameters.where(
+        col("analysisWithBodyweight").isin(["is_body_weight", "is_fasted_body_weight"])
+    )
+    weight_observations = weight_observations.join(
+        weight_parameters,
+        (
+            (weight_observations["_pipeline"] == weight_parameters["pipelineKey"])
+            & (weight_observations["_procedureID"] == weight_parameters["procedureKey"])
+            & (
+                weight_observations["simpleParameter._parameterID"]
+                == weight_parameters["parameterKey"]
+            )
+        ),
     )
     weight_observations = weight_observations.select(
         "specimenID",
@@ -130,11 +149,43 @@ def get_associated_body_weight(dcc_experiment_df: DataFrame, mice_df: DataFrame)
         "left_outer",
     )
     get_associated_body_weight_udf = udf(_get_closest_weight, output_weight_schema)
+    not_use_body_weight_parameters = parameters.where(
+        col("analysisWithBodyweight").isin(
+            [
+                "do_not_use_body_weight_covariate",
+                "is_body_weight",
+                "is_fasted_body_weight",
+            ]
+        )
+    )
+    dcc_experiment_df = dcc_experiment_df.join(
+        not_use_body_weight_parameters,
+        (
+            (
+                dcc_experiment_df["_pipeline"]
+                == not_use_body_weight_parameters["pipelineKey"]
+            )
+            & (
+                dcc_experiment_df["_procedureID"]
+                == not_use_body_weight_parameters["procedureKey"]
+            )
+            & (
+                dcc_experiment_df["simpleParameter._parameterID"]
+                == not_use_body_weight_parameters["parameterKey"]
+            )
+        ),
+        "left_outer",
+    )
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "weight",
-        get_associated_body_weight_udf(
-            col("_dateOfExperiment"), col("procedureGroup"), col("weight_observations")
-        ),
+        when(
+            col("analysisWithBodyweight").isNull(),
+            get_associated_body_weight_udf(
+                col("_dateOfExperiment"),
+                col("procedureGroup"),
+                col("weight_observations"),
+            ),
+        ).otherwise(lit(None).astype(output_weight_schema)),
     )
     dcc_experiment_df = dcc_experiment_df.select("exp.*", "weight")
     return dcc_experiment_df
