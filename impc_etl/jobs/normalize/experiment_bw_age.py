@@ -81,7 +81,7 @@ def get_associated_body_weight(
         "pipelineKey",
         "procedure.procedureKey",
         "parameter.parameterKey",
-        "analysisWithBodyweight",
+        "parameter.analysisWithBodyweight",
     ).distinct()
     weight_parameters = parameters.where(
         col("analysisWithBodyweight").isin(["is_body_weight", "is_fasted_body_weight"])
