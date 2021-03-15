@@ -22,40 +22,18 @@ def clean_specimens(specimen_df: DataFrame) -> DataFrame:
     :return: a clean specimen parquet file
     :rtype: DataFrame
     """
-    logger.info("JUST ENTER")
-    specimen_df.where(col("_specimenID").contains("654659")).show(
-        vertical=True, truncate=False
-    )
     specimen_df: DataFrame = (
         specimen_df.transform(map_centre_ids)
         .transform(map_project_ids)
         .transform(map_production_centre_ids)
         .transform(map_phenotyping_centre_ids)
     )
-
     specimen_df = specimen_df.transform(truncate_europhenome_specimen_ids)
-    logger.info("truncate_europhenome_specimen_ids")
-    specimen_df.where(col("_specimenID").contains("654659")).show(
-        vertical=True, truncate=False
-    )
     specimen_df = specimen_df.transform(truncate_europhenome_colony_ids)
-    logger.info("truncate_europhenome_colony_ids")
-    specimen_df.where(col("_specimenID").contains("654659")).show(
-        vertical=True, truncate=False
-    )
     specimen_df = specimen_df.transform(parse_europhenome_colony_xml_entities)
     specimen_df = specimen_df.transform(standardize_strain_ids)
     specimen_df = specimen_df.transform(override_3i_specimen_data)
-    logger.info("override_3i_specimen_data")
-    specimen_df.where(col("_specimenID").contains("654659")).show(
-        vertical=True, truncate=False
-    )
     specimen_df = specimen_df.transform(generate_unique_id)
-    logger.info("override_3i_specimen_data")
-    specimen_df.where(col("_specimenID").contains("654659")).show(
-        vertical=True, truncate=False
-    )
-    raise TypeError
     return specimen_df.drop_duplicates(
         [col_name for col_name in specimen_df.columns if col_name != "_sourceFile"]
     )
