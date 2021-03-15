@@ -97,6 +97,9 @@ def get_associated_body_weight(
             )
         ),
     )
+    weight_observations = weight_observations.withColumn(
+        "weightFasted", col("analysisWithBodyweight") == "is_fasted_body_weight"
+    )
     weight_observations = weight_observations.select(
         "specimenID",
         "_centreID",
@@ -104,6 +107,7 @@ def get_associated_body_weight(
         col("_dateOfExperiment").alias("weightDate"),
         col("simpleParameter._parameterID").alias("weightParameterID"),
         col("simpleParameter.value").alias("weightValue"),
+        "weightFasted",
     )
     weight_observations = weight_observations.where(col("weightValue").isNotNull())
     weight_observations = weight_observations.join(
@@ -122,6 +126,7 @@ def get_associated_body_weight(
                 "weightParameterID",
                 "weightValue",
                 "weightDaysOld",
+                "weightFasted",
             )
         ).alias("weight_observations")
     )
@@ -234,6 +239,16 @@ def _get_closest_weight(
     errors = []
     min_time = datetime.min.time()
     experiment_date_time = datetime.combine(experiment_date, min_time)
+    fasted_weights = [w for w in specimen_weights if w["weightFasted"]]
+    non_fasted_weights = [w for w in specimen_weights if not w["weightFasted"]]
+    if len(fasted_weights) > 0:
+        same_procedure_fasted_weights = [
+            w for w in fasted_weights if procedure_group in w["weightParameterID"]
+        ]
+        if len(same_procedure_fasted_weights) > 0:
+            specimen_weights = same_procedure_fasted_weights
+        else:
+            specimen_weights = non_fasted_weights
     for candidate_weight in specimen_weights:
         if (
             candidate_weight["weightValue"] == "null"
