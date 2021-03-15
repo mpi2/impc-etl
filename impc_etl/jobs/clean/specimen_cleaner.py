@@ -51,7 +51,11 @@ def clean_specimens(specimen_df: DataFrame) -> DataFrame:
         vertical=True, truncate=False
     )
     specimen_df = specimen_df.transform(generate_unique_id)
-
+    logger.info("override_3i_specimen_data")
+    specimen_df.where(col("_specimenID").contains("654659")).show(
+        vertical=True, truncate=False
+    )
+    raise TypeError
     return specimen_df.drop_duplicates(
         [col_name for col_name in specimen_df.columns if col_name != "_sourceFile"]
     )
