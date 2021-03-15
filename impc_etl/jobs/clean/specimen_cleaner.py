@@ -3,6 +3,7 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import StringType
 from pyspark.sql.functions import udf, when, regexp_replace, col, lit, md5, concat
 from impc_etl.shared import utils
+from impc_etl import logger
 
 
 def main(argv):
@@ -21,18 +22,36 @@ def clean_specimens(specimen_df: DataFrame) -> DataFrame:
     :return: a clean specimen parquet file
     :rtype: DataFrame
     """
+    logger.info("JUST ENTER")
+    specimen_df.where(col("_specimenID").contains("654659")).show(
+        vertical=True, truncate=False
+    )
     specimen_df: DataFrame = (
         specimen_df.transform(map_centre_ids)
         .transform(map_project_ids)
         .transform(map_production_centre_ids)
         .transform(map_phenotyping_centre_ids)
-        .transform(truncate_europhenome_specimen_ids)
-        .transform(truncate_europhenome_colony_ids)
-        .transform(parse_europhenome_colony_xml_entities)
-        .transform(standardize_strain_ids)
-        .transform(override_3i_specimen_data)
-        .transform(generate_unique_id)
     )
+
+    specimen_df = specimen_df.transform(truncate_europhenome_specimen_ids)
+    logger.info("truncate_europhenome_specimen_ids")
+    specimen_df.where(col("_specimenID").contains("654659")).show(
+        vertical=True, truncate=False
+    )
+    specimen_df = specimen_df.transform(truncate_europhenome_colony_ids)
+    logger.info("truncate_europhenome_colony_ids")
+    specimen_df.where(col("_specimenID").contains("654659")).show(
+        vertical=True, truncate=False
+    )
+    specimen_df = specimen_df.transform(parse_europhenome_colony_xml_entities)
+    specimen_df = specimen_df.transform(standardize_strain_ids)
+    specimen_df = specimen_df.transform(override_3i_specimen_data)
+    logger.info("override_3i_specimen_data")
+    specimen_df.where(col("_specimenID").contains("654659")).show(
+        vertical=True, truncate=False
+    )
+    specimen_df = specimen_df.transform(generate_unique_id)
+
     return specimen_df.drop_duplicates(
         [col_name for col_name in specimen_df.columns if col_name != "_sourceFile"]
     )
