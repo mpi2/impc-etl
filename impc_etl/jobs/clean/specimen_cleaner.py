@@ -152,19 +152,18 @@ def standardize_strain_ids(dcc_df: DataFrame) -> DataFrame:
 
 def override_3i_specimen_data(dcc_specimen_df: DataFrame) -> DataFrame:
     dcc_specimen_df_a = dcc_specimen_df.alias("a")
-    three_i_specimen = dcc_specimen_df.where(col("_dataSource") == "3i")
-    three_i_specimen = three_i_specimen.alias("3i")
+    dcc_specimen_df_b = dcc_specimen_df.alias("b")
     dcc_specimen_df = dcc_specimen_df_a.join(
-        three_i_specimen,
-        (dcc_specimen_df_a["_specimenID"] == three_i_specimen["_specimenID"])
-        & (dcc_specimen_df_a["_centreID"] == three_i_specimen["_centreID"])
-        & (dcc_specimen_df_a["_pipeline"] == three_i_specimen["_pipeline"])
-        & (dcc_specimen_df_a["_dataSource"] != three_i_specimen["_dataSource"]),
+        dcc_specimen_df_b,
+        (dcc_specimen_df_a["_specimenID"] == dcc_specimen_df_b["_specimenID"])
+        & (dcc_specimen_df_a["_centreID"] == dcc_specimen_df_b["_centreID"])
+        & (dcc_specimen_df_a["_pipeline"] == dcc_specimen_df_b["_pipeline"])
+        & (dcc_specimen_df_a["_dataSource"] != dcc_specimen_df_b["_dataSource"]),
         "left_outer",
     )
     dcc_specimen_df = dcc_specimen_df.where(
-        col("3i._specimenID").isNull()
-        | ((col("3i._specimenID").isNotNull()) & (col("a._dataSource") != "3i"))
+        col("b._specimenID").isNull()
+        | ((col("b._specimenID").isNotNull()) & (col("a._dataSource") != "3i"))
     )
     return dcc_specimen_df.select("a.*")
 
