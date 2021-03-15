@@ -28,15 +28,21 @@ def clean_specimens(specimen_df: DataFrame) -> DataFrame:
         .transform(map_production_centre_ids)
         .transform(map_phenotyping_centre_ids)
     )
+
     specimen_df = specimen_df.transform(truncate_europhenome_specimen_ids)
     specimen_df = specimen_df.transform(truncate_europhenome_colony_ids)
     specimen_df = specimen_df.transform(parse_europhenome_colony_xml_entities)
     specimen_df = specimen_df.transform(standardize_strain_ids)
     specimen_df = specimen_df.transform(override_3i_specimen_data)
     specimen_df = specimen_df.transform(generate_unique_id)
-    return specimen_df.drop_duplicates(
+    specimen_df = specimen_df.drop_duplicates(
         [col_name for col_name in specimen_df.columns if col_name != "_sourceFile"]
     )
+    logger.info("JUST ENTER")
+    specimen_df.where(col("_specimenID").contains("654659")).show(
+        vertical=True, truncate=False
+    )
+    return
 
 
 def map_centre_ids(dcc_df: DataFrame) -> DataFrame:
@@ -147,7 +153,7 @@ def override_3i_specimen_data(dcc_specimen_df: DataFrame) -> DataFrame:
 
 
 def generate_unique_id(dcc_specimen_df: DataFrame) -> DataFrame:
-    unique_columns = ["_productionCentre", "_specimenID", "_pipeline"]
+    unique_columns = ["_productionCentre", "_specimenID"]
     unique_columns = [
         col_name for col_name in dcc_specimen_df.columns if col_name in unique_columns
     ]
