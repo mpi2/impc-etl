@@ -924,15 +924,15 @@ def get_body_weight_curve_observations(
             body_weight_parameters,
             (
                 (
-                    bwt_observations["pipeline_stable_id"]
+                    unidimensional_observations_df["pipeline_stable_id"]
                     == body_weight_parameters["pipelineKey"]
                 )
                 & (
-                    bwt_observations["procedure_stable_id"]
+                    unidimensional_observations_df["procedure_stable_id"]
                     == body_weight_parameters["procedureKey"]
                 )
                 & (
-                    bwt_observations["parameter_stable_id"]
+                    unidimensional_observations_df["parameter_stable_id"]
                     == body_weight_parameters["parameterKey"]
                 )
             ),
