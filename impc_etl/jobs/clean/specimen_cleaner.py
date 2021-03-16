@@ -137,7 +137,6 @@ def override_3i_specimen_data(dcc_specimen_df: DataFrame) -> DataFrame:
         dcc_specimen_df_b,
         (dcc_specimen_df_a["_specimenID"] == dcc_specimen_df_b["_specimenID"])
         & (dcc_specimen_df_a["_centreID"] == dcc_specimen_df_b["_centreID"])
-        & (dcc_specimen_df_a["_pipeline"] == dcc_specimen_df_b["_pipeline"])
         & (dcc_specimen_df_a["_dataSource"] != dcc_specimen_df_b["_dataSource"]),
         "left_outer",
     )
@@ -145,7 +144,7 @@ def override_3i_specimen_data(dcc_specimen_df: DataFrame) -> DataFrame:
         col("b._specimenID").isNull()
         | ((col("b._specimenID").isNotNull()) & (col("a._dataSource") != "3i"))
     )
-    return dcc_specimen_df.select("a.*")
+    return dcc_specimen_df.select("a.*").dropDuplicates()
 
 
 def generate_unique_id(dcc_specimen_df: DataFrame) -> DataFrame:
