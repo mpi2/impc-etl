@@ -288,12 +288,10 @@ def map_experiment_columns(exp_df: DataFrame):
     exp_df = exp_df.withColumn(
         "strain_name",
         when(
-            (col("colony_id") == "baseline") | (col("specimen._isBaseline") == True)
-            # TODO add strain managemend for all legacy data and not only for baselines
+            (col("colony_id") == "baseline")
+            | (col("specimen._isBaseline") == True)
             | (col("datasource_name").isin(["EuroPhenome", "MGP"])),
-            when(
-                col("strain.strainName").isNotNull(), col("strain.strainName")
-            ).otherwise(col("specimen._strainID")),
+            col("specimen._strainID"),
         ).otherwise(
             when(
                 col("strain.strainName").isNotNull(), col("strain.strainName")
