@@ -291,7 +291,9 @@ def map_experiment_columns(exp_df: DataFrame):
             (col("colony_id") == "baseline")
             | (col("specimen._isBaseline") == True)
             | (col("datasource_name").isin(["EuroPhenome", "MGP"])),
-            col("specimen._strainID"),
+            when(
+                col("specimen._strainID").isNotNull(), col("specimen._strainID")
+            ).otherwise(col("strain.strainName")),
         ).otherwise(
             when(
                 col("strain.strainName").isNotNull(), col("strain.strainName")
