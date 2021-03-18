@@ -480,6 +480,11 @@ def resolve_simple_value(exp_df, pipeline_df):
         ).otherwise(lit(None)),
     )
 
+    exp_df = exp_df.withColumn("data_point", col("data_point").cast(IntegerType()))
+    exp_df = exp_df.where(
+        ((col("observation_type") == "unidimensional") & col("data_point").isNotNull())
+        | (col("observation_type") != "unidimensional")
+    )
     exp_df = exp_df.withColumn(
         "text_value",
         when(col("observation_type") == "text", col("simpleParameter.value")).otherwise(
