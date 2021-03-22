@@ -40,12 +40,14 @@ class ColonyTrackingExtractor(PySparkTask):
             "Phenotyping Work Unit": "phenotyping_centre",
             "Phenotyping Work Group": "phenotyping_consortium",
         }
+        new_col_names = []
+        for col_name in gentar_df.columns:
+            if col_name in gentar_col_mapping:
+                new_col_names.append(gentar_col_mapping[col_name])
+            else:
+                new_col_names.append(col_name.replace(" ", "_").lower())
         gentar_df = gentar_df.toDF(
-            *[
-                gentar_col_mapping[col_name]
-                for col_name in gentar_df.columns
-                if col_name in gentar_col_mapping
-            ]
+            *new_col_names
         )
         imits_df = imits_df.toDF(
             *[column_name.replace(" ", "_").lower() for column_name in imits_df.columns]
