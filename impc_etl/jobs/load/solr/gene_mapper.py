@@ -271,6 +271,18 @@ def main(argv):
         )
         .otherwise(col("phenotyping_status")),
     )
+    gene_df = gene_df.withColumn(
+        "phenotyping_data_available",
+        when(
+            col("phenotyping_status").isin(
+                ["Phenotyping finished", "Phenotyping data available"]
+            )
+            | col("phenotype_status").isin(
+                ["Phenotyping finished", "Phenotyping data available"]
+            ),
+            lit("True"),
+        ).otherwise(lit(False)),
+    )
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
     gene_df.distinct().write.parquet(output_path)
