@@ -48,7 +48,6 @@ class ColonyTrackingExtractor(PySparkTask):
             else:
                 new_col_names.append(col_name.replace(" ", "_").lower())
         gentar_df = gentar_df.toDF(*new_col_names)
-        gentar_df.show()
         imits_df = imits_df.toDF(
             *[column_name.replace(" ", "_").lower() for column_name in imits_df.columns]
         )
@@ -64,5 +63,5 @@ class ColonyTrackingExtractor(PySparkTask):
         for col_name in gentar_df.columns:
             if col_name not in imits_df.columns:
                 imits_df = imits_df.withColumn(col_name, lit(None).cast(StringType()))
-        colonies_df = imits_df.union(gentar_df)
+        colonies_df = imits_df.union(gentar_df.select(*imits_df.columns))
         colonies_df.write.parquet(output_path)
