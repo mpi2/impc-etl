@@ -5,6 +5,7 @@ from impc_etl.workflow.config import ImpcConfig
 from pyspark.sql.session import SparkSession
 import luigi
 from luigi.contrib.spark import PySparkTask
+from pyspark.sql.types import StringType
 
 
 class ColonyTrackingExtractor(PySparkTask):
@@ -46,9 +47,7 @@ class ColonyTrackingExtractor(PySparkTask):
                 new_col_names.append(gentar_col_mapping[col_name])
             else:
                 new_col_names.append(col_name.replace(" ", "_").lower())
-        gentar_df = gentar_df.toDF(
-            *new_col_names
-        )
+        gentar_df = gentar_df.toDF(*new_col_names)
         imits_df = imits_df.toDF(
             *[column_name.replace(" ", "_").lower() for column_name in imits_df.columns]
         )
@@ -62,6 +61,6 @@ class ColonyTrackingExtractor(PySparkTask):
                 gentar_df = gentar_df.withColumn(col_name, lit(None))
         for col_name in gentar_df.columns:
             if col_name not in imits_df.columns:
-                imits_df = imits_df.withColumn(col_name, lit(None))
+                imits_df = imits_df.withColumn(col_name, lit(None).cast(StringType()))
         colonies_df = imits_df.union(gentar_df)
         colonies_df.write.parquet(output_path)
