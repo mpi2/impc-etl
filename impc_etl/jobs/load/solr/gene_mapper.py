@@ -280,7 +280,7 @@ def main(argv):
             | col("phenotype_status").isin(
                 ["Phenotyping finished", "Phenotyping data available"]
             ),
-            lit("True"),
+            lit(True),
         ).otherwise(lit(False)),
     )
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
