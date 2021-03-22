@@ -40,6 +40,8 @@ class ColonyTrackingExtractor(PySparkTask):
             "MGI Strain Accession ID": "mgi_strain_accession_id",
             "Phenotyping Work Unit": "phenotyping_centre",
             "Phenotyping Work Group": "phenotyping_consortium",
+            "Production Work Unit": "production_centre",
+            "Production Work Group": "production_consortium",
         }
         new_col_names = []
         for col_name in gentar_df.columns:
