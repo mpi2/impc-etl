@@ -60,5 +60,8 @@ class ColonyTrackingExtractor(PySparkTask):
         for col_name in imits_df.columns:
             if col_name not in gentar_df.columns:
                 gentar_df = gentar_df.withColumn(col_name, lit(None))
+        for col_name in gentar_df.columns:
+            if col_name not in imits_df.columns:
+                imits_df = imits_df.withColumn(col_name, lit(None))
         colonies_df = imits_df.union(gentar_df)
         colonies_df.write.parquet(output_path)
