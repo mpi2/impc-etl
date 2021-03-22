@@ -937,6 +937,12 @@ def get_body_weight_curve_observations(
             "pipelineKey", "procedureKey", "parameterKey", "analysisWithBodyweight"
         )
         bwt_observations = bwt_observations.withColumn(
+            "pipeline_stable_id", lit(parameter_data["pipeline_stable_id"])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            "pipeline_name", lit(parameter_data["pipeline_name"])
+        )
+        bwt_observations = bwt_observations.withColumn(
             "procedure_stable_id", lit(parameter_data["procedure_stable_id"])
         )
         bwt_observations = bwt_observations.withColumn(
