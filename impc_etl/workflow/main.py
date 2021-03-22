@@ -3,6 +3,7 @@ from typing import Union
 from luigi.contrib.hdfs import HdfsTarget
 
 from impc_etl.workflow.load import *
+from impc_etl.jobs.extract.colony_tracking_extractor import *
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
 )
