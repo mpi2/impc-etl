@@ -59,6 +59,7 @@ class ColonyTrackingExtractor(PySparkTask):
         imits_df = imits_df.join(gentar_tmp_df, "colony_name", "left_outer")
         imits_df = imits_df.where(col("gentar.marker_symbol").isNull())
         imits_df = imits_df.select("imits.*")
+        imits_df = imits_df.drop_duplicates()
         for col_name in imits_df.columns:
             if col_name not in gentar_df.columns:
                 gentar_df = gentar_df.withColumn(col_name, lit(None).cast(StringType()))
