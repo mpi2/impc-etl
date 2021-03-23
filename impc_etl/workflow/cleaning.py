@@ -100,8 +100,7 @@ class ColonyCleaner(SparkSubmitTask):
         return ColonyTrackingExtractor()
 
     def output(self):
-        output_path = self.input().path.replace("_raw", "")
-        return ImpcConfig().get_target(output_path)
+        return ImpcConfig().get_target(f"{self.output_path}colony_parquet")
 
     def app_options(self):
         return [self.input().path, self.output().path]
