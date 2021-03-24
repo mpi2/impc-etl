@@ -11,7 +11,7 @@ def main(argv):
     output_path = argv[3]
     spark = SparkSession.builder.getOrCreate()
     ontology_terms_list_url = (
-        "http://sandbox.mousephenotype.org/impress/ontologyterm/list"
+        "http://sandbox.mousephenotype.org/impressapi/ontologyterm/list"
     )
     ontology_term_dict = requests.get(
         ontology_terms_list_url, proxies={"http": http_proxy, "https": http_proxy}
