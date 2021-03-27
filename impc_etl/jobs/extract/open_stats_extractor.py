@@ -31,12 +31,12 @@ def main(argv):
     if use_cache != "true":
         stats_df = spark.read.jdbc(
             jdbc_connection_str,
-            table="(SELECT CAST(id AS BIGINT) AS numericId, * FROM dr12window10092020_22) AS tmp",
+            table="(SELECT CAST(id AS BIGINT) AS numericId, * FROM dr14_26032021_1505) AS tmp",
             properties=properties,
             numPartitions=5000,
             column="numericId",
             lowerBound=0,
-            upperBound=99999986070243,
+            upperBound=999992061,
         )
         stats_df = stats_df.withColumnRenamed("statpacket", "json")
         stats_df.write.mode("overwrite").parquet(output_path + "_temp")
@@ -139,46 +139,31 @@ def _get_stat_result(row, include_raw_data=False, extract_windowed_data=False):
             stats_packet_detail["MPTERM"] if "MPTERM" in stats_packet_detail else None
         )
     if include_raw_data:
-        stats_result["observations_biological_sample_group"] = (
-            stats_packet_detail["Original_biological_sample_group"]
-            if "Original_biological_sample_group" in stats_packet_detail
-            else []
+        stats_result["observations_biological_sample_group"] = _process_raw_data_field(
+            "Original_biological_sample_group", stats_packet_detail
         )
-        stats_result["observations_body_weight"] = (
-            stats_packet_detail["Original_body_weight"]
-            if "Original_body_weight" in stats_packet_detail
-            else []
+        stats_result["observations_body_weight"] = _process_raw_data_field(
+            "Original_body_weight", stats_packet_detail
         )
-        stats_result["observations_date_of_experiment"] = (
-            stats_packet_detail["Original_date_of_experiment"]
-            if "Original_date_of_experiment" in stats_packet_detail
-            else []
+        stats_result["observations_date_of_experiment"] = _process_raw_data_field(
+            "Original_date_of_experiment", stats_packet_detail
         )
-        stats_result["observations_external_sample_id"] = (
-            stats_packet_detail["Original_external_sample_id"]
-            if "Original_external_sample_id" in stats_packet_detail
-            else []
+        stats_result["observations_external_sample_id"] = _process_raw_data_field(
+            "Original_external_sample_id", stats_packet_detail
         )
-        stats_result["observations_response"] = (
-            stats_packet_detail["Original_response"]
-            if "Original_response" in stats_packet_detail
-            else []
+        stats_result["observations_response"] = _process_raw_data_field(
+            "Original_response", stats_packet_detail
         )
-        stats_result["observations_time_point"] = (
-            stats_packet_detail["Original_time_point"]
-            if "Original_time_point" in stats_packet_detail
-            else []
+        stats_result["observations_time_point"] = _process_raw_data_field(
+            "Original_time_point", stats_packet_detail
         )
-        stats_result["observations_discrete_point"] = (
-            stats_packet_detail["Original_discrete_point"]
-            if "Original_discrete_point" in stats_packet_detail
-            else []
+        stats_result["observations_discrete_point"] = _process_raw_data_field(
+            "Original_discrete_point", stats_packet_detail
         )
-        stats_result["observations_sex"] = (
-            stats_packet_detail["Original_sex"]
-            if "Original_sex" in stats_packet_detail
-            else []
+        stats_result["observations_sex"] = _process_raw_data_field(
+            "Original_sex", stats_packet_detail
         )
+
         if extract_windowed_data:
             window_parameters = stats_packet_detail["Window parameters"]
             stats_result["window_l_value"] = window_parameters["l"]["value"]
@@ -271,6 +256,16 @@ def get_raw_data_details(stats_packet_detail) -> Dict:
         raise type(e)(
             str(e) + " happens at %s" % str(stats_packet_detail)
         ).with_traceback(sys.exc_info()[2])
+
+
+def _process_raw_data_field(original_name, stats_packet_detail):
+    if original_name in stats_packet_detail:
+        if type(stats_packet_detail[original_name]) == list:
+            return stats_packet_detail[original_name]
+        else:
+            return [stats_packet_detail[original_name]]
+    else:
+        return []
 
 
 def get_calculation_details(normal_result, applied_method):

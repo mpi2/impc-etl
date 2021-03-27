@@ -1746,7 +1746,7 @@ def _histopathology_stats_results(observations_df: DataFrame):
         significance_stats_join
     )
     histopathology_stats_results = histopathology_stats_results.join(
-        histopathology_significance_scores, significance_stats_join
+        histopathology_significance_scores, significance_stats_join, "left_outer"
     )
 
     required_stats_columns = STATS_OBSERVATIONS_JOIN + [
