@@ -21,7 +21,7 @@ from pyspark.sql.functions import (
     substring,
     upper,
 )
-from pyspark.sql.types import StringType, IntegerType, LongType
+from pyspark.sql.types import DoubleType, StringType, IntegerType, LongType
 
 from impc_etl.config.constants import Constants
 from impc_etl.shared.utils import has_column
@@ -480,7 +480,7 @@ def resolve_simple_value(exp_df, pipeline_df):
         ).otherwise(lit(None)),
     )
 
-    exp_df = exp_df.withColumn("data_point", col("data_point").cast(IntegerType()))
+    exp_df = exp_df.withColumn("data_point", col("data_point").cast(DoubleType()))
     exp_df = exp_df.where(
         ((col("observation_type") == "unidimensional") & col("data_point").isNotNull())
         | (col("observation_type") != "unidimensional")
