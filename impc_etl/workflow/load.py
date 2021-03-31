@@ -6,6 +6,11 @@ from luigi.task import flatten
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
 )
+from impc_etl.jobs.normalize.experiment_bw_age import ExperimentBWAgeProcessor
+from impc_etl.jobs.normalize.experiment_parameter_derivator import (
+    ExperimentParameterDerivator,
+    LineParameterDerivator,
+)
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
 from impc_etl.workflow.normalization import *
 
@@ -22,18 +27,8 @@ class ObservationsMapper(SparkSubmitTask):
 
     def requires(self):
         return [
-            ExperimentNormalizer(
-                dcc_xml_path=self.dcc_xml_path,
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                entity_type="experiment",
-                output_path=self.output_path,
-            ),
-            LineExperimentNormalizer(
-                dcc_xml_path=self.dcc_xml_path,
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                entity_type="line",
-                output_path=self.output_path,
-            ),
+            ExperimentBWAgeProcessor(),
+            LineParameterDerivator(),
             MouseNormalizer(
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 dcc_xml_path=self.dcc_xml_path,
@@ -628,7 +623,7 @@ class ImpcImagesCoreLoader(SparkSubmitTask):
 
 
 class Parquet2Solr(SparkSubmitTask):
-    app = "lib/parquet2solr-08012021.jar"
+    app = "lib/parquet2solr-16022021.jar"
     name = "Parquet2Solr"
     input_path = luigi.Parameter()
     output_path = luigi.Parameter()
@@ -694,9 +689,17 @@ class ImpcMergeIndex(LSFExternalJobTask):
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
     solr_core_name = ""
+    n_cpu_flag = 8
+    shared_tmp_dir = "/scratch"
+    memory_flag = "34000"
+    resource_flag = "mem=34000"
 
     def init_local(self):
-        self.app = "java -jar " + os.getcwd() + "/lib/impc-merge-index-1.0-SNAPSHOT.jar"
+        self.app = (
+            "java -jar -Xmx32000m "
+            + os.getcwd()
+            + "/lib/impc-merge-index-1.0-SNAPSHOT.jar"
+        )
 
     def requires(self):
         return [

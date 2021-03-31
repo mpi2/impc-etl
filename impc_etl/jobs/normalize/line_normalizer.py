@@ -6,7 +6,6 @@ from impc_etl.jobs.normalize.experiment_normalizer import (
     re_map_europhenome_experiments,
     generate_metadata_group,
     generate_metadata,
-    get_derived_parameters,
 )
 from impc_etl.jobs.normalize.specimen_normalizer import _generate_allelic_composition
 
@@ -45,11 +44,7 @@ def normalize_lines(
         line_colony_df, pipeline_df, exp_type="line"
     )
     line_colony_df = generate_metadata(line_colony_df, pipeline_df, exp_type="line")
-    line_colony_df = get_derived_parameters(
-        spark_session, line_colony_df, pipeline_df, exp_type="line"
-    )
     line_colony_df = generate_allelic_composition(line_colony_df)
-
     line_columns = [
         col_name
         for col_name in line_df.columns

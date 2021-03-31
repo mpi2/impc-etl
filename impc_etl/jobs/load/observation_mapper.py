@@ -21,7 +21,7 @@ from pyspark.sql.functions import (
     substring,
     upper,
 )
-from pyspark.sql.types import StringType, IntegerType, LongType
+from pyspark.sql.types import DoubleType, StringType, IntegerType, LongType
 
 from impc_etl.config.constants import Constants
 from impc_etl.shared.utils import has_column
@@ -84,6 +84,55 @@ def main(argv):
     observations_df = observations_df.where(
         (~col("text_value").like('%outcome": null%')) | col("text_value").isNull()
     )
+    weight_columns = [
+        "weight",
+        "weight_date",
+        "weight_days_old",
+        "weight_parameter_stable_id",
+    ]
+    parameters = pipeline_df.select(
+        "pipelineKey",
+        "procedure.procedureKey",
+        "parameter.parameterKey",
+        "parameter.analysisWithBodyweight",
+    ).distinct()
+    not_use_body_weight_parameters = parameters.where(
+        col("analysisWithBodyweight").isin(
+            [
+                "do_not_use_body_weight_covariate",
+                "is_body_weight",
+                "is_fasted_body_weight",
+            ]
+        )
+    )
+    not_use_body_weight_parameters = not_use_body_weight_parameters.alias("bw")
+    observations_df = observations_df.alias("obs")
+    observations_df = observations_df.join(
+        not_use_body_weight_parameters,
+        (
+            (
+                observations_df["pipeline_stable_id"]
+                == not_use_body_weight_parameters["pipelineKey"]
+            )
+            & (
+                observations_df["procedure_stable_id"]
+                == not_use_body_weight_parameters["procedureKey"]
+            )
+            & (
+                observations_df["parameter_stable_id"]
+                == not_use_body_weight_parameters["parameterKey"]
+            )
+        ),
+        "left_outer",
+    )
+    for weight_column in weight_columns:
+        observations_df = observations_df.withColumn(
+            weight_column,
+            when(col("analysisWithBodyweight").isNull(), col(weight_column)).otherwise(
+                lit(None)
+            ),
+        )
+    observations_df = observations_df.select("obs.*", *weight_columns)
     observations_df.write.mode("overwrite").parquet(output_path)
 
 
@@ -238,17 +287,8 @@ def map_experiment_columns(exp_df: DataFrame):
 
     exp_df = exp_df.withColumn(
         "strain_name",
-        when(
-            (col("colony_id") == "baseline") | (col("specimen._isBaseline") == True)
-            # TODO add strain managemend for all legacy data and not only for baselines
-            | (col("datasource_name").isin(["EuroPhenome", "MGP"])),
-            when(
-                col("strain.strainName").isNotNull(), col("strain.strainName")
-            ).otherwise(col("specimen._strainID")),
-        ).otherwise(
-            when(
-                col("strain.strainName").isNotNull(), col("strain.strainName")
-            ).otherwise(col("specimen._strainID"))
+        when(col("strain.strainName").isNotNull(), col("strain.strainName")).otherwise(
+            col("specimen._strainID")
         ),
     )
 
@@ -440,6 +480,11 @@ def resolve_simple_value(exp_df, pipeline_df):
         ).otherwise(lit(None)),
     )
 
+    exp_df = exp_df.withColumn("data_point", col("data_point").cast(DoubleType()))
+    exp_df = exp_df.where(
+        ((col("observation_type") == "unidimensional") & col("data_point").isNotNull())
+        | (col("observation_type") != "unidimensional")
+    )
     exp_df = exp_df.withColumn(
         "text_value",
         when(col("observation_type") == "text", col("simpleParameter.value")).otherwise(
@@ -846,14 +891,56 @@ def process_parameter_values(
     return parameter_observation_df
 
 
-def get_body_weight_curve_observations(unidimensional_observations_df: DataFrame):
+def get_body_weight_curve_observations(
+    unidimensional_observations_df: DataFrame, pipeline_df: DataFrame
+):
     body_weight_curve_df = None
     for (
         parameter_stable_id,
         parameter_data,
     ) in Constants.BODY_WEIGHT_CURVE_PARAMETERS.items():
-        bwt_observations = unidimensional_observations_df.where(
-            col("parameter_stable_id").isin(parameter_data["parameters"])
+        parameters = pipeline_df.select(
+            "pipelineKey",
+            "procedure.procedureKey",
+            "parameter.parameterKey",
+            "parameter.analysisWithBodyweight",
+        ).distinct()
+        body_weight_parameters = parameters.where(
+            col("analysisWithBodyweight") == "is_body_weight"
+        )
+        if "ESLIM" in parameter_stable_id:
+            body_weight_parameters = body_weight_parameters.where(
+                col("pipelineKey") == parameter_data["pipeline_stable_id"]
+            )
+        else:
+            body_weight_parameters = body_weight_parameters.where(
+                ~col("pipelineKey").contains("ESLIM")
+            )
+        bwt_observations = unidimensional_observations_df.join(
+            body_weight_parameters,
+            (
+                (
+                    unidimensional_observations_df["pipeline_stable_id"]
+                    == body_weight_parameters["pipelineKey"]
+                )
+                & (
+                    unidimensional_observations_df["procedure_stable_id"]
+                    == body_weight_parameters["procedureKey"]
+                )
+                & (
+                    unidimensional_observations_df["parameter_stable_id"]
+                    == body_weight_parameters["parameterKey"]
+                )
+            ),
+        )
+        bwt_observations = bwt_observations.drop(
+            "pipelineKey", "procedureKey", "parameterKey", "analysisWithBodyweight"
+        )
+        bwt_observations = bwt_observations.withColumn(
+            "pipeline_stable_id", lit(parameter_data["pipeline_stable_id"])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            "pipeline_name", lit(parameter_data["pipeline_name"])
         )
         bwt_observations = bwt_observations.withColumn(
             "procedure_stable_id", lit(parameter_data["procedure_stable_id"])
@@ -1043,7 +1130,8 @@ def map_experiments_to_observations(
     simple_observation_df = simple_observation_df.union(line_simple_observation_df)
 
     body_weight_curve_observation_df = get_body_weight_curve_observations(
-        simple_observation_df.where(col("observation_type") == "unidimensional")
+        simple_observation_df.where(col("observation_type") == "unidimensional"),
+        pipeline_df,
     )
 
     simple_media_observation_df = process_parameter_values(

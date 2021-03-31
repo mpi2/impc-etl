@@ -1,3 +1,4 @@
+from impc_etl.jobs.extract.colony_tracking_extractor import ColonyTrackingExtractor
 from impc_etl.workflow.extraction import *
 from impc_etl.workflow.config import ImpcConfig
 
@@ -96,13 +97,10 @@ class ColonyCleaner(SparkSubmitTask):
     resources = {"overwrite_resource": 1}
 
     def requires(self):
-        return ColonyExtractor(
-            imits_tsv_path=self.imits_colonies_tsv_path, output_path=self.output_path
-        )
+        return ColonyTrackingExtractor()
 
     def output(self):
-        output_path = self.input().path.replace("_raw", "")
-        return ImpcConfig().get_target(output_path)
+        return ImpcConfig().get_target(f"{self.output_path}colony_parquet")
 
     def app_options(self):
         return [self.input().path, self.output().path]

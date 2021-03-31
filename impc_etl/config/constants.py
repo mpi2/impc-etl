@@ -243,6 +243,8 @@ class Constants:
             "procedure_group": "IMPC_BWT",
             "procedure_name": "Body Weight",
             "parameter_name": "Body weight curve",
+            "pipeline_stable_id": "IMPC_001",
+            "pipeline_name": "IMPC Pipeline",
         },
         "ESLIM_022_001_701": {
             "parameters": [
@@ -257,6 +259,8 @@ class Constants:
             "procedure_group": "ESLIM_022",
             "procedure_name": "Body Weight",
             "parameter_name": "Body Weight Curve Pipeline One",
+            "pipeline_stable_id": "ESLIM_001",
+            "pipeline_name": "EUMODIC Pipeline 1",
         },
         "ESLIM_022_001_702": {
             "parameters": [
@@ -271,6 +275,8 @@ class Constants:
             "procedure_group": "ESLIM_022",
             "procedure_name": "Body Weight",
             "parameter_name": "Body Weight Curve Pipeline Two",
+            "pipeline_stable_id": "ESLIM_002",
+            "pipeline_name": "EUMODIC Pipeline 2",
         },
     }
 

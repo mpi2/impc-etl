@@ -22,7 +22,7 @@ def track_job(job_id):
     """
     cmd = "bjobs -noheader -o stat {}".format(job_id)
     track_job_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-    status = str(track_job_proc.communicate()[0]).strip("\n")
+    status = track_job_proc.communicate()[0].decode("utf-8").strip("\n")
     return status
 
 

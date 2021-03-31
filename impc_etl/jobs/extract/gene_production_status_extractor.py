@@ -1,14 +1,23 @@
 import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import when, col, lit, lower, udf
+from pyspark.sql.functions import (
+    when,
+    col,
+    lit,
+    lower,
+    udf,
+    collect_set,
+    array_contains,
+)
 from pyspark.sql.types import StringType, IntegerType
 
 from impc_etl.workflow.config import ImpcConfig
+from impc_etl.workflow.extraction import ProductExtractor
 
 
 class GeneProductionStatusExtractor(PySparkTask):
-    name = "IMPC_Gene_Production_Statuses_Extractor"
+    name = "IMPC_Gene_Production_Status_Extractor"
 
     imits_gene_status_path = luigi.Parameter()
     gentar_gene_status_path = luigi.Parameter()
@@ -17,14 +26,37 @@ class GeneProductionStatusExtractor(PySparkTask):
     def output(self):
         return ImpcConfig().get_target(f"{self.output_path}gene_status_parquet")
 
+    def requires(self):
+        return [ProductExtractor()]
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.imits_gene_status_path,
+            self.gentar_gene_status_path,
+            self.output().path,
+        ]
+
     def main(self, sc, *args):
         spark = SparkSession(sc)
+        product_parquet_path = args[0]
+        imits_gene_status_path = args[1]
+        gentar_gene_status_path = args[2]
+        output_path = args[3]
+
         imits_gene_status_df = spark.read.csv(
-            self.imits_gene_status_path, header=True, sep="\t"
+            imits_gene_status_path, header=True, sep="\t"
         )
         gentar_gene_status_df = spark.read.csv(
-            self.gentar_gene_status_path, header=True, sep="\t"
+            gentar_gene_status_path, header=True, sep="\t"
         )
+
+        product_df = spark.read.parquet(product_parquet_path)
+        product_df = product_df.select("mgi_accession_id", "type").distinct()
+        has_products = product_df.groupBy("mgi_accession_id").agg(
+            collect_set("type").alias("product_types")
+        )
+
         # Renaming imits TSV columns to match the gene core
         for col_name in imits_gene_status_df.columns:
             new_col_name = (
@@ -43,6 +75,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             "ES Null Production Status": "null_allele_production_status",
             "ES Conditional Production Status": "conditional_allele_production_status",
             "Crispr Production Status": "crispr_allele_production_status",
+            "Early Adult Phenotyping Status": "phenotyping_status",
         }
         for col_name in gentar_gene_status_df.columns:
             new_col_name = (
@@ -67,6 +100,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             "crispr_allele_production_status",
             "es_cell_production_status",
             "mouse_production_status",
+            "phenotyping_status",
         ]
 
         gene_status_df = self._resolve_assigment_status(gene_status_df)
@@ -117,7 +151,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             "mouse_production_status",
         )
 
-        allele_es_cells_prod_status_map = {
+        assignment_status_es_cells_prod_status_map = {
             "Aborted - ES Cell QC Failed": "Not Assigned for ES Cell Production",
             "Assigned - ES Cell QC In Progress": "Assigned for ES Cell Production",
             "Assigned - ES Cell QC Complete": "ES Cells Produced",
@@ -126,21 +160,59 @@ class GeneProductionStatusExtractor(PySparkTask):
         gene_status_df = self.collapse_production_status(
             spark,
             gene_status_df,
-            allele_es_cells_prod_status_map,
-            ["assignment_status"],
+            assignment_status_es_cells_prod_status_map,
+            ["imits_assignment_status"],
             "es_cell_production_status",
         )
 
+        allele_es_cells_prod_status_map = {
+            "Micro-injection in progress": "Assigned for ES Cell Production",
+            "Chimeras obtained": "ES Cells Produced",
+            "Genotype confirmed": "ES Cells Produced",
+            "Micro-injection aborted": "Not Assigned for ES Cell Production",
+        }
+
+        map_allele_es_cells_udf = udf(
+            lambda x: allele_es_cells_prod_status_map[x]
+            if x in allele_es_cells_prod_status_map
+            else None,
+            StringType(),
+        )
+
+        gene_status_df = gene_status_df.withColumn(
+            "es_cell_production_status",
+            when(
+                col("imits_assignment_status") == "Assigned",
+                when(
+                    col("conditional_allele_production_status").isNotNull(),
+                    map_allele_es_cells_udf("conditional_allele_production_status"),
+                ).otherwise(lit("Assigned - ES Cell QC In Progress")),
+            ).otherwise(col("es_cell_production_status")),
+        )
+        gene_status_df = gene_status_df.join(
+            has_products, "mgi_accession_id", "left_outer"
+        )
+        gene_status_df = gene_status_df.withColumn(
+            "es_cell_production_status",
+            when(
+                (
+                    col("es_cell_production_status").isNull()
+                    | (col("es_cell_production_status") != "ES Cells Produced")
+                )
+                & (array_contains("product_types", "es_cell")),
+                lit("ES Cells Produced"),
+            ).otherwise(col("es_cell_production_status")),
+        )
         imits_gene_prod_status_map = {
-            "Aborted - ES Cell QC Failed": "Selected for production and phenotyping",
-            "Assigned - ES Cell QC Complete": "Selected for production and phenotyping",
-            "Assigned - ES Cell QC In Progress": "Selected for production and phenotyping",
-            "Assigned": "Selected for production and phenotyping",
-            "Conflict": "Selected for production and phenotyping",
-            "Inspect - Conflict": "Selected for production and phenotyping",
-            "Inspect - GLT Mouse": "Selected for production and phenotyping",
-            "Inspect - MI Attempt": "Selected for production and phenotyping",
-            "Interest": "Selected for production and phenotyping",
+            "Aborted - ES Cell QC Failed": "Selected for production",
+            "Assigned - ES Cell QC Complete": "Selected for production",
+            "Assigned - ES Cell QC In Progress": "Selected for production",
+            "Assigned": "Selected for production",
+            "Conflict": "Selected for production",
+            "Inspect - Conflict": "Selected for production",
+            "Inspect - GLT Mouse": "Selected for production",
+            "Inspect - MI Attempt": "Selected for production",
+            "Interest": "Selected for production",
             "Chimeras obtained": "Started",
             "Chimeras/Founder obtained": "Started",
             "Cre Excision Started": "Started",
@@ -154,7 +226,7 @@ class GeneProductionStatusExtractor(PySparkTask):
         }
 
         for status_col in gene_statuses_cols:
-            if status_col != "mgi_accession_id":
+            if status_col not in ["mgi_accession_id", "phenotyping_status"]:
                 gene_status_df = self.map_status(
                     spark, gene_status_df, imits_gene_prod_status_map, status_col
                 )
@@ -165,7 +237,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             "Founder Obtained": "Started",
             "Genotype In Progress": "Started",
             "Genotype Not Confirmed": "Started",
-            "Plan Created": "Selected for production and phenotyping",
+            "Plan Created": "Selected for production",
             "Genotype Confirmed": "Genotype Confirmed Mice",
             "Abandoned": "Withdrawn",
             "Attempt Aborted": "Withdrawn",
@@ -176,13 +248,56 @@ class GeneProductionStatusExtractor(PySparkTask):
         }
 
         for status_col in gene_statuses_cols:
-            if status_col != "mgi_accession_id":
+            if status_col not in ["mgi_accession_id", "phenotyping_status"]:
                 gene_status_df = self.map_status(
                     spark, gene_status_df, gentar_gene_prod_status_map, status_col
                 )
-        gene_status_df.select(gene_statuses_cols).distinct().write.parquet(
-            self.output().path
+        phenotyping_status_map = {
+            "Phenotype Production Aborted": "NULL",
+            "Phenotype Attempt Registered": "Phenotype attempt registered",
+            "Phenotyping Registered": "Phenotype attempt registered",
+            "Rederivation Complete": "Phenotyping started",
+            "Phenotyping Started": "Phenotyping started",
+            "Phenotyping All Data Processed": "Phenotyping started",
+            "Phenotyping Complete": "Phenotyping data available",
+            "Phenotyping Finished": "Phenotyping finished",
+        }
+
+        get_status_hierarchy_udf = udf(
+            lambda x: list(phenotyping_status_map.values()).index(
+                phenotyping_status_map[x]
+            )
+            if x is not None
+            else 0,
+            IntegerType(),
         )
+        gene_status_df = gene_status_df.withColumn(
+            "phenotyping_status",
+            when(
+                col("imits_phenotyping_status").isNull()
+                & col("gentar_phenotyping_status").isNotNull(),
+                col("gentar_phenotyping_status"),
+            )
+            .when(
+                col("imits_phenotyping_status").isNotNull()
+                & col("gentar_phenotyping_status").isNull(),
+                col("gentar_phenotyping_status"),
+            )
+            .when(
+                col("imits_phenotyping_status").isNotNull()
+                & col("gentar_phenotyping_status").isNotNull(),
+                when(
+                    get_status_hierarchy_udf("imits_phenotyping_status")
+                    > get_status_hierarchy_udf("gentar_phenotyping_status"),
+                    col("imits_phenotyping_status"),
+                ).otherwise(col("gentar_phenotyping_status")),
+            )
+            .otherwise(lit(None)),
+        )
+        gene_status_df = self.map_status(
+            spark, gene_status_df, phenotyping_status_map, "phenotyping_status"
+        )
+        gene_status_df.select(gene_statuses_cols).distinct().write.parquet(output_path)
 
     def _resolve_assigment_status(self, gene_status_df):
         gene_status_df = gene_status_df.withColumn(
@@ -257,8 +372,14 @@ class GeneProductionStatusExtractor(PySparkTask):
         gene_status_df = gene_status_df.withColumn(
             status_col_to_map,
             when(
-                col("dst_production_status").isNotNull(), col("dst_production_status")
-            ).otherwise(col(status_col_to_map)),
+                (
+                    col("dst_production_status").isNotNull()
+                    & (col("dst_production_status") != "NULL")
+                ),
+                col("dst_production_status"),
+            )
+            .when(col("dst_production_status") == "NULL", lit(None))
+            .otherwise(col(status_col_to_map)),
         )
         gene_status_df = gene_status_df.drop(
             "src_production_status", "dst_production_status"

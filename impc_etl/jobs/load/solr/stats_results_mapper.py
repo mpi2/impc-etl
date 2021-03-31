@@ -33,6 +33,7 @@ from pyspark.sql.functions import (
     least,
     greatest,
     concat_ws,
+    collect_list,
 )
 from pyspark.sql.types import (
     StructType,
@@ -1126,11 +1127,6 @@ def map_three_i(open_stats_df):
     return open_stats_df
 
 
-def map_manual_annotations(observations_df: DataFrame):
-
-    return observations_df
-
-
 def _fertility_stats_results(observations_df: DataFrame, pipeline_df: DataFrame):
     fertility_condition = col("parameter_stable_id").isin(
         ["IMPC_FER_001_001", "IMPC_FER_019_001"]
@@ -1329,16 +1325,30 @@ def _embryo_stats_results(
                 lit(None).cast(StringType()).alias("otherPossibilities"),
                 col("sex"),
                 col("termAcc").alias("term_id"),
-            )
+            ),
         ).alias("mp_term"),
+        collect_list(col("termAcc")).alias("abnormalCalls"),
     )
 
     embryo_stats_results = embryo_stats_results.withColumn(
         "mp_term", expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)")
     )
     embryo_stats_results = embryo_stats_results.withColumn(
+        "abnormalCallsCount",
+        size(expr("filter(abnormalCalls, mp -> mp IS NOT NULL)")),
+    )
+    embryo_stats_results = embryo_stats_results.withColumn(
         "mp_term",
-        when(size(col("mp_term.term_id")) == 0, lit(None)).otherwise(col("mp_term")),
+        when(
+            ((col("zygosity") == "homozygote") | (col("zygosity") == "hemizygote"))
+            & (col("abnormalCallsCount") >= 2),
+            col("mp_term"),
+        )
+        .when(
+            (col("zygosity") == "heterozygote") & (col("abnormalCallsCount") >= 4),
+            col("mp_term"),
+        )
+        .otherwise(lit(None)),
     )
     embryo_stats_results = embryo_stats_results.withColumn(
         "p_value", when(col("mp_term").isNull(), lit(1.0)).otherwise(lit(0.0))
@@ -1708,9 +1718,11 @@ def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
 
 
 def _histopathology_stats_results(observations_df: DataFrame):
-    histopathology_significance_scores = observations_df.where(
-        col("parameter_name").endswith("Significance score")
-    ).where(col("category") == "1")
+    histopathology_significance_scores = (
+        observations_df.where(col("parameter_name").endswith("Significance score"))
+        .where(col("biological_sample_group") == "experimental")
+        .where(col("category") == "1")
+    )
 
     histopathology_significance_scores = histopathology_significance_scores.withColumn(
         "tissue_name", regexp_extract("parameter_name", "(.*)( - .*)", 1)
@@ -1734,7 +1746,7 @@ def _histopathology_stats_results(observations_df: DataFrame):
         significance_stats_join
     )
     histopathology_stats_results = histopathology_stats_results.join(
-        histopathology_significance_scores, significance_stats_join
+        histopathology_significance_scores, significance_stats_join, "left_outer"
     )
 
     required_stats_columns = STATS_OBSERVATIONS_JOIN + [

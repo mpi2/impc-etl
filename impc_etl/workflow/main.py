@@ -3,6 +3,7 @@ from typing import Union
 from luigi.contrib.hdfs import HdfsTarget
 
 from impc_etl.workflow.load import *
+from impc_etl.jobs.extract.colony_tracking_extractor import *
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
 )
@@ -376,3 +377,42 @@ class ImpcCleanDaily(luigi.Task):
             self._delele_target_if_exists(impc_merge_index_task.output())
             self._delele_target_if_exists(impc_copy_index_task.output())
             self._delele_target_if_exists(impc_parquet_to_solr_task.output(), hdfs=True)
+
+
+class ImpcIndexDataRelease(luigi.Task):
+    name = "IMPC_Index_Data_Release"
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    parquet_path = luigi.Parameter()
+    solr_path = luigi.Parameter()
+    local_path = luigi.Parameter()
+    remote_host = luigi.Parameter()
+
+    def requires(self):
+        return [
+            ObservationsMapper(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+            ),
+        ]
+
+    def run(self):
+        tasks = []
+        for dependency in self.input():
+            tasks.append(
+                ImpcMergeIndex(
+                    remote_host=self.remote_host,
+                    parquet_path=dependency.path,
+                    solr_path=self.solr_path,
+                    local_path=self.local_path,
+                )
+            )
+        yield tasks
