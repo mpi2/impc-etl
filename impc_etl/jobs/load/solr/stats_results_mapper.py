@@ -1718,16 +1718,6 @@ def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
 
 
 def _histopathology_stats_results(observations_df: DataFrame):
-    histopathology_significance_scores = (
-        observations_df.where(col("parameter_name").endswith("Significance score"))
-        .where(col("biological_sample_group") == "experimental")
-        .where(col("category") == "1")
-    )
-
-    histopathology_significance_scores = histopathology_significance_scores.withColumn(
-        "tissue_name", regexp_extract("parameter_name", "(.*)( - .*)", 1)
-    )
-
     histopathology_stats_results = observations_df.where(
         expr("exists(sub_term_id, term -> term LIKE 'MPATH:%')")
         & ~expr("exists(sub_term_name, term -> term = 'normal')")
@@ -1735,6 +1725,19 @@ def _histopathology_stats_results(observations_df: DataFrame):
     histopathology_stats_results = histopathology_stats_results.withColumn(
         "tissue_name", regexp_extract("parameter_name", "(.*)( - .*)", 1)
     )
+
+    histopathology_significance_scores = observations_df.where(
+        col("parameter_name").endswith("Significance score")
+    ).where(col("biological_sample_group") == "experimental")
+
+    histopathology_significance_scores = histopathology_significance_scores.withColumn(
+        "tissue_name", regexp_extract("parameter_name", "(.*)( - .*)", 1)
+    )
+
+    histopathology_significance_scores = histopathology_significance_scores.withColumn(
+        "significance", when(col("category") == "1", lit(True)).otherwise(lit(False))
+    )
+
     significance_stats_join = [
         "pipeline_stable_id",
         "procedure_stable_id",
@@ -1742,11 +1745,12 @@ def _histopathology_stats_results(observations_df: DataFrame):
         "experiment_id",
         "tissue_name",
     ]
+
     histopathology_significance_scores = histopathology_significance_scores.select(
-        significance_stats_join
+        significance_stats_join + ["significance"]
     )
     histopathology_stats_results = histopathology_stats_results.join(
-        histopathology_significance_scores, significance_stats_join, "left_outer"
+        histopathology_significance_scores, significance_stats_join
     )
 
     required_stats_columns = STATS_OBSERVATIONS_JOIN + [
@@ -1810,10 +1814,16 @@ def _histopathology_stats_results(observations_df: DataFrame):
         "status", lit("Successful")
     )
     histopathology_stats_results = histopathology_stats_results.withColumn(
-        "p_value", when(col("mp_term").isNull(), lit(1.0)).otherwise(lit(0.0))
+        "p_value",
+        when(col("significance").isNull() | ~col("significance"), lit(1.0)).otherwise(
+            lit(0.0)
+        ),
     )
     histopathology_stats_results = histopathology_stats_results.withColumn(
-        "effect_size", when(col("mp_term").isNull(), lit(0.0)).otherwise(lit(1.0))
+        "effect_size",
+        when(col("significance").isNull() | ~col("significance"), lit(0.0)).otherwise(
+            lit(1.0)
+        ),
     )
 
     histopathology_stats_results = histopathology_stats_results.withColumn(
