@@ -1,4 +1,4 @@
-from pyspark.sql.functions import col, collect_set
+from pyspark.sql.functions import col, collect_set, explode
 from pyspark.sql.session import SparkSession
 from impc_etl.workflow.load import (
     GeneCoreLoader,
@@ -65,6 +65,7 @@ class BatchQueryLoader(PySparkTask):
         stats_df = stats_df.withColumnRenamed(
             "marker_accession_id", "gene_accession_id"
         )
+        stats_df = stats_df.withColumn("life_stage_name", explode("life_stage_name"))
 
         batch_query_df = (
             stats_df.where(col("significant"))
