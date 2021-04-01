@@ -630,10 +630,16 @@ class Parquet2Solr(SparkSubmitTask):
     parquet_name = ""
     solr_core_name = ""
     parquet_solr_map = {
-        "imits_product_raw_parquet": "product",
         "observations_parquet": "experiment",
-        "gene_core_parquet": "gene",
         "stats_results_parquet": "statistical-result",
+        "stats_results_parquet_raw_data": "statistical-raw-data",
+        "gene_core_parquet": "gene",
+        "imits_allele_raw_parquet": "allele2",
+        "gene_pheno_parquet": "genotype-phenotype",
+        "mp_parquet": "mp",
+        "pipeline_core_parquet": "pipeline",
+        "imits_product_raw_parquet": "product",
+        "mgi_phenotype_parquet": "mgi-phenotype",
     }
 
     def output(self):
@@ -689,14 +695,15 @@ class ImpcMergeIndex(LSFExternalJobTask):
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
     solr_core_name = ""
-    n_cpu_flag = 8
+    n_cpu_flag = 16
     shared_tmp_dir = "/scratch"
-    memory_flag = "34000"
-    resource_flag = "mem=34000"
+    memory_flag = "96000"
+    resource_flag = "mem=16000"
+    extra_bsub_args = "-R span[ptile=6]"
 
     def init_local(self):
         self.app = (
-            "java -jar -Xmx32000m "
+            "java -jar -Xmx98304m "
             + os.getcwd()
             + "/lib/impc-merge-index-1.0-SNAPSHOT.jar"
         )

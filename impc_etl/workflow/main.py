@@ -394,14 +394,15 @@ class ImpcIndexDataRelease(luigi.Task):
 
     def requires(self):
         return [
-            ObservationsMapper(
-                dcc_xml_path=self.dcc_xml_path,
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                output_path=self.output_path,
-                mgi_strain_input_path=self.mgi_strain_input_path,
-                mgi_allele_input_path=self.mgi_allele_input_path,
-                ontology_input_path=self.ontology_input_path,
-            ),
+            ObservationsMapper(),
+            StatsResultsCoreLoader(),
+            GeneCoreLoader(),
+            Allele2Extractor(),
+            GenotypePhenotypeCoreLoader(),
+            MPCoreLoader(),
+            PipelineCoreLoader(),
+            ProductExtractor(),
+            MGIPhenotypeCoreLoader(),
         ]
 
     def run(self):
@@ -415,4 +416,13 @@ class ImpcIndexDataRelease(luigi.Task):
                     local_path=self.local_path,
                 )
             )
+            if "stats_results" in dependency.path:
+                tasks.append(
+                    ImpcMergeIndex(
+                        remote_host=self.remote_host,
+                        parquet_path=dependency.path + "_raw_data",
+                        solr_path=self.solr_path,
+                        local_path=self.local_path,
+                    )
+                )
         yield tasks
