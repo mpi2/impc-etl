@@ -1766,6 +1766,7 @@ def _histopathology_stats_results(observations_df: DataFrame):
         "sub_term_id",
         "sub_term_name",
         "specimen_id",
+        "significance",
     ]
 
     histopathology_stats_results = (
@@ -1829,6 +1830,7 @@ def _histopathology_stats_results(observations_df: DataFrame):
     histopathology_stats_results = histopathology_stats_results.withColumn(
         "data_type", lit("histopathology")
     )
+    histopathology_stats_results = histopathology_stats_results.drop("significance")
 
     return histopathology_stats_results
 
