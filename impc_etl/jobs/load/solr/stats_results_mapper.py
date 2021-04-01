@@ -1805,7 +1805,9 @@ def _histopathology_stats_results(observations_df: DataFrame):
     )
     histopathology_stats_results = histopathology_stats_results.withColumn(
         "mp_term",
-        when(size(col("mp_term.term_id")) == 0, lit(None)).otherwise(col("mp_term")),
+        when(col("significance").isNull() | ~col("significance"), lit(None)).otherwise(
+            col("mp_term")
+        ),
     )
 
     histopathology_stats_results = histopathology_stats_results.withColumn(
