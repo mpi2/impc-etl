@@ -613,7 +613,7 @@ class Parquet2Solr(SparkSubmitTask):
         "stats_results_parquet": "statistical-result",
         "stats_results_parquet_raw_data": "statistical-raw-data",
         "gene_core_parquet": "gene",
-        "imits_allele_raw_parquet": "allele2",
+        "imits_allele2_raw_parquet": "allele2",
         "genotype_phenotype_parquet": "genotype-phenotype",
         "mp_parquet": "mp",
         "pipeline_core_parquet": "pipeline",
