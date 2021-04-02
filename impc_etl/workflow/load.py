@@ -674,7 +674,7 @@ class ImpcMergeIndex(LSFExternalJobTask):
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
     solr_core_name = ""
-    n_cpu_flag = 16
+    n_cpu_flag = 56
     shared_tmp_dir = "/scratch"
     memory_flag = "210000"
     resource_flag = "mem=16000"
