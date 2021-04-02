@@ -676,13 +676,13 @@ class ImpcMergeIndex(LSFExternalJobTask):
     solr_core_name = ""
     n_cpu_flag = 16
     shared_tmp_dir = "/scratch"
-    memory_flag = "96000"
+    memory_flag = "210000"
     resource_flag = "mem=16000"
-    extra_bsub_args = "-R span[ptile=6]"
+    extra_bsub_args = "-R span[ptile=14]"
 
     def init_local(self):
         self.app = (
-            "java -jar -Xmx98304m "
+            "java -jar -Xmx209920m "
             + os.getcwd()
             + "/lib/impc-merge-index-1.0-SNAPSHOT.jar"
         )
