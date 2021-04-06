@@ -1720,7 +1720,13 @@ def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
 def _histopathology_stats_results(observations_df: DataFrame):
     histopathology_stats_results = observations_df.where(
         expr("exists(sub_term_id, term -> term LIKE 'MPATH:%')")
-        & ~expr("exists(sub_term_name, term -> term = 'normal')")
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "term_set", array_distinct("sub_term_name")
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "is_normal",
+        (size("term_set") == 1) & expr("exists(term_set, term -> term = 'normal')"),
     )
     histopathology_stats_results = histopathology_stats_results.withColumn(
         "tissue_name", regexp_extract("parameter_name", "(.*)( - .*)", 1)
@@ -1751,6 +1757,10 @@ def _histopathology_stats_results(observations_df: DataFrame):
     )
     histopathology_stats_results = histopathology_stats_results.join(
         histopathology_significance_scores, significance_stats_join
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "significance",
+        when(col("significance") & ~col("is_normal"), lit(True)).otherwise(lit(False)),
     )
 
     required_stats_columns = STATS_OBSERVATIONS_JOIN + [
