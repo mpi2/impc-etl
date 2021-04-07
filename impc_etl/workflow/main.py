@@ -403,6 +403,7 @@ class ImpcIndexDataRelease(luigi.Task):
             PipelineCoreLoader(),
             ProductExtractor(),
             MGIPhenotypeCoreLoader(),
+            ImpcImagesCoreLoader()
         ]
 
     def run(self):
