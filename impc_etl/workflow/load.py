@@ -619,6 +619,7 @@ class Parquet2Solr(SparkSubmitTask):
         "pipeline_core_parquet": "pipeline",
         "imits_product_raw_parquet": "product",
         "mgi_phenotype_parquet": "mgi-phenotype",
+        "impc_images_core_parquet": "impc_images",
     }
 
     def output(self):
