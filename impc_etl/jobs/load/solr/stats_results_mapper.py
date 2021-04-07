@@ -1843,6 +1843,7 @@ def _histopathology_stats_results(observations_df: DataFrame):
         "data_type", lit("histopathology")
     )
     histopathology_stats_results = histopathology_stats_results.drop("significance")
+    histopathology_stats_results = histopathology_stats_results.dropDuplicates()
 
     return histopathology_stats_results
 
