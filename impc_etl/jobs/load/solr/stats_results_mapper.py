@@ -780,7 +780,18 @@ def main(argv):
     ]
     open_stats_df = open_stats_df.withColumn("doc_id", md5(concat(*identifying_cols)))
     if raw_data_in_output == "include":
-        open_stats_df = _parse_raw_data(open_stats_df, extract_windowed_data)
+        specimen_dobs = (
+            observations_df.select("external_sample_id", "date_of_birth")
+            .dropDuplicates()
+            .collect()
+        )
+        specimen_dob_dict = [row.asDict() for row in specimen_dobs.collect()]
+        specimen_dob_dict = {
+            row["external_sample_id"]: row["date_of_birth"] for row in specimen_dob_dict
+        }
+        open_stats_df = _parse_raw_data(
+            open_stats_df, extract_windowed_data, specimen_dob_dict
+        )
     open_stats_df = open_stats_df.withColumn(
         "data_type",
         when(
@@ -829,7 +840,7 @@ def _compress_and_encode(json_text):
         return str(base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))), "utf-8")
 
 
-def _parse_raw_data(open_stats_df, extract_windowed_data):
+def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
     compress_and_encode = udf(_compress_and_encode, StringType())
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_biological_sample_group", "biological_sample_group"
@@ -849,6 +860,14 @@ def _parse_raw_data(open_stats_df, extract_windowed_data):
     )
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_discrete_point", "discrete_point"
+    )
+    date_of_birth_udf = lambda specimen_list: [
+        specimen_dob_dict[specimen] if specimen in specimen_dob_dict else None
+        for specimen in specimen_list
+    ]
+    date_of_birth_udf = udf(date_of_birth_udf, StringType())
+    open_stats_df = open_stats_df.withColumn(
+        "date_of_birth", date_of_birth_udf("external_sample_id")
     )
     if extract_windowed_data:
         open_stats_df = open_stats_df.withColumnRenamed(
@@ -931,6 +950,7 @@ def _parse_raw_data(open_stats_df, extract_windowed_data):
         "category",
         "time_point",
         "discrete_point",
+        "date_of_birth",
     ]
     if extract_windowed_data:
         raw_data_cols.append("window_weight")
