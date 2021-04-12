@@ -785,7 +785,7 @@ def main(argv):
             .dropDuplicates()
             .collect()
         )
-        specimen_dob_dict = [row.asDict() for row in specimen_dobs.collect()]
+        specimen_dob_dict = [row.asDict() for row in specimen_dobs]
         specimen_dob_dict = {
             row["external_sample_id"]: row["date_of_birth"] for row in specimen_dob_dict
         }
