@@ -975,6 +975,10 @@ def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
     #     StringType(),
     # )
     open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
+    for idx, col_name in enumerate(raw_data_cols):
+        open_stats_df = open_stats_df.withColumn(
+            "raw_data", regexp_replace("raw_data", f'"{idx}":', f'"{col_name}":')
+        )
     open_stats_df = open_stats_df.withColumn(
         "raw_data", compress_and_encode("raw_data")
     )
