@@ -11,6 +11,7 @@ from pyspark.sql.functions import (
     lit,
     split,
     collect_set,
+    to_json,
     when,
     udf,
     expr,
@@ -924,10 +925,14 @@ def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
         ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
 
-    date_of_birth_udf = lambda specimen_list: [
-        specimen_dob_dict[specimen] if specimen in specimen_dob_dict else None
-        for specimen in specimen_list
-    ]  if specimen_list is not None else []
+    date_of_birth_udf = (
+        lambda specimen_list: [
+            specimen_dob_dict[specimen] if specimen in specimen_dob_dict else None
+            for specimen in specimen_list
+        ]
+        if specimen_list is not None
+        else []
+    )
     date_of_birth_udf = udf(date_of_birth_udf, ArrayType(StringType()))
     open_stats_df = open_stats_df.withColumn(
         "date_of_birth", date_of_birth_udf("external_sample_id")
@@ -958,18 +963,18 @@ def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
     open_stats_df = open_stats_df.withColumn("raw_data", arrays_zip(*raw_data_cols))
     open_stats_df.printSchema()
 
-    to_json_udf = udf(
-        lambda row: None
-        if row is None
-        else json.dumps(
-            [
-                {raw_data_cols[int(key)]: value for key, value in item.asDict().items()}
-                for item in row
-            ]
-        ),
-        StringType(),
-    )
-    open_stats_df = open_stats_df.withColumn("raw_data", to_json_udf("raw_data"))
+    # to_json_udf = udf(
+    #     lambda row: None
+    #     if row is None
+    #     else json.dumps(
+    #         [
+    #             {raw_data_cols[int(key)]: value for key, value in item.asDict().items()}
+    #             for item in row
+    #         ]
+    #     ),
+    #     StringType(),
+    # )
+    open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
     open_stats_df = open_stats_df.withColumn(
         "raw_data", compress_and_encode("raw_data")
     )
