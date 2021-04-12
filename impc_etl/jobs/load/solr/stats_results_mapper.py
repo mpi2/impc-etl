@@ -841,7 +841,7 @@ def _compress_and_encode(json_text):
 
 
 def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
-    compress_and_encode = udf(_compress_and_encode, ArrayType(StringType()))
+    compress_and_encode = udf(_compress_and_encode, StringType())
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_biological_sample_group", "biological_sample_group"
     )
@@ -865,7 +865,7 @@ def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
         specimen_dob_dict[specimen] if specimen in specimen_dob_dict else None
         for specimen in specimen_list
     ]
-    date_of_birth_udf = udf(date_of_birth_udf, StringType())
+    date_of_birth_udf = udf(date_of_birth_udf, ArrayType(StringType()))
     open_stats_df = open_stats_df.withColumn(
         "date_of_birth", date_of_birth_udf("external_sample_id")
     )
