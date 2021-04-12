@@ -841,7 +841,7 @@ def _compress_and_encode(json_text):
 
 
 def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
-    compress_and_encode = udf(_compress_and_encode, StringType())
+    compress_and_encode = udf(_compress_and_encode, ArrayType(StringType()))
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_biological_sample_group", "biological_sample_group"
     )
