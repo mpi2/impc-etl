@@ -927,7 +927,7 @@ def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
     date_of_birth_udf = lambda specimen_list: [
         specimen_dob_dict[specimen] if specimen in specimen_dob_dict else None
         for specimen in specimen_list
-    ]
+    ]  if specimen_list is not None else []
     date_of_birth_udf = udf(date_of_birth_udf, ArrayType(StringType()))
     open_stats_df = open_stats_df.withColumn(
         "date_of_birth", date_of_birth_udf("external_sample_id")
