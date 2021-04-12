@@ -861,14 +861,6 @@ def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_discrete_point", "discrete_point"
     )
-    date_of_birth_udf = lambda specimen_list: [
-        specimen_dob_dict[specimen] if specimen in specimen_dob_dict else None
-        for specimen in specimen_list
-    ]
-    date_of_birth_udf = udf(date_of_birth_udf, ArrayType(StringType()))
-    open_stats_df = open_stats_df.withColumn(
-        "date_of_birth", date_of_birth_udf("external_sample_id")
-    )
     if extract_windowed_data:
         open_stats_df = open_stats_df.withColumnRenamed(
             "observations_window_weight", "window_weight"
@@ -931,6 +923,15 @@ def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
             col("discrete_point"),
         ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
+
+    date_of_birth_udf = lambda specimen_list: [
+        specimen_dob_dict[specimen] if specimen in specimen_dob_dict else None
+        for specimen in specimen_list
+    ]
+    date_of_birth_udf = udf(date_of_birth_udf, ArrayType(StringType()))
+    open_stats_df = open_stats_df.withColumn(
+        "date_of_birth", date_of_birth_udf("external_sample_id")
+    )
     if extract_windowed_data:
         open_stats_df = open_stats_df.withColumn(
             "window_weight",
@@ -955,6 +956,7 @@ def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
     if extract_windowed_data:
         raw_data_cols.append("window_weight")
     open_stats_df = open_stats_df.withColumn("raw_data", arrays_zip(*raw_data_cols))
+    open_stats_df.printSchema()
 
     to_json_udf = udf(
         lambda row: None
