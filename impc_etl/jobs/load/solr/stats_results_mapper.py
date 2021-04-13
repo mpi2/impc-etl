@@ -1322,6 +1322,11 @@ def _embryo_stats_results(
     )
 
     embryo_stats_results = embryo_stats_results.withColumn(
+        "category",
+        when(col("category") == "yes", lit("abnormal")).otherwise(col("category")),
+    )
+
+    embryo_stats_results = embryo_stats_results.withColumn(
         "data_type", lit("categorical")
     )
     embryo_stats_results = embryo_stats_results.withColumn("status", lit("Successful"))
