@@ -49,10 +49,12 @@ def main(argv):
         col("intermediate_mp_id").alias("impress_intermediate_mp_id"),
         col("intermediate_mp_term").alias("impress_intermediate_mp_term"),
     ).distinct()
-    omero_ids_df = spark.read.csv(omero_ids_csv_path, header=True)
+    omero_ids_df = spark.read.csv(omero_ids_csv_path, header=True).dropDuplicates()
+    omero_ids_df = omero_ids_df.alias("omero")
     image_observations_df = observations_df.where(
         col("observation_type") == "image_record"
     )
+    image_observations_df = image_observations_df.alias("obs")
     image_observations_df = image_observations_df.join(
         omero_ids_df,
         [
@@ -62,10 +64,10 @@ def main(argv):
             "pipeline_stable_id",
             "procedure_stable_id",
             "parameter_stable_id",
-            "increment_value",
             "datasource_name",
         ],
     )
+    image_observations_df = image_observations_df.select("obs.*", "omero.omero_id")
     parameter_association_fields = [
         "parameter_association_stable_id",
         "parameter_association_sequence_id",
