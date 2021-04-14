@@ -83,6 +83,8 @@ STATS_RESULTS_COLUMNS = [
     "female_effect_size",
     "genotype_effect_size_low_vs_normal_high",
     "genotype_effect_size_low_normal_vs_high",
+    "genotype_pvalue_low_vs_normal_high",
+    "genotype_pvalue_low_normal_vs_high",
 ]
 
 
