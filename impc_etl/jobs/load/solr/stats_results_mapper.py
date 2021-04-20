@@ -36,6 +36,7 @@ from pyspark.sql.functions import (
     concat_ws,
     collect_list,
 )
+from pyspark.sql.window import Window
 from pyspark.sql.types import (
     StructType,
     StructField,
@@ -1317,14 +1318,56 @@ def _embryo_stats_results(
         .withColumnRenamed("gene_symbol", "marker_symbol")
         .select(required_stats_columns)
     )
+    embryo_control_data = observations_df.where(
+        col("procedure_group").rlike(
+            "|".join(
+                [
+                    "IMPC_GPL",
+                    "IMPC_GEL",
+                    "IMPC_GPM",
+                    "IMPC_GEM",
+                    "IMPC_GPO",
+                    "IMPC_GEO",
+                    "IMPC_GPP",
+                    "IMPC_GEP",
+                ]
+            )
+        )
+        & (col("biological_sample_group") == "control")
+        & (col("observation_type") == "categorical")
+        & (col("category").isin(["yes", "no"]))
+    )
+    embryo_control_data = embryo_control_data.select(
+        "procedure_stable_id", "parameter_stable_id", "category"
+    )
+    embryo_control_data = embryo_control_data.groupBy(
+        "procedure_stable_id", "parameter_stable_id", "category"
+    ).count()
+    window = Window.partitionBy("procedure_stable_id", "parameter_stable_id").orderBy(
+        col("count").desc()
+    )
+    embryo_normal_data = embryo_control_data.select(
+        "procedure_stable_id",
+        "parameter_stable_id",
+        first("category").over(window).alias("normal_category"),
+    ).distinct()
     embryo_stats_results = embryo_stats_results.withColumn(
         "category", lower(col("category"))
+    )
+    embryo_stats_results = embryo_stats_results.join(
+        embryo_normal_data, ["procedure_stable_id", "parameter_stable_id"], "left_outer"
     )
 
     embryo_stats_results = embryo_stats_results.withColumn(
         "category",
-        when(col("category") == "yes", lit("abnormal")).otherwise(col("category")),
+        when(
+            col("category").isin(["yes", "no"])
+            & (col("category") != col("normal_category")),
+            lit("abnormal"),
+        ).otherwise(col("category")),
     )
+
+    embryo_stats_results = embryo_stats_results.drop("normal_category")
 
     embryo_stats_results = embryo_stats_results.withColumn(
         "data_type", lit("categorical")
