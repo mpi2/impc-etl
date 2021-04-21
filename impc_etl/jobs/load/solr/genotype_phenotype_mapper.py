@@ -235,6 +235,13 @@ def main(argv):
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
         "doc_id", monotonically_increasing_id().astype(StringType())
     )
+    ontology_field_prefixes = ["mpath_", "anatomy_"]
+    for prefix in ontology_field_prefixes:
+        for col_name in genotype_phenotype_df.columns:
+            if prefix in col_name:
+                genotype_phenotype_df = genotype_phenotype_df.withColumn(
+                    col_name, col_name.replace(prefix, "mp_")
+                )
     genotype_phenotype_df.distinct().write.parquet(output_path)
 
 
