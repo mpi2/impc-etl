@@ -1801,7 +1801,7 @@ def _histopathology_stats_results(observations_df: DataFrame):
         expr("exists(sub_term_id, term -> term LIKE 'MPATH:%')")
     )
     histopathology_stats_results = histopathology_stats_results.withColumn(
-        "term_set", array_distinct("sub_term_name")
+        "term_set", array_sort(array_distinct("sub_term_name"))
     )
     histopathology_stats_results = histopathology_stats_results.withColumn(
         "is_normal",
