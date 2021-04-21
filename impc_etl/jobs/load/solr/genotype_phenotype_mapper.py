@@ -240,7 +240,10 @@ def main(argv):
         for col_name in genotype_phenotype_df.columns:
             if prefix in col_name:
                 genotype_phenotype_df = genotype_phenotype_df.withColumn(
-                    col_name, col(col_name.replace(prefix, "mp_"))
+                    col_name,
+                    when(
+                        col(col_name).isNotNull(), col(col_name.replace(prefix, "mp_"))
+                    ).otherwise(col(col_name)),
                 )
     genotype_phenotype_df.distinct().write.parquet(output_path)
 
