@@ -7,6 +7,7 @@ from typing import List
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import (
     array_contains,
+    array_sort,
     col,
     lit,
     split,
