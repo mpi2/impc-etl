@@ -149,6 +149,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
     emapa_metadata_csv_path = luigi.Parameter()
     ma_metadata_csv_path = luigi.Parameter()
     mpath_metadata_csv_path = luigi.Parameter()
+    mp_mapping_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
     raw_data_in_output = luigi.Parameter()
     extract_windowed_data = luigi.Parameter()
@@ -213,6 +214,7 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             self.input()[6].path,
             self.threei_stats_results_csv,
             self.mpath_metadata_csv_path,
+            self.mp_mapping_path,
             self.raw_data_in_output,
             self.extract_windowed_data,
             self.output().path,
@@ -244,28 +246,7 @@ class GenotypePhenotypeCoreLoader(SparkSubmitTask):
 
     def requires(self):
         return [
-            StatsResultsCoreLoader(
-                openstats_jdbc_connection=self.openstats_jdbc_connection,
-                openstats_db_user=self.openstats_db_user,
-                openstats_db_password=self.openstats_db_password,
-                data_release_version=self.data_release_version,
-                use_cache=self.use_cache,
-                dcc_xml_path=self.dcc_xml_path,
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
-                mgi_strain_input_path=self.mgi_strain_input_path,
-                mgi_allele_input_path=self.mgi_allele_input_path,
-                ontology_input_path=self.ontology_input_path,
-                emap_emapa_csv_path=self.emap_emapa_csv_path,
-                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
-                ma_metadata_csv_path=self.ma_metadata_csv_path,
-                mpath_metadata_csv_path=self.mpath_metadata_csv_path,
-                threei_stats_results_csv=self.threei_stats_results_csv,
-                raw_data_in_output="exclude",
-                extract_windowed_data="false",
-                http_proxy=self.http_proxy,
-                output_path=self.output_path,
-            ),
+            StatsResultsCoreLoader(),
             OntologyExtractor(
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
@@ -490,28 +471,7 @@ class GeneCoreLoader(SparkSubmitTask):
                 mgi_allele_input_path=self.mgi_allele_input_path,
                 ontology_input_path=self.ontology_input_path,
             ),
-            StatsResultsCoreLoader(
-                openstats_jdbc_connection=self.openstats_jdbc_connection,
-                openstats_db_user=self.openstats_db_user,
-                openstats_db_password=self.openstats_db_password,
-                data_release_version=self.data_release_version,
-                use_cache=self.use_cache,
-                dcc_xml_path=self.dcc_xml_path,
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
-                mgi_strain_input_path=self.mgi_strain_input_path,
-                mgi_allele_input_path=self.mgi_allele_input_path,
-                ontology_input_path=self.ontology_input_path,
-                emap_emapa_csv_path=self.emap_emapa_csv_path,
-                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
-                ma_metadata_csv_path=self.ma_metadata_csv_path,
-                mpath_metadata_csv_path=self.mpath_metadata_csv_path,
-                threei_stats_results_csv=self.threei_stats_results_csv,
-                raw_data_in_output="exclude",
-                http_proxy=self.http_proxy,
-                extract_windowed_data="false",
-                output_path=self.output_path,
-            ),
+            StatsResultsCoreLoader(),
             OntologyMetadataExtractor(
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
