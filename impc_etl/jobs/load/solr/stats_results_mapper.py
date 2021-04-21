@@ -313,10 +313,9 @@ def main(argv):
     mp_chooser_path = argv[7]
     threei_parquet_path = argv[8]
     mpath_metadata_path = argv[9]
-    mp_mapping_path = argv[10]
-    raw_data_in_output = argv[11]
-    extract_windowed_data = argv[12] == "true"
-    output_path = argv[13]
+    raw_data_in_output = argv[10]
+    extract_windowed_data = argv[11] == "true"
+    output_path = argv[12]
     spark = SparkSession.builder.getOrCreate()
     open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
     ontology_df = spark.read.parquet(ontology_parquet_path)
@@ -327,9 +326,6 @@ def main(argv):
     threei_df = spark.read.csv(threei_parquet_path, header=True)
     threei_df = standardize_threei_schema(threei_df)
     mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
-    mp_mapping_df = spark.read.csv(mp_mapping_path, header=True)
-    mp_mapping_df = mp_mapping_df.withColumnRenamed("acc", "mp_acc")
-    mp_mapping_df = mp_mapping_df.withColumnRenamed("entity", "mapped_acc")
     mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path).collect()[0][1]
     mp_chooser = json.loads(mp_chooser_txt)
     embryo_stat_packets = open_stats_complete_df.where(
@@ -593,6 +589,11 @@ def main(argv):
         if col_name not in open_stats_df.columns:
             open_stats_df = open_stats_df.withColumn(col_name, lit(None))
 
+    ontology_df = ontology_df.withColumnRenamed("id", "mp_term_id")
+    open_stats_df = map_to_stats(
+        open_stats_df, ontology_df, ["mp_term_id"], ONTOLOGY_STATS_MAP, "ontology"
+    )
+
     pipeline_core_join = [
         "parameter_stable_id",
         "pipeline_stable_id",
@@ -644,6 +645,19 @@ def main(argv):
         "impress",
     )
 
+    open_stats_df = open_stats_df.withColumn(
+        "top_level_mp_term_id",
+        when(
+            col("top_level_mp_term_id").isNull(), col("top_level_mp_id_options")
+        ).otherwise(col("top_level_mp_term_id")),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "top_level_mp_term_name",
+        when(
+            col("top_level_mp_term_name").isNull(), col("top_level_mp_term_options")
+        ).otherwise(col("top_level_mp_term_name")),
+    )
+
     allele_df = allele_df.select(
         ["allele_symbol"] + list(ALLELE_STATS_MAP.values())
     ).dropDuplicates()
@@ -692,42 +706,6 @@ def main(argv):
     open_stats_df = map_ontology_prefix(open_stats_df, "MA:", "anatomy_")
     open_stats_df = map_ontology_prefix(open_stats_df, "EMAP:", "anatomy_")
     open_stats_df = map_ontology_prefix(open_stats_df, "EMAPA:", "anatomy_")
-    open_stats_df = map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
-    open_stats_df = open_stats_df.join(
-        mp_mapping_df, col("mpath_term_id") == col("mapped_acc"), "left_outer"
-    )
-    open_stats_df = open_stats_df.withColumn(
-        "mp_term_id",
-        when(
-            col("mpath_term_id").isNotNull() & col("mp_acc").isNotNull(), col("mp_acc")
-        ).otherwise(col("mp_term_id")),
-    )
-    mpath_metadata_df = mpath_metadata_df.select(
-        col("acc").alias("mpath_term_id"), col("name").alias("mpath_metadata_term_name")
-    ).distinct()
-    open_stats_df = open_stats_df.join(mpath_metadata_df, "mpath_term_id", "left_outer")
-    open_stats_df = open_stats_df.withColumn(
-        "mpath_term_name", col("mpath_metadata_term_name")
-    )
-
-    ontology_df = ontology_df.withColumnRenamed("id", "mp_term_id")
-    open_stats_df = map_to_stats(
-        open_stats_df, ontology_df, ["mp_term_id"], ONTOLOGY_STATS_MAP, "ontology"
-    )
-
-    open_stats_df = open_stats_df.withColumn(
-        "top_level_mp_term_id",
-        when(
-            col("top_level_mp_term_id").isNull(), col("top_level_mp_id_options")
-        ).otherwise(col("top_level_mp_term_id")),
-    )
-    open_stats_df = open_stats_df.withColumn(
-        "top_level_mp_term_name",
-        when(
-            col("top_level_mp_term_name").isNull(), col("top_level_mp_term_options")
-        ).otherwise(col("top_level_mp_term_name")),
-    )
-
     open_stats_df = open_stats_df.withColumn(
         "significant",
         when(col("mp_term_id").isNotNull(), lit(True)).otherwise(lit(False)),
@@ -759,6 +737,14 @@ def main(argv):
                 col("genotype_effect_size_low_vs_normal_high"),
             ),
         ).otherwise(col("effect_size")),
+    )
+    open_stats_df = map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
+    mpath_metadata_df = mpath_metadata_df.select(
+        col("acc").alias("mpath_term_id"), col("name").alias("mpath_metadata_term_name")
+    ).distinct()
+    open_stats_df = open_stats_df.join(mpath_metadata_df, "mpath_term_id", "left_outer")
+    open_stats_df = open_stats_df.withColumn(
+        "mpath_term_name", col("mpath_metadata_term_name")
     )
     open_stats_df = open_stats_df.withColumn(
         "metadata",
