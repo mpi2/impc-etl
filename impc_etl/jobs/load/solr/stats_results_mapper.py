@@ -739,6 +739,16 @@ def main(argv):
         ).otherwise(col("effect_size")),
     )
     open_stats_df = map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
+    open_stats_df.withColumn(
+        "procedure_stable_id", explode("procedure_stable_id")
+    ).where(col("colony_id") == "CR10090").where(
+        col("procedure_stable_id").contains("HIS")
+    ).select(
+        "allele_symbol", "parameter_name", "mp_term_id", "mpath_term_id", "sex"
+    ).show(
+        vertical=True, truncate=False
+    )
+    raise TypeError
     mpath_metadata_df = mpath_metadata_df.select(
         col("acc").alias("mpath_term_id"), col("name").alias("mpath_metadata_term_name")
     ).distinct()
