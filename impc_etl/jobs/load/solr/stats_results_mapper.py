@@ -745,7 +745,7 @@ def main(argv):
     )
     open_stats_df = map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
     open_stats_df = open_stats_df.join(
-        mp_mapping_df, col("mpath_term_id") == "mapped_acc", "left_outer"
+        mp_mapping_df, col("mpath_term_id") == col("mapped_acc"), "left_outer"
     )
     open_stats_df = open_stats_df.withColumn(
         "mp_term_id",
