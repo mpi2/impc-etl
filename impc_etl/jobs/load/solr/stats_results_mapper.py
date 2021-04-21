@@ -394,13 +394,9 @@ def main(argv):
         if col_name not in histopathology_stats.columns:
             histopathology_stats = histopathology_stats.withColumn(col_name, lit(None))
     histopathology_stats = histopathology_stats.select(open_stats_df.columns)
-    histopathology_stats.withColumn(
-        "procedure_stable_id", explode("procedure_stable_id")
-    ).where(col("colony_id") == "CR10090").where(
+    histopathology_stats.where(col("colony_id") == "CR10090").where(
         col("procedure_stable_id").contains("HIS")
-    ).show(
-        vertical=True, truncate=False
-    )
+    ).show(vertical=True, truncate=False)
     raise TypeError
     open_stats_df = open_stats_df.union(histopathology_stats)
 
