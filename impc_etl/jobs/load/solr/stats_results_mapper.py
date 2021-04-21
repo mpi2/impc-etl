@@ -9,6 +9,7 @@ from pyspark.sql.functions import (
     array_contains,
     array_sort,
     col,
+    explode,
     lit,
     split,
     collect_set,
@@ -393,6 +394,14 @@ def main(argv):
         if col_name not in histopathology_stats.columns:
             histopathology_stats = histopathology_stats.withColumn(col_name, lit(None))
     histopathology_stats = histopathology_stats.select(open_stats_df.columns)
+    histopathology_stats.withColumn(
+        "procedure_stable_id", explode("procedure_stable_id")
+    ).where(col("colony_id") == "CR10090").where(
+        col("procedure_stable_id").contains("HIS")
+    ).show(
+        vertical=True, truncate=False
+    )
+    raise TypeError
     open_stats_df = open_stats_df.union(histopathology_stats)
 
     embryo_viability_stats = _embryo_viability_stats_results(
