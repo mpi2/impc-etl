@@ -393,7 +393,7 @@ def main(argv):
     for col_name in open_stats_df.columns:
         if col_name not in histopathology_stats.columns:
             histopathology_stats = histopathology_stats.withColumn(col_name, lit(None))
-    histopathology_stats = histopathology_stats.select(open_stats_df.columns)
+    histopathology_stats = histopathology_stats.select(open_stats_df.columns).distinct()
     histopathology_stats.where(col("colony_id") == "CR10090").where(
         col("procedure_stable_id").contains("HIS")
     ).show(vertical=True, truncate=False)
