@@ -692,6 +692,23 @@ def main(argv):
     open_stats_df = map_ontology_prefix(open_stats_df, "MA:", "anatomy_")
     open_stats_df = map_ontology_prefix(open_stats_df, "EMAP:", "anatomy_")
     open_stats_df = map_ontology_prefix(open_stats_df, "EMAPA:", "anatomy_")
+    open_stats_df = map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
+    open_stats_df = open_stats_df.join(
+        mp_mapping_df, col("mpath_term_id") == col("mapped_acc"), "left_outer"
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "mp_term_id",
+        when(
+            col("mpath_term_id").isNotNull() & col("mp_acc").isNotNull(), col("mp_acc")
+        ).otherwise(col("mp_term_id")),
+    )
+    mpath_metadata_df = mpath_metadata_df.select(
+        col("acc").alias("mpath_term_id"), col("name").alias("mpath_metadata_term_name")
+    ).distinct()
+    open_stats_df = open_stats_df.join(mpath_metadata_df, "mpath_term_id", "left_outer")
+    open_stats_df = open_stats_df.withColumn(
+        "mpath_term_name", col("mpath_metadata_term_name")
+    )
 
     ontology_df = ontology_df.withColumnRenamed("id", "mp_term_id")
     open_stats_df = map_to_stats(
@@ -742,23 +759,6 @@ def main(argv):
                 col("genotype_effect_size_low_vs_normal_high"),
             ),
         ).otherwise(col("effect_size")),
-    )
-    open_stats_df = map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
-    open_stats_df = open_stats_df.join(
-        mp_mapping_df, col("mpath_term_id") == col("mapped_acc"), "left_outer"
-    )
-    open_stats_df = open_stats_df.withColumn(
-        "mp_term_id",
-        when(
-            col("mpath_term_id").isNotNull() & col("mp_acc").isNotNull(), col("mp_acc")
-        ).otherwise(col("mp_term_id")),
-    )
-    mpath_metadata_df = mpath_metadata_df.select(
-        col("acc").alias("mpath_term_id"), col("name").alias("mpath_metadata_term_name")
-    ).distinct()
-    open_stats_df = open_stats_df.join(mpath_metadata_df, "mpath_term_id", "left_outer")
-    open_stats_df = open_stats_df.withColumn(
-        "mpath_term_name", col("mpath_metadata_term_name")
     )
     open_stats_df = open_stats_df.withColumn(
         "metadata",
