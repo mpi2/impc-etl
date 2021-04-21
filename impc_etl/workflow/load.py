@@ -149,7 +149,6 @@ class StatsResultsCoreLoader(SparkSubmitTask):
     emapa_metadata_csv_path = luigi.Parameter()
     ma_metadata_csv_path = luigi.Parameter()
     mpath_metadata_csv_path = luigi.Parameter()
-    mp_mapping_path = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
     raw_data_in_output = luigi.Parameter()
     extract_windowed_data = luigi.Parameter()
@@ -214,7 +213,6 @@ class StatsResultsCoreLoader(SparkSubmitTask):
             self.input()[6].path,
             self.threei_stats_results_csv,
             self.mpath_metadata_csv_path,
-            self.mp_mapping_path,
             self.raw_data_in_output,
             self.extract_windowed_data,
             self.output().path,
