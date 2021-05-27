@@ -272,7 +272,7 @@ STATS_RESULTS_COLUMNS = [
     "full_mp_term",
     "male_effect_size",
     "female_effect_size",
-    "observation_ids"
+    "observation_ids",
 ]
 
 WINDOW_COLUMNS = [
