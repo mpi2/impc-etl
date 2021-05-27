@@ -254,7 +254,6 @@ class ImpcIndexDaily(luigi.Task):
 
     def requires(self):
         return [
-            Allele2Extractor(),
             ProductExtractor(
                 imits_tsv_path=self.imits_product_tsv_path,
                 output_path=self.parquet_path,
@@ -316,6 +315,7 @@ class ImpcCleanDaily(luigi.Task):
             self._delele_target_if_exists(impc_merge_index_task.output())
             self._delele_target_if_exists(impc_copy_index_task.output())
             self._delele_target_if_exists(impc_parquet_to_solr_task.output(), hdfs=True)
+        self._delele_target_if_exists(Allele2Extractor().output(), hdfs=True)
 
 
 class ImpcIndexDataRelease(luigi.Task):
