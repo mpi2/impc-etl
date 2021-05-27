@@ -272,6 +272,7 @@ STATS_RESULTS_COLUMNS = [
     "full_mp_term",
     "male_effect_size",
     "female_effect_size",
+    "observation_ids"
 ]
 
 WINDOW_COLUMNS = [
@@ -783,6 +784,9 @@ def main(argv):
         for col_name in identifying_cols
     ]
     open_stats_df = open_stats_df.withColumn("doc_id", md5(concat(*identifying_cols)))
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_id", "observation_ids"
+    )
     if raw_data_in_output == "include":
         specimen_dobs = (
             observations_df.select("external_sample_id", "date_of_birth")
