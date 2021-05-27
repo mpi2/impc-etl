@@ -257,6 +257,7 @@ class GeneProductionStatusExtractor(PySparkTask):
             "Phenotype Attempt Registered": "Phenotype attempt registered",
             "Phenotyping Registered": "Phenotype attempt registered",
             "Rederivation Complete": "Phenotyping started",
+            "Rederivation Started": "Phenotyping started",
             "Phenotyping Started": "Phenotyping started",
             "Phenotyping All Data Processed": "Phenotyping started",
             "Phenotyping Complete": "Phenotyping data available",
