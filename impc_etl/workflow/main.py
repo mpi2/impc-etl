@@ -181,9 +181,7 @@ class ImpcStatPacketLoader(luigi.Task):
     output_path = luigi.Parameter()
 
     def requires(self):
-        return [
-            StatsResultsCoreLoader()
-        ]
+        return [StatsResultsCoreLoader()]
 
 
 class ImpcWindowedDataLoader(luigi.Task):
@@ -343,7 +341,7 @@ class ImpcIndexDataRelease(luigi.Task):
             PipelineCoreLoader(),
             ProductExtractor(),
             MGIPhenotypeCoreLoader(),
-            ImpcImagesCoreLoader()
+            ImpcImagesCoreLoader(),
         ]
 
     def run(self):

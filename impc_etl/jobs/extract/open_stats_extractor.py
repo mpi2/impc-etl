@@ -479,14 +479,14 @@ def get_calculation_details(normal_result, applied_method):
                     if "High" in female_vs_ko_p_value
                     else None
                 )
-            if "Sex FvKO effect size" in normal_result:
+
                 female_vs_ko_effect = normal_result["Sex FvKO effect size"]
-                calculation_details["female_effect_size_low_vs_normal_high"] = (
+                calculation_details["female_pvalue_low_vs_normal_high"] = (
                     female_vs_ko_effect["Low"]["effect"]["value"]
                     if "Low" in female_vs_ko_effect
                     else None
                 )
-                calculation_details["female_effect_size_low_normal_vs_high"] = (
+                calculation_details["female_pvalue_low_normal_vs_high"] = (
                     female_vs_ko_effect["High"]["effect"]["value"]
                     if "High" in female_vs_ko_effect
                     else None
@@ -516,7 +516,18 @@ def get_calculation_details(normal_result, applied_method):
                     if "High" in male_vs_ko_effect
                     else None
                 )
-
+            if "Sex FvKO effect size" in normal_result:
+                female_vs_ko_effect = normal_result["Sex FvKO effect size"]
+                calculation_details["female_effect_size_low_vs_normal_high"] = (
+                    female_vs_ko_effect["Low"]["effect"]["value"]
+                    if "Low" in female_vs_ko_effect
+                    else None
+                )
+                calculation_details["female_effect_size_low_normal_vs_high"] = (
+                    female_vs_ko_effect["High"]["effect"]["value"]
+                    if "High" in female_vs_ko_effect
+                    else None
+                )
         fisher_regex = re.compile(r".*Fisher Exact.*")
         if fisher_regex.search(applied_method):
             calculation_details["p_value"] = (

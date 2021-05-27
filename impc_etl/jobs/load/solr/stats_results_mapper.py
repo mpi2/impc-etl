@@ -963,12 +963,10 @@ def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
         "category",
         "time_point",
         "discrete_point",
-        "date_of_birth",
     ]
     if extract_windowed_data:
         raw_data_cols.append("window_weight")
     open_stats_df = open_stats_df.withColumn("raw_data", arrays_zip(*raw_data_cols))
-    open_stats_df.printSchema()
 
     # to_json_udf = udf(
     #     lambda row: None
@@ -1841,7 +1839,7 @@ def _histopathology_stats_results(observations_df: DataFrame):
         significance_stats_join + ["significance"]
     )
     histopathology_stats_results = histopathology_stats_results.join(
-        histopathology_significance_scores, significance_stats_join
+        histopathology_significance_scores, significance_stats_join, "left_outer"
     )
     histopathology_stats_results = histopathology_stats_results.withColumn(
         "significance",

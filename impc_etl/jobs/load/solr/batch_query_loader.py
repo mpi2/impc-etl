@@ -1,3 +1,4 @@
+from impc_etl.workflow.extraction import OntologyMetadataExtractor
 from pyspark.sql.functions import col, collect_set, explode
 from pyspark.sql.session import SparkSession
 from impc_etl.workflow.load import (
@@ -13,19 +14,26 @@ from luigi.contrib.spark import PySparkTask
 class BatchQueryLoader(PySparkTask):
     name = "IMPC_Batch_Query_Loader"
     orthologe_parquet_path = luigi.Parameter()
+    ontology_metadata_parquet = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def output(self):
         return ImpcConfig().get_target(f"{self.output_path}batch_query_parquet")
 
     def requires(self):
-        return [ObservationsMapper(), GeneCoreLoader(), StatsResultsCoreLoader()]
+        return [
+            ObservationsMapper(),
+            GeneCoreLoader(),
+            StatsResultsCoreLoader(),
+            OntologyMetadataExtractor(),
+        ]
 
     def app_options(self):
         return [
             self.input()[0].path,
             self.input()[1].path,
             self.input()[2].path,
+            self.input()[3].path,
             self.orthologe_parquet_path,
             self.output().path,
         ]
@@ -35,12 +43,14 @@ class BatchQueryLoader(PySparkTask):
         observations_parquet_path = args[0]
         gene_parquet_path = args[1]
         stats_parquet_path = args[2]
-        orthologe_parquet_path = args[3]
-        output_path = args[4]
+        ontology_metadata_parquet_path = args[3]
+        orthologe_parquet_path = args[4]
+        output_path = args[5]
 
         stats_df = spark.read.parquet(stats_parquet_path)
         observations_df = spark.read.parquet(observations_parquet_path)
         gene_df = spark.read.parquet(gene_parquet_path)
+        ontology_df = spark.read.parquet(ontology_metadata_parquet_path)
         orthologe_df = spark.read.parquet(orthologe_parquet_path)
 
         group_by_cols = [
@@ -56,9 +66,7 @@ class BatchQueryLoader(PySparkTask):
 
         grouped_stats_cols = [
             "mp_term_id",
-            "mp_term_name",
             "top_level_mp_term_id",
-            "top_level_mp_term_name",
         ]
 
         stats_df = stats_df.withColumnRenamed("marker_symbol", "gene_symbol")
@@ -113,8 +121,11 @@ class BatchQueryLoader(PySparkTask):
         orthologe_df = orthologe_df.where(
             (col("o_is_max_human_to_mouse") == "max")
             & (col("o_is_max_mouse_to_human") == "max")
+            & (col("mmf_category_for_threshold") == "one-to-one")
+            & (col("hmf_category_for_threshold") == "one-to-one")
             & (col("o_support_count") >= 5)
         ).select("gene_accession_id", "hg_hgnc_acc_id", "hg_symbol")
+        # Remove the ones that have more than one orthologue mmf_category_for_threshold=one-to-one hmf_category_for_threshold=one-to-one
         orthologe_df = orthologe_df.groupBy("gene_accession_id").agg(
             *[collect_set(col_name).alias(col_name) for col_name in grouped_orth_cols]
         )
