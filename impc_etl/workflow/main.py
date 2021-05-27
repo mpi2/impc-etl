@@ -254,6 +254,7 @@ class ImpcIndexDaily(luigi.Task):
 
     def requires(self):
         return [
+            Allele2Extractor(),
             ProductExtractor(
                 imits_tsv_path=self.imits_product_tsv_path,
                 output_path=self.parquet_path,
