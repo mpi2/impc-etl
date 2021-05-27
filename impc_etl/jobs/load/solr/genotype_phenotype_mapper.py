@@ -83,6 +83,8 @@ STATS_RESULTS_COLUMNS = [
     "female_effect_size",
     "genotype_effect_size_low_vs_normal_high",
     "genotype_effect_size_low_normal_vs_high",
+    "genotype_pvalue_low_vs_normal_high",
+    "genotype_pvalue_low_normal_vs_high",
 ]
 
 
@@ -153,7 +155,12 @@ def main(argv):
                     col("female_pvalue_low_normal_vs_high"),
                 ),
             )
-            .otherwise(col("genotype_effect_p_value")),
+            .otherwise(
+                least(
+                    "genotype_pvalue_low_normal_vs_high",
+                    "genotype_pvalue_low_vs_normal_high",
+                )
+            ),
         )
         .otherwise(
             when(col("sex") == "male", col("male_ko_effect_p_value"))
@@ -228,6 +235,16 @@ def main(argv):
     genotype_phenotype_df = genotype_phenotype_df.withColumn(
         "doc_id", monotonically_increasing_id().astype(StringType())
     )
+    ontology_field_prefixes = ["mpath_", "anatomy_"]
+    for prefix in ontology_field_prefixes:
+        for col_name in genotype_phenotype_df.columns:
+            if prefix in col_name:
+                genotype_phenotype_df = genotype_phenotype_df.withColumn(
+                    col_name,
+                    when(
+                        col(col_name).isNotNull(), col(col_name.replace(prefix, "mp_"))
+                    ).otherwise(col(col_name)),
+                )
     genotype_phenotype_df.distinct().write.parquet(output_path)
 
 

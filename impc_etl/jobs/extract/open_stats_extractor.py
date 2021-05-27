@@ -15,7 +15,7 @@ def main(argv):
     jdbc_connection_str = argv[1]
     db_user = argv[2]
     db_password = argv[3]
-    data_release_version = argv[4]
+    db_table = argv[4]
     use_cache = argv[5]
     raw_data_in_output = argv[6] == "include"
     extract_windowed_data = argv[7] == "true"
@@ -31,12 +31,12 @@ def main(argv):
     if use_cache != "true":
         stats_df = spark.read.jdbc(
             jdbc_connection_str,
-            table="(SELECT CAST(id AS BIGINT) AS numericId, * FROM dr14_26032021_1505) AS tmp",
+            table=f"(SELECT CAST(id AS BIGINT) AS numericId, * FROM {db_table}) AS tmp",
             properties=properties,
             numPartitions=5000,
             column="numericId",
             lowerBound=0,
-            upperBound=999992061,
+            upperBound=999991716,
         )
         stats_df = stats_df.withColumnRenamed("statpacket", "json")
         stats_df.write.mode("overwrite").parquet(output_path + "_temp")
@@ -162,6 +162,9 @@ def _get_stat_result(row, include_raw_data=False, extract_windowed_data=False):
         )
         stats_result["observations_sex"] = _process_raw_data_field(
             "Original_sex", stats_packet_detail
+        )
+        stats_result["observations_id"] = _process_raw_data_field(
+            "Original_observation_id", stats_packet_detail
         )
 
         if extract_windowed_data:

@@ -7,10 +7,13 @@ from typing import List
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import (
     array_contains,
+    array_sort,
     col,
+    explode,
     lit,
     split,
     collect_set,
+    to_json,
     when,
     udf,
     expr,
@@ -35,6 +38,7 @@ from pyspark.sql.functions import (
     concat_ws,
     collect_list,
 )
+from pyspark.sql.window import Window
 from pyspark.sql.types import (
     StructType,
     StructField,
@@ -268,6 +272,7 @@ STATS_RESULTS_COLUMNS = [
     "full_mp_term",
     "male_effect_size",
     "female_effect_size",
+    "observation_ids",
 ]
 
 WINDOW_COLUMNS = [
@@ -389,7 +394,7 @@ def main(argv):
     for col_name in open_stats_df.columns:
         if col_name not in histopathology_stats.columns:
             histopathology_stats = histopathology_stats.withColumn(col_name, lit(None))
-    histopathology_stats = histopathology_stats.select(open_stats_df.columns)
+    histopathology_stats = histopathology_stats.select(open_stats_df.columns).distinct()
     open_stats_df = open_stats_df.union(histopathology_stats)
 
     embryo_viability_stats = _embryo_viability_stats_results(
@@ -779,8 +784,22 @@ def main(argv):
         for col_name in identifying_cols
     ]
     open_stats_df = open_stats_df.withColumn("doc_id", md5(concat(*identifying_cols)))
+    open_stats_df = open_stats_df.withColumnRenamed(
+        "observations_id", "observation_ids"
+    )
     if raw_data_in_output == "include":
-        open_stats_df = _parse_raw_data(open_stats_df, extract_windowed_data)
+        specimen_dobs = (
+            observations_df.select("external_sample_id", "date_of_birth")
+            .dropDuplicates()
+            .collect()
+        )
+        specimen_dob_dict = [row.asDict() for row in specimen_dobs]
+        specimen_dob_dict = {
+            row["external_sample_id"]: row["date_of_birth"] for row in specimen_dob_dict
+        }
+        open_stats_df = _parse_raw_data(
+            open_stats_df, extract_windowed_data, specimen_dob_dict
+        )
     open_stats_df = open_stats_df.withColumn(
         "data_type",
         when(
@@ -829,7 +848,7 @@ def _compress_and_encode(json_text):
         return str(base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))), "utf-8")
 
 
-def _parse_raw_data(open_stats_df, extract_windowed_data):
+def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
     compress_and_encode = udf(_compress_and_encode, StringType())
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_biological_sample_group", "biological_sample_group"
@@ -912,6 +931,19 @@ def _parse_raw_data(open_stats_df, extract_windowed_data):
             col("discrete_point"),
         ).otherwise(expr("transform(external_sample_id, sample_id -> NULL)")),
     )
+
+    date_of_birth_udf = (
+        lambda specimen_list: [
+            specimen_dob_dict[specimen] if specimen in specimen_dob_dict else None
+            for specimen in specimen_list
+        ]
+        if specimen_list is not None
+        else []
+    )
+    date_of_birth_udf = udf(date_of_birth_udf, ArrayType(StringType()))
+    open_stats_df = open_stats_df.withColumn(
+        "date_of_birth", date_of_birth_udf("external_sample_id")
+    )
     if extract_windowed_data:
         open_stats_df = open_stats_df.withColumn(
             "window_weight",
@@ -936,18 +968,22 @@ def _parse_raw_data(open_stats_df, extract_windowed_data):
         raw_data_cols.append("window_weight")
     open_stats_df = open_stats_df.withColumn("raw_data", arrays_zip(*raw_data_cols))
 
-    to_json_udf = udf(
-        lambda row: None
-        if row is None
-        else json.dumps(
-            [
-                {raw_data_cols[int(key)]: value for key, value in item.asDict().items()}
-                for item in row
-            ]
-        ),
-        StringType(),
-    )
-    open_stats_df = open_stats_df.withColumn("raw_data", to_json_udf("raw_data"))
+    # to_json_udf = udf(
+    #     lambda row: None
+    #     if row is None
+    #     else json.dumps(
+    #         [
+    #             {raw_data_cols[int(key)]: value for key, value in item.asDict().items()}
+    #             for item in row
+    #         ]
+    #     ),
+    #     StringType(),
+    # )
+    open_stats_df = open_stats_df.withColumn("raw_data", to_json("raw_data"))
+    for idx, col_name in enumerate(raw_data_cols):
+        open_stats_df = open_stats_df.withColumn(
+            "raw_data", regexp_replace("raw_data", f'"{idx}":', f'"{col_name}":')
+        )
     open_stats_df = open_stats_df.withColumn(
         "raw_data", compress_and_encode("raw_data")
     )
@@ -1286,9 +1322,56 @@ def _embryo_stats_results(
         .withColumnRenamed("gene_symbol", "marker_symbol")
         .select(required_stats_columns)
     )
+    embryo_control_data = observations_df.where(
+        col("procedure_group").rlike(
+            "|".join(
+                [
+                    "IMPC_GPL",
+                    "IMPC_GEL",
+                    "IMPC_GPM",
+                    "IMPC_GEM",
+                    "IMPC_GPO",
+                    "IMPC_GEO",
+                    "IMPC_GPP",
+                    "IMPC_GEP",
+                ]
+            )
+        )
+        & (col("biological_sample_group") == "control")
+        & (col("observation_type") == "categorical")
+        & (col("category").isin(["yes", "no"]))
+    )
+    embryo_control_data = embryo_control_data.select(
+        "procedure_stable_id", "parameter_stable_id", "category"
+    )
+    embryo_control_data = embryo_control_data.groupBy(
+        "procedure_stable_id", "parameter_stable_id", "category"
+    ).count()
+    window = Window.partitionBy("procedure_stable_id", "parameter_stable_id").orderBy(
+        col("count").desc()
+    )
+    embryo_normal_data = embryo_control_data.select(
+        "procedure_stable_id",
+        "parameter_stable_id",
+        first("category").over(window).alias("normal_category"),
+    ).distinct()
     embryo_stats_results = embryo_stats_results.withColumn(
         "category", lower(col("category"))
     )
+    embryo_stats_results = embryo_stats_results.join(
+        embryo_normal_data, ["procedure_stable_id", "parameter_stable_id"], "left_outer"
+    )
+
+    embryo_stats_results = embryo_stats_results.withColumn(
+        "category",
+        when(
+            col("category").isin(["yes", "no"])
+            & (col("category") != col("normal_category")),
+            lit("abnormal"),
+        ).otherwise(col("category")),
+    )
+
+    embryo_stats_results = embryo_stats_results.drop("normal_category")
 
     embryo_stats_results = embryo_stats_results.withColumn(
         "data_type", lit("categorical")
@@ -1718,23 +1801,32 @@ def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
 
 
 def _histopathology_stats_results(observations_df: DataFrame):
-    histopathology_significance_scores = (
-        observations_df.where(col("parameter_name").endswith("Significance score"))
-        .where(col("biological_sample_group") == "experimental")
-        .where(col("category") == "1")
+    histopathology_stats_results = observations_df.where(
+        expr("exists(sub_term_id, term -> term LIKE 'MPATH:%')")
     )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "term_set", array_sort(array_distinct("sub_term_name"))
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "is_normal",
+        (size("term_set") == 1) & expr("exists(term_set, term -> term = 'normal')"),
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "tissue_name", regexp_extract("parameter_name", "(.*)( - .*)", 1)
+    )
+
+    histopathology_significance_scores = observations_df.where(
+        col("parameter_name").endswith("Significance score")
+    ).where(col("biological_sample_group") == "experimental")
 
     histopathology_significance_scores = histopathology_significance_scores.withColumn(
         "tissue_name", regexp_extract("parameter_name", "(.*)( - .*)", 1)
     )
 
-    histopathology_stats_results = observations_df.where(
-        expr("exists(sub_term_id, term -> term LIKE 'MPATH:%')")
-        & ~expr("exists(sub_term_name, term -> term = 'normal')")
+    histopathology_significance_scores = histopathology_significance_scores.withColumn(
+        "significance", when(col("category") == "1", lit(True)).otherwise(lit(False))
     )
-    histopathology_stats_results = histopathology_stats_results.withColumn(
-        "tissue_name", regexp_extract("parameter_name", "(.*)( - .*)", 1)
-    )
+
     significance_stats_join = [
         "pipeline_stable_id",
         "procedure_stable_id",
@@ -1742,11 +1834,16 @@ def _histopathology_stats_results(observations_df: DataFrame):
         "experiment_id",
         "tissue_name",
     ]
+
     histopathology_significance_scores = histopathology_significance_scores.select(
-        significance_stats_join
+        significance_stats_join + ["significance"]
     )
     histopathology_stats_results = histopathology_stats_results.join(
         histopathology_significance_scores, significance_stats_join, "left_outer"
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        "significance",
+        when(col("significance") & ~col("is_normal"), lit(True)).otherwise(lit(False)),
     )
 
     required_stats_columns = STATS_OBSERVATIONS_JOIN + [
@@ -1762,6 +1859,7 @@ def _histopathology_stats_results(observations_df: DataFrame):
         "sub_term_id",
         "sub_term_name",
         "specimen_id",
+        "significance",
     ]
 
     histopathology_stats_results = (
@@ -1800,7 +1898,9 @@ def _histopathology_stats_results(observations_df: DataFrame):
     )
     histopathology_stats_results = histopathology_stats_results.withColumn(
         "mp_term",
-        when(size(col("mp_term.term_id")) == 0, lit(None)).otherwise(col("mp_term")),
+        when(col("significance").isNull() | ~col("significance"), lit(None)).otherwise(
+            col("mp_term")
+        ),
     )
 
     histopathology_stats_results = histopathology_stats_results.withColumn(
@@ -1810,15 +1910,23 @@ def _histopathology_stats_results(observations_df: DataFrame):
         "status", lit("Successful")
     )
     histopathology_stats_results = histopathology_stats_results.withColumn(
-        "p_value", when(col("mp_term").isNull(), lit(1.0)).otherwise(lit(0.0))
+        "p_value",
+        when(col("significance").isNull() | ~col("significance"), lit(1.0)).otherwise(
+            lit(0.0)
+        ),
     )
     histopathology_stats_results = histopathology_stats_results.withColumn(
-        "effect_size", when(col("mp_term").isNull(), lit(0.0)).otherwise(lit(1.0))
+        "effect_size",
+        when(col("significance").isNull() | ~col("significance"), lit(0.0)).otherwise(
+            lit(1.0)
+        ),
     )
 
     histopathology_stats_results = histopathology_stats_results.withColumn(
         "data_type", lit("histopathology")
     )
+    histopathology_stats_results = histopathology_stats_results.drop("significance")
+    histopathology_stats_results = histopathology_stats_results.dropDuplicates()
 
     return histopathology_stats_results
 
