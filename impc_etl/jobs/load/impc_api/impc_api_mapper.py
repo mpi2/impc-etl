@@ -3,7 +3,7 @@ from typing import List, Dict
 import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import arrays_zip, when, col, to_json
+from pyspark.sql.functions import arrays_zip, when, col, to_json, lit
 from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.load import ObservationsMapper
 
@@ -74,7 +74,7 @@ class ApiSpecimenMapper(ApiMapper):
     extra_transformations = [
         lambda df: df.withColumn(
             "specimen_type",
-            when(col("date_of_birth").isNull(), "embryo").otherwhise("mouse"),
+            when(col("date_of_birth").isNull(), lit("embryo")).otherwise(lit("mouse")),
         )
     ]
 
@@ -146,7 +146,7 @@ class ApiObservationMapper(ApiMapper):
                 arrays_zip(
                     col("sub_term_id").alias("ontology_term_id"),
                     col("sub_term_name").alias("ontology_term_name"),
-                    col("sub_term_description").alias(""),
+                    col("sub_term_description").alias("ontology_term_description"),
                 )
             ),
         ).drop(
