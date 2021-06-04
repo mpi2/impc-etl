@@ -3,7 +3,7 @@ from typing import List, Dict
 import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import arrays_zip
+from pyspark.sql.functions import arrays_zip, when, col
 from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.load import ObservationsMapper
 
@@ -65,14 +65,18 @@ class ApiSpecimenMapper(ApiMapper):
         "biological_sample_group",
         "sex",
         "pipeline_stable_id",
-        "developmental_stage_name",
-        "developmental_stage_acc",
         "date_of_birth",
     ]
     column_renaming = {
         "external_sample_id": "source_id",
         "biological_sample_group": "sample_group",
     }
+    extra_transformations = [
+        lambda df: df.withColumn(
+            "specimen_type",
+            when(col("date_of_birth").isNull(), "embryo").otherwhise("mouse"),
+        )
+    ]
 
     def requires(self):
         return [ObservationsMapper()]
@@ -96,6 +100,8 @@ class ApiExperimentMapper(ApiMapper):
         "weight",
         "weight_date",
         "weight_days_old",
+        "developmental_stage_name",
+        "developmental_stage_acc",
     ]
     column_renaming = {
         "experiment_source_id": "source_id",
@@ -104,6 +110,8 @@ class ApiExperimentMapper(ApiMapper):
         "weight": "specimen_weight",
         "weight_date": "specimen_weight_date",
         "weight_days_old": "specimen_weight_age_in_days",
+        "developmental_stage_name": "specimen_developmental_stage_name",
+        "developmental_stage_acc": "specimen_developmental_stage_acc",
     }
 
     def requires(self):
