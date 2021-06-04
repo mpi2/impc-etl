@@ -71,7 +71,8 @@ class ApiPostgreSQLLoader(PySparkTask):
                 ]
             api_df = api_df.dropDuplicates([table_df["id_col"]])
             for table in self.database_tables:
-                api_df = api_df.where(col(table["id_col"]).isNotNull())
+                if table["id_col"] in api_df.columns:
+                    api_df = api_df.where(col(table["id_col"]).isNotNull())
             api_df.write.mode("overwrite").jdbc(
                 self.api_db_jdbc_connection_str,
                 table_df["name"],
