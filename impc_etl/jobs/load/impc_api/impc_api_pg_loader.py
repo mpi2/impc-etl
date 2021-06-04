@@ -70,7 +70,7 @@ class ApiPostgreSQLLoader(PySparkTask):
                     "col_defs"
                 ]
             api_df.where(col(table_df["id_col"]).isNotNull()).dropDuplicates(
-                table_df["id_col"]
+                [table_df["id_col"]]
             ).write.mode("overwrite").jdbc(
                 self.api_db_jdbc_connection_str,
                 table_df["name"],
