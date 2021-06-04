@@ -60,7 +60,7 @@ class ApiSpecimenMapper(ApiMapper):
         "zygosity",
         "production_center",
         "phenotyping_center",
-        "project",
+        "project_name",
         "litter_id",
         "biological_sample_group",
         "sex",
