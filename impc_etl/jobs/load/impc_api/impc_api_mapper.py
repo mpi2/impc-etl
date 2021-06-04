@@ -43,7 +43,7 @@ class ApiMapper(PySparkTask):
             impc_api_df = impc_api_df.withColumnRenamed(col_name, new_col_name)
 
         for col_name, transformation in self.extra_transformations.items():
-            impc_api_df = impc_api_df.withColumn(col_name, transformation)
+            impc_api_df = transformation(impc_api_df)
 
         impc_api_df.write.parquet(output_path)
 
@@ -131,8 +131,11 @@ class ApiObservationMapper(ApiMapper):
         "subterm_name": "ontology_term_name",
         "sub_term_description": "ontology_term_description",
     }
-    extra_transformations = {
-        "ontology_terms": arrays_zip(
-            "ontology_term_id", "ontology_term_name", "ontology_term_description"
+    extra_transformations = [
+        lambda df: df.withColumn(
+            "ontology_terms",
+            arrays_zip(
+                "ontology_term_id", "ontology_term_name", "ontology_term_description"
+            ),
         )
-    }
+    ]
