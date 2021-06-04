@@ -27,7 +27,7 @@ class ApiMapper(PySparkTask):
 
     def app_options(self):
         return [
-            self.input()[0],
+            self.input()[0].path,
             self.output().path,
         ]
 
