@@ -150,11 +150,9 @@ class ApiObservationMapper(ApiMapper):
                 )
             ),
         ).drop(
-            [
-                "ontology_term_id",
-                "ontology_term_name",
-                "ontology_term_description",
-            ]
+            "sub_term_id",
+            "sub_term_name",
+            "sub_term_name",
         )
     ]
 
