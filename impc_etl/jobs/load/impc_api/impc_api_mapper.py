@@ -124,14 +124,14 @@ class ApiObservationMapper(ApiMapper):
         "time_point",
         "discrete_point",
         "increment_value",
-        "subterm_id",
+        "sub_term_id",
         "sub_term_name",
         "sub_term_description",
     ]
     column_renaming = {
         "sequence_id": "parameter_sequence_id",
-        "subterm_id": "ontology_term_id",
-        "subterm_name": "ontology_term_name",
+        "sub_term_id": "ontology_term_id",
+        "sub_term_name": "ontology_term_name",
         "sub_term_description": "ontology_term_description",
     }
     extra_transformations = [
