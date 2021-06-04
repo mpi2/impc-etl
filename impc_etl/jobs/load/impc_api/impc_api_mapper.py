@@ -147,11 +147,17 @@ class ApiObservationMapper(ApiMapper):
             "ontology_terms",
             to_json(
                 arrays_zip(
-                    "ontology_term_id",
-                    "ontology_term_name",
-                    "ontology_term_description",
+                    col("sub_term_id").alias("ontology_term_id"),
+                    col("sub_term_name").alias("ontology_term_name"),
+                    col("sub_term_description").alias(""),
                 )
             ),
+        ).drop(
+            [
+                "ontology_term_id",
+                "ontology_term_name",
+                "ontology_term_description",
+            ]
         )
     ]
 

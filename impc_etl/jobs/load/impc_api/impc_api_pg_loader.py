@@ -69,9 +69,10 @@ class ApiPostgreSQLLoader(PySparkTask):
                 api_table_props["createTableColumnTypes"] = self.database_tables[i][
                     "col_defs"
                 ]
-            api_df.where(col(table_df["id_col"]).isNotNull()).dropDuplicates(
-                [table_df["id_col"]]
-            ).write.mode("overwrite").jdbc(
+            api_df = api_df.dropDuplicates([table_df["id_col"]])
+            for table in self.database_tables:
+                api_df = api_df.where(col(table["id_col"]).isNotNull())
+            api_df.write.mode("overwrite").jdbc(
                 self.api_db_jdbc_connection_str,
                 table_df["name"],
                 properties=properties,
