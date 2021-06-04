@@ -41,6 +41,9 @@ class ApiPostgreSQLLoader(PySparkTask):
         },
     ]
 
+    def output(self):
+        return ImpcConfig.get_target("done!")
+
     def requires(self):
         return [ApiSpecimenMapper(), ApiExperimentMapper(), ApiObservationMapper()]
 
