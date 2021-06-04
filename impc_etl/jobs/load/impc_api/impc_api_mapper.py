@@ -42,7 +42,7 @@ class ApiMapper(PySparkTask):
         for col_name, new_col_name in self.column_renaming.items():
             impc_api_df = impc_api_df.withColumnRenamed(col_name, new_col_name)
 
-        for col_name, transformation in self.extra_transformations.items():
+        for transformation in self.extra_transformations:
             impc_api_df = transformation(impc_api_df)
 
         impc_api_df.write.parquet(output_path)
