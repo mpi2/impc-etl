@@ -2,6 +2,11 @@ from typing import Union
 
 from luigi.contrib.hdfs import HdfsTarget
 
+from impc_etl.jobs.load.impc_api.impc_api_mapper import (
+    ApiSpecimenMapper,
+    ApiExperimentMapper,
+    ApiObservationMapper,
+)
 from impc_etl.workflow.load import *
 from impc_etl.jobs.extract.colony_tracking_extractor import *
 from impc_etl.jobs.extract.gene_production_status_extractor import (
@@ -368,3 +373,10 @@ class ImpcIndexDataRelease(luigi.Task):
                     )
                 )
         yield tasks
+
+
+class ImpcApiDatasource(luigi.Task):
+    name = "IMPC_Generate_API_Datasource"
+
+    def requires(self):
+        return [ApiSpecimenMapper(), ApiExperimentMapper(), ApiObservationMapper()]
