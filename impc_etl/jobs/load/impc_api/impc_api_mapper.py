@@ -3,7 +3,7 @@ from typing import List, Dict
 import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import arrays_zip, when, col
+from pyspark.sql.functions import arrays_zip, when, col, to_json
 from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.load import ObservationsMapper
 
@@ -145,8 +145,12 @@ class ApiObservationMapper(ApiMapper):
     extra_transformations = [
         lambda df: df.withColumn(
             "ontology_terms",
-            arrays_zip(
-                "ontology_term_id", "ontology_term_name", "ontology_term_description"
+            to_json(
+                arrays_zip(
+                    "ontology_term_id",
+                    "ontology_term_name",
+                    "ontology_term_description",
+                )
             ),
         )
     ]
