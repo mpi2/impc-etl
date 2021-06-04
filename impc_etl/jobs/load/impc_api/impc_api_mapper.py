@@ -120,7 +120,7 @@ class ApiObservationMapper(ApiMapper):
         "sequence_id",
         "data_point",
         "category",
-        "text",
+        "text_value",
         "time_point",
         "discrete_point",
         "increment_value",
