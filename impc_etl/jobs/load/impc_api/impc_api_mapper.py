@@ -18,7 +18,7 @@ class ApiMapper(PySparkTask):
     output_path = luigi.Parameter()
 
     def requires(self):
-        return [self.primary_dependency]
+        return []
 
     def output(self):
         return ImpcConfig().get_target(
@@ -50,7 +50,6 @@ class ApiMapper(PySparkTask):
 
 class ApiSpecimenMapper(ApiMapper):
     output_entity_name = "specimen"
-    primary_dependency = ObservationsMapper()
     column_select = [
         "specimen_id",
         "external_sample_id",
@@ -75,10 +74,12 @@ class ApiSpecimenMapper(ApiMapper):
         "biological_sample_group": "sample_group",
     }
 
+    def requires(self):
+        return [ObservationsMapper()]
+
 
 class ApiExperimentMapper(ApiMapper):
     output_entity_name = "experiment"
-    primary_dependency = ObservationsMapper()
     column_select = [
         "experiment_id",
         "specimen_id",
@@ -105,10 +106,12 @@ class ApiExperimentMapper(ApiMapper):
         "weight_days_old": "specimen_weight_age_in_days",
     }
 
+    def requires(self):
+        return [ObservationsMapper()]
+
 
 class ApiObservationMapper(ApiMapper):
     output_entity_name = "observation"
-    primary_dependency = ObservationsMapper()
     column_select = [
         "observation_id",
         "experiment_id",
@@ -139,3 +142,6 @@ class ApiObservationMapper(ApiMapper):
             ),
         )
     ]
+
+    def requires(self):
+        return [ObservationsMapper()]
