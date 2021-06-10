@@ -1168,17 +1168,17 @@ def _fertility_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
         ["IMPC_FER_001_001", "IMPC_FER_019_001"]
     )
 
-    mp_chooser = (
-        pipeline_df.select(
-            col("pipelineKey").alias("pipeline_stable_id"),
-            col("procedure.procedureKey").alias("procedure_stable_id"),
-            col("parameter.parameterKey").alias("parameter_stable_id"),
-            col("parammpterm.optionText").alias("category"),
-            col("termAcc"),
-        )
-        .withColumn("category", lower(col("category")))
-        .distinct()
-    )
+    # mp_chooser = (
+    #     pipeline_df.select(
+    #         col("pipelineKey").alias("pipeline_stable_id"),
+    #         col("procedure.procedureKey").alias("procedure_stable_id"),
+    #         col("parameter.parameterKey").alias("parameter_stable_id"),
+    #         col("parammpterm.optionText").alias("category"),
+    #         col("termAcc"),
+    #     )
+    #     .withColumn("category", lower(col("category")))
+    #     .distinct()
+    # )
 
     required_stats_columns = STATS_OBSERVATIONS_JOIN + [
         "sex",
@@ -1215,15 +1215,25 @@ def _fertility_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
     )
     fertility_stats_results = fertility_stats_results.withColumn("p_value", lit(0.0))
 
-    fertility_stats_results = fertility_stats_results.join(
-        mp_chooser,
-        [
-            "pipeline_stable_id",
-            "procedure_stable_id",
-            "parameter_stable_id",
-            "category",
-        ],
-        "left_outer",
+    # fertility_stats_results = fertility_stats_results.join(
+    #     mp_chooser,
+    #     [
+    #         "pipeline_stable_id",
+    #         "procedure_stable_id",
+    #         "parameter_stable_id",
+    #         "category",
+    #     ],
+    #     "left_outer",
+    # )
+
+    fertility_stats_results = fertility_stats_results.withColumn(
+        "termAcc",
+        when(
+            col("category") == "Infertile",
+            when(
+                col("parameter_stable_id") == "IMPC_FER_001_001", lit("MP:0001925")
+            ).otherwise(lit("MP:0001926")),
+        ).otherwise(lit(None)),
     )
 
     fertility_stats_results = fertility_stats_results.groupBy(
