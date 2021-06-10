@@ -448,10 +448,10 @@ class GeneCoreLoader(SparkSubmitTask):
     def requires(self):
         return [
             GeneExtractor(
-                imits_tsv_path=self.imits_tsv_path, output_path=self.output_path
+                imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
             ),
             AlleleExtractor(
-                imits_tsv_path=self.imits_tsv_path, output_path=self.output_path
+                imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
             ),
             MGIHomoloGeneExtractor(
                 mgi_input_path=self.mgi_homologene_input_path,
