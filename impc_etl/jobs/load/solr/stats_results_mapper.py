@@ -1229,7 +1229,7 @@ def _fertility_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
     fertility_stats_results = fertility_stats_results.withColumn(
         "termAcc",
         when(
-            col("category") == "Infertile",
+            col("category") == "infertile",
             when(
                 col("parameter_stable_id") == "IMPC_FER_001_001", lit("MP:0001925")
             ).otherwise(lit("MP:0001926")),
