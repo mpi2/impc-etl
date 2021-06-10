@@ -413,7 +413,6 @@ class MPCoreLoader(SparkSubmitTask):
 class GeneCoreLoader(SparkSubmitTask):
     name = "IMPC_Gene_Core_Loader"
     app = "impc_etl/jobs/load/solr/gene_mapper.py"
-    imits_tsv_path = luigi.Parameter()
     mgi_homologene_input_path = luigi.Parameter()
     mgi_mrk_list_input_path = luigi.Parameter()
     embryo_data_json_path = luigi.Parameter()
