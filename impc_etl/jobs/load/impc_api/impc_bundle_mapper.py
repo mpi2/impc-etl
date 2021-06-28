@@ -61,7 +61,7 @@ class ImpcBundleMapper(PySparkTask):
             self.input()[6].path,
             self.input()[7].path,
             self.input()[8].path,
-            self.input()[8].path,
+            self.input()[9].path,
             self.input()[10].path,
             self.output().path,
         ]
