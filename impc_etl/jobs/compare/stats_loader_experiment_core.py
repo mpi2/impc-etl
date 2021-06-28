@@ -211,7 +211,7 @@ if __name__ == "__main__":
     parquet_path = "/nfs/nobackup/spot/mouseinformatics/federico/snapshot/dr11.0/experiment_core_parquet"
     json_path = "/nfs/nobackup/spot/mouseinformatics/federico/snapshot/dr11.0/experiment_core_json"
     get_solr_core(
-        "http://ves-ebi-d0.ebi.ac.uk:8986/solr/experiment/",
+        "http://wp-np3-83.ebi.ac.uk:8986/solr/experiment/",
         solr_query,
         "experiment",
         json_path,
