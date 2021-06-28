@@ -67,6 +67,7 @@ class ImpcBundleMapper(PySparkTask):
         ]
 
     def main(self, sc, *argv):
+        print(argv)
         imits_gene_parquet_path = argv[1]
         imits_allele_parquet_path = argv[2]
         mgi_homologene_report_parquet_path = argv[3]
