@@ -115,6 +115,7 @@ class ImpcBundleMapper(PySparkTask):
             stats_results_df,
             ontology_metadata_df,
             gene_production_status_df,
+            False,
         )
         genotype_phenotype_df = genotype_phenotype_df.withColumnRenamed(
             "marker_accession_id", "mgi_accession_id"
