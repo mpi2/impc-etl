@@ -47,7 +47,7 @@ class ImpcBundleMapper(PySparkTask):
         ]
 
     def output(self):
-        return ImpcConfig().get_target(f"{self.output_path}_gene_bundle_parquet")
+        return ImpcConfig().get_target(f"{self.output_path}gene_bundle_parquet")
 
     def app_options(self):
         return [
@@ -67,20 +67,19 @@ class ImpcBundleMapper(PySparkTask):
         ]
 
     def main(self, sc, *argv):
-        print(argv)
-        imits_gene_parquet_path = argv[1]
-        imits_allele_parquet_path = argv[2]
-        mgi_homologene_report_parquet_path = argv[3]
-        mgi_mrk_list_report_parquet_path = argv[4]
-        embryo_data_json_path = argv[5]
-        observations_parquet_path = argv[6]
-        stats_results_parquet_path = argv[7]
-        ontology_metadata_parquet_path = argv[8]
-        gene_production_status_path = argv[9]
-        genotype_phenotype_parquet_path = argv[10]
-        impc_images_parquet_path = argv[11]
-        product_parquet_path = argv[12]
-        output_path = argv[13]
+        imits_gene_parquet_path = argv[0]
+        imits_allele_parquet_path = argv[1]
+        mgi_homologene_report_parquet_path = argv[2]
+        mgi_mrk_list_report_parquet_path = argv[3]
+        embryo_data_json_path = argv[4]
+        observations_parquet_path = argv[5]
+        stats_results_parquet_path = argv[6]
+        ontology_metadata_parquet_path = argv[7]
+        gene_production_status_path = argv[8]
+        genotype_phenotype_parquet_path = argv[9]
+        impc_images_parquet_path = argv[10]
+        product_parquet_path = argv[11]
+        output_path = argv[12]
 
         spark = SparkSession.builder.getOrCreate()
         imits_gene_df = spark.read.parquet(imits_gene_parquet_path).select(
