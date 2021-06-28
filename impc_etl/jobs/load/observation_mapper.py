@@ -958,10 +958,6 @@ def get_body_weight_curve_observations(
             "parameter_name", lit(parameter_data["parameter_name"])
         )
         bwt_observations = bwt_observations.withColumn(
-            "experiment_id",
-            md5(concat(lit(parameter_stable_id + "_"), col("experiment_id"))),
-        )
-        bwt_observations = bwt_observations.withColumn(
             "observation_id",
             md5(concat(lit(parameter_stable_id + "_"), col("observation_id"))),
         )
@@ -973,6 +969,10 @@ def get_body_weight_curve_observations(
         bwt_observations = bwt_observations.withColumn(
             "metadata",
             array(concat(lit("Source experiment id: "), col("experiment_id"))),
+        )
+        bwt_observations = bwt_observations.withColumn(
+            "experiment_id",
+            md5(concat(lit(parameter_stable_id + "_"), col("experiment_id"))),
         )
 
         bwt_observations = bwt_observations.withColumn(
