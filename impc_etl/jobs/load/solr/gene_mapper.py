@@ -547,18 +547,18 @@ def _get_datasets_by_gene(
         "gene_accession_id", "mgi_accession_id"
     )
 
-    to_json_udf = functions.udf(
-        lambda row: None
-        if row is None
-        else json.dumps(
-            [{key: value for key, value in item.asDict().items()} for item in row]
-        ),
-        StringType(),
-    )
-    mgi_datasets_df = mgi_datasets_df.withColumn(
-        "datasets_raw_data", to_json_udf("datasets_raw_data")
-    )
     if compress:
+        to_json_udf = functions.udf(
+            lambda row: None
+            if row is None
+            else json.dumps(
+                [{key: value for key, value in item.asDict().items()} for item in row]
+            ),
+            StringType(),
+        )
+        mgi_datasets_df = mgi_datasets_df.withColumn(
+            "datasets_raw_data", to_json_udf("datasets_raw_data")
+        )
         compress_and_encode = functions.udf(_compress_and_encode, StringType())
         mgi_datasets_df = mgi_datasets_df.withColumn(
             "datasets_raw_data", compress_and_encode("datasets_raw_data")
