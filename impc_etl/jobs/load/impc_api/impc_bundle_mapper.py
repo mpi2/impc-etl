@@ -32,10 +32,11 @@ class ImpcBundleMapper(PySparkTask):
     mongodb_database = luigi.Parameter()
     mongodb_collection = luigi.Parameter()
     output_path = luigi.Parameter()
+    packages = "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1"
 
     @property
     def packages(self):
-        return "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1"
+        return super().packages + super(PySparkTask, self).packages
 
     def requires(self):
         return [
