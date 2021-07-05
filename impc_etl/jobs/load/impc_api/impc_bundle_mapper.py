@@ -33,6 +33,10 @@ class ImpcBundleMapper(PySparkTask):
     mongodb_collection = luigi.Parameter()
     output_path = luigi.Parameter()
     packages = "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1"
+    mongodb_connection_uri = luigi.Parameter()
+    mongodb_database = luigi.Parameter()
+    mongodb_collection = luigi.Parameter()
+    mongodb_replica_set = luigi.Parameter()
 
     @property
     def packages(self):
@@ -171,7 +175,7 @@ class ImpcBundleMapper(PySparkTask):
 
         gene_df = gene_df.join(products_by_gene, "mgi_accession_id", "left_outer")
         gene_df.write.format("mongo").mode("append").option(
-            "database",
-            str(self.mongodb_database),
-        ).option("collection", str(self.mongodb_collection)).save()
+            "spark.mongodb.output.uri",
+            f"${self.mongodb_connection_uri}/${self.mongodb_database}.${self.mongodb_collection}",
+        ).save()
         gene_df.write.parquet(output_path)
