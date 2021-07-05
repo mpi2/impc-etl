@@ -176,6 +176,6 @@ class ImpcBundleMapper(PySparkTask):
         gene_df = gene_df.join(products_by_gene, "mgi_accession_id", "left_outer")
         gene_df.write.format("mongo").mode("append").option(
             "spark.mongodb.output.uri",
-            f"${self.mongodb_connection_uri}/${self.mongodb_database}.${self.mongodb_collection}",
+            f"{self.mongodb_connection_uri}/{self.mongodb_database}.{self.mongodb_collection}",
         ).save()
         gene_df.write.parquet(output_path)
