@@ -169,8 +169,8 @@ class ImpcBundleMapper(PySparkTask):
         )
 
         gene_df = gene_df.join(products_by_gene, "mgi_accession_id", "left_outer")
-        gene_df.write.parquet(output_path)
         gene_df.write.format("mongo").mode("append").option(
             "database",
             str(self.mongodb_database),
         ).option("collection", str(self.mongodb_collection)).save()
+        gene_df.write.parquet(output_path)
