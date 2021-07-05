@@ -29,10 +29,8 @@ from impc_etl.workflow.load import (
 class ImpcBundleMapper(PySparkTask):
     name = "IMPC_Bundle_Mapper"
     embryo_data_json_path = luigi.Parameter()
-    mongodb_connection_uri = luigi.Parameter()
     mongodb_database = luigi.Parameter()
     mongodb_collection = luigi.Parameter()
-    mongodb_replica_set = luigi.Parameter()
     output_path = luigi.Parameter()
 
     @property
@@ -88,17 +86,8 @@ class ImpcBundleMapper(PySparkTask):
         impc_images_parquet_path = argv[10]
         product_parquet_path = argv[11]
         output_path = argv[12]
-        mongo_connection = f"${self.mongodb_connection_uri}/${self.mongodb_database}.${self.mongodb_collection}?replicaSet=${self.mongodb_replica_set}"
+        spark = SparkSession(sc)
 
-        spark = (
-            SparkSession.builder.config(
-                "spark.mongodb.input.uri",
-                mongo_connection,
-            )
-            .config("spark.mongodb.output.uri", mongo_connection)
-            .config("spark.jars.packages", self.packages)
-            .getOrCreate()
-        )
         imits_gene_df = spark.read.parquet(imits_gene_parquet_path).select(
             IMITS_GENE_COLUMNS
         )
@@ -181,4 +170,7 @@ class ImpcBundleMapper(PySparkTask):
 
         gene_df = gene_df.join(products_by_gene, "mgi_accession_id", "left_outer")
         gene_df.write.parquet(output_path)
-        gene_df.write.format("mongo").mode("append").save()
+        gene_df.write.format("mongo").mode("append").option(
+            "database",
+            str(self.mongodb_database),
+        ).option("collection", str(self.mongodb_collection)).save()
