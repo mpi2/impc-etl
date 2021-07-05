@@ -96,6 +96,7 @@ class ImpcBundleMapper(PySparkTask):
                 mongo_connection,
             )
             .config("spark.mongodb.output.uri", mongo_connection)
+            .config("spark.jars.packages", self.packages)
             .getOrCreate()
         )
         imits_gene_df = spark.read.parquet(imits_gene_parquet_path).select(
