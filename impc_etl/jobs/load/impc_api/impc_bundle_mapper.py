@@ -25,6 +25,19 @@ from impc_etl.workflow.load import (
     ImpcImagesCoreLoader,
 )
 
+EXCLUDE_PRODUCT_COLUMNS = [
+    "marker_mgi_accession_id",
+    "marker_type",
+    "marker_name",
+    "marker_synonym",
+    "allele_mgi_accession_id",
+    "allele_symbol",
+    "allele_has_issue",
+    "allele_synonym",
+    "associated_product_colony_name",
+    "associated_products_vector_names",
+]
+
 
 class ImpcBundleMapper(PySparkTask):
     name = "IMPC_Bundle_Mapper"
@@ -128,6 +141,9 @@ class ImpcBundleMapper(PySparkTask):
             gene_production_status_df,
             False,
         )
+        gene_df = gene_df.withColumnRenamed(
+            "datasets_raw_data", "gene_statistical_results"
+        )
         genotype_phenotype_df = genotype_phenotype_df.withColumnRenamed(
             "marker_accession_id", "mgi_accession_id"
         )
@@ -140,7 +156,7 @@ class ImpcBundleMapper(PySparkTask):
                         if col_name != "mgi_accession_id"
                     ]
                 )
-            ).alias("significant_phenotype_associations")
+            ).alias("gene_phenotype_associations")
         )
         gene_df = gene_df.join(gp_by_gene_df, "mgi_accession_id", "left_outer")
 
@@ -157,7 +173,7 @@ class ImpcBundleMapper(PySparkTask):
                         if col_name != "mgi_accession_id"
                     ]
                 )
-            ).alias("impc_images")
+            ).alias("gene_images")
         )
         gene_df = gene_df.join(images_by_gene_df, "mgi_accession_id", "left_outer")
 
@@ -167,7 +183,8 @@ class ImpcBundleMapper(PySparkTask):
                     *[
                         col_name
                         for col_name in product_df.columns
-                        if col_name != "mgi_accession_id"
+                        if col_name
+                        not in ["mgi_accession_id"] + EXCLUDE_PRODUCT_COLUMNS
                     ]
                 )
             ).alias("gene_products")
