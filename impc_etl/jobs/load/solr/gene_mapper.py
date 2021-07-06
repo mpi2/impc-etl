@@ -9,7 +9,15 @@ import sys
 
 import requests
 from pyspark.sql import SparkSession, functions
-from pyspark.sql.functions import count, col, collect_set, lit, when
+from pyspark.sql.functions import (
+    count,
+    col,
+    collect_set,
+    lit,
+    when,
+    array_except,
+    array,
+)
 from pyspark.sql.types import StringType, DoubleType
 
 from impc_etl.config.constants import Constants
@@ -507,6 +515,12 @@ def _get_datasets_by_gene(
     datasets_df = datasets_df.withColumnRenamed(
         "top_level_mp_term_id", "top_level_phenotype_term_id"
     )
+
+    datasets_df = datasets_df.withColumn(
+        "top_level_mp_term_name",
+        array_except(col("top_level_mp_term_name"), array(lit(None).cast("string"))),
+    )
+
     datasets_df = datasets_df.withColumnRenamed(
         "top_level_mp_term_name", "top_level_phenotype_term_name"
     )
