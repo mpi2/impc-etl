@@ -36,6 +36,7 @@ EXCLUDE_PRODUCT_COLUMNS = [
     "allele_synonym",
     "associated_product_colony_name",
     "associated_products_vector_names",
+    "loa_assays",
 ]
 
 
