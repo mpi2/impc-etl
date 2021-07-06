@@ -1,8 +1,7 @@
 import luigi
 from luigi.contrib.spark import PySparkTask
 from typing import List, Dict
-from pyspark.sql.functions import collect_set, struct
-
+from pyspark.sql.functions import collect_set, struct, lit
 
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
@@ -144,6 +143,9 @@ class ImpcBundleMapper(PySparkTask):
         )
         gene_df = gene_df.withColumnRenamed(
             "datasets_raw_data", "gene_statistical_results"
+        )
+        gene_df = gene_df.withColumn(
+            "_class", lit("org.mousephenotype.api.models.GeneBundle")
         )
         genotype_phenotype_df = genotype_phenotype_df.withColumnRenamed(
             "marker_accession_id", "mgi_accession_id"
