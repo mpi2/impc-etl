@@ -31,8 +31,6 @@ class ImpcStatsBundleMapper(PySparkTask):
     mongodb_replica_set = luigi.Parameter()
     threei_stats_results_csv = luigi.Parameter()
     mpath_metadata_csv_path = luigi.Parameter()
-    raw_data_in_output = luigi.Parameter()
-    extract_windowed_data = luigi.Parameter()
 
     @property
     def packages(self):
@@ -63,24 +61,20 @@ class ImpcStatsBundleMapper(PySparkTask):
             self.input()[6].path,
             self.threei_stats_results_csv,
             self.mpath_metadata_csv_path,
-            self.raw_data_in_output,
-            self.extract_windowed_data,
             self.output().path,
         ]
 
     def main(self, sc, *argv):
-        open_stats_parquet_path = argv[1]
-        observations_parquet_path = argv[2]
-        ontology_parquet_path = argv[3]
-        pipeline_parquet_path = argv[4]
-        pipeline_core_parquet_path = argv[5]
-        allele_parquet_path = argv[6]
-        mp_chooser_path = argv[7]
-        threei_parquet_path = argv[8]
-        mpath_metadata_path = argv[9]
-        raw_data_in_output = argv[10]
-        extract_windowed_data = argv[11] == "true"
-        output_path = argv[12]
+        open_stats_parquet_path = argv[0]
+        observations_parquet_path = argv[1]
+        ontology_parquet_path = argv[2]
+        pipeline_parquet_path = argv[3]
+        pipeline_core_parquet_path = argv[4]
+        allele_parquet_path = argv[5]
+        mp_chooser_path = argv[6]
+        threei_parquet_path = argv[7]
+        mpath_metadata_path = argv[8]
+        output_path = argv[9]
 
         spark = SparkSession(sc)
         open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
