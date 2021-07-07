@@ -828,6 +828,9 @@ def main(argv):
             if col_name != "observations_window_weight"
         ]
         stats_results_df = open_stats_df.select(*stats_results_column_list)
+    elif raw_data_in_output == "bundled":
+        stats_results_column_list = STATS_RESULTS_COLUMNS + ["raw_data"]
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
     else:
         stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
     for col_name in stats_results_df.columns:

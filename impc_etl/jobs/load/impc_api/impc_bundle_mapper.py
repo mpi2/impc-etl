@@ -62,7 +62,7 @@ class ImpcBundleMapper(PySparkTask):
             MGIHomoloGeneExtractor(),
             MGIMrkListExtractor(),
             ObservationsMapper(),
-            StatsResultsCoreLoader(),
+            StatsResultsCoreLoader(raw_data_in_output="bundled"),
             OntologyMetadataExtractor(),
             GeneProductionStatusExtractor(),
             GenotypePhenotypeCoreLoader(),
@@ -199,5 +199,11 @@ class ImpcBundleMapper(PySparkTask):
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
             "collection", str(self.mongodb_collection)
+        ).save()
+        stats_results_df.write.format("mongo").mode("append").option(
+            "spark.mongodb.output.uri",
+            f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
+        ).option("database", str(self.mongodb_database)).option(
+            "collection", "statistical_results"
         ).save()
         gene_df.write.parquet(output_path)
