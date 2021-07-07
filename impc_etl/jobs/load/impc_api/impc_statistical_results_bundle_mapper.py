@@ -112,7 +112,7 @@ class ImpcStatsBundleMapper(PySparkTask):
             "spark.mongodb.output.uri",
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
-            "collection", self.mongodb_collection
+            "collection", self.mongodb_stats_collection
         ).save()
         output_cols = ["status"]
         data = [("Success")]
