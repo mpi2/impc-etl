@@ -787,7 +787,7 @@ def main(argv):
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_id", "observation_ids"
     )
-    if raw_data_in_output == "include":
+    if raw_data_in_output == "include" or raw_data_in_output == "bundled":
         specimen_dobs = (
             observations_df.select("external_sample_id", "date_of_birth")
             .dropDuplicates()
