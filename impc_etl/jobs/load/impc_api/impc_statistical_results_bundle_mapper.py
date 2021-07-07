@@ -102,10 +102,11 @@ class ImpcStatsBundleMapper(PySparkTask):
             mpath_metadata_df,
             mp_chooser,
             False,
-            "bundled",
+            "include",
         )
 
         stats_results_column_list = STATS_RESULTS_COLUMNS + ["raw_data"]
+        stats_results_column_list.remove("observation_ids")
         stats_results_df = open_stats_df.select(*stats_results_column_list)
         if "raw_data" not in stats_results_df.columns:
             stats_results_df.printSchema()
