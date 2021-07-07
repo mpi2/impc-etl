@@ -91,7 +91,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         ][1]
         mp_chooser = json.loads(mp_chooser_txt)
 
-        stats_results_df = get_stats_results_core(
+        open_stats_df = get_stats_results_core(
             open_stats_complete_df,
             ontology_df,
             allele_df,
@@ -106,7 +106,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         )
 
         stats_results_column_list = STATS_RESULTS_COLUMNS + ["raw_data"]
-        stats_results_df = stats_results_df.select(*stats_results_column_list)
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
         if "raw_data" not in stats_results_df.columns:
             stats_results_df.printSchema()
             raise Exception
