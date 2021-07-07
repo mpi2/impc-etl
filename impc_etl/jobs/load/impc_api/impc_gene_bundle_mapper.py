@@ -39,7 +39,7 @@ EXCLUDE_PRODUCT_COLUMNS = [
 ]
 
 
-class ImpcBundleMapper(PySparkTask):
+class ImpcGeneBundleMapper(PySparkTask):
     name = "IMPC_Bundle_Mapper"
     embryo_data_json_path = luigi.Parameter()
     mongodb_database = luigi.Parameter()
@@ -48,7 +48,7 @@ class ImpcBundleMapper(PySparkTask):
     packages = "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1"
     mongodb_connection_uri = luigi.Parameter()
     mongodb_database = luigi.Parameter()
-    mongodb_collection = luigi.Parameter()
+    mongodb_genes_collection = luigi.Parameter()
     mongodb_replica_set = luigi.Parameter()
 
     @property
@@ -199,11 +199,5 @@ class ImpcBundleMapper(PySparkTask):
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
             "collection", str(self.mongodb_collection)
-        ).save()
-        stats_results_df.write.format("mongo").mode("append").option(
-            "spark.mongodb.output.uri",
-            f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
-        ).option("database", str(self.mongodb_database)).option(
-            "collection", "statistical_results"
         ).save()
         gene_df.write.parquet(output_path)

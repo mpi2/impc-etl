@@ -317,6 +317,7 @@ def main(argv):
     raw_data_in_output = argv[10]
     extract_windowed_data = argv[11] == "true"
     output_path = argv[12]
+
     spark = SparkSession.builder.getOrCreate()
     open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
     ontology_df = spark.read.parquet(ontology_parquet_path)
@@ -325,10 +326,64 @@ def main(argv):
     pipeline_core_df = spark.read.parquet(pipeline_core_parquet_path)
     observations_df = spark.read.parquet(observations_parquet_path)
     threei_df = spark.read.csv(threei_parquet_path, header=True)
-    threei_df = standardize_threei_schema(threei_df)
     mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
+
     mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path).collect()[0][1]
     mp_chooser = json.loads(mp_chooser_txt)
+
+    open_stats_df = get_stats_results_core(
+        open_stats_complete_df,
+        ontology_df,
+        allele_df,
+        pipeline_df,
+        pipeline_core_df,
+        observations_df,
+        threei_df,
+        mpath_metadata_df,
+        mp_chooser,
+        extract_windowed_data,
+        raw_data_in_output,
+    )
+
+    if extract_windowed_data:
+        stats_results_column_list = STATS_RESULTS_COLUMNS + [
+            col_name
+            for col_name in WINDOW_COLUMNS
+            if col_name != "observations_window_weight"
+        ]
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
+    elif raw_data_in_output == "bundled":
+        stats_results_column_list = STATS_RESULTS_COLUMNS + ["raw_data"]
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
+        stats_results_df = stats_results_df.repartition(20000)
+    else:
+        stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
+    for col_name in stats_results_df.columns:
+        if dict(stats_results_df.dtypes)[col_name] == "null":
+            stats_results_df = stats_results_df.withColumn(
+                col_name, lit(None).astype(StringType())
+            )
+    stats_results_df.write.parquet(output_path)
+    if raw_data_in_output == "include":
+        raw_data_df = open_stats_df.select("doc_id", "raw_data")
+        raw_data_df.distinct().write.parquet(output_path + "_raw_data")
+
+
+def get_stats_results_core(
+    open_stats_complete_df,
+    ontology_df,
+    allele_df,
+    pipeline_df,
+    pipeline_core_df,
+    observations_df,
+    threei_df,
+    mpath_metadata_df,
+    mp_chooser,
+    extract_windowed_data=False,
+    raw_data_in_output="include",
+):
+    threei_df = standardize_threei_schema(threei_df)
+
     embryo_stat_packets = open_stats_complete_df.where(
         (
             (col("procedure_group").contains("IMPC_GPL"))
@@ -824,28 +879,7 @@ def main(argv):
             lit("embryo"),
         ).otherwise(col("data_type")),
     )
-    if extract_windowed_data:
-        stats_results_column_list = STATS_RESULTS_COLUMNS + [
-            col_name
-            for col_name in WINDOW_COLUMNS
-            if col_name != "observations_window_weight"
-        ]
-        stats_results_df = open_stats_df.select(*stats_results_column_list)
-    elif raw_data_in_output == "bundled":
-        stats_results_column_list = STATS_RESULTS_COLUMNS + ["raw_data"]
-        stats_results_df = open_stats_df.select(*stats_results_column_list)
-        stats_results_df = stats_results_df.repartition(20000)
-    else:
-        stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
-    for col_name in stats_results_df.columns:
-        if dict(stats_results_df.dtypes)[col_name] == "null":
-            stats_results_df = stats_results_df.withColumn(
-                col_name, lit(None).astype(StringType())
-            )
-    stats_results_df.write.parquet(output_path)
-    if raw_data_in_output == "include":
-        raw_data_df = open_stats_df.select("doc_id", "raw_data")
-        raw_data_df.distinct().write.parquet(output_path + "_raw_data")
+    return open_stats_df
 
 
 def _compress_and_encode(json_text):
