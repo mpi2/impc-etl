@@ -13,7 +13,10 @@ from impc_etl.jobs.extract.colony_tracking_extractor import *
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
 )
-from impc_etl.jobs.load.impc_api.impc_gene_bundle_mapper import ImpcBundleMapper
+from impc_etl.jobs.load.impc_api.impc_gene_bundle_mapper import ImpcGeneBundleMapper
+from impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper import (
+    ImpcStatsBundleMapper,
+)
 
 
 class ImpcEtl(luigi.Task):
