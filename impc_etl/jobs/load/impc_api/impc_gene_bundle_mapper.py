@@ -43,11 +43,9 @@ class ImpcGeneBundleMapper(PySparkTask):
     name = "IMPC_Bundle_Mapper"
     embryo_data_json_path = luigi.Parameter()
     mongodb_database = luigi.Parameter()
-    mongodb_collection = luigi.Parameter()
     output_path = luigi.Parameter()
     packages = "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1"
     mongodb_connection_uri = luigi.Parameter()
-    mongodb_database = luigi.Parameter()
     mongodb_genes_collection = luigi.Parameter()
     mongodb_replica_set = luigi.Parameter()
 
@@ -198,6 +196,6 @@ class ImpcGeneBundleMapper(PySparkTask):
             "spark.mongodb.output.uri",
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
-            "collection", str(self.mongodb_collection)
+            "collection", str(self.mongodb_genes_collection)
         ).save()
         gene_df.write.parquet(output_path)
