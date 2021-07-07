@@ -627,9 +627,14 @@ def get_stats_results_core(
     open_stats_df = open_stats_df.withColumnRenamed("mp_term", "full_mp_term")
     open_stats_df = open_stats_df.withColumn(
         "full_mp_term",
-        when(col("full_mp_term").isNull(), array(col("collapsed_mp_term"))).otherwise(
-            col("full_mp_term")
-        ),
+        when(
+            col("full_mp_term").isNull() & col("collapsed_mp_term").isNotNull(),
+            array(col("collapsed_mp_term")),
+        )
+        .when(
+            col("full_mp_term").isNull() & col("collapsed_mp_term").isNull(), lit(None)
+        )
+        .otherwise(col("full_mp_term")),
     )
 
     if extract_windowed_data:

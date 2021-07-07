@@ -107,6 +107,9 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         stats_results_column_list = STATS_RESULTS_COLUMNS + ["raw_data"]
         stats_results_df = stats_results_df.select(*stats_results_column_list)
+        if "raw_data" not in stats_results_df.columns:
+            stats_results_df.printSchema()
+            raise Exception
 
         stats_results_df.write.format("mongo").mode("append").option(
             "spark.mongodb.output.uri",
