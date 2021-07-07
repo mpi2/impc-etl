@@ -798,7 +798,10 @@ def main(argv):
             row["external_sample_id"]: row["date_of_birth"] for row in specimen_dob_dict
         }
         open_stats_df = _parse_raw_data(
-            open_stats_df, extract_windowed_data, specimen_dob_dict
+            open_stats_df,
+            extract_windowed_data,
+            specimen_dob_dict,
+            raw_data_in_output != "bundled",
         )
     open_stats_df = open_stats_df.withColumn(
         "data_type",
@@ -851,7 +854,9 @@ def _compress_and_encode(json_text):
         return str(base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))), "utf-8")
 
 
-def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
+def _parse_raw_data(
+    open_stats_df, extract_windowed_data, specimen_dob_dict, compress=True
+):
     compress_and_encode = udf(_compress_and_encode, StringType())
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_biological_sample_group", "biological_sample_group"
@@ -987,9 +992,10 @@ def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
         open_stats_df = open_stats_df.withColumn(
             "raw_data", regexp_replace("raw_data", f'"{idx}":', f'"{col_name}":')
         )
-    open_stats_df = open_stats_df.withColumn(
-        "raw_data", compress_and_encode("raw_data")
-    )
+    if compress:
+        open_stats_df = open_stats_df.withColumn(
+            "raw_data", compress_and_encode("raw_data")
+        )
     return open_stats_df
 
 
