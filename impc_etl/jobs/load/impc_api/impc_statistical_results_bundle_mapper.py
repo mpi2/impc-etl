@@ -25,7 +25,6 @@ class ImpcStatsBundleMapper(PySparkTask):
     name = "IMPC_Stats_Bundle_Mapper"
     embryo_data_json_path = luigi.Parameter()
     mongodb_database = luigi.Parameter()
-    mongodb_collection = luigi.Parameter()
     output_path = luigi.Parameter()
     mongodb_connection_uri = luigi.Parameter()
     mongodb_stats_collection = luigi.Parameter()
