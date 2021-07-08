@@ -107,7 +107,7 @@ class ImpcStatsBundleMapper(PySparkTask):
             "include",
         )
 
-        stats_results_column_list = STATS_RESULTS_COLUMNS + ["raw_data"]
+        stats_results_column_list = STATS_RESULTS_COLUMNS
         stats_results_column_list.remove("observation_ids")
         stats_results_df = open_stats_df.select(*stats_results_column_list)
         for col_name in stats_results_df.columns:
@@ -116,6 +116,8 @@ class ImpcStatsBundleMapper(PySparkTask):
                     col_name, lit(None).astype(StringType())
                 )
         stats_results_df.write.parquet(output_path)
+        # raw_data_df = open_stats_df.select("doc_id", "raw_data")
+        # raw_data_df.distinct().write.parquet(output_path + "_raw_data")
         stats_results_df = spark.read.parquet(output_path)
         stats_results_df.coalesce(100).write.format("mongo").mode("append").option(
             "spark.mongodb.output.uri",
