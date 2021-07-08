@@ -2,6 +2,8 @@ import luigi
 import json
 from luigi.contrib.spark import PySparkTask
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import lit
+from pyspark.sql.types import StringType
 
 from impc_etl.jobs.load.solr.stats_results_mapper import (
     get_stats_results_core,
@@ -108,13 +110,18 @@ class ImpcStatsBundleMapper(PySparkTask):
         stats_results_column_list = STATS_RESULTS_COLUMNS + ["raw_data"]
         stats_results_column_list.remove("observation_ids")
         stats_results_df = open_stats_df.select(*stats_results_column_list)
-        stats_results_df.write.paquet(output_path)
+        for col_name in stats_results_df.columns:
+            if dict(stats_results_df.dtypes)[col_name] == "null":
+                stats_results_df = stats_results_df.withColumn(
+                    col_name, lit(None).astype(StringType())
+                )
+        stats_results_df.write.parquet(output_path)
         stats_results_df = spark.read.parquet(output_path)
         stats_results_df.coalesce(100).write.format("mongo").mode("append").option(
             "spark.mongodb.output.uri",
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
-            "collection", self.mongodb_stats_collection
+            "collection", str(self.mongodb_stats_collection)
         ).option(
             "maxBatchSize", 100
         ).save()
