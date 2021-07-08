@@ -21,6 +21,7 @@ from impc_etl.workflow.load import (
     PipelineCoreLoader,
     MPChooserLoader,
 )
+from pymongo import MongoClient
 
 
 class ImpcStatsBundleMapper(PySparkTask):
@@ -65,6 +66,34 @@ class ImpcStatsBundleMapper(PySparkTask):
             self.mpath_metadata_csv_path,
             self.output().path,
         ]
+
+    def _setup_collections(self):
+        mongo_client = MongoClient(
+            f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}"
+        )
+        db = mongo_client.some_database
+        col_stats_name = str(self.mongodb_stats_collection)
+        col_raw_data_name = str(self.mongodb_stats_collection) + "_raw_data"
+        if col_stats_name in db.list_collection_names():
+            col_stats = db[col_stats_name]
+            col_stats.drop()
+        if col_raw_data_name in db.list_collection_names():
+            col_raw_data = db[col_raw_data_name]
+            col_raw_data.drop()
+        col_stats = db[col_stats_name]
+        col_raw_data = db[col_raw_data_name]
+        col_stats.create_index([("doc_id", 1)])
+        col_stats.create_index(
+            [
+                ("pipeline_stable_id", 1),
+                ("procedure_stable_id", 1),
+                ("parameter_stable_id", 1),
+                ("marker_accession_id", 1),
+                ("allele_accession_id", 1),
+                ("zygosity", 1),
+            ]
+        )
+        col_raw_data.create_index([("doc_id", 1)])
 
     def main(self, sc, *argv):
         open_stats_parquet_path = argv[0]
