@@ -108,7 +108,9 @@ class ImpcStatsBundleMapper(PySparkTask):
         stats_results_column_list = STATS_RESULTS_COLUMNS + ["raw_data"]
         stats_results_column_list.remove("observation_ids")
         stats_results_df = open_stats_df.select(*stats_results_column_list)
-        stats_results_df.write.format("mongo").mode("append").option(
+        stats_results_df.write.paquet(output_path)
+        stats_results_df = spark.read.parquet(output_path)
+        stats_results_df.coalesce(100).write.format("mongo").mode("append").option(
             "spark.mongodb.output.uri",
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
@@ -116,8 +118,3 @@ class ImpcStatsBundleMapper(PySparkTask):
         ).option(
             "maxBatchSize", 100
         ).save()
-        output_cols = ["status"]
-        data = [("Success")]
-        spark.sparkContext.parallelize(data).toDF(output_cols).write.parquet(
-            output_path
-        )
