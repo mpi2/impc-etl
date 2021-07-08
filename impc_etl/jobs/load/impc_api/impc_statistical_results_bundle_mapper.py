@@ -112,7 +112,7 @@ class ImpcStatsBundleMapper(PySparkTask):
             stats_results_df.printSchema()
             raise Exception
 
-        stats_results_df.repartition(18000).write.format("mongo").mode("append").option(
+        stats_results_df.coalesce(100).write.format("mongo").mode("append").option(
             "spark.mongodb.output.uri",
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
