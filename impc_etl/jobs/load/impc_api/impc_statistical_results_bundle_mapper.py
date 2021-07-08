@@ -148,6 +148,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         raw_data_df = open_stats_df.select("doc_id", "raw_data").distinct()
         raw_data_df.write.parquet(output_path + "_raw_data")
         stats_results_df = spark.read.parquet(output_path)
+        self._setup_collections()
         stats_results_df.write.format("mongo").mode("append").option(
             "spark.mongodb.output.uri",
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
