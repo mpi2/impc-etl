@@ -119,11 +119,16 @@ class ImpcStatsBundleMapper(PySparkTask):
         raw_data_df = open_stats_df.select("doc_id", "raw_data").distinct()
         raw_data_df.write.parquet(output_path + "_raw_data")
         stats_results_df = spark.read.parquet(output_path)
-        raw_data_df = spark.read.parquet(output_path + "_raw_data")
-        stats_results_df = stats_results_df.join(raw_data_df, "doc_id", "left_outer")
         stats_results_df.write.format("mongo").mode("append").option(
             "spark.mongodb.output.uri",
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
             "collection", str(self.mongodb_stats_collection)
+        ).save()
+        raw_data_df = spark.read.parquet(output_path + "_raw_data")
+        raw_data_df.write.format("mongo").mode("append").option(
+            "spark.mongodb.output.uri",
+            f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
+        ).option("database", str(self.mongodb_database)).option(
+            "collection", str(self.mongodb_stats_collection) + "_raw_data"
         ).save()
