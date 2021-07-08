@@ -108,15 +108,13 @@ class ImpcStatsBundleMapper(PySparkTask):
         stats_results_column_list = STATS_RESULTS_COLUMNS + ["raw_data"]
         stats_results_column_list.remove("observation_ids")
         stats_results_df = open_stats_df.select(*stats_results_column_list)
-        if "raw_data" not in stats_results_df.columns:
-            stats_results_df.printSchema()
-            raise Exception
-
-        stats_results_df.coalesce(100).write.format("mongo").mode("append").option(
+        stats_results_df.write.format("mongo").mode("append").option(
             "spark.mongodb.output.uri",
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
             "collection", self.mongodb_stats_collection
+        ).option(
+            "maxBatchSize", 100
         ).save()
         output_cols = ["status"]
         data = [("Success")]
