@@ -71,7 +71,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         mongo_client = MongoClient(
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}"
         )
-        db = mongo_client.some_database
+        db = mongo_client[self.mongodb_database]
         col_stats_name = str(self.mongodb_stats_collection)
         col_raw_data_name = str(self.mongodb_stats_collection) + "_raw_data"
         if col_stats_name in db.list_collection_names():
