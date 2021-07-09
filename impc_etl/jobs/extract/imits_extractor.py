@@ -97,7 +97,9 @@ def extract_imits_tsv(spark_session: SparkSession, file_path, entity_type) -> Da
                 when(
                     col(col_name).contains("|"),
                     split(col_name, r"\|"),
-                ).otherwise(array(col_name)),
+                )
+                .when(col(col_name).isNull(), lit(None))
+                .otherwise(array(col_name)),
             )
     return imits_df
 

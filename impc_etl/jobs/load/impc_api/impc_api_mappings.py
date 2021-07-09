@@ -1,0 +1,25 @@
+SPECIMEN_MAPPING = {
+    "output_name": "specimen",
+    "select": [
+        "specimen_id",
+        "external_sample_id",
+        "colony_id",
+        "strain_accession_id",
+        "genetic_background",
+        "strain_name",
+        "zygosity",
+        "production_center",
+        "phenotyping_center",
+        "project",
+        "litter_id",
+        "biological_sample_group",
+        "sex",
+        "pipeline_stable_id",
+        "developmental_stage_name",
+        "developmental_stage_acc",
+    ],
+    "col_renaming": {
+        "external_sample_id": "source_id",
+        "biological_sample_group": "sample_group",
+    },
+}

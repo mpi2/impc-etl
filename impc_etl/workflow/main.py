@@ -2,10 +2,20 @@ from typing import Union
 
 from luigi.contrib.hdfs import HdfsTarget
 
+from impc_etl.jobs.load.impc_api.impc_api_mapper import (
+    ApiSpecimenMapper,
+    ApiExperimentMapper,
+    ApiObservationMapper,
+)
+from impc_etl.jobs.load.impc_api.impc_api_pg_loader import ApiPostgreSQLLoader
 from impc_etl.workflow.load import *
 from impc_etl.jobs.extract.colony_tracking_extractor import *
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
+)
+from impc_etl.jobs.load.impc_api.impc_gene_bundle_mapper import ImpcGeneBundleMapper
+from impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper import (
+    ImpcStatsBundleMapper,
 )
 
 
@@ -315,6 +325,9 @@ class ImpcCleanDaily(luigi.Task):
             self._delele_target_if_exists(impc_merge_index_task.output())
             self._delele_target_if_exists(impc_copy_index_task.output())
             self._delele_target_if_exists(impc_parquet_to_solr_task.output(), hdfs=True)
+        self._delele_target_if_exists(Allele2Extractor().output(), hdfs=True)
+        self._delele_target_if_exists(GeneExtractor().output(), hdfs=True)
+        self._delele_target_if_exists(AlleleExtractor().output(), hdfs=True)
 
 
 class ImpcIndexDataRelease(luigi.Task):
@@ -365,3 +378,10 @@ class ImpcIndexDataRelease(luigi.Task):
                     )
                 )
         yield tasks
+
+
+class ImpcApiDatasource(luigi.Task):
+    name = "IMPC_Generate_API_Datasource"
+
+    def requires(self):
+        return [ApiPostgreSQLLoader()]

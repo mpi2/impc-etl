@@ -9,7 +9,15 @@ import sys
 
 import requests
 from pyspark.sql import SparkSession, functions
-from pyspark.sql.functions import count, col, collect_set, lit, when
+from pyspark.sql.functions import (
+    count,
+    col,
+    collect_set,
+    lit,
+    when,
+    array_except,
+    array,
+)
 from pyspark.sql.types import StringType, DoubleType
 
 from impc_etl.config.constants import Constants
@@ -102,6 +110,35 @@ def main(argv):
     )
     embryo_data_df = spark.read.json(embryo_data_json_path, mode="FAILFAST")
     observations_df = spark.read.parquet(observations_parquet_path)
+    stats_results_df = spark.read.parquet(stats_results_parquet_path)
+    ontology_metadata_df = spark.read.parquet(ontology_metadata_parquet_path)
+    gene_production_status_df = spark.read.parquet(gene_production_status_path)
+    gene_df = get_gene_core_df(
+        imits_gene_df,
+        imits_allele_df,
+        mgi_homologene_df,
+        mgi_mrk_list_df,
+        embryo_data_df,
+        observations_df,
+        stats_results_df,
+        ontology_metadata_df,
+        gene_production_status_df,
+    )
+    gene_df.distinct().write.parquet(output_path)
+
+
+def get_gene_core_df(
+    imits_gene_df,
+    imits_allele_df,
+    mgi_homologene_df,
+    mgi_mrk_list_df,
+    embryo_data_df,
+    observations_df,
+    stats_results_df,
+    ontology_metadata_df,
+    gene_production_status_df,
+    compress_data_sets=True,
+):
     phenotyping_data_availability_df = observations_df.groupBy("gene_accession_id").agg(
         count("*").alias("data_points")
     )
@@ -119,14 +156,11 @@ def main(argv):
             "gene_accession_id", "mgi_accession_id"
         )
     )
-    stats_results_df = spark.read.parquet(stats_results_parquet_path)
-    ontology_metadata_df = spark.read.parquet(ontology_metadata_parquet_path)
+
     ontology_metadata_df = ontology_metadata_df.select(
         functions.col("curie").alias("phenotype_term_id"),
         functions.col("name").alias("phenotype_term_name"),
     ).distinct()
-
-    gene_production_status_df = spark.read.parquet(gene_production_status_path)
 
     stats_results_df = stats_results_df.withColumnRenamed(
         "marker_accession_id", "gene_accession_id"
@@ -154,7 +188,7 @@ def main(argv):
 
     significant_mp_term = _get_significance_fields_by_gene(stats_results_df)
     mgi_datasets_df = _get_datasets_by_gene(
-        stats_results_df, observations_df, ontology_metadata_df
+        stats_results_df, observations_df, ontology_metadata_df, compress_data_sets
     )
 
     gene_allele_info_df = imits_allele_df.select(
@@ -285,7 +319,7 @@ def main(argv):
     )
     gene_df = gene_df.join(mgi_datasets_df, "mgi_accession_id", "left_outer")
     gene_df = gene_df.join(significant_mp_term, "mgi_accession_id", "left_outer")
-    gene_df.distinct().write.parquet(output_path)
+    return gene_df
 
 
 def get_embryo_data(spark: SparkSession):
@@ -301,7 +335,9 @@ def _compress_and_encode(json_text):
         return str(base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))), "utf-8")
 
 
-def _get_datasets_by_gene(stats_results_df, observations_df, ontology_metadata_df):
+def _get_datasets_by_gene(
+    stats_results_df, observations_df, ontology_metadata_df, compress=True
+):
     significance_cols = [
         "female_ko_effect_p_value",
         "male_ko_effect_p_value",
@@ -479,6 +515,12 @@ def _get_datasets_by_gene(stats_results_df, observations_df, ontology_metadata_d
     datasets_df = datasets_df.withColumnRenamed(
         "top_level_mp_term_id", "top_level_phenotype_term_id"
     )
+
+    datasets_df = datasets_df.withColumn(
+        "top_level_mp_term_name",
+        array_except(col("top_level_mp_term_name"), array(lit(None).cast("string"))),
+    )
+
     datasets_df = datasets_df.withColumnRenamed(
         "top_level_mp_term_name", "top_level_phenotype_term_name"
     )
@@ -519,21 +561,22 @@ def _get_datasets_by_gene(stats_results_df, observations_df, ontology_metadata_d
         "gene_accession_id", "mgi_accession_id"
     )
 
-    to_json_udf = functions.udf(
-        lambda row: None
-        if row is None
-        else json.dumps(
-            [{key: value for key, value in item.asDict().items()} for item in row]
-        ),
-        StringType(),
-    )
-    mgi_datasets_df = mgi_datasets_df.withColumn(
-        "datasets_raw_data", to_json_udf("datasets_raw_data")
-    )
-    compress_and_encode = functions.udf(_compress_and_encode, StringType())
-    mgi_datasets_df = mgi_datasets_df.withColumn(
-        "datasets_raw_data", compress_and_encode("datasets_raw_data")
-    )
+    if compress:
+        to_json_udf = functions.udf(
+            lambda row: None
+            if row is None
+            else json.dumps(
+                [{key: value for key, value in item.asDict().items()} for item in row]
+            ),
+            StringType(),
+        )
+        mgi_datasets_df = mgi_datasets_df.withColumn(
+            "datasets_raw_data", to_json_udf("datasets_raw_data")
+        )
+        compress_and_encode = functions.udf(_compress_and_encode, StringType())
+        mgi_datasets_df = mgi_datasets_df.withColumn(
+            "datasets_raw_data", compress_and_encode("datasets_raw_data")
+        )
     return mgi_datasets_df
 
 

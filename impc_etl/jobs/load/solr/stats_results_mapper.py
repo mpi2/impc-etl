@@ -317,6 +317,7 @@ def main(argv):
     raw_data_in_output = argv[10]
     extract_windowed_data = argv[11] == "true"
     output_path = argv[12]
+
     spark = SparkSession.builder.getOrCreate()
     open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
     ontology_df = spark.read.parquet(ontology_parquet_path)
@@ -325,10 +326,64 @@ def main(argv):
     pipeline_core_df = spark.read.parquet(pipeline_core_parquet_path)
     observations_df = spark.read.parquet(observations_parquet_path)
     threei_df = spark.read.csv(threei_parquet_path, header=True)
-    threei_df = standardize_threei_schema(threei_df)
     mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
+
     mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path).collect()[0][1]
     mp_chooser = json.loads(mp_chooser_txt)
+
+    open_stats_df = get_stats_results_core(
+        open_stats_complete_df,
+        ontology_df,
+        allele_df,
+        pipeline_df,
+        pipeline_core_df,
+        observations_df,
+        threei_df,
+        mpath_metadata_df,
+        mp_chooser,
+        extract_windowed_data,
+        raw_data_in_output,
+    )
+
+    if extract_windowed_data:
+        stats_results_column_list = STATS_RESULTS_COLUMNS + [
+            col_name
+            for col_name in WINDOW_COLUMNS
+            if col_name != "observations_window_weight"
+        ]
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
+    elif raw_data_in_output == "bundled":
+        stats_results_column_list = STATS_RESULTS_COLUMNS + ["raw_data"]
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
+        stats_results_df = stats_results_df.repartition(20000)
+    else:
+        stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
+    for col_name in stats_results_df.columns:
+        if dict(stats_results_df.dtypes)[col_name] == "null":
+            stats_results_df = stats_results_df.withColumn(
+                col_name, lit(None).astype(StringType())
+            )
+    stats_results_df.write.parquet(output_path)
+    if raw_data_in_output == "include":
+        raw_data_df = open_stats_df.select("doc_id", "raw_data")
+        raw_data_df.distinct().write.parquet(output_path + "_raw_data")
+
+
+def get_stats_results_core(
+    open_stats_complete_df,
+    ontology_df,
+    allele_df,
+    pipeline_df,
+    pipeline_core_df,
+    observations_df,
+    threei_df,
+    mpath_metadata_df,
+    mp_chooser,
+    extract_windowed_data=False,
+    raw_data_in_output="include",
+):
+    threei_df = standardize_threei_schema(threei_df)
+
     embryo_stat_packets = open_stats_complete_df.where(
         (
             (col("procedure_group").contains("IMPC_GPL"))
@@ -572,9 +627,14 @@ def main(argv):
     open_stats_df = open_stats_df.withColumnRenamed("mp_term", "full_mp_term")
     open_stats_df = open_stats_df.withColumn(
         "full_mp_term",
-        when(col("full_mp_term").isNull(), array(col("collapsed_mp_term"))).otherwise(
-            col("full_mp_term")
-        ),
+        when(
+            col("full_mp_term").isNull() & col("collapsed_mp_term").isNotNull(),
+            array(col("collapsed_mp_term")),
+        )
+        .when(
+            col("full_mp_term").isNull() & col("collapsed_mp_term").isNull(), lit(None)
+        )
+        .otherwise(col("full_mp_term")),
     )
 
     if extract_windowed_data:
@@ -787,7 +847,7 @@ def main(argv):
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_id", "observation_ids"
     )
-    if raw_data_in_output == "include":
+    if raw_data_in_output == "include" or raw_data_in_output == "bundled":
         specimen_dobs = (
             observations_df.select("external_sample_id", "date_of_birth")
             .dropDuplicates()
@@ -798,7 +858,10 @@ def main(argv):
             row["external_sample_id"]: row["date_of_birth"] for row in specimen_dob_dict
         }
         open_stats_df = _parse_raw_data(
-            open_stats_df, extract_windowed_data, specimen_dob_dict
+            open_stats_df,
+            extract_windowed_data,
+            specimen_dob_dict,
+            raw_data_in_output != "bundled",
         )
     open_stats_df = open_stats_df.withColumn(
         "data_type",
@@ -821,24 +884,7 @@ def main(argv):
             lit("embryo"),
         ).otherwise(col("data_type")),
     )
-    if extract_windowed_data:
-        stats_results_column_list = STATS_RESULTS_COLUMNS + [
-            col_name
-            for col_name in WINDOW_COLUMNS
-            if col_name != "observations_window_weight"
-        ]
-        stats_results_df = open_stats_df.select(*stats_results_column_list)
-    else:
-        stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
-    for col_name in stats_results_df.columns:
-        if dict(stats_results_df.dtypes)[col_name] == "null":
-            stats_results_df = stats_results_df.withColumn(
-                col_name, lit(None).astype(StringType())
-            )
-    stats_results_df.write.parquet(output_path)
-    if raw_data_in_output == "include":
-        raw_data_df = open_stats_df.select("doc_id", "raw_data")
-        raw_data_df.distinct().write.parquet(output_path + "_raw_data")
+    return open_stats_df
 
 
 def _compress_and_encode(json_text):
@@ -848,7 +894,9 @@ def _compress_and_encode(json_text):
         return str(base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))), "utf-8")
 
 
-def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
+def _parse_raw_data(
+    open_stats_df, extract_windowed_data, specimen_dob_dict, compress=True
+):
     compress_and_encode = udf(_compress_and_encode, StringType())
     open_stats_df = open_stats_df.withColumnRenamed(
         "observations_biological_sample_group", "biological_sample_group"
@@ -984,9 +1032,10 @@ def _parse_raw_data(open_stats_df, extract_windowed_data, specimen_dob_dict):
         open_stats_df = open_stats_df.withColumn(
             "raw_data", regexp_replace("raw_data", f'"{idx}":', f'"{col_name}":')
         )
-    open_stats_df = open_stats_df.withColumn(
-        "raw_data", compress_and_encode("raw_data")
-    )
+    if compress:
+        open_stats_df = open_stats_df.withColumn(
+            "raw_data", compress_and_encode("raw_data")
+        )
     return open_stats_df
 
 
@@ -1168,17 +1217,17 @@ def _fertility_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
         ["IMPC_FER_001_001", "IMPC_FER_019_001"]
     )
 
-    mp_chooser = (
-        pipeline_df.select(
-            col("pipelineKey").alias("pipeline_stable_id"),
-            col("procedure.procedureKey").alias("procedure_stable_id"),
-            col("parameter.parameterKey").alias("parameter_stable_id"),
-            col("parammpterm.optionText").alias("category"),
-            col("termAcc"),
-        )
-        .withColumn("category", lower(col("category")))
-        .distinct()
-    )
+    # mp_chooser = (
+    #     pipeline_df.select(
+    #         col("pipelineKey").alias("pipeline_stable_id"),
+    #         col("procedure.procedureKey").alias("procedure_stable_id"),
+    #         col("parameter.parameterKey").alias("parameter_stable_id"),
+    #         col("parammpterm.optionText").alias("category"),
+    #         col("termAcc"),
+    #     )
+    #     .withColumn("category", lower(col("category")))
+    #     .distinct()
+    # )
 
     required_stats_columns = STATS_OBSERVATIONS_JOIN + [
         "sex",
@@ -1215,15 +1264,25 @@ def _fertility_stats_results(observations_df: DataFrame, pipeline_df: DataFrame)
     )
     fertility_stats_results = fertility_stats_results.withColumn("p_value", lit(0.0))
 
-    fertility_stats_results = fertility_stats_results.join(
-        mp_chooser,
-        [
-            "pipeline_stable_id",
-            "procedure_stable_id",
-            "parameter_stable_id",
-            "category",
-        ],
-        "left_outer",
+    # fertility_stats_results = fertility_stats_results.join(
+    #     mp_chooser,
+    #     [
+    #         "pipeline_stable_id",
+    #         "procedure_stable_id",
+    #         "parameter_stable_id",
+    #         "category",
+    #     ],
+    #     "left_outer",
+    # )
+
+    fertility_stats_results = fertility_stats_results.withColumn(
+        "termAcc",
+        when(
+            col("category") == "infertile",
+            when(
+                col("parameter_stable_id") == "IMPC_FER_001_001", lit("MP:0001925")
+            ).otherwise(lit("MP:0001926")),
+        ).otherwise(lit(None)),
     )
 
     fertility_stats_results = fertility_stats_results.groupBy(

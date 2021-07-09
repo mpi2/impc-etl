@@ -42,6 +42,7 @@ COLUMN_MAPPER = {
     "media": "parameter.isMedia",
     "has_options": "parameter.isOption",
     "increment": "parameter.isIncrement",
+    "comparable_parameter_group": "parameter.comparableParameterGroup",
 }
 
 COMPUTED_COLUNMS = [""]
