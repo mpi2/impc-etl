@@ -78,15 +78,16 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	cd $(staging-path)/$(dr-tag)/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
 	cd $(staging-path)/$(dr-tag)/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<\/ns2:/<\//g' {} \;
 	cp -r $(input-data-path)/phenotype_data/impc/latest/*/* $(staging-path)/$(dr-tag)/xml/impc/
-	cd $(staging-path)/$(dr-tag)/xml/impc/ && find "$PWD" -type f -name "*.xml" -exec bash -c ' DIR=$( dirname "{}"  ); mv "{}" "$DIR"_$(basename "{}")  ' \;
+	cd $(staging-path)/$(dr-tag)/xml/impc/ && find "$(PWD)" -type f -name "*.xml" -exec bash -c ' DIR=$( dirname "{}"  ); mv "{}" "$(DIR)"_$(basename "{}")  ' \;
 	cd $(staging-path)/$(dr-tag)/xml/impc/ && rm -R -- */
 	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output $(staging-path)/$(dr-tag)/mgi/MGI_Strain.rpt
 	curl http://www.informatics.jax.org/downloads/reports/MGI_PhenotypicAllele.rpt --output $(staging-path)/$(dr-tag)/mgi/MGI_PhenotypicAllele.rpt
 	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output $(staging-path)/$(dr-tag)/mgi/MRK_List1.rpt
 	curl http://www.informatics.jax.org/downloads/reports/HGNC_homologene.rpt --output $(staging-path)/$(dr-tag)/mgi/HGNC_homologene.rpt
 	curl http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt --output $(staging-path)/$(dr-tag)/mgi/MGI_GenePheno.rpt
-	curl https://www.mousephenotype.org/embryoviewer/rest/ready --output $(staging-path)/$(dr-tag)/misc/embryo_data.json
-	cd $(staging-path)/$(dr-tag)/misc/ && tr -d '\n' < embryo_data.json
+	curl https://www.mousephenotype.org/embryoviewer/rest/ready --output $(staging-path)/$(dr-tag)/misc/embryo_data_og.json
+	cd $(staging-path)/$(dr-tag)/misc/ && tr -d '\n' < embryo_data_og.json > embryo_data.json
+	cd $(staging-path)/$(dr-tag)/misc/ && rm embryo_data_og.json
 	scp -R $(staging-path)/$(dr-tag) $(etl-host):$(etl-dir)/
 
 
