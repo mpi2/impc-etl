@@ -148,12 +148,16 @@ def override_3i_specimen_data(dcc_specimen_df: DataFrame) -> DataFrame:
 
 
 def generate_unique_id(dcc_specimen_df: DataFrame) -> DataFrame:
-    unique_columns = ["_productionCentre", "_specimenID"]
-    unique_columns = [
-        col_name for col_name in dcc_specimen_df.columns if col_name in unique_columns
-    ]
     dcc_specimen_df = dcc_specimen_df.withColumn(
-        "unique_id", md5(concat(*unique_columns))
+        "unique_id",
+        md5(
+            concat(
+                *[
+                    when(col("_productionCentre").otherwise()).otherwise(),
+                    col("_specimenID"),
+                ]
+            )
+        ),
     )
     return dcc_specimen_df
 
