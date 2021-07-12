@@ -59,29 +59,36 @@ devEnv: .venv devDeps
 ##	source .venv/bin/activate && pre-commit install --install-hooks
 
 
-data:            ##@data Download test data
-	cd ${DATA_PATH} && mkdir imits mgi owl xml parquet solr misc
-	cd ${DATA_PATH}/xml && mkdir impc 3i europhenome
-	cp ${INPUT_DATA_PATH}/imits/imits-report.tsv ${DATA_PATH}/imits/
-	cp ${INPUT_DATA_PATH}/imits/allele2Entries.tsv ${DATA_PATH}/imits/
-	cp ${INPUT_DATA_PATH}/imits/productEntries.tsv ${DATA_PATH}/imits/
-	cp -r ${INPUT_DATA_PATH}/3i/latest/*.xml ${DATA_PATH}/xml/3i/
-	cd ${DATA_PATH}/xml/3i/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
-	cd ${DATA_PATH}/xml/3i/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<\/ns2:/<\//g' {} \;
-	cp -r ${INPUT_DATA_PATH}/europhenome/2013-10-31/*.xml ${DATA_PATH}/xml/europhenome/
-	cp -r ${INPUT_DATA_PATH}/europhenome/2013-05-20/*.xml ${DATA_PATH}/xml/europhenome/
-	cd ${DATA_PATH}/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
-	cd ${DATA_PATH}/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<\/ns2:/<\//g' {} \;
-	cp -r ${INPUT_DATA_PATH}/impc/latest/*/* ${DATA_PATH}/xml/impc/
-	cd ${DATA_PATH}/xml/impc/ && find "$PWD" -type f -name "*.xml" -exec bash -c ' DIR=$( dirname "{}"  ); mv "{}" "$DIR"_$(basename "{}")  ' \;
-	cd ${DATA_PATH}/xml/impc/ && rm -R -- */
-	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output ${DATA_PATH}/mgi/MGI_Strain.rpt
-	curl http://www.informatics.jax.org/downloads/reports/MGI_PhenotypicAllele.rpt --output ${DATA_PATH}/mgi/MGI_PhenotypicAllele.rpt
-	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output ${DATA_PATH}/mgi/MRK_List1.rpt
-	curl http://www.informatics.jax.org/downloads/reports/HGNC_homologene.rpt --output ${DATA_PATH}/mgi/HGNC_homologene.rpt
-	curl http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt --output ${DATA_PATH}/mgi/MGI_GenePheno.rpt
-	curl https://www.mousephenotype.org/embryoviewer/rest/ready --output ${DATA_PATH}/misc/embryo_data.json
-#TODO Remove \n from embryo_data.json
+data:            ##@data Download and structure input data for the ETL. Parameters: staging-path (e.g. /nobackup/staging), dr-tag (e.g. dr15.0), input-data-path (e.g. /impc/), etl-host (e.g. hadoop-host), etl-dir (e.g. /user/impc/)
+	cd $(staging-path) && mkdir $(dr-tag)
+	cd $(staging-path)/$(dr-tag) && mkdir tracking mgi ontologies owl xml parquet solr misc
+	cd $(staging-path)/$(dr-tag)/xml && mkdir impc 3i europhenome
+	cp $(input-data-path)/phenotype_data/imits/imits-phenotyping-colonies-report.tsv $(staging-path)/$(dr-tag)/tracking/
+	cp $(input-data-path)/datafiles/daily/latest/gentar-phenotyping-colonies-report.tsv $(staging-path)/$(dr-tag)/tracking/
+	cp $(input-data-path)/datafiles/daily/latest/allele2Entries.tsv $(staging-path)/$(dr-tag)/tracking/
+	cp $(input-data-path)/datafiles/daily/latest/productEntries.tsv $(staging-path)/$(dr-tag)/tracking/
+	cp $(input-data-path)/datafiles/daily/latest/gene_interest.tsv $(staging-path)/$(dr-tag)/tracking/
+	cp $(input-data-path)/datafiles/daily/latest/mp2_load_gene_interest_report_es_cell.tsv $(staging-path)/$(dr-tag)/tracking/
+	cp -r $(input-data-path)/phenotype_data/3i/latest/*.xml $(staging-path)/$(dr-tag)/xml/3i/
+	cd $(staging-path)/$(dr-tag)/xml/3i/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
+	cd $(staging-path)/$(dr-tag)/xml/3i/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<\/ns2:/<\//g' {} \;
+	cp $(input-data-path)/datafiles/flow_results_EBIexport_180119.csv $(staging-path)/$(dr-tag)/misc/
+	cp -r $(input-data-path)/phenotype_data/europhenome/2013-10-31/*.xml $(staging-path)/$(dr-tag)/xml/europhenome/
+	cp -r $(input-data-path)/phenotype_data/europhenome/2013-05-20/*.xml $(staging-path)/$(dr-tag)/xml/europhenome/
+	cd $(staging-path)/$(dr-tag)/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
+	cd $(staging-path)/$(dr-tag)/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<\/ns2:/<\//g' {} \;
+	cp -r $(input-data-path)/phenotype_data/impc/latest/*/* $(staging-path)/$(dr-tag)/xml/impc/
+	cd $(staging-path)/$(dr-tag)/xml/impc/ && find "$PWD" -type f -name "*.xml" -exec bash -c ' DIR=$( dirname "{}"  ); mv "{}" "$DIR"_$(basename "{}")  ' \;
+	cd $(staging-path)/$(dr-tag)/xml/impc/ && rm -R -- */
+	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output $(staging-path)/$(dr-tag)/mgi/MGI_Strain.rpt
+	curl http://www.informatics.jax.org/downloads/reports/MGI_PhenotypicAllele.rpt --output $(staging-path)/$(dr-tag)/mgi/MGI_PhenotypicAllele.rpt
+	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output $(staging-path)/$(dr-tag)/mgi/MRK_List1.rpt
+	curl http://www.informatics.jax.org/downloads/reports/HGNC_homologene.rpt --output $(staging-path)/$(dr-tag)/mgi/HGNC_homologene.rpt
+	curl http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt --output $(staging-path)/$(dr-tag)/mgi/MGI_GenePheno.rpt
+	curl https://www.mousephenotype.org/embryoviewer/rest/ready --output $(staging-path)/$(dr-tag)/misc/embryo_data.json
+	cd $(staging-path)/$(dr-tag)/misc/ && tr -d '\n' < embryo_data.json
+	scp -R $(staging-path)/$(dr-tag) $(etl-host):$(etl-dir)/
+
 
 
 test:       ##@best_practices Run pystest against the test folder
