@@ -69,6 +69,7 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	cp $(input-data-path)/datafiles/daily/latest/productEntries.tsv $(staging-path)/$(dr-tag)/tracking/
 	cp $(input-data-path)/datafiles/daily/latest/gene_interest.tsv $(staging-path)/$(dr-tag)/tracking/
 	cp $(input-data-path)/datafiles/daily/latest/mp2_load_gene_interest_report_es_cell.tsv $(staging-path)/$(dr-tag)/tracking/
+	cp -r $(input-data-path)/impc_ontologies/*  $(staging-path)/$(dr-tag)/ontologies/
 	cp -r $(input-data-path)/phenotype_data/3i/latest/*.xml $(staging-path)/$(dr-tag)/xml/3i/
 	cd $(staging-path)/$(dr-tag)/xml/3i/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
 	cd $(staging-path)/$(dr-tag)/xml/3i/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<\/ns2:/<\//g' {} \;
