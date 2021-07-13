@@ -121,3 +121,4 @@ env.zip
 spark-env.zip
 spark-env/
 
+luigi.cfg.template
