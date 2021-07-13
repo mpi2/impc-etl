@@ -69,7 +69,7 @@ def extract_dcc_xml_files(
     dcc_xml_path = (
         dcc_xml_path + "/" if not dcc_xml_path.endswith("/") else dcc_xml_path
     )
-    path = f"{dcc_xml_path}**/*{file_type}*.xml"
+    path = f"{dcc_xml_path}**{file_type}*.xml"
 
     logger.info(f"loading DCC data source from path '{path}'")
     try:
