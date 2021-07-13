@@ -94,7 +94,7 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	scp -r $(staging-path)/$(dr-tag) $(etl-host):$(etl-dir)/
 
 createLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template using a new dr-tag, parameter: dr-tag (e.g. dr15.0)
-sed 's/%DR_TAG%/dr15.0/' luigi.cfg.template > luigi-prod.cfg
+	sed 's/%DR_TAG%/dr15.0/' luigi.cfg.template > luigi-prod.cfg
 
 test:       ##@best_practices Run pystest against the test folder
 	source venv/bin/activate && pytest
