@@ -191,7 +191,9 @@ def get_impress_entity_by_ids(
             raise Exception(
                 "Max retries for "
                 + "{}/{}/multiple with {} ".format(
-                    impress_api_url, impress_type, ",".join(impress_ids)
+                    impress_api_url,
+                    impress_type,
+                    ",".join([str(identifier) for identifier in impress_ids]),
                 )
             )
     return entity
