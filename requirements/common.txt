@@ -2,6 +2,7 @@ click
 requests
 findspark
 luigi
+setuptools_scm
 pysolr
 hdfs
 webhdfs
