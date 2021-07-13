@@ -14,7 +14,7 @@ submit-dev:
 
 
 .venv:          ##@environment Create a venv
-	if [ ! -e "venv/bin/activate" ] ; then python3 -m venv --clear venv ; fi
+	if [ ! -e "venv/bin/activate" ] ; then $(PYTHON) -m venv --clear venv ; fi
 	source venv/bin/activate && pip install --upgrade pip
 
 lint:           ##@best_practices Run pylint against the main script and the shared, jobs and test folders
