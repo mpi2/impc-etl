@@ -61,7 +61,7 @@ devEnv: .venv devDeps
 
 data:            ##@data Download and structure input data for the ETL. Parameters: staging-path (e.g. /nobackup/staging), dr-tag (e.g. dr15.0), input-data-path (e.g. /impc/), etl-host (e.g. hadoop-host), etl-dir (e.g. /user/impc/)
 	cd $(staging-path) && mkdir $(dr-tag)
-	cd $(staging-path)/$(dr-tag) && mkdir tracking mgi ontologies owl xml parquet solr misc
+	cd $(staging-path)/$(dr-tag) && mkdir tracking mgi ontologies xml parquet solr misc
 	cd $(staging-path)/$(dr-tag)/xml && mkdir impc 3i europhenome
 	cp $(input-data-path)/phenotype_data/imits/imits-phenotyping-colonies-report.tsv $(staging-path)/$(dr-tag)/tracking/
 	cp $(input-data-path)/datafiles/daily/latest/gentar-phenotyping-colonies-report.tsv $(staging-path)/$(dr-tag)/tracking/
@@ -78,9 +78,10 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	cp -r $(input-data-path)/phenotype_data/europhenome/2013-05-20/*.xml $(staging-path)/$(dr-tag)/xml/europhenome/
 	cd $(staging-path)/$(dr-tag)/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
 	cd $(staging-path)/$(dr-tag)/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<\/ns2:/<\//g' {} \;
-	cp -r $(input-data-path)/phenotype_data/impc/latest/*/* $(staging-path)/$(dr-tag)/xml/impc/
-	cd $(staging-path)/$(dr-tag)/xml/impc/ && find "$$PWD" -type f -name "*.xml" -exec bash -c ' DIR=$( dirname "{}"  ); mv "{}" "$$DIR"_$(basename "{}")  ' \;
-	cd $(staging-path)/$(dr-tag)/xml/impc/ && rm -R -- */
+	cp -r $(input-data-path)/phenotype_data/impc/latest/* $(staging-path)/$(dr-tag)/xml/impc/
+	cd $(staging-path)/$(dr-tag)/xml/impc/ && find "$$PWD" -type f -name "*.xml" -exec bash -c ' DIR=$$( dirname "{}"  ); mv "{}" "$$DIR"_$$(basename "{}")  ' \;
+	cd $(staging-path)/$(dr-tag)/xml/impc/normal && find "$$PWD" -type d -empty -delete
+	cd $(staging-path)/$(dr-tag)/xml/impc/finalising && find "$$PWD" -type d -empty -delete
 	curl http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt --output $(staging-path)/$(dr-tag)/mgi/MGI_Strain.rpt
 	curl http://www.informatics.jax.org/downloads/reports/MGI_PhenotypicAllele.rpt --output $(staging-path)/$(dr-tag)/mgi/MGI_PhenotypicAllele.rpt
 	curl http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt --output $(staging-path)/$(dr-tag)/mgi/MRK_List1.rpt
@@ -89,7 +90,7 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	curl https://www.mousephenotype.org/embryoviewer/rest/ready --output $(staging-path)/$(dr-tag)/misc/embryo_data_og.json
 	cd $(staging-path)/$(dr-tag)/misc/ && tr -d '\n' < embryo_data_og.json > embryo_data.json
 	cd $(staging-path)/$(dr-tag)/misc/ && rm embryo_data_og.json
-	scp -R $(staging-path)/$(dr-tag) $(etl-host):$(etl-dir)/
+	scp -r $(staging-path)/$(dr-tag) $(etl-host):$(etl-dir)/
 
 
 
