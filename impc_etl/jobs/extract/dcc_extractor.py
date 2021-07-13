@@ -69,14 +69,14 @@ def extract_dcc_xml_files(
     dcc_xml_path = (
         dcc_xml_path + "/" if not dcc_xml_path.endswith("/") else dcc_xml_path
     )
-    path = f"{dcc_xml_path}**{file_type}*.xml"
-
-    logger.info(f"loading DCC data source from path '{path}'")
+    logger.info(f"loading DCC data source from path '{dcc_xml_path}'")
     try:
         dcc_df = (
             spark_session.read.format("com.databricks.spark.xml")
             .options(rowTag="centre", samplingRatio="1", nullValue="", mode="FAILFAST")
-            .load(path)
+            .option("recursiveFileLookup", "true")
+            .option("pathGlobFilter", f"*{file_type}*.xml")
+            .load(dcc_xml_path)
         )
 
         logger.info(f"adding _dataSource column")
@@ -84,7 +84,7 @@ def extract_dcc_xml_files(
         data_source_extract = udf(lambda x: x.split("/")[-2], StringType())
         dcc_df = dcc_df.withColumn("_dataSource", data_source_extract("_sourceFile"))
 
-        logger.info(f"finished load of DCC data source from path '{path}'")
+        logger.info(f"finished load of DCC data source from path '{dcc_xml_path}'")
     except py4j.protocol.Py4JJavaError as e:
         if "InvalidInputException" in str(e):
             raise FileNotFoundError
