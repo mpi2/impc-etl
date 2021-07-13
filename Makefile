@@ -4,7 +4,7 @@ default: clean devDeps build
 
 # submit-h: clean devDeps build
 submit-h: clean build
-	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' PYSPARK_PYTHON=python36 YARN_CONF_DIR=/homes/federico/impc-etl/spark-2.4.5-bin-hadoop2.7/yarn-conf-hh/ luigi --module impc_etl.workflow.main $(task) --workers 3
+	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' PYSPARK_PYTHON=python36 luigi --module impc_etl.workflow.main $(task) --workers 3
 
 submit-lsf: clean devDeps build
 	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-lsf.cfg'  PYTHONPATH='.' luigi --module impc_etl.workflow.main $(task) --workers 3
@@ -14,7 +14,7 @@ submit-dev:
 
 
 .venv:          ##@environment Create a venv
-	if [ ! -e "venv/bin/activate" ] ; then python -m venv --clear venv ; fi
+	if [ ! -e "venv/bin/activate" ] ; then python3 -m venv --clear venv ; fi
 
 lint:           ##@best_practices Run pylint against the main script and the shared, jobs and test folders
 	source .venv/bin/activate && pylint -r n impc_etl/main.py impc_etl/shared/ impc_etl/jobs/ tests/
