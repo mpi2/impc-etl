@@ -72,10 +72,10 @@ def extract_dcc_xml_files(
     logger.info(f"loading DCC data source from path '{dcc_xml_path}'")
     try:
         dcc_df = (
-            spark_session.read.format("com.databricks.spark.xml")
-            .options(rowTag="centre", samplingRatio="1", nullValue="", mode="FAILFAST")
-            .option("recursiveFileLookup", "true")
+            spark_session.read.option("recursiveFileLookup", "true")
             .option("pathGlobFilter", f"*{file_type}*.xml")
+            .format("com.databricks.spark.xml")
+            .options(rowTag="centre", samplingRatio="1", nullValue="", mode="FAILFAST")
             .load(dcc_xml_path)
         )
 
