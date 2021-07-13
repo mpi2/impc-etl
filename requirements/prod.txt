@@ -1,0 +1,3 @@
+pyspark
+bs4
+lxml
