@@ -153,7 +153,12 @@ def generate_unique_id(dcc_specimen_df: DataFrame) -> DataFrame:
         md5(
             concat(
                 *[
-                    when(col("_productionCentre").otherwise()).otherwise(),
+                    when(col("_productionCentre").isNotNull(), col("_productionCentre"))
+                    .when(
+                        col("_phenotypingCentre").isNotNull(),
+                        col("_phenotypingCentre"),
+                    )
+                    .otherwise(lit("")),
                     col("_specimenID"),
                 ]
             )
