@@ -242,7 +242,18 @@ def _get_closest_weight(
             errors.append("[PARSING] Failed to parse: " + str(candidate_weight))
             continue
 
-        nearest_weight_value = float(nearest_weight["weightValue"])
+        try:
+            nearest_weight_value = float(nearest_weight["weightValue"])
+        except ValueError:
+            errors.append(
+                "[PARSING] Failed to parse: "
+                + str(nearest_weight["weightValue"])
+                + " "
+                + procedure_group
+                + " "
+                + str(experiment_date)
+            )
+            continue
 
         if candidate_diff < nearest_diff:
             nearest_weight = candidate_weight
