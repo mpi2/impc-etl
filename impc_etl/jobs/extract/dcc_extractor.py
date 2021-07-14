@@ -79,7 +79,7 @@ def extract_dcc_xml_files(
         dcc_df = (
             spark_session.read.format("com.databricks.spark.xml")
             .options(rowTag="centre", samplingRatio="1", nullValue="", mode="FAILFAST")
-            .load([other_project_path, impc_path])
+            .load(",".join([other_project_path, impc_path]))
         )
 
         logger.info(f"adding _dataSource column")
