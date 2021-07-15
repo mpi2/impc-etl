@@ -17,6 +17,7 @@ from pyspark.sql.functions import (
     expr,
     regexp_replace,
     to_date,
+    regexp_extract,
 )
 from pyspark.sql.types import (
     ArrayType,
@@ -163,27 +164,7 @@ def get_associated_body_weight(
         & (dcc_experiment_df["_centreID"] == mice_df["_centreID"]),
         "left_outer",
     )
-    for col_name, date_prefix in {
-        "_dateOfBloodCollection": "Date and time of blood collection = ",
-        "_dateOfSacrifice": "Date and time of sacrifice = ",
-    }.items():
-        dcc_experiment_df = dcc_experiment_df.withColumn(
-            col_name + "Array",
-            expr(
-                f"filter(metadata, metadataValue ->  metadataValue LIKE '{date_prefix}%' )"
-            ),
-        )
-        dcc_experiment_df = dcc_experiment_df.withColumn(
-            col_name,
-            to_date(
-                regexp_replace(
-                    col(col_name + "Array").getItem(0),
-                    date_prefix,
-                    "",
-                ),
-                "yyyy-MM-dd'T'HH:mm:ss",
-            ),
-        )
+    dcc_experiment_df = _add_special_dates(dcc_experiment_df)
     get_associated_body_weight_udf = udf(_get_closest_weight, output_weight_schema)
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "weight",
@@ -210,27 +191,7 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
         & (experiment_df_a["_centreID"] == mice_df["_centreID"]),
         "left_outer",
     )
-    for col_name, date_prefix in {
-        "_dateOfBloodCollection": "Date and time of blood collection = ",
-        "_dateOfSacrifice": "Date and time of sacrifice = ",
-    }.items():
-        dcc_experiment_df = dcc_experiment_df.withColumn(
-            col_name + "Array",
-            expr(
-                f"filter(metadata, metadataValue ->  metadataValue LIKE '{date_prefix}%' )"
-            ),
-        )
-        dcc_experiment_df = dcc_experiment_df.withColumn(
-            col_name,
-            to_date(
-                regexp_replace(
-                    col(col_name + "Array").getItem(0),
-                    date_prefix,
-                    "",
-                ),
-                "yyyy-MM-dd'T'HH:mm:ss",
-            ),
-        )
+    dcc_experiment_df = _add_special_dates(dcc_experiment_df)
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "ageInDays",
         datediff(
@@ -345,3 +306,30 @@ def _get_closest_weight(
             "weightDaysOld": None,
             "error": errors,
         }
+
+
+def _add_special_dates(dcc_experiment_df: DataFrame):
+    for col_name, date_prefixes in {
+        "_dateOfBloodCollection": [
+            "date and time of blood collection = ",
+            "date/time of blood collection = ",
+        ],
+        "_dateOfSacrifice": ["date and time of sacrifice = ", "date of sacrifice = "],
+    }.items():
+        prefix_sql_patterns = " OR ".join([f"%{prefix}%" for prefix in date_prefixes])
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            col_name + "Array",
+            expr(
+                f"filter(metadata, metadataValue ->  metadataValue ILIKE ({prefix_sql_patterns}) )"
+            ),
+        )
+        escaped_prefixes = [prefix.replace("/", ".") for prefix in date_prefixes]
+        prefix_regex = f"(.*)({'|'.join(escaped_prefixes)})(.*)"
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            col_name,
+            to_date(
+                regexp_extract(col(col_name + "Array").getItem(0), prefix_regex, 3),
+                "yyyy-MM-dd'T'HH:mm:ss",
+            ),
+        )
+    return dcc_experiment_df
