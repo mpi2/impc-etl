@@ -204,9 +204,34 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
         & (experiment_df_a["_centreID"] == mice_df["_centreID"]),
         "left_outer",
     )
+    for col_name, date_prefix in {
+        "_dateOfBloodCollection": "Date and time of blood collection = ",
+        "_dateOfSacrifice": "Date and time of sacrifice = ",
+    }.items():
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            col_name,
+            expr(
+                f"filter(metadata, metadataValue ->  metadataValue LIKE '{date_prefix}%' )"
+            ),
+        )
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            col_name,
+            regexp_replace(
+                expr(f"transform({col_name}, dates -> dates[0])"),
+                date_prefix,
+                "",
+            ),
+        )
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "ageInDays",
-        datediff(col("exp._dateOfExperiment"), col("mice._DOB")),
+        datediff(
+            when(
+                col("_dateOfBloodCollection").isNotNull(), col("_dateOfBloodCollection")
+            )
+            .when(col("_dateOfSacrifice").isNotNull(), col("_dateOfSacrifice"))
+            .otherwise(col("_dateOfExperiment")),
+            col("mice._DOB"),
+        ),
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "ageInWeeks",
