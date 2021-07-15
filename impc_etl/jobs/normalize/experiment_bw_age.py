@@ -16,6 +16,7 @@ from pyspark.sql.functions import (
     lit,
     expr,
     regexp_replace,
+    to_date,
 )
 from pyspark.sql.types import (
     ArrayType,
@@ -172,10 +173,13 @@ def get_associated_body_weight(
         )
         dcc_experiment_df = dcc_experiment_df.withColumn(
             col_name,
-            regexp_replace(
-                col(col_name + "Array").getItem(0),
-                date_prefix,
-                "",
+            to_date(
+                regexp_replace(
+                    col(col_name + "Array").getItem(0),
+                    date_prefix,
+                    "",
+                ),
+                "yyyy-MM-ddTHH:mm:ss",
             ),
         )
     get_associated_body_weight_udf = udf(_get_closest_weight, output_weight_schema)
@@ -216,10 +220,13 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
         )
         dcc_experiment_df = dcc_experiment_df.withColumn(
             col_name,
-            regexp_replace(
-                col(col_name + "Array").getItem(0),
-                date_prefix,
-                "",
+            to_date(
+                regexp_replace(
+                    col(col_name + "Array").getItem(0),
+                    date_prefix,
+                    "",
+                ),
+                "yyyy-MM-ddTHH:mm:ss",
             ),
         )
     dcc_experiment_df = dcc_experiment_df.withColumn(
