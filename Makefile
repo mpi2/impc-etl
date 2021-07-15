@@ -1,3 +1,4 @@
+env=''
 all: default
 
 default: clean devDeps build
@@ -29,21 +30,20 @@ lint:           ##@best_practices Run pylint against the main script and the sha
 	source .venv/bin/activate && pylint -r n impc_etl/main.py impc_etl/shared/ impc_etl/jobs/ tests/
 
 build: clean        ##@deploy Build to the dist package
-	mkdir ./dist
-#	cp ./impc_etl/main.py ./dist/
-	zip -x main.py -r ./dist/impc_etl.zip impc_etl
-	cd ./dist && mkdir libs
+	mkdir ./dist$(env)
+	zip -x main.py -r ./dist$(env)/impc_etl.zip impc_etl
+	cd ./dist$(env) && mkdir libs
 	source venv/bin/activate && pip install --upgrade pip
-	source venv/bin/activate && pip install -U -r requirements/common.txt -t ./dist/libs
-	source venv/bin/activate && pip install -U -r requirements/prod.txt -t ./dist/libs
-	cd ./dist/libs && zip -r ../libs.zip .
-	cd ./dist && rm -rf libs
+	source venv/bin/activate && pip install -U -r requirements/common.txt -t ./dist$(env)/libs
+	source venv/bin/activate && pip install -U -r requirements/prod.txt -t ./dist$(env)/libs
+	cd ./dist$(env)/libs && zip -r ../libs.zip .
+	cd ./dist$(env) && rm -rf libs
 
 
 clean: clean-build clean-pyc clean-test           ##@clean Clean all
 
 clean-build:           ##@clean Clean the dist folder
-	rm -fr dist/
+	rm -fr dist$(env)/
 
 clean-pyc:           ##@clean Clean all the python auto generated files
 	find . -name '*.pyc' -exec rm -f {} +
