@@ -179,7 +179,7 @@ def get_associated_body_weight(
                     date_prefix,
                     "",
                 ),
-                "yyyy-MM-ddTHH:mm:ss",
+                "yyyy-MM-dd'T'HH:mm:ss",
             ),
         )
     get_associated_body_weight_udf = udf(_get_closest_weight, output_weight_schema)
@@ -226,7 +226,7 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
                     date_prefix,
                     "",
                 ),
-                "yyyy-MM-ddTHH:mm:ss",
+                "yyyy-MM-dd'T'HH:mm:ss",
             ),
         )
     dcc_experiment_df = dcc_experiment_df.withColumn(
