@@ -623,7 +623,7 @@ class ImpcCopyIndexParts(luigi.Task):
 
     def run(self):
         client = WebHdfsClient()
-        client.download(self.input()[0].path, self.output().path)
+        client.download(self.input()[0].path, self.output().path, n_threads=50)
 
 
 class ImpcMergeIndex(LSFExternalJobTask):
