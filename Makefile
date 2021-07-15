@@ -6,6 +6,14 @@ default: clean devDeps build
 submit-h: clean build
 	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' PYSPARK_PYTHON=python36 luigi --module impc_etl.workflow.main $(task) --workers 3
 
+# submit-h: clean devDeps build
+submit-h-daily: clean build createDailyLuigiCfg
+	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-daily.cfg'  PYTHONPATH='.' PYSPARK_PYTHON=python36 luigi --module impc_etl.workflow.main $(task) --workers 3
+
+# submit-h: clean devDeps build
+submit-custom:
+	source venv/bin/activate && LUIGI_CONFIG_PATH='$(confFile)'  PYTHONPATH='.' PYSPARK_PYTHON=python36 YARN_CONF_DIR=/homes/mi_hadoop/hadoop-yarn-conf/ luigi --module impc_etl.workflow.main $(task) --workers 2
+
 submit-lsf: clean devDeps build
 	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-lsf.cfg'  PYTHONPATH='.' luigi --module impc_etl.workflow.main $(task) --workers 3
 
@@ -93,8 +101,11 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	cd $(staging-path)/$(dr-tag)/misc/ && rm embryo_data_og.json
 	scp -r $(staging-path)/$(dr-tag) $(etl-host):$(etl-dir)/
 
-createLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
-	sed 's/%DR_TAG%/dr15.0/' luigi.cfg.template > luigi-prod.cfg
+createProdLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
+	sed 's/%DR_TAG%/$(dr-tag)/' luigi.cfg.template > luigi-prod.cfg
+
+createDailyLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
+	sed 's/%DR_TAG%/$(dr-tag)/' luigi.cfg.template > luigi-daily.cfg
 
 test:       ##@best_practices Run pystest against the test folder
 	source venv/bin/activate && pytest
