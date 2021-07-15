@@ -173,7 +173,7 @@ def get_associated_body_weight(
         dcc_experiment_df = dcc_experiment_df.withColumn(
             col_name,
             regexp_replace(
-                expr(f"transform({col_name + 'Array'}, dates -> dates[0])"),
+                col(col_name + "Array").getItem(0),
                 date_prefix,
                 "",
             ),
@@ -217,7 +217,7 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
         dcc_experiment_df = dcc_experiment_df.withColumn(
             col_name,
             regexp_replace(
-                expr(f"transform({col_name + 'Array'}, dates -> dates[0])"),
+                col(col_name + "Array").getItem(0),
                 date_prefix,
                 "",
             ),
