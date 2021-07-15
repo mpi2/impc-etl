@@ -14,6 +14,8 @@ from pyspark.sql.functions import (
     udf,
     when,
     lit,
+    expr,
+    regexp_replace,
 )
 from pyspark.sql.types import (
     ArrayType,
@@ -158,11 +160,33 @@ def get_associated_body_weight(
         & (dcc_experiment_df["_centreID"] == mice_df["_centreID"]),
         "left_outer",
     )
+    for col_name, date_prefix in {
+        "_dateOfBloodCollection": "Date and time of blood collection = ",
+        "_dateOfSacrifice": "Date and time of sacrifice = ",
+    }.items():
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            col_name,
+            expr(
+                f"filter(metadata, metadataValue ->  metadataValue LIKE '{date_prefix}%' )"
+            ),
+        )
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            col_name,
+            regexp_replace(
+                expr(f"transform({col_name}, dates -> dates[0])"),
+                date_prefix,
+                "",
+            ),
+        )
     get_associated_body_weight_udf = udf(_get_closest_weight, output_weight_schema)
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "weight",
         get_associated_body_weight_udf(
-            col("_dateOfExperiment"),
+            when(
+                col("_dateOfBloodCollection").isNotNull(), col("_dateOfBloodCollection")
+            )
+            .when(col("_dateOfSacrifice").isNotNull(), col("_dateOfSacrifice"))
+            .otherwise(col("_dateOfExperiment")),
             col("procedureGroup"),
             col("weight_observations"),
         ),
