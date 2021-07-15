@@ -14,6 +14,8 @@ from pyspark.sql.functions import (
     udf,
     when,
     lit,
+    expr,
+    regexp_replace,
 )
 from pyspark.sql.types import (
     ArrayType,
@@ -158,11 +160,33 @@ def get_associated_body_weight(
         & (dcc_experiment_df["_centreID"] == mice_df["_centreID"]),
         "left_outer",
     )
+    for col_name, date_prefix in {
+        "_dateOfBloodCollection": "Date and time of blood collection = ",
+        "_dateOfSacrifice": "Date and time of sacrifice = ",
+    }.items():
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            col_name,
+            expr(
+                f"filter(metadata, metadataValue ->  metadataValue LIKE '{date_prefix}%' )"
+            ),
+        )
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            col_name,
+            regexp_replace(
+                expr(f"transform({col_name}, dates -> dates[0])"),
+                date_prefix,
+                "",
+            ),
+        )
     get_associated_body_weight_udf = udf(_get_closest_weight, output_weight_schema)
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "weight",
         get_associated_body_weight_udf(
-            col("_dateOfExperiment"),
+            when(
+                col("_dateOfBloodCollection").isNotNull(), col("_dateOfBloodCollection")
+            )
+            .when(col("_dateOfSacrifice").isNotNull(), col("_dateOfSacrifice"))
+            .otherwise(col("_dateOfExperiment")),
             col("procedureGroup"),
             col("weight_observations"),
         ),
@@ -180,9 +204,34 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
         & (experiment_df_a["_centreID"] == mice_df["_centreID"]),
         "left_outer",
     )
+    for col_name, date_prefix in {
+        "_dateOfBloodCollection": "Date and time of blood collection = ",
+        "_dateOfSacrifice": "Date and time of sacrifice = ",
+    }.items():
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            col_name,
+            expr(
+                f"filter(metadata, metadataValue ->  metadataValue LIKE '{date_prefix}%' )"
+            ),
+        )
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            col_name,
+            regexp_replace(
+                expr(f"transform({col_name}, dates -> dates[0])"),
+                date_prefix,
+                "",
+            ),
+        )
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "ageInDays",
-        datediff(col("exp._dateOfExperiment"), col("mice._DOB")),
+        datediff(
+            when(
+                col("_dateOfBloodCollection").isNotNull(), col("_dateOfBloodCollection")
+            )
+            .when(col("_dateOfSacrifice").isNotNull(), col("_dateOfSacrifice"))
+            .otherwise(col("_dateOfExperiment")),
+            col("mice._DOB"),
+        ),
     )
     dcc_experiment_df = dcc_experiment_df.withColumn(
         "ageInWeeks",
@@ -242,7 +291,18 @@ def _get_closest_weight(
             errors.append("[PARSING] Failed to parse: " + str(candidate_weight))
             continue
 
-        nearest_weight_value = float(nearest_weight["weightValue"])
+        try:
+            nearest_weight_value = float(nearest_weight["weightValue"])
+        except ValueError:
+            errors.append(
+                "[PARSING] Failed to parse: "
+                + str(nearest_weight["weightValue"])
+                + " "
+                + procedure_group
+                + " "
+                + str(experiment_date)
+            )
+            continue
 
         if candidate_diff < nearest_diff:
             nearest_weight = candidate_weight
