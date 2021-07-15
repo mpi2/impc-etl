@@ -62,6 +62,8 @@ class ExperimentBWAgeProcessor(PySparkTask):
 
     def main(self, sc, *args):
         spark = SparkSession(sc)
+        spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
+        spark.sql("set spark.sql.legacy.parquet.datetimeRebaseModeInWrite=LEGACY")
         experiment_parquet_path = args[0]
         mouse_parquet_path = args[1]
         pipeline_parquet_path = args[2]
