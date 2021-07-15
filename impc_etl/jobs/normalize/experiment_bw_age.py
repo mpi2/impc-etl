@@ -165,7 +165,7 @@ def get_associated_body_weight(
         "_dateOfSacrifice": "Date and time of sacrifice = ",
     }.items():
         dcc_experiment_df = dcc_experiment_df.withColumn(
-            col_name,
+            col_name + "Array",
             expr(
                 f"filter(metadata, metadataValue ->  metadataValue LIKE '{date_prefix}%' )"
             ),
@@ -173,7 +173,7 @@ def get_associated_body_weight(
         dcc_experiment_df = dcc_experiment_df.withColumn(
             col_name,
             regexp_replace(
-                expr(f"transform({col_name}, dates -> dates[0])"),
+                expr(f"transform({col_name + 'Array'}, dates -> dates[0])"),
                 date_prefix,
                 "",
             ),
@@ -209,7 +209,7 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
         "_dateOfSacrifice": "Date and time of sacrifice = ",
     }.items():
         dcc_experiment_df = dcc_experiment_df.withColumn(
-            col_name,
+            col_name + "Array",
             expr(
                 f"filter(metadata, metadataValue ->  metadataValue LIKE '{date_prefix}%' )"
             ),
@@ -217,7 +217,7 @@ def generate_age_information(dcc_experiment_df: DataFrame, mice_df: DataFrame):
         dcc_experiment_df = dcc_experiment_df.withColumn(
             col_name,
             regexp_replace(
-                expr(f"transform({col_name}, dates -> dates[0])"),
+                expr(f"transform({col_name + 'Array'}, dates -> dates[0])"),
                 date_prefix,
                 "",
             ),
