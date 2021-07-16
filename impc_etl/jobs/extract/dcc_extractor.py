@@ -84,8 +84,12 @@ def extract_dcc_xml_files(
 
         logger.info(f"adding _dataSource column")
         dcc_df = dcc_df.withColumn("_sourceFile", lit(input_file_name()))
-        data_source_extract = udf(lambda x: x.split("/")[-2], StringType())
+        data_source_extract = udf(lambda x: x.split("/")[-4], StringType())
+        phenotyping_data_status_extract = udf(lambda x: x.split("/")[-3], StringType())
         dcc_df = dcc_df.withColumn("_dataSource", data_source_extract("_sourceFile"))
+        dcc_df = dcc_df.withColumn(
+            "_sourcePhenotypingStatus", phenotyping_data_status_extract("_sourceFile")
+        )
 
         logger.info(
             f"finished load of DCC data source from path '{other_project_path}' '{impc_path}'"

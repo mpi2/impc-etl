@@ -1,10 +1,8 @@
 from pyspark.sql.functions import concat_ws, col, lit, when, explode, collect_set, size
 
-observations_df = spark.read.parquet("impc/dr14.0/parquet/observations_parquet")
-observations_dr13_df = spark.read.parquet(
-    "/user/federico/data/dr13.0/parquet/observations_parquet"
-)
-exp_df = spark.read.parquet("impc/dr14.0/parquet/experiment_full_parquet")
+observations_df = spark.read.parquet("impc/dr15.0/parquet/observations_parquet")
+observations_dr14_df = spark.read.parquet("impc/dr14.0/parquet/observations_parquet")
+exp_df = spark.read.parquet("impc/dr15.0/parquet/experiment_full_parquet")
 experiment_list = exp_df.select(
     col("_centreID").alias("phenotyping_center"),
     col("_pipeline").alias("pipeline_stable_id"),
@@ -31,8 +29,8 @@ experiments = (
     )
     .distinct()
 )
-experiments_dr13 = (
-    observations_dr13_df.where(col("datasource_name") == "IMPC")
+experiments_dr14 = (
+    observations_dr14_df.where(col("datasource_name") == "IMPC")
     .select(
         "phenotyping_center",
         "pipeline_stable_id",
@@ -42,45 +40,45 @@ experiments_dr13 = (
     )
     .distinct()
 )
-dr13_dr14_diff = experiments_dr13.subtract(experiments)
-dr13_dr14_diff.count()
+dr14_dr15_diff = experiments_dr14.subtract(experiments)
+dr14_dr15_diff.count()
 experiment_with_status_list = experiment_with_status_list.alias("exp")
-dr13_dr14_diff = dr13_dr14_diff.alias("obs")
-dr13_dr14_diff = (
-    dr13_dr14_diff.join(
+dr14_dr15_diff = dr14_dr15_diff.alias("obs")
+dr14_dr15_diff = (
+    dr14_dr15_diff.join(
         experiment_with_status_list,
         (
-            dr13_dr14_diff["phenotyping_center"]
+            dr14_dr15_diff["phenotyping_center"]
             == experiment_with_status_list["phenotyping_center"]
         )
         & (
-            dr13_dr14_diff["procedure_stable_id"]
+            dr14_dr15_diff["procedure_stable_id"]
             == experiment_with_status_list["procedure_stable_id"]
         )
         & (
             when(
-                dr13_dr14_diff["procedure_sequence_id"].isNull()
+                dr14_dr15_diff["procedure_sequence_id"].isNull()
                 & experiment_with_status_list["procedure_sequence_id"].isNull(),
                 lit(True),
             )
             .when(
                 (
-                    dr13_dr14_diff["procedure_sequence_id"].isNotNull()
+                    dr14_dr15_diff["procedure_sequence_id"].isNotNull()
                     & experiment_with_status_list["procedure_sequence_id"].isNull()
                 )
                 | (
-                    dr13_dr14_diff["procedure_sequence_id"].isNull()
+                    dr14_dr15_diff["procedure_sequence_id"].isNull()
                     & experiment_with_status_list["procedure_sequence_id"].isNotNull()
                 ),
                 lit(False),
             )
             .otherwise(
-                dr13_dr14_diff["procedure_sequence_id"]
+                dr14_dr15_diff["procedure_sequence_id"]
                 == experiment_with_status_list["procedure_sequence_id"]
             )
         )
         & (
-            dr13_dr14_diff["external_sample_id"]
+            dr14_dr15_diff["external_sample_id"]
             == experiment_with_status_list["external_sample_id"]
         ),
         "left_outer",
@@ -91,37 +89,37 @@ dr13_dr14_diff = (
         "exp.has_status",
     )
     .repartition(1)
-    .write.csv("impc/dr14.0/csv/dr13_dr14_diff", header=True)
+    .write.csv("impc/dr15.0/csv/dr14_dr15_diff", header=True)
 )
 
 
-diff_vs_bora = dr13_dr14_diff.join(
+diff_vs_bora = dr14_dr15_diff.join(
     bora_report,
-    (dr13_dr14_diff["phenotyping_center"] == bora_report["phenotyping_center"])
-    & (dr13_dr14_diff["procedure_stable_id"] == bora_report["procedure_stable_id"])
+    (dr14_dr15_diff["phenotyping_center"] == bora_report["phenotyping_center"])
+    & (dr14_dr15_diff["procedure_stable_id"] == bora_report["procedure_stable_id"])
     & (
         when(
-            dr13_dr14_diff["procedure_sequence_id"].isNull()
+            dr14_dr15_diff["procedure_sequence_id"].isNull()
             & bora_report["procedure_sequence_id"].isNull(),
             lit(True),
         )
         .when(
             (
-                dr13_dr14_diff["procedure_sequence_id"].isNotNull()
+                dr14_dr15_diff["procedure_sequence_id"].isNotNull()
                 & bora_report["procedure_sequence_id"].isNull()
             )
             | (
-                dr13_dr14_diff["procedure_sequence_id"].isNull()
+                dr14_dr15_diff["procedure_sequence_id"].isNull()
                 & bora_report["procedure_sequence_id"].isNotNull()
             ),
             lit(False),
         )
         .otherwise(
-            dr13_dr14_diff["procedure_sequence_id"]
+            dr14_dr15_diff["procedure_sequence_id"]
             == bora_report["procedure_sequence_id"]
         )
     )
-    & (dr13_dr14_diff["external_sample_id"] == bora_report["external_sample_id"]),
+    & (dr14_dr15_diff["external_sample_id"] == bora_report["external_sample_id"]),
     "left_outer",
 )
 
