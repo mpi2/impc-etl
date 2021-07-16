@@ -472,6 +472,7 @@ class Constants:
     OBSERVATION_COLUMNS = [
         "experiment_source_file",
         "specimen_source_file",
+        "source_phenotyping_status",
         "experiment_id",
         "specimen_id",
         "observation_id",
