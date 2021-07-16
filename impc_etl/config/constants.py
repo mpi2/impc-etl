@@ -417,7 +417,7 @@ class Constants:
     }
 
     EXPERIMENT_TO_OBSERVATION_MAP = {
-        "source_phenotyping_status": "experiment_sourcePhenotypingStatus",
+        "source_phenotyping_status": "experiment._sourcePhenotypingStatus",
         "project_name": "experiment._project",
         "age_in_days": "experiment.ageInDays",
         "age_in_weeks": "experiment.ageInWeeks",
