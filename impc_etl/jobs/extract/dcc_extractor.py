@@ -14,7 +14,7 @@ DCC Extractor module
 import sys
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StringType
-from pyspark.sql.functions import input_file_name, udf, explode_outer, lit
+from pyspark.sql.functions import input_file_name, udf, explode_outer, lit, when, col
 from impc_etl.shared.exceptions import UnsupportedEntityError, UnsupportedFileTypeError
 from typing import List
 from impc_etl import logger
@@ -84,11 +84,20 @@ def extract_dcc_xml_files(
 
         logger.info(f"adding _dataSource column")
         dcc_df = dcc_df.withColumn("_sourceFile", lit(input_file_name()))
-        data_source_extract = udf(lambda x: x.split("/")[-4], StringType())
+        data_source_extract = udf(
+            lambda x: x.split("/")[-4]
+            if x.split("/")[-4] == "impc"
+            else x.split("/")[-2],
+            StringType(),
+        )
         phenotyping_data_status_extract = udf(lambda x: x.split("/")[-3], StringType())
         dcc_df = dcc_df.withColumn("_dataSource", data_source_extract("_sourceFile"))
         dcc_df = dcc_df.withColumn(
-            "_sourcePhenotypingStatus", phenotyping_data_status_extract("_sourceFile")
+            "_sourcePhenotypingStatus",
+            when(
+                col("_dataSource") == "impc",
+                phenotyping_data_status_extract("_sourceFile"),
+            ).otherwise(lit(None)),
         )
 
         logger.info(
@@ -120,7 +129,14 @@ def get_experiments_by_type(dcc_df: DataFrame, entity_type: str) -> DataFrame:
     experiment_df = _get_entity_by_type(
         dcc_df,
         entity_type,
-        ["_centreID", "_pipeline", "_project", "_sourceFile", "_dataSource"],
+        [
+            "_centreID",
+            "_pipeline",
+            "_project",
+            "_sourceFile",
+            "_dataSource",
+            "_sourcePhenotypingStatus",
+        ],
     )
     return experiment_df.select(
         ["procedure.*"]
@@ -143,7 +159,9 @@ def get_specimens_by_type(dcc_df: DataFrame, entity_type: str) -> DataFrame:
     if entity_type not in ["mouse", "embryo"]:
         raise UnsupportedEntityError
     return _get_entity_by_type(
-        dcc_df, entity_type, ["_centreID", "_sourceFile", "_dataSource"]
+        dcc_df,
+        entity_type,
+        ["_centreID", "_sourceFile", "_dataSource", "_sourcePhenotypingStatus"],
     )
 
 
