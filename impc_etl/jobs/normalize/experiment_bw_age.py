@@ -316,15 +316,14 @@ def _add_special_dates(dcc_experiment_df: DataFrame):
         ],
         "_dateOfSacrifice": ["date and time of sacrifice = ", "date of sacrifice = "],
     }.items():
-        prefix_sql_patterns = " OR ".join([f"%{prefix}%" for prefix in date_prefixes])
+        escaped_prefixes = [prefix.replace("/", ".") for prefix in date_prefixes]
+        prefix_regex = f"(.*)({'|'.join(escaped_prefixes)})(.*)"
         dcc_experiment_df = dcc_experiment_df.withColumn(
             col_name + "Array",
             expr(
-                f"filter(metadata, metadataValue ->  metadataValue ILIKE ({prefix_sql_patterns}) )"
+                f'filter(metadata, metadataValue ->  metadataValue rlike "{prefix_regex}" )'
             ),
         )
-        escaped_prefixes = [prefix.replace("/", ".") for prefix in date_prefixes]
-        prefix_regex = f"(.*)({'|'.join(escaped_prefixes)})(.*)"
         dcc_experiment_df = dcc_experiment_df.withColumn(
             col_name,
             to_date(
