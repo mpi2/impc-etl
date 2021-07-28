@@ -36,11 +36,17 @@ def main(argv):
             numPartitions=5000,
             column="numericId",
             lowerBound=0,
-            upperBound=999991716,
+            upperBound=999992360,
         )
         stats_df = stats_df.withColumnRenamed("statpacket", "json")
         stats_df.write.mode("overwrite").parquet(output_path + "_temp")
     stats_df = spark.read.parquet(output_path + "_temp").repartition(10000)
+    stats_df = stats_df.where(
+        ~(
+            col("procedure_stable_id").contains("_EYE_003")
+            & col("parameter_stable_id").contains("EYE_092_002")
+        )
+    )
     if extract_windowed_data:
         stats_df = stats_df.where(col("json").contains("Windowed result"))
 
