@@ -129,6 +129,7 @@ RAW_DATA_COLUMNS = [
     "observations_categories",
     "observations_time_point",
     "observations_discrete_point",
+    "observations_id",
 ]
 
 
@@ -844,9 +845,6 @@ def get_stats_results_core(
         for col_name in identifying_cols
     ]
     open_stats_df = open_stats_df.withColumn("doc_id", md5(concat(*identifying_cols)))
-    open_stats_df = open_stats_df.withColumnRenamed(
-        "observations_id", "observation_ids"
-    )
     if raw_data_in_output == "include" or raw_data_in_output == "bundled":
         specimen_dobs = (
             observations_df.select("external_sample_id", "date_of_birth")
