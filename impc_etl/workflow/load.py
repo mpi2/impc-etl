@@ -559,7 +559,7 @@ class ImpcImagesCoreLoader(SparkSubmitTask):
 
 
 class Parquet2Solr(SparkSubmitTask):
-    app = "lib/parquet2solr-16022021.jar"
+    app = "lib/parquet2solr-02082021.jar"
     name = "Parquet2Solr"
     input_path = luigi.Parameter()
     output_path = luigi.Parameter()
