@@ -47,9 +47,6 @@ def main(argv):
             & col("parameter_stable_id").contains("EYE_092_002")
         )
     )
-    if extract_windowed_data:
-        stats_df = stats_df.where(col("json").contains("Windowed result"))
-
     dumping_function = dump_json
     if raw_data_in_output:
         dumping_function = dump_json_raw_data
@@ -123,7 +120,10 @@ def _get_stat_result(row, include_raw_data=False, extract_windowed_data=False):
 
     if stats_result["status"] == "Successful":
         try:
-            if extract_windowed_data:
+            if (
+                extract_windowed_data
+                and "Windowed result" in stats_packet["Result"]["Vector output"]
+            ):
                 normal_result = stats_packet["Result"]["Vector output"][
                     "Windowed result"
                 ]
@@ -173,32 +173,30 @@ def _get_stat_result(row, include_raw_data=False, extract_windowed_data=False):
             "Original_observation_id", stats_packet_detail
         )
 
-        if extract_windowed_data:
+        if extract_windowed_data and "Window parameters" in stats_packet_detail:
             window_parameters = stats_packet_detail["Window parameters"]
-            stats_result["window_l_value"] = window_parameters["l"]["value"]
-            stats_result["window_l_score"] = window_parameters["l"]["score"]
-            stats_result["window_k_value"] = window_parameters["k"]["value"]
-            stats_result["window_k_score"] = window_parameters["k"]["score"]
-            stats_result["window_doe"] = window_parameters["DOE"]
-            stats_result["window_min_obs_required"] = window_parameters[
+            stats_result["soft_windowing_bandwidth"] = window_parameters["l"]["value"]
+            stats_result["soft_windowing_shape"] = window_parameters["k"]["value"]
+            stats_result["soft_windowing_peaks"] = window_parameters["DOE"]
+            stats_result["soft_windowing_min_obs_required"] = window_parameters[
                 "Min obs required in the window"
             ]
-            stats_result["window_total_obs_or_weight"] = (
+            stats_result["soft_windowing_total_obs_or_weight"] = (
                 window_parameters["Total obs or weight in the window"]
                 if "Total obs or weight in the window" in window_parameters
                 else None
             )
-            stats_result["window_threshold"] = (
+            stats_result["soft_windowing_threshold"] = (
                 window_parameters["Threshold"]
                 if "Threshold" in window_parameters
                 else None
             )
-            stats_result["window_number_of_doe"] = (
+            stats_result["soft_windowing_number_of_doe"] = (
                 window_parameters["The number of DOE in the window"]
                 if "The number of DOE in the window" in window_parameters
                 else None
             )
-            stats_result["window_doe_note"] = (
+            stats_result["soft_windowing_doe_note"] = (
                 window_parameters["DOE note"]
                 if "DOE note" in window_parameters
                 else None

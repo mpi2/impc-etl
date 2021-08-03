@@ -277,16 +277,14 @@ STATS_RESULTS_COLUMNS = [
 ]
 
 WINDOW_COLUMNS = [
-    "window_l_value",
-    "window_l_score",
-    "window_k_value",
-    "window_k_score",
-    "window_doe",
-    "window_min_obs_required",
-    "window_total_obs_or_weight",
-    "window_threshold",
-    "window_number_of_doe",
-    "window_doe_note",
+    "soft_windowing_bandwidth",
+    "soft_windowing_shape",
+    "soft_windowing_peaks",
+    "soft_windowing_min_obs_required",
+    "soft_windowing_total_obs_or_weight",
+    "soft_windowing_threshold",
+    "soft_windowing_number_of_doe",
+    "soft_windowing_doe_note",
     "observations_window_weight",
 ]
 
