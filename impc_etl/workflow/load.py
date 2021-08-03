@@ -568,7 +568,9 @@ class Parquet2Solr(SparkSubmitTask):
     parquet_solr_map = {
         "observations_parquet": "experiment",
         "stats_results_parquet": "statistical-result",
+        "stats_results_parquet_with_windowing": "statistical-result",
         "stats_results_parquet_raw_data": "statistical-raw-data",
+        "stats_results_parquet_with_windowing_raw_data": "statistical-raw-data",
         "gene_core_parquet": "gene",
         "imits_allele2_raw_parquet": "allele2",
         "genotype_phenotype_parquet": "genotype-phenotype",
