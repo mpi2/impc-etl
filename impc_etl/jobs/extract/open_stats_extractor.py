@@ -141,9 +141,22 @@ def _get_stat_result(row, include_raw_data=False, extract_windowed_data=False):
         stats_result.update(
             get_calculation_details(normal_result, stats_result["statistical_method"])
         )
-        stats_result["mp_term"] = (
-            stats_packet_detail["MPTERM"] if "MPTERM" in stats_packet_detail else None
-        )
+        stats_result["mp_term"] = None
+        if (
+            extract_windowed_data
+            and "Windowed result" in stats_packet["Result"]["Vector output"]
+        ):
+            stats_result["mp_term"] = (
+                stats_packet_detail["WMPTERM"]
+                if "WMPTERM" in stats_packet_detail
+                else None
+            )
+        else:
+            stats_result["mp_term"] = (
+                stats_packet_detail["MPTERM"]
+                if "MPTERM" in stats_packet_detail
+                else None
+            )
     if include_raw_data:
         stats_result["observations_biological_sample_group"] = _process_raw_data_field(
             "Original_biological_sample_group", stats_packet_detail
