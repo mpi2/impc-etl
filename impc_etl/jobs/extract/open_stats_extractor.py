@@ -41,12 +41,6 @@ def main(argv):
         stats_df = stats_df.withColumnRenamed("statpacket", "json")
         stats_df.write.mode("overwrite").parquet(output_path + "_temp")
     stats_df = spark.read.parquet(output_path + "_temp").repartition(10000)
-    stats_df = stats_df.where(
-        ~(
-            col("procedure_stable_id").contains("_EYE_003")
-            & col("parameter_stable_id").contains("EYE_092_002")
-        )
-    )
     dumping_function = dump_json
     if raw_data_in_output:
         dumping_function = dump_json_raw_data
