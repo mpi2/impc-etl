@@ -117,7 +117,7 @@ def _get_stat_result(row, include_raw_data=False, extract_windowed_data=False):
         "EYE_003" in stats_result["procedure_stable_id"]
         and "EYE_092_002" in stats_result["parameter_stable_id"]
     ):
-        stats_result["status"] == "NotProcessed"
+        stats_result["status"] = "NotProcessed"
 
     if stats_result["status"] == "Successful":
         try:
