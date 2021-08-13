@@ -317,7 +317,7 @@ def _add_special_dates(dcc_experiment_df: DataFrame):
         "_dateOfSacrifice": ["date and time of sacrifice = ", "date of sacrifice = "],
     }.items():
         escaped_prefixes = [prefix.replace("/", ".") for prefix in date_prefixes]
-        prefix_regex = f"(.*)({'|'.join(escaped_prefixes)})(.*)"
+        prefix_regex = f"(?i)(.*)({'|'.join(escaped_prefixes)})(.*)"
         dcc_experiment_df = dcc_experiment_df.withColumn(
             col_name + "Array",
             expr(
