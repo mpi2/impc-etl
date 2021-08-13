@@ -326,9 +326,8 @@ def _add_special_dates(dcc_experiment_df: DataFrame):
         )
         dcc_experiment_df = dcc_experiment_df.withColumn(
             col_name,
-            to_date(
-                regexp_extract(col(col_name + "Array").getItem(0), prefix_regex, 3),
-                "yyyy-MM-dd'T'HH:mm:ss",
+            regexp_extract(col(col_name + "Array").getItem(0), prefix_regex, 3).astype(
+                DateType()
             ),
         )
     return dcc_experiment_df
