@@ -682,7 +682,14 @@ def get_stats_results_core(
             *[
                 array_distinct(flatten(collect_set(col_name))).alias(col_name)
                 if col_name
-                in ["mp_id", "mp_term", "top_level_mp_id", "top_level_mp_term"]
+                in [
+                    "mp_id",
+                    "mp_term",
+                    "top_level_mp_id",
+                    "top_level_mp_term",
+                    "intermediate_mp_id",
+                    "intermediate_mp_term",
+                ]
                 else collect_set(col_name).alias(col_name)
                 for col_name in list(set(PIPELINE_STATS_MAP.values()))
                 if col_name != "pipeline_stable_key"
