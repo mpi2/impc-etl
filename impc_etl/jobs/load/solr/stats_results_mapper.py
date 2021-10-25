@@ -72,6 +72,8 @@ PIPELINE_STATS_MAP = {
     "mp_term_name_options": "mp_term",
     "top_level_mp_id_options": "top_level_mp_id",
     "top_level_mp_term_options": "top_level_mp_term",
+    "intermediate_mp_id_options": "intermediate_mp_id",
+    "intermediate_mp_term_options": "intermediate_mp_term",
     "parameter_stable_key": "parameter_stable_key",
     "procedure_name": "procedure_name",
     "pipeline_stable_key": "pipeline_stable_key",
@@ -716,6 +718,20 @@ def get_stats_results_core(
         when(
             col("top_level_mp_term_name").isNull(), col("top_level_mp_term_options")
         ).otherwise(col("top_level_mp_term_name")),
+    )
+
+    open_stats_df = open_stats_df.withColumn(
+        "intermediate_mp_term_id",
+        when(
+            col("intermediate_mp_term_id").isNull(), col("intermediate_mp_id_options")
+        ).otherwise(col("intermediate_mp_term_id")),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        "intermediate_mp_term_name",
+        when(
+            col("intermediate_mp_term_name").isNull(),
+            col("intermediate_mp_term_options"),
+        ).otherwise(col("intermediate_mp_term_name")),
     )
 
     allele_df = allele_df.select(
