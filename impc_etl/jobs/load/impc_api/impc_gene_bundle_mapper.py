@@ -192,6 +192,7 @@ class ImpcGeneBundleMapper(PySparkTask):
         )
 
         gene_df = gene_df.join(products_by_gene, "mgi_accession_id", "left_outer")
+        gene_df = gene_df.withColumn("_id", col("mgi_accession_id"))
         gene_df.write.format("mongo").mode("append").option(
             "spark.mongodb.output.uri",
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
@@ -201,6 +202,7 @@ class ImpcGeneBundleMapper(PySparkTask):
 
         ## Create gene search index
         gene_search_df = gene_df.select(
+            col("mgi_accession_id").alias("_id"),
             "mgi_accession_id",
             "marker_name",
             "human_gene_symbol",
