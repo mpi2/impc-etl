@@ -60,7 +60,7 @@ class ImpcGeneBundleMapper(PySparkTask):
             MGIHomoloGeneExtractor(),
             MGIMrkListExtractor(),
             ObservationsMapper(),
-            StatsResultsCoreLoader(raw_data_in_output="true"),
+            StatsResultsCoreLoader(raw_data_in_output="bundled"),
             OntologyMetadataExtractor(),
             GeneProductionStatusExtractor(),
             GenotypePhenotypeCoreLoader(),
