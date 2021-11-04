@@ -1,7 +1,7 @@
 import luigi
 from luigi.contrib.spark import PySparkTask
 from typing import List, Dict
-from pyspark.sql.functions import collect_set, struct, lit
+from pyspark.sql.functions import collect_set, struct, lit, col, concat
 
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
@@ -60,7 +60,7 @@ class ImpcGeneBundleMapper(PySparkTask):
             MGIHomoloGeneExtractor(),
             MGIMrkListExtractor(),
             ObservationsMapper(),
-            StatsResultsCoreLoader(raw_data_in_output="bundled"),
+            StatsResultsCoreLoader(raw_data_in_output="true"),
             OntologyMetadataExtractor(),
             GeneProductionStatusExtractor(),
             GenotypePhenotypeCoreLoader(),
@@ -197,5 +197,39 @@ class ImpcGeneBundleMapper(PySparkTask):
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
             "collection", str(self.mongodb_genes_collection)
+        ).save()
+
+        ## Create gene search index
+        gene_search_df = gene_df.select(
+            "mgi_accession_id",
+            "marker_name",
+            "human_gene_symbol",
+            "marker_synonym",
+            "assignment_status",
+            "crispr_allele_production_status",
+            "es_cell_production_status",
+            "mouse_production_status",
+            "phenotype_status",
+            "phenotyping_data_available",
+            col("significant_top_level_mp_terms").alias("significant_phenotype_system"),
+            col("not_significant_top_level_mp_terms").alias(
+                "non_significant_phenotype_system"
+            ),
+            concat(
+                "gene_phenotype_associations.mp_term_id",
+                "gene_phenotype_associations.intermediate_mp_term_id",
+                "gene_phenotype_associations.top_level_mp_term_id",
+            ).alias("significant_mp_term_ids"),
+            concat(
+                "gene_phenotype_associations.mp_term_name",
+                "gene_phenotype_associations.intermediate_mp_term_name",
+                "gene_phenotype_associations.top_level_mp_term_name",
+            ).alias("significant_mp_term_names"),
+        )
+        gene_search_df.write.format("mongo").mode("append").option(
+            "spark.mongodb.output.uri",
+            f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
+        ).option("database", str(self.mongodb_database)).option(
+            "collection", str(self.mongodb_genes_collection) + "_search"
         ).save()
         gene_df.write.parquet(output_path)
