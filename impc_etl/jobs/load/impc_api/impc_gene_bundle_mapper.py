@@ -226,6 +226,9 @@ class ImpcGeneBundleMapper(PySparkTask):
                 flatten("gene_phenotype_associations.top_level_mp_term_name"),
             ).alias("significant_mp_term_names"),
         )
+        gene_search_df = gene_search_df.withColumn(
+            "_class", lit("org.mousephenotype.api.models.Gene")
+        )
         gene_search_df.write.format("mongo").mode("append").option(
             "spark.mongodb.output.uri",
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
