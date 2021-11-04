@@ -1,7 +1,7 @@
 import luigi
 from luigi.contrib.spark import PySparkTask
 from typing import List, Dict
-from pyspark.sql.functions import collect_set, struct, lit, col, concat
+from pyspark.sql.functions import collect_set, struct, lit, col, concat, flatten
 
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
@@ -217,13 +217,13 @@ class ImpcGeneBundleMapper(PySparkTask):
             ),
             concat(
                 "gene_phenotype_associations.mp_term_id",
-                "gene_phenotype_associations.intermediate_mp_term_id",
-                "gene_phenotype_associations.top_level_mp_term_id",
+                flatten("gene_phenotype_associations.intermediate_mp_term_id"),
+                flatten("gene_phenotype_associations.top_level_mp_term_id"),
             ).alias("significant_mp_term_ids"),
             concat(
                 "gene_phenotype_associations.mp_term_name",
-                "gene_phenotype_associations.intermediate_mp_term_name",
-                "gene_phenotype_associations.top_level_mp_term_name",
+                flatten("gene_phenotype_associations.intermediate_mp_term_name"),
+                flatten("gene_phenotype_associations.top_level_mp_term_name"),
             ).alias("significant_mp_term_names"),
         )
         gene_search_df.write.format("mongo").mode("append").option(
