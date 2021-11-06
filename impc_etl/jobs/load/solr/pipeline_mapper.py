@@ -192,14 +192,10 @@ def main(argv):
         pipeline_mp_terms_df, "fully_qualified_name", "left_outer"
     )
 
-    pipeline_df = pipeline_df.join(
-        emap_emapa_df.alias("emap_emapa"),
-        col("emap_id") == col("termAcc"),
-        "left_outer",
+    pipeline_df = pipeline_df.withColumn(
+        "embryo_anatomy_id",
+        when(col("termAcc").contains("EMAPA:"), col("termAcc")).otherwise(lit(None)),
     )
-    pipeline_df = pipeline_df.withColumn("embryo_anatomy_id", col("emapa_id"))
-    pipeline_df = pipeline_df.drop(*emap_emapa_df.columns)
-
     emapa_metadata_df = emapa_metadata_df.select("acc", col("name").alias("emapaName"))
     pipeline_df = pipeline_df.join(
         emapa_metadata_df, col("embryo_anatomy_id") == col("acc"), "left_outer"
