@@ -82,7 +82,8 @@ def main(argv):
     pipeline_core_parquet_path = argv[3]
     impc_search_index_csv_path = argv[4]
     mp_relation_augmented_metadata_table_csv_path = argv[5]
-    output_path = argv[6]
+    mp_hp_matches_csv_path = argv[6]
+    output_path = argv[7]
 
     spark = SparkSession.builder.getOrCreate()
     ontology_df = spark.read.parquet(ontology_parquet_path)
@@ -92,6 +93,8 @@ def main(argv):
     mp_ext_df = spark.read.csv(
         mp_relation_augmented_metadata_table_csv_path, header=True
     )
+    mp_hp_matches_df = spark.read.csv(mp_hp_matches_csv_path, header=True)
+
     impc_search_index_df = (
         impc_search_index_df.groupBy("phenotype")
         .pivot("property")
@@ -101,27 +104,34 @@ def main(argv):
     for column_name, ontology_column in ONTOLOGY_MP_MAP.items():
         mp_df = mp_df.withColumnRenamed(ontology_column, column_name)
     mp_df = mp_df.select(list(ONTOLOGY_MP_MAP.keys()))
-
+    mp_hp_matches_df = mp_hp_matches_df.withColumnRenamed("curie_y", "mp_id")
+    mp_hp_matches_df = mp_hp_matches_df.withColumnRenamed("curie_x", "hp_id")
+    mp_hp_matches_df = mp_hp_matches_df.withColumnRenamed("label_x", "hp_term")
+    mp_hp_matches_df = mp_hp_matches_df.groupBy("mp_id").agg(
+        collect_set("hp_id").alias("hp_id"), collect_set("hp_term").alias("hp_term")
+    )
+    mp_hp_matches_df = mp_hp_matches_df.select("mp_id", "hp_id", "hp_term")
+    mp_df = mp_df.join(mp_hp_matches_df, "mp_id", "left_outer")
+    # mp_df = mp_df.withColumn(
+    #     "hp_id",
+    #     concat(
+    #         "impc:childOneLabel",
+    #         "impc:childTwoLabel",
+    #         "impc:hpExactSynonym",
+    #         "impc:hpLabel",
+    #     ),
+    # )
+    # mp_df = mp_df.withColumn(
+    #     "hp_term",
+    #     concat(
+    #         "impc:childOneLabel",
+    #         "impc:childTwoLabel",
+    #         "impc:hpExactSynonym",
+    #         "impc:hpLabel",
+    #     ),
+    # )
     mp_df = mp_df.join(
         impc_search_index_df, col("mp_id") == col("phenotype"), "left_outer"
-    )
-    mp_df = mp_df.withColumn(
-        "hp_id",
-        concat(
-            "impc:childOneLabel",
-            "impc:childTwoLabel",
-            "impc:hpExactSynonym",
-            "impc:hpLabel",
-        ),
-    )
-    mp_df = mp_df.withColumn(
-        "hp_term",
-        concat(
-            "impc:childOneLabel",
-            "impc:childTwoLabel",
-            "impc:hpExactSynonym",
-            "impc:hpLabel",
-        ),
     )
     mp_df = mp_df.withColumn("mp_term_synonym", col("oio:hasExactSynonym"))
 
