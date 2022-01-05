@@ -361,6 +361,7 @@ class MPCoreLoader(SparkSubmitTask):
     ma_metadata_csv_path = luigi.Parameter()
     impc_search_index_csv_path = luigi.Parameter()
     mp_relation_augmented_metadata_table_csv_path = luigi.Parameter()
+    mp_hp_matches_csv_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
@@ -406,6 +407,7 @@ class MPCoreLoader(SparkSubmitTask):
             self.input()[2].path,
             self.impc_search_index_csv_path,
             self.mp_relation_augmented_metadata_table_csv_path,
+            self.mp_hp_matches_csv_path,
             self.output().path,
         ]
 
