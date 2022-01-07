@@ -4,7 +4,7 @@ from impc_etl.workflow.config import ImpcConfig
 
 class SpecimenNormalizer(SparkSubmitTask):
     name = "IMPC_Specimen_Normalizer"
-    app = "impc_etl/jobs/normalize/specimen_normalizer.py"
+    app = "impc_etl/jobs/transform/specimen_normalizer.py"
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     entity_type = luigi.Parameter()
@@ -58,7 +58,7 @@ class EmbryoNormalizer(SpecimenNormalizer):
 
 class ExperimentNormalizer(SparkSubmitTask):
     name = "IMPC_Experiment_Normalizer"
-    app = "impc_etl/jobs/normalize/experiment_normalizer.py"
+    app = "impc_etl/jobs/transform/experiment_normalizer.py"
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     entity_type = luigi.Parameter()
@@ -104,7 +104,7 @@ class ExperimentNormalizer(SparkSubmitTask):
 
 class LineExperimentNormalizer(SparkSubmitTask):
     name = "IMPC_Line_Experiment_Normalizer"
-    app = "impc_etl/jobs/normalize/line_normalizer.py"
+    app = "impc_etl/jobs/transform/line_normalizer.py"
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     entity_type = luigi.Parameter()

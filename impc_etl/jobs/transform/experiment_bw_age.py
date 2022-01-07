@@ -30,7 +30,7 @@ from pyspark.sql.types import (
 )
 
 from impc_etl.config.constants import Constants
-from impc_etl.jobs.normalize.experiment_parameter_derivator import (
+from impc_etl.jobs.transform.experiment_parameter_derivator import (
     ExperimentParameterDerivator,
 )
 from impc_etl.shared.utils import (
