@@ -6,8 +6,8 @@ from luigi.task import flatten
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
 )
-from impc_etl.jobs.normalize.experiment_bw_age import ExperimentBWAgeProcessor
-from impc_etl.jobs.normalize.experiment_parameter_derivator import (
+from impc_etl.jobs.transform.experiment_bw_age import ExperimentBWAgeProcessor
+from impc_etl.jobs.transform.experiment_parameter_derivator import (
     ExperimentParameterDerivator,
     LineParameterDerivator,
 )

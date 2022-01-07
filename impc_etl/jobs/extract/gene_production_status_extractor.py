@@ -213,13 +213,17 @@ class GeneProductionStatusExtractor(PySparkTask):
             "Inspect - GLT Mouse": "Selected for production",
             "Inspect - MI Attempt": "Selected for production",
             "Interest": "Selected for production",
+            # Production statuses
             "Chimeras obtained": "Started",
-            "Chimeras/Founder obtained": "Started",
+            "Chimeras/Founder Obtained": "Started",
+            "Mouse Allele Modification Genotype Confirmed": "Genotype confirmed mice",
+            # Changed
             "Cre Excision Started": "Started",
             "Founder obtained": "Started",
             "Micro-injection aborted": "Started",
             "Micro-injection in progress": "Started",
-            "Cre Excision Complete": "Genotype confirmed mice",
+            # Changed
+            "Cre Excision Complete": "Started",
             "Genotype confirmed": "Genotype confirmed mice",
             "Inactive": "Withdrawn",
             "Withdrawn": "Withdrawn",

@@ -2,12 +2,12 @@ import sys
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import udf, lit
 from pyspark.sql.types import StringType
-from impc_etl.jobs.normalize.experiment_normalizer import (
+from impc_etl.jobs.transform.experiment_normalizer import (
     re_map_europhenome_experiments,
     generate_metadata_group,
     generate_metadata,
 )
-from impc_etl.jobs.normalize.specimen_normalizer import _generate_allelic_composition
+from impc_etl.jobs.transform.specimen_normalizer import _generate_allelic_composition
 
 
 def main(argv):
