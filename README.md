@@ -59,5 +59,11 @@ Another member of the team will review your changes and after having two +1 you 
     git push origin master
     ```
 
+## Re-generate the documentation
+
+
+```
+pdoc --html --force --template-dir docs/templates -o docs impc_etl
+```
 
 

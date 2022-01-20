@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>impc_etl.jobs.load.solr.mp_mapper API documentation</title>
+<meta name="description" content="SOLR module
+Generates the required Solr cores" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>impc_etl.jobs.load.solr.mp_mapper</code></h1>
+</header>
+<section id="section-intro">
+<p>SOLR module
+Generates the required Solr cores</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+SOLR module
+   Generates the required Solr cores
+&#34;&#34;&#34;
+import sys
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import (
+    col,
+    explode,
+    collect_set,
+    concat,
+    flatten,
+    monotonically_increasing_id,
+)
+from pyspark.sql.types import StringType
+
+ONTOLOGY_MP_MAP = {
+    &#34;mp_id&#34;: &#34;id&#34;,
+    &#34;mp_term&#34;: &#34;term&#34;,
+    &#34;mp_definition&#34;: &#34;definition&#34;,
+    &#34;mp_term_synonym&#34;: &#34;synonyms&#34;,
+    &#34;alt_mp_id&#34;: &#34;alt_ids&#34;,
+    &#34;child_mp_id&#34;: &#34;child_ids&#34;,
+    &#34;child_mp_term&#34;: &#34;child_terms&#34;,
+    &#34;parent_mp_id&#34;: &#34;parent_ids&#34;,
+    &#34;parent_mp_term&#34;: &#34;parent_terms&#34;,
+    &#34;intermediate_mp_id&#34;: &#34;intermediate_ids&#34;,
+    &#34;intermediate_mp_term&#34;: &#34;intermediate_terms&#34;,
+    &#34;top_level_mp_id&#34;: &#34;top_level_ids&#34;,
+    &#34;top_level_mp_term&#34;: &#34;top_level_terms&#34;,
+    &#34;top_level_mp_term_id&#34;: &#34;top_level_term_id&#34;,
+    &#34;top_level_mp_term_synonym&#34;: &#34;top_level_synonyms&#34;,
+}
+
+ONTOLOGY_MA_MAP = {
+    &#34;inferred_ma_id&#34;: &#34;id&#34;,
+    &#34;inferred_ma_term&#34;: &#34;term&#34;,
+    &#34;inferred_intermediate_ma_id&#34;: &#34;intermediate_ids&#34;,
+    &#34;inferred_intermediate_ma_term&#34;: &#34;intermediate_terms&#34;,
+    &#34;inferred_selected_top_level_ma_id&#34;: &#34;top_level_ids&#34;,
+    &#34;inferred_selected_top_level_ma_term&#34;: &#34;top_level_terms&#34;,
+}
+
+
+MP_CORE_COLUMNS = [
+    &#34;mp_id&#34;,
+    &#34;mp_term&#34;,
+    &#34;mp_definition&#34;,
+    &#34;mp_term_synonym&#34;,
+    &#34;alt_mp_id&#34;,
+    &#34;child_mp_id&#34;,
+    &#34;child_mp_term&#34;,
+    &#34;parent_mp_id&#34;,
+    &#34;parent_mp_term&#34;,
+    &#34;intermediate_mp_id&#34;,
+    &#34;intermediate_mp_term&#34;,
+    &#34;top_level_mp_id&#34;,
+    &#34;top_level_mp_term&#34;,
+    &#34;top_level_mp_term_synonym&#34;,
+    &#34;top_level_mp_term_id&#34;,
+    &#34;inferred_ma_id&#34;,
+    &#34;inferred_ma_term&#34;,
+    &#34;inferred_intermediate_ma_id&#34;,
+    &#34;inferred_intermediate_ma_term&#34;,
+    &#34;inferred_selected_top_level_ma_id&#34;,
+    &#34;inferred_selected_top_level_ma_term&#34;,
+    &#34;hp_id&#34;,
+    &#34;hp_term&#34;,
+]
+
+
+def main(argv):
+    &#34;&#34;&#34;
+    Solr Core loader
+    :param list argv: the list elements should be:
+                    [1]: source IMPC parquet file
+                    [2]: Output Path
+    &#34;&#34;&#34;
+    ontology_parquet_path = argv[1]
+    observations_parquet_path = argv[2]
+    pipeline_core_parquet_path = argv[3]
+    impc_search_index_csv_path = argv[4]
+    mp_relation_augmented_metadata_table_csv_path = argv[5]
+    mp_hp_matches_csv_path = argv[6]
+    output_path = argv[7]
+
+    spark = SparkSession.builder.getOrCreate()
+    ontology_df = spark.read.parquet(ontology_parquet_path)
+    pipeline_df = spark.read.parquet(pipeline_core_parquet_path)
+    observations_df = spark.read.parquet(observations_parquet_path)
+    impc_search_index_df = spark.read.csv(impc_search_index_csv_path, header=True)
+    mp_ext_df = spark.read.csv(
+        mp_relation_augmented_metadata_table_csv_path, header=True
+    )
+    mp_hp_matches_df = spark.read.csv(mp_hp_matches_csv_path, header=True)
+
+    impc_search_index_df = (
+        impc_search_index_df.groupBy(&#34;phenotype&#34;)
+        .pivot(&#34;property&#34;)
+        .agg(collect_set(&#34;value&#34;))
+    )
+    mp_df = ontology_df.where(col(&#34;id&#34;).startswith(&#34;MP:&#34;))
+    for column_name, ontology_column in ONTOLOGY_MP_MAP.items():
+        mp_df = mp_df.withColumnRenamed(ontology_column, column_name)
+    mp_df = mp_df.select(list(ONTOLOGY_MP_MAP.keys()))
+    mp_hp_matches_df = mp_hp_matches_df.withColumnRenamed(&#34;curie_y&#34;, &#34;mp_id&#34;)
+    mp_hp_matches_df = mp_hp_matches_df.withColumnRenamed(&#34;curie_x&#34;, &#34;hp_id&#34;)
+    mp_hp_matches_df = mp_hp_matches_df.withColumnRenamed(&#34;label_x&#34;, &#34;hp_term&#34;)
+    mp_hp_matches_df = mp_hp_matches_df.groupBy(&#34;mp_id&#34;).agg(
+        collect_set(&#34;hp_id&#34;).alias(&#34;hp_id&#34;), collect_set(&#34;hp_term&#34;).alias(&#34;hp_term&#34;)
+    )
+    mp_hp_matches_df = mp_hp_matches_df.select(&#34;mp_id&#34;, &#34;hp_id&#34;, &#34;hp_term&#34;)
+    mp_df = mp_df.join(mp_hp_matches_df, &#34;mp_id&#34;, &#34;left_outer&#34;)
+    # mp_df = mp_df.withColumn(
+    #     &#34;hp_id&#34;,
+    #     concat(
+    #         &#34;impc:childOneLabel&#34;,
+    #         &#34;impc:childTwoLabel&#34;,
+    #         &#34;impc:hpExactSynonym&#34;,
+    #         &#34;impc:hpLabel&#34;,
+    #     ),
+    # )
+    # mp_df = mp_df.withColumn(
+    #     &#34;hp_term&#34;,
+    #     concat(
+    #         &#34;impc:childOneLabel&#34;,
+    #         &#34;impc:childTwoLabel&#34;,
+    #         &#34;impc:hpExactSynonym&#34;,
+    #         &#34;impc:hpLabel&#34;,
+    #     ),
+    # )
+    mp_df = mp_df.join(
+        impc_search_index_df, col(&#34;mp_id&#34;) == col(&#34;phenotype&#34;), &#34;left_outer&#34;
+    )
+    mp_df = mp_df.withColumn(&#34;mp_term_synonym&#34;, col(&#34;oio:hasExactSynonym&#34;))
+
+    ma_df = ontology_df.where(
+        (~col(&#34;id&#34;).startswith(&#34;MP:&#34;)) &amp; (~col(&#34;id&#34;).startswith(&#34;MPATH:&#34;))
+    )
+    for column_name, ontology_column in ONTOLOGY_MA_MAP.items():
+        ma_df = ma_df.withColumnRenamed(ontology_column, column_name)
+    ma_df = ma_df.select(list(ONTOLOGY_MA_MAP.keys()))
+    mp_ma_df = (
+        mp_ext_df.select(col(&#34;acc&#34;).alias(&#34;mp_id&#34;), col(&#34;ma&#34;).alias(&#34;inferred_ma_id&#34;))
+        .where(col(&#34;inferred_ma_id&#34;).isNotNull())
+        .distinct()
+    )
+    mp_ma_df = mp_ma_df.join(ma_df, &#34;inferred_ma_id&#34;)
+    mp_ma_df = mp_ma_df.groupBy(&#34;mp_id&#34;).agg(
+        collect_set(&#34;inferred_ma_id&#34;).alias(&#34;inferred_ma_id&#34;),
+        collect_set(&#34;inferred_ma_term&#34;).alias(&#34;inferred_ma_term&#34;),
+        *[
+            flatten(collect_set(col_name)).alias(col_name)
+            for col_name in ma_df.columns
+            if col_name not in [&#34;mp_id&#34;, &#34;inferred_ma_id&#34;, &#34;inferred_ma_term&#34;]
+        ]
+    )
+    mp_df = mp_df.join(mp_ma_df, &#34;mp_id&#34;, &#34;left_outer&#34;)
+    tested_ontology_terms = pipeline_df.withColumn(
+        &#34;mp_id&#34;, explode(concat(&#34;mp_id&#34;, &#34;top_level_mp_id&#34;, &#34;intermediate_mp_id&#34;))
+    ).select(&#34;mp_id&#34;, &#34;fully_qualified_name&#34;)
+    ontological_obs_df = observations_df.where(col(&#34;observation_type&#34;) == &#34;ontological&#34;)
+    ontological_obs_df = ontological_obs_df.withColumn(&#34;mp_id&#34;, explode(&#34;sub_term_id&#34;))
+    ontological_obs_df = ontological_obs_df.where(col(&#34;mp_id&#34;).startswith(&#34;MP:&#34;))
+    ontological_obs_df = ontological_obs_df.withColumn(
+        &#34;fully_qualified_name&#34;,
+        concat(&#34;pipeline_stable_id&#34;, &#34;procedure_stable_id&#34;, &#34;parameter_stable_id&#34;),
+    )
+    ontological_obs_df = ontological_obs_df.select(
+        &#34;mp_id&#34;, &#34;fully_qualified_name&#34;
+    ).distinct()
+    tested_ontology_terms = tested_ontology_terms.union(ontological_obs_df).distinct()
+    mp_df = mp_df.join(tested_ontology_terms, &#34;mp_id&#34;)
+    mp_df = mp_df.select(MP_CORE_COLUMNS).distinct()
+    mp_df = mp_df.withColumn(
+        &#34;doc_id&#34;, monotonically_increasing_id().astype(StringType())
+    )
+    mp_df.write.parquet(output_path)
+
+
+if __name__ == &#34;__main__&#34;:
+    sys.exit(main(sys.argv))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="impc_etl.jobs.load.solr.mp_mapper.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>argv)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Solr Core loader
+:param list argv: the list elements should be:
+[1]: source IMPC parquet file
+[2]: Output Path</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(argv):
+    &#34;&#34;&#34;
+    Solr Core loader
+    :param list argv: the list elements should be:
+                    [1]: source IMPC parquet file
+                    [2]: Output Path
+    &#34;&#34;&#34;
+    ontology_parquet_path = argv[1]
+    observations_parquet_path = argv[2]
+    pipeline_core_parquet_path = argv[3]
+    impc_search_index_csv_path = argv[4]
+    mp_relation_augmented_metadata_table_csv_path = argv[5]
+    mp_hp_matches_csv_path = argv[6]
+    output_path = argv[7]
+
+    spark = SparkSession.builder.getOrCreate()
+    ontology_df = spark.read.parquet(ontology_parquet_path)
+    pipeline_df = spark.read.parquet(pipeline_core_parquet_path)
+    observations_df = spark.read.parquet(observations_parquet_path)
+    impc_search_index_df = spark.read.csv(impc_search_index_csv_path, header=True)
+    mp_ext_df = spark.read.csv(
+        mp_relation_augmented_metadata_table_csv_path, header=True
+    )
+    mp_hp_matches_df = spark.read.csv(mp_hp_matches_csv_path, header=True)
+
+    impc_search_index_df = (
+        impc_search_index_df.groupBy(&#34;phenotype&#34;)
+        .pivot(&#34;property&#34;)
+        .agg(collect_set(&#34;value&#34;))
+    )
+    mp_df = ontology_df.where(col(&#34;id&#34;).startswith(&#34;MP:&#34;))
+    for column_name, ontology_column in ONTOLOGY_MP_MAP.items():
+        mp_df = mp_df.withColumnRenamed(ontology_column, column_name)
+    mp_df = mp_df.select(list(ONTOLOGY_MP_MAP.keys()))
+    mp_hp_matches_df = mp_hp_matches_df.withColumnRenamed(&#34;curie_y&#34;, &#34;mp_id&#34;)
+    mp_hp_matches_df = mp_hp_matches_df.withColumnRenamed(&#34;curie_x&#34;, &#34;hp_id&#34;)
+    mp_hp_matches_df = mp_hp_matches_df.withColumnRenamed(&#34;label_x&#34;, &#34;hp_term&#34;)
+    mp_hp_matches_df = mp_hp_matches_df.groupBy(&#34;mp_id&#34;).agg(
+        collect_set(&#34;hp_id&#34;).alias(&#34;hp_id&#34;), collect_set(&#34;hp_term&#34;).alias(&#34;hp_term&#34;)
+    )
+    mp_hp_matches_df = mp_hp_matches_df.select(&#34;mp_id&#34;, &#34;hp_id&#34;, &#34;hp_term&#34;)
+    mp_df = mp_df.join(mp_hp_matches_df, &#34;mp_id&#34;, &#34;left_outer&#34;)
+    # mp_df = mp_df.withColumn(
+    #     &#34;hp_id&#34;,
+    #     concat(
+    #         &#34;impc:childOneLabel&#34;,
+    #         &#34;impc:childTwoLabel&#34;,
+    #         &#34;impc:hpExactSynonym&#34;,
+    #         &#34;impc:hpLabel&#34;,
+    #     ),
+    # )
+    # mp_df = mp_df.withColumn(
+    #     &#34;hp_term&#34;,
+    #     concat(
+    #         &#34;impc:childOneLabel&#34;,
+    #         &#34;impc:childTwoLabel&#34;,
+    #         &#34;impc:hpExactSynonym&#34;,
+    #         &#34;impc:hpLabel&#34;,
+    #     ),
+    # )
+    mp_df = mp_df.join(
+        impc_search_index_df, col(&#34;mp_id&#34;) == col(&#34;phenotype&#34;), &#34;left_outer&#34;
+    )
+    mp_df = mp_df.withColumn(&#34;mp_term_synonym&#34;, col(&#34;oio:hasExactSynonym&#34;))
+
+    ma_df = ontology_df.where(
+        (~col(&#34;id&#34;).startswith(&#34;MP:&#34;)) &amp; (~col(&#34;id&#34;).startswith(&#34;MPATH:&#34;))
+    )
+    for column_name, ontology_column in ONTOLOGY_MA_MAP.items():
+        ma_df = ma_df.withColumnRenamed(ontology_column, column_name)
+    ma_df = ma_df.select(list(ONTOLOGY_MA_MAP.keys()))
+    mp_ma_df = (
+        mp_ext_df.select(col(&#34;acc&#34;).alias(&#34;mp_id&#34;), col(&#34;ma&#34;).alias(&#34;inferred_ma_id&#34;))
+        .where(col(&#34;inferred_ma_id&#34;).isNotNull())
+        .distinct()
+    )
+    mp_ma_df = mp_ma_df.join(ma_df, &#34;inferred_ma_id&#34;)
+    mp_ma_df = mp_ma_df.groupBy(&#34;mp_id&#34;).agg(
+        collect_set(&#34;inferred_ma_id&#34;).alias(&#34;inferred_ma_id&#34;),
+        collect_set(&#34;inferred_ma_term&#34;).alias(&#34;inferred_ma_term&#34;),
+        *[
+            flatten(collect_set(col_name)).alias(col_name)
+            for col_name in ma_df.columns
+            if col_name not in [&#34;mp_id&#34;, &#34;inferred_ma_id&#34;, &#34;inferred_ma_term&#34;]
+        ]
+    )
+    mp_df = mp_df.join(mp_ma_df, &#34;mp_id&#34;, &#34;left_outer&#34;)
+    tested_ontology_terms = pipeline_df.withColumn(
+        &#34;mp_id&#34;, explode(concat(&#34;mp_id&#34;, &#34;top_level_mp_id&#34;, &#34;intermediate_mp_id&#34;))
+    ).select(&#34;mp_id&#34;, &#34;fully_qualified_name&#34;)
+    ontological_obs_df = observations_df.where(col(&#34;observation_type&#34;) == &#34;ontological&#34;)
+    ontological_obs_df = ontological_obs_df.withColumn(&#34;mp_id&#34;, explode(&#34;sub_term_id&#34;))
+    ontological_obs_df = ontological_obs_df.where(col(&#34;mp_id&#34;).startswith(&#34;MP:&#34;))
+    ontological_obs_df = ontological_obs_df.withColumn(
+        &#34;fully_qualified_name&#34;,
+        concat(&#34;pipeline_stable_id&#34;, &#34;procedure_stable_id&#34;, &#34;parameter_stable_id&#34;),
+    )
+    ontological_obs_df = ontological_obs_df.select(
+        &#34;mp_id&#34;, &#34;fully_qualified_name&#34;
+    ).distinct()
+    tested_ontology_terms = tested_ontology_terms.union(ontological_obs_df).distinct()
+    mp_df = mp_df.join(tested_ontology_terms, &#34;mp_id&#34;)
+    mp_df = mp_df.select(MP_CORE_COLUMNS).distinct()
+    mp_df = mp_df.withColumn(
+        &#34;doc_id&#34;, monotonically_increasing_id().astype(StringType())
+    )
+    mp_df.write.parquet(output_path)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<header>
+<div style="max-width: 300px, text-align: center">
+<img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
+</div>
+</header>
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="impc_etl.jobs.load.solr" href="index.html">impc_etl.jobs.load.solr</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="impc_etl.jobs.load.solr.mp_mapper.main" href="#impc_etl.jobs.load.solr.mp_mapper.main">main</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p><span></span></p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

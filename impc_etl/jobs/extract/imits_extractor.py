@@ -58,9 +58,10 @@ def main(argv):
     """
     IMITS Extractor job runner
     :param list argv: the list elements should be:
-                    [1]: Input TSV Path
-                    [2]: Output Path
-                    [3]: Entity type
+
+    - [1]: Input TSV Path
+    - [2]: Output Path
+    - [3]: Entity type
     """
     input_path = argv[1]
     output_path = argv[2]
@@ -105,7 +106,7 @@ def extract_imits_tsv(spark_session: SparkSession, file_path, entity_type) -> Da
 
 
 def extract_imits_tsv_by_entity_type(
-    spark_session: SparkSession, file_path, entity_type
+    spark_session: SparkSession, file_path: str, entity_type: str
 ) -> DataFrame:
     """
     Uses a Spark Session to generate a DataFrame from a TSV file and a specific entity type.
@@ -141,7 +142,9 @@ def extract_imits_tsv_by_entity_type(
     return imtis_entity_df
 
 
-def extract_imits_tsv_allele_2(spark_session: SparkSession, file_path):
+def extract_imits_tsv_allele_2(
+    spark_session: SparkSession, file_path: str
+) -> DataFrame:
     imits_df = utils.extract_tsv(spark_session, file_path)
     imits_df = imits_df.withColumn(
         "allele_mgi_accession_id",

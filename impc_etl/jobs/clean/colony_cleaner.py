@@ -1,3 +1,12 @@
+"""
+
+Luigi Spark task executable that takes the colonies tracking system
+report and returns it ready to be used on the rest of the ETL.
+
+The cleaning process includes the mapping of legacy colony IDs to newer nomenclature and the generation
+of the string representatcion of the genetic background.
+
+"""
 import sys
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import udf, col, lit, concat
@@ -19,10 +28,13 @@ def clean_colonies(colonies_df: DataFrame) -> DataFrame:
     """
     DCC colonies cleaner
 
-    :param colonies_df: Spark DataFrame
-    :param str colonies_df: colonies DataFrame with the raw colonies data
-    :return: a clean specimen parquet file
-    :rtype: DataFrame
+    Parameters
+    __________
+    colonies_df: colonies DataFrame with the raw colonies data
+
+    Returns
+    _______
+    A clean colonies parquet file
     """
     colonies_df = colonies_df.transform(map_colonies_df_ids)
     # colonies_df = map_strain_names(colonies_df)

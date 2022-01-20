@@ -3,8 +3,8 @@ pytest-spark
 pyspark
 pylint
 mock
-sphinx
-sphinx_rtd_theme
+pdoc3
 bs4
 lxml
 pyspark-stubs
+owlready2

@@ -1,0 +1,1963 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>impc_etl.config.constants API documentation</title>
+<meta name="description" content="Runtime constants file, these constants are usually stable and don&#39;t change between Data Releases." />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>impc_etl.config.constants</code></h1>
+</header>
+<section id="section-intro">
+<p>Runtime constants file, these constants are usually stable and don't change between Data Releases.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+Runtime constants file, these constants are usually stable and don&#39;t change between Data Releases.
+
+&#34;&#34;&#34;
+
+from pyspark.sql.types import StringType, ArrayType
+
+
+class Constants:
+    SKIPPED_PROCEDURES = {
+        &#34;SLM_SLM&#34;,
+        &#34;SLM_AGS&#34;,
+        &#34;TRC_TRC&#34;,
+        &#34;DSS_DSS&#34;,
+        &#34;MGP_ANA&#34;,
+        &#34;MGP_BCI&#34;,
+        &#34;MGP_BMI&#34;,
+        &#34;MGP_EEI&#34;,
+        &#34;MGP_MLN&#34;,
+        &#34;MGP_PBI&#34;,
+        &#34;MGP_IMM&#34;,
+    }
+    &#34;&#34;&#34;
+    List of procedure that we don&#39;t load. These are Legacy pipelines procedures.
+    &#34;&#34;&#34;
+    VALID_PROJECT_IDS = {
+        &#34;BaSH&#34;,
+        &#34;DTCC&#34;,
+        &#34;EUMODIC&#34;,
+        &#34;EUCOMM-EUMODIC&#34;,
+        &#34;Helmholtz GMC&#34;,
+        &#34;JAX&#34;,
+        &#34;NING&#34;,
+        &#34;MARC&#34;,
+        &#34;MGP&#34;,
+        &#34;MGP Legacy&#34;,
+        &#34;MRC&#34;,
+        &#34;NorCOMM2&#34;,
+        &#34;Phenomin&#34;,
+        &#34;RIKEN BRC&#34;,
+        &#34;KMPC&#34;,
+        &#34;Kmpc&#34;,
+        &#34;3i&#34;,
+        &#34;IMPC&#34;,
+    }
+    &#34;&#34;&#34;
+    List of valid project identifiers coming from the DCC XML files.
+    These are used to determine if an experiment should be marked as MGP or not.
+    &#34;&#34;&#34;
+    EUROPHENOME_VALID_COLONIES = {
+        &#34;EPD0013_1_G11_10613&#34;,
+        &#34;EPD0019_1_A05_10494&#34;,
+        &#34;EPD0023_1_F07_10481&#34;,
+        &#34;EPD0033_3_F04_10955&#34;,
+        &#34;EPD0037_1_E07_10471&#34;,
+        &#34;EPD0037_3_G01_10533&#34;,
+        &#34;EPD0039_1_B01_10470&#34;,
+        &#34;EPD0057_2_C02_10474&#34;,
+        &#34;EPD0065_2_E04_10968&#34;,
+        &#34;EPD0089_4_F11_10538&#34;,
+        &#34;EPD0100_4_A06_10472&#34;,
+        &#34;EPD0135_1_A05_10967&#34;,
+        &#34;EPD0156_1_B01_10970&#34;,
+        &#34;EPD0242_4_B03_10958&#34;,
+        &#34;EPD0011_3_B08_10331&#34;,
+        &#34;EPD0017_3_E02_71&#34;,
+        &#34;EPD0019_1_A05_10574&#34;,
+        &#34;EPD0023_1_F07_10553&#34;,
+        &#34;EPD0033_3_F04_10514&#34;,
+        &#34;EPD0037_1_B03_10395&#34;,
+        &#34;EPD0037_1_E07_10554&#34;,
+        &#34;EPD0038_2_B10_10557&#34;,
+        &#34;EPD0057_1_H01_10556&#34;,
+        &#34;EPD0057_2_C02_10549&#34;,
+        &#34;EPD0065_2_E04_10515&#34;,
+        &#34;EPD0065_5_A04_10523&#34;,
+        &#34;EPD0089_4_F11_320&#34;,
+        &#34;EPD0100_4_A06_10380&#34;,
+        &#34;EPD0135_1_A05_10581&#34;,
+        &#34;EPD0145_4_B09_10343&#34;,
+        &#34;EPD0156_1_B01_10099&#34;,
+        &#34;EPD0242_4_B03_10521&#34;,
+        &#34;EPD0023_1_F07_10594&#34;,
+        &#34;EPD0037_1_B03_10632&#34;,
+        &#34;EPD0037_1_E07_10595&#34;,
+        &#34;EPD0038_2_B10_10026&#34;,
+        &#34;EPD0046_2_F02_216&#34;,
+        &#34;EPD0057_1_H01_134&#34;,
+        &#34;EPD0057_2_C02_10630&#34;,
+        &#34;EPD0065_2_E04_10028&#34;,
+        &#34;EPD0065_5_A04_141&#34;,
+        &#34;EPD0089_4_F11_10578&#34;,
+        &#34;EPD0100_4_A06_10519&#34;,
+        &#34;EPD0135_1_A05_10631&#34;,
+        &#34;EPD0156_1_B01_10517&#34;,
+        &#34;EPD0242_4_B03_10579&#34;,
+        &#34;EPD0011_3_B08_28&#34;,
+        &#34;EPD0013_1_G11_10560&#34;,
+        &#34;EPD0017_3_E02_10220&#34;,
+        &#34;EPD0019_1_A05_73&#34;,
+        &#34;EPD0033_3_F04_10232&#34;,
+        &#34;EPD0037_1_B03_10234&#34;,
+        &#34;EPD0037_3_G01_10649&#34;,
+        &#34;EPD0039_1_B01_157&#34;,
+        &#34;EPD0046_2_F02_10658&#34;,
+        &#34;EPD0135_1_A05_10562&#34;,
+        &#34;EPD0145_4_B09_10826&#34;,
+        &#34;EPD0242_4_B03_10233&#34;,
+        &#34;Dll1_C3H_113&#34;,
+        &#34;Dll1_C3H_10333&#34;,
+        &#34;EPD0059_2_C08_10660&#34;,
+    }
+    &#34;&#34;&#34;
+    Some EuroPhenome colonies have to be stripped to remove a spurious suffix,
+    this list of valid IDs should not be modified by the ETL.
+    &#34;&#34;&#34;
+
+    BODY_WEIGHT_CURVE_PARAMETERS = {
+        &#34;IMPC_BWT_008_001&#34;: {
+            &#34;parameters&#34;: [
+                &#34;IMPC_GRS_003_001&#34;,
+                &#34;IMPC_CAL_001_001&#34;,
+                &#34;IMPC_DXA_001_001&#34;,
+                &#34;IMPC_HWT_007_001&#34;,
+                &#34;IMPC_PAT_049_001&#34;,
+                &#34;IMPC_BWT_001_001&#34;,
+                &#34;IMPC_ABR_001_001&#34;,
+                &#34;IMPC_CHL_001_001&#34;,
+                &#34;TCP_CHL_001_001&#34;,
+                &#34;HMGU_ROT_004_001&#34;,
+            ],
+            &#34;procedure_stable_id&#34;: &#34;IMPC_BWT_001&#34;,
+            &#34;procedure_group&#34;: &#34;IMPC_BWT&#34;,
+            &#34;procedure_name&#34;: &#34;Body Weight&#34;,
+            &#34;parameter_name&#34;: &#34;Body weight curve&#34;,
+            &#34;pipeline_stable_id&#34;: &#34;IMPC_001&#34;,
+            &#34;pipeline_name&#34;: &#34;IMPC Pipeline&#34;,
+        },
+        &#34;ESLIM_022_001_701&#34;: {
+            &#34;parameters&#34;: [
+                &#34;ESLIM_001_001_001&#34;,
+                &#34;ESLIM_002_001_001&#34;,
+                &#34;ESLIM_003_001_001&#34;,
+                &#34;ESLIM_004_001_001&#34;,
+                &#34;ESLIM_005_001_001&#34;,
+                &#34;ESLIM_020_001_001&#34;,
+            ],
+            &#34;procedure_stable_id&#34;: &#34;ESLIM_022_001&#34;,
+            &#34;procedure_group&#34;: &#34;ESLIM_022&#34;,
+            &#34;procedure_name&#34;: &#34;Body Weight&#34;,
+            &#34;parameter_name&#34;: &#34;Body Weight Curve Pipeline One&#34;,
+            &#34;pipeline_stable_id&#34;: &#34;ESLIM_001&#34;,
+            &#34;pipeline_name&#34;: &#34;EUMODIC Pipeline 1&#34;,
+        },
+        &#34;ESLIM_022_001_702&#34;: {
+            &#34;parameters&#34;: [
+                &#34;ESLIM_009_001_003&#34;,
+                &#34;ESLIM_010_001_003&#34;,
+                &#34;ESLIM_011_001_011&#34;,
+                &#34;ESLIM_012_001_005&#34;,
+                &#34;ESLIM_013_001_018&#34;,
+                &#34;ESLIM_022_001_001&#34;,
+            ],
+            &#34;procedure_stable_id&#34;: &#34;ESLIM_022_001&#34;,
+            &#34;procedure_group&#34;: &#34;ESLIM_022&#34;,
+            &#34;procedure_name&#34;: &#34;Body Weight&#34;,
+            &#34;parameter_name&#34;: &#34;Body Weight Curve Pipeline Two&#34;,
+            &#34;pipeline_stable_id&#34;: &#34;ESLIM_002&#34;,
+            &#34;pipeline_name&#34;: &#34;EUMODIC Pipeline 2&#34;,
+        },
+    }
+    &#34;&#34;&#34;
+    This map is used to generate the BWT Curve parameters,
+    the key is the target parameter and it contains a list of source parameters and the target parameter metadata values.
+    &#34;&#34;&#34;
+
+    CENTRE_ID_MAP = {
+        &#34;bcm&#34;: &#34;BCM&#34;,
+        &#34;gmc&#34;: &#34;HMGU&#34;,
+        &#34;h&#34;: &#34;MRC Harwell&#34;,
+        &#34;harwell&#34;: &#34;MRC Harwell&#34;,
+        &#34;hmgu&#34;: &#34;HMGU&#34;,
+        &#34;ics&#34;: &#34;ICS&#34;,
+        &#34;j&#34;: &#34;JAX&#34;,
+        &#34;jax&#34;: &#34;JAX&#34;,
+        &#34;ncom&#34;: &#34;CMHD&#34;,
+        &#34;norcomm&#34;: &#34;CMHD&#34;,
+        &#34;ning&#34;: &#34;MARC&#34;,
+        &#34;marc&#34;: &#34;MARC&#34;,
+        &#34;rbrc&#34;: &#34;RBRC&#34;,
+        &#34;tcp&#34;: &#34;TCP&#34;,
+        &#34;ucd&#34;: &#34;UC Davis&#34;,
+        &#34;wtsi&#34;: &#34;WTSI&#34;,
+        &#34;wsi&#34;: &#34;WTSI&#34;,
+        &#34;kmpc&#34;: &#34;KMPC&#34;,
+        &#34;biat&#34;: &#34;BIAT&#34;,
+        &#34;ph&#34;: &#34;PH&#34;,
+        &#34;cdta&#34;: &#34;CDTA&#34;,
+        &#34;crl&#34;: &#34;Crl&#34;,
+        &#34;riken brc&#34;: &#34;RBRC&#34;,
+        &#34;ccp-img&#34;: &#34;CCP-IMG&#34;,
+        &#34;ccpcz&#34;: &#34;CCP-IMG&#34;,
+        &#34;ccp&#34;: &#34;CCP-IMG&#34;,
+        &#34;monterotondo&#34;: &#34;Monterotondo&#34;,
+        &#34;narlabs&#34;: &#34;NARLabs&#34;,
+    }
+    &#34;&#34;&#34;
+    This map is used to translate the centre IDs coming in the XML files to the ones we use on the website. 
+    &#34;&#34;&#34;
+
+    PROJECT_ID_MAP = {
+        &#34;bash&#34;: &#34;BaSH&#34;,
+        &#34;dtcc&#34;: &#34;DTCC&#34;,
+        &#34;eumodic&#34;: &#34;EUMODIC&#34;,
+        &#34;eucomm-eumodic&#34;: &#34;EUMODIC&#34;,
+        &#34;eucomm-eucomm-eumodic&#34;: &#34;EUMODIC&#34;,
+        &#34;helmholtz gmc&#34;: &#34;Helmholtz GMC&#34;,
+        &#34;jax&#34;: &#34;JAX&#34;,
+        &#34;ning&#34;: &#34;MARC&#34;,
+        &#34;marc&#34;: &#34;MARC&#34;,
+        &#34;mgp&#34;: &#34;MGP&#34;,
+        &#34;mgp legacy&#34;: &#34;MGP Legacy&#34;,
+        &#34;mrc&#34;: &#34;MRC&#34;,
+        &#34;norcomm2&#34;: &#34;NorCOMM2&#34;,
+        &#34;phenomin&#34;: &#34;Phenomin&#34;,
+        &#34;riken brc&#34;: &#34;RBRC&#34;,
+        &#34;kmpc&#34;: &#34;KMPC&#34;,
+        &#34;3i&#34;: &#34;3i&#34;,
+        &#34;impc&#34;: &#34;IMPC&#34;,
+        &#34;ccp-img&#34;: &#34;CCP-IMG&#34;,
+        &#34;norcomm&#34;: &#34;NorCOMM&#34;,
+        &#34;ucd-komp&#34;: &#34;UC Davis&#34;,
+        &#34;eucommtoolscre&#34;: &#34;EUCOMMToolsCre&#34;,
+        &#34;monterotondo&#34;: &#34;Monterotondo&#34;,
+        &#34;infrafrontier-i3&#34;: &#34;Infrafrontier-I3&#34;,
+        &#34;komp&#34;: &#34;KOMP&#34;,
+        &#34;narlabs&#34;: &#34;NARLabs&#34;,
+        &#34;ccpcz&#34;: &#34;CCP-IMG&#34;,
+        &#34;ccp&#34;: &#34;CCP-IMG&#34;,
+        &#34;tobeloadedfromimits&#34;: &#34;tobeloadedfromimits&#34;,
+    }
+    &#34;&#34;&#34;
+    This map is used to translate the project IDs coming in the XML files to the ones we use on the website. 
+    &#34;&#34;&#34;
+
+    EXPERIMENTER_IDS = {
+        &#34;LHl&#34;: &#34;131&#34;,
+        &#34;OH&#34;: &#34;132&#34;,
+        &#34;jiangman, wangchenhao&#34;: &#34;jiangman,wangchenhao&#34;,
+        &#34;jiangman wangchenhao&#34;: &#34;jiangman,wangchenhao&#34;,
+        &#34;jianman  wangchenhao&#34;: &#34;jiangman,wangchenhao&#34;,
+        &#34;JMC_301_304&#34;: &#34;JMC301,JMC304&#34;,
+        &#34;JMC601,JMC602JMC603&#34;: &#34;JMC601,JMC602,JMC603&#34;,
+        &#34;JCM601,JCM602,JCM603&#34;: &#34;JMC601,JMC602,JMC603&#34;,
+        &#34;JCM601,JCM603&#34;: &#34;JMC601,JMC603&#34;,
+        &#34;JMC601,JCM603&#34;: &#34;JMC601,JMC603&#34;,
+        &#34;JCM602,JCM603&#34;: &#34;JMC602,JMC603&#34;,
+        &#34;JMC602,JCM603&#34;: &#34;JMC602,JMC603&#34;,
+        &#34;JCM603&#34;: &#34;JMC603&#34;,
+        &#34;qixin;jiangman&#34;: &#34;qixin,jiangman&#34;,
+        &#34;Chenhao Wang&#34;: &#34;wangchenhao&#34;,
+        &#34;wangchenhao  jiangman&#34;: &#34;wangchenhao,jiangman&#34;,
+    }
+    &#34;&#34;&#34;
+    Some experiment IDs from legacy experiment files need to be mapped to a standardized version so they match.
+    &#34;&#34;&#34;
+
+    EFO_EMBRYONIC_STAGES = {
+        &#34;0&#34;: &#34;EFO:0XXXXXX&#34;,
+        &#34;8.25&#34;: &#34;EFO:0002561&#34;,
+        &#34;8.5&#34;: &#34;EFO:85XXXXXX&#34;,
+        &#34;9&#34;: &#34;EFO:0002561&#34;,
+        &#34;9.5&#34;: &#34;EFO:0007641&#34;,
+        &#34;10.5&#34;: &#34;EFO:0007643&#34;,
+        &#34;11.5&#34;: &#34;EFO:0002562&#34;,
+        &#34;12&#34;: &#34;EFO:0007640&#34;,
+        &#34;12.5&#34;: &#34;EFO:0002563&#34;,
+        &#34;13&#34;: &#34;EFO:0007642&#34;,
+        &#34;13.5&#34;: &#34;EFO:0002564&#34;,
+        &#34;14.5&#34;: &#34;EFO:0002565&#34;,
+        &#34;15.5&#34;: &#34;EFO:0002566&#34;,
+        &#34;16.5&#34;: &#34;EFO:0002567&#34;,
+        &#34;17.5&#34;: &#34;EFO:0002568&#34;,
+        &#34;18&#34;: &#34;EFO:0002569&#34;,
+        &#34;18.5&#34;: &#34;EFO:0002570&#34;,
+    }
+    &#34;&#34;&#34;
+    Maps IMPC embryonic stages to EFO ontology term IDs.
+    &#34;&#34;&#34;
+
+    EXPERIMENT_TO_OBSERVATION_MAP = {
+        &#34;source_phenotyping_status&#34;: &#34;experiment._sourcePhenotypingStatus&#34;,
+        &#34;project_name&#34;: &#34;experiment._project&#34;,
+        &#34;age_in_days&#34;: &#34;experiment.ageInDays&#34;,
+        &#34;age_in_weeks&#34;: &#34;experiment.ageInWeeks&#34;,
+        &#34;date_of_experiment&#34;: &#34;experiment._dateOfExperiment&#34;,
+        &#34;metadata_group&#34;: &#34;experiment.metadataGroup&#34;,
+        &#34;procedure_sequence_id&#34;: &#34;experiment._sequenceID&#34;,
+        &#34;experiment_source_id&#34;: &#34;experiment._experimentID&#34;,
+        &#34;external_sample_id&#34;: &#34;specimen._specimenID&#34;,
+        &#34;sex&#34;: &#34;specimen._gender&#34;,
+        &#34;allelic_composition&#34;: &#34;specimen.allelicComposition&#34;,
+        &#34;production_center&#34;: &#34;specimen._productionCentre&#34;,
+        &#34;phenotyping_center&#34;: &#34;specimen._phenotypingCentre&#34;,
+        &#34;phenotyping_cons&#34;: &#34;colony.phenotyping_consortium&#34;,
+        &#34;litter_id&#34;: &#34;specimen._litterId&#34;,
+        &#34;date_of_birth&#34;: &#34;specimen._DOB&#34;,
+        &#34;strain_accession_id&#34;: &#34;strain.mgiStrainID&#34;,  ## Fallback to Imits
+    }
+    &#34;&#34;&#34;
+    Maps columns names coming from the Experiment Parquet file
+    to the column names in the schema of the Observations Parquet file.
+    &#34;&#34;&#34;
+
+    LINE_TO_OBSERVATION_MAP = {
+        &#34;source_phenotyping_status&#34;: &#34;_sourcePhenotypingStatus&#34;,
+        &#34;project_name&#34;: &#34;_project&#34;,
+        &#34;age_in_days&#34;: None,
+        &#34;age_in_weeks&#34;: None,
+        &#34;developmental_stage_name&#34;: None,
+        &#34;developmental_stage_acc&#34;: None,
+        &#34;date_of_experiment&#34;: None,
+        &#34;metadata_group&#34;: &#34;metadataGroup&#34;,
+        &#34;procedure_sequence_id&#34;: None,
+        &#34;experiment_source_id&#34;: &#34;_experimentID&#34;,
+        &#34;external_sample_id&#34;: None,
+        &#34;sex&#34;: None,
+        &#34;allelic_composition&#34;: &#34;allelicComposition&#34;,
+        &#34;production_center&#34;: None,
+        &#34;phenotyping_center&#34;: &#34;colony.phenotyping_centre&#34;,
+        &#34;phenotyping_cons&#34;: &#34;colony.phenotyping_consortium&#34;,
+        &#34;litter_id&#34;: None,
+        &#34;date_of_birth&#34;: None,
+        &#34;specimen_source_file&#34;: None,
+        &#34;strain_accession_id&#34;: &#34;strain.mgiStrainID&#34;,
+        &#34;strain_name&#34;: &#34;colony.colony_background_strain&#34;,
+        &#34;allele_symbol&#34;: &#34;colony.allele_symbol&#34;,
+        &#34;gene_symbol&#34;: &#34;colony.marker_symbol&#34;,
+        &#34;gene_accession_id&#34;: &#34;colony.mgi_accession_id&#34;,
+        &#34;genetic_background&#34;: &#34;colony.genetic_background&#34;,
+        &#34;colony_id&#34;: &#34;_colonyID&#34;,
+        &#34;weight&#34;: None,
+        &#34;weight_date&#34;: None,
+        &#34;weight_days_old&#34;: None,
+        &#34;weight_parameter_stable_id&#34;: None,
+    }
+    &#34;&#34;&#34;
+    Maps columns names coming from the Line Experiment Parquet file
+    to the column names in the schema of the Observations Parquet file.
+    &#34;&#34;&#34;
+
+    OBSERVATION_COLUMNS = [
+        &#34;experiment_source_file&#34;,
+        &#34;specimen_source_file&#34;,
+        &#34;source_phenotyping_status&#34;,
+        &#34;experiment_id&#34;,
+        &#34;specimen_id&#34;,
+        &#34;observation_id&#34;,
+        &#34;allele_accession_id&#34;,
+        &#34;gene_accession_id&#34;,
+        &#34;project_name&#34;,
+        &#34;strain_accession_id&#34;,
+        &#34;litter_id&#34;,
+        &#34;phenotyping_center&#34;,
+        &#34;phenotyping_cons&#34;,
+        &#34;external_sample_id&#34;,
+        &#34;developmental_stage_name&#34;,
+        &#34;developmental_stage_acc&#34;,
+        &#34;datasource_name&#34;,
+        &#34;age_in_days&#34;,
+        &#34;date_of_birth&#34;,
+        &#34;metadata&#34;,
+        &#34;metadata_group&#34;,
+        &#34;procedure_sequence_id&#34;,
+        &#34;sequence_id&#34;,
+        &#34;experiment_source_id&#34;,
+        &#34;gene_symbol&#34;,
+        &#34;biological_sample_group&#34;,
+        &#34;sex&#34;,
+        &#34;allele_symbol&#34;,
+        &#34;production_center&#34;,
+        &#34;age_in_weeks&#34;,
+        &#34;weight&#34;,
+        &#34;weight_date&#34;,
+        &#34;weight_days_old&#34;,
+        &#34;weight_parameter_stable_id&#34;,
+        &#34;colony_id&#34;,
+        &#34;zygosity&#34;,
+        &#34;allelic_composition&#34;,
+        &#34;pipeline_name&#34;,
+        &#34;pipeline_stable_id&#34;,
+        &#34;procedure_name&#34;,
+        &#34;procedure_stable_id&#34;,
+        &#34;procedure_group&#34;,
+        &#34;parameter_name&#34;,
+        &#34;parameter_stable_id&#34;,
+        &#34;parameter_status&#34;,
+        &#34;observation_type&#34;,
+        &#34;data_point&#34;,
+        &#34;text_value&#34;,
+        &#34;category&#34;,
+        &#34;strain_name&#34;,
+        &#34;genetic_background&#34;,
+        &#34;date_of_experiment&#34;,
+        &#34;sub_term_name&#34;,
+        &#34;sub_term_id&#34;,
+        &#34;sub_term_description&#34;,
+        &#34;discrete_point&#34;,
+        &#34;time_point&#34;,
+        &#34;download_file_path&#34;,
+        &#34;file_type&#34;,
+        &#34;image_link&#34;,
+        &#34;increment_value&#34;,
+        &#34;parameter_association_stable_id&#34;,
+        &#34;parameter_association_sequence_id&#34;,
+        &#34;parameter_association_name&#34;,
+        &#34;parameter_association_value&#34;,
+    ]
+    &#34;&#34;&#34;
+    List of columns for the Observations parquet output schema.
+    &#34;&#34;&#34;
+
+    PARAMETER_SPECIFIC_FIELDS = {
+        &#34;data_point&#34;: StringType(),
+        &#34;text_value&#34;: StringType(),
+        &#34;category&#34;: StringType(),
+        &#34;sequence_id&#34;: StringType(),
+        &#34;sub_term_name&#34;: ArrayType(StringType()),
+        &#34;sub_term_id&#34;: ArrayType(StringType()),
+        &#34;sub_term_description&#34;: ArrayType(StringType()),
+        &#34;discrete_point&#34;: StringType(),
+        &#34;time_point&#34;: StringType(),
+        &#34;download_file_path&#34;: StringType(),
+        &#34;image_link&#34;: StringType(),
+        &#34;file_type&#34;: StringType(),
+        &#34;increment_value&#34;: StringType(),
+        &#34;parameter_association_stable_id&#34;: ArrayType(StringType()),
+        &#34;parameter_association_sequence_id&#34;: ArrayType(StringType()),
+        &#34;parameter_association_name&#34;: ArrayType(StringType()),
+        &#34;parameter_association_value&#34;: ArrayType(StringType()),
+    }
+    &#34;&#34;&#34;
+    PySpark schema dictionary to represent IMPReSS parameters in the Observations Parquet schema.
+    &#34;&#34;&#34;
+
+    DATE_FORMATS = [
+        &#34;yyyy-MM-dd&#39;T&#39;HH:mm:ssXXX&#34;,
+        &#34;yyyy-MM-dd&#39;T&#39;HH:mm:ssX&#34;,
+        &#34;yyyy-MM-dd&#39;T&#39;HH:mm:ssZ&#34;,
+        &#34;yyyy-MM-dd&#39; &#39;HH:mm:ssZ&#34;,
+        &#34;yyyy-MM-dd&#39;T&#39;HH:mm:ss&#39;Z&#39;&#34;,
+        &#34;yyyy-MM-dd&#39; &#39;HH:mm:ss&#39;Z&#39;&#34;,
+        &#34;yyyy-MM-dd&#39;T&#39;HH:mm:ss&#34;,
+        &#34;yyyy-MM-dd&#39; &#39;HH:mm:ss&#34;,
+        &#34;yyyy-MM-dd&#39; &#39;HH:mm&#34;,
+    ]
+    &#34;&#34;&#34;
+    List of valid data formats for Time Series parameters.
+    &#34;&#34;&#34;
+
+    FEMALE_LINE_PARAMETERS = [
+        &#34;IMPC_FER_019_001&#34;,
+        &#34;IMPC_FER_011_001&#34;,
+        &#34;IMPC_FER_010_001&#34;,
+        &#34;IMPC_FER_012_001&#34;,
+        &#34;IMPC_FER_013_001&#34;,
+        &#34;IMPC_VIA_026_001&#34;,
+        &#34;IMPC_VIA_036_001&#34;,
+        &#34;IMPC_VIA_038_001&#34;,
+        &#34;IMPC_VIA_039_001&#34;,
+        &#34;IMPC_VIA_042_001&#34;,
+        &#34;IMPC_VIA_044_001&#34;,
+        &#34;IMPC_VIA_046_001&#34;,
+        &#34;IMPC_VIA_048_001&#34;,
+        &#34;IMPC_VIA_050_001&#34;,
+        &#34;IMPC_VIA_052_001&#34;,
+        &#34;IMPC_VIA_054_001&#34;,
+        &#34;IMPC_VIA_056_001&#34;,
+        &#34;IMPC_VIA_062_001&#34;,
+        &#34;IMPC_VIA_064_001&#34;,
+    ]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID,
+    so we use this list to determine if the line parameter is sex specific (female).
+    &#34;&#34;&#34;
+
+    MALE_LINE_PARAMETERS = [
+        &#34;IMPC_FER_001_001&#34;,
+        &#34;IMPC_FER_007_001&#34;,
+        &#34;IMPC_FER_006_001&#34;,
+        &#34;IMPC_FER_008_001&#34;,
+        &#34;IMPC_FER_009_001&#34;,
+        &#34;IMPC_VIA_035_001&#34;,
+        &#34;IMPC_VIA_037_001&#34;,
+        &#34;IMPC_VIA_041_001&#34;,
+        &#34;IMPC_VIA_043_001&#34;,
+        &#34;IMPC_VIA_045_001&#34;,
+        &#34;IMPC_VIA_047_001&#34;,
+        &#34;IMPC_VIA_061_001&#34;,
+        &#34;IMPC_VIA_049_001&#34;,
+        &#34;IMPC_VIA_051_001&#34;,
+        &#34;IMPC_VIA_053_001&#34;,
+        &#34;IMPC_VIA_055_001&#34;,
+        &#34;IMPC_VIA_061_001&#34;,
+        &#34;IMPC_VIA_063_001&#34;,
+        &#34;IMPC_VIA_065_001&#34;,
+    ]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID, so we don&#39;t know the sex of the specimens
+    so we use this list to determine if the line parameter is sex specific (male).
+    &#34;&#34;&#34;
+
+    HET_LINE_PARAMETERS = [
+        &#34;IMPC_VIA_043_001&#34;,
+        &#34;IMPC_VIA_044_001&#34;,
+        &#34;IMPC_VIA_051_001&#34;,
+        &#34;IMPC_VIA_052_001&#34;,
+        &#34;IMPC_VIA_059_001&#34;,
+        &#34;IMPC_VIA_066_001&#34;,
+    ]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID, so we don&#39;t know the zygosity of the specimens
+    so we use this list to determine if the line parameter is for HET only.
+    &#34;&#34;&#34;
+
+    HOM_LINE_PARAMETERS = [
+        &#34;IMPC_VIA_045_001&#34;,
+        &#34;IMPC_VIA_046_001&#34;,
+        &#34;IMPC_VIA_053_001&#34;,
+        &#34;IMPC_VIA_054_001&#34;,
+        &#34;IMPC_VIA_060_001&#34;,
+        &#34;IMPC_VIA_063_001&#34;,
+        &#34;IMPC_VIA_064_001&#34;,
+        &#34;IMPC_VIA_067_001&#34;,
+    ]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID, so we don&#39;t know the zygosity of the specimens
+    so we use this list to determine if the line parameter is for HOM only.
+    &#34;&#34;&#34;
+
+    HEM_LINE_PARAMETERS = [&#34;IMPC_VIA_047_001&#34;, &#34;IMPC_VIA_055_001&#34;, &#34;IMPC_VIA_065_001&#34;]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID, so we don&#39;t know the zygosity of the specimens
+    so we use this list to determine if the line parameter is for HEM only.
+    &#34;&#34;&#34;
+
+    ANZ_LINE_PARAMETERS = [&#34;IMPC_VIA_048_001&#34;, &#34;IMPC_VIA_056_001&#34;]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID, so we don&#39;t know the zygosity of the specimens
+    so we use this list to determine if the line parameter is for ANZ only.
+    &#34;&#34;&#34;
+
+    ZYG_NA_LINE_PARAMETERS = [
+        &#34;IMPC_VIA_057_001&#34;,
+        &#34;IMPC_VIA_061_001&#34;,
+        &#34;IMPC_VIA_062_001&#34;,
+    ]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID, so we don&#39;t know the zygosity of the specimens
+    so we use this list to determine if the line parameter does not have a zygosity.
+    &#34;&#34;&#34;
+
+    EUROPHENOME_DERIVATIONS = [
+        # ESLIM_011 derivations
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_011_001_701&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;mul(div(sub(&#39;ESLIM_011_001_006&#39;, &#39;ESLIM_011_001_007&#39;), &#39;ESLIM_011_001_006&#39;), 100)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_011_001_702&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;mul(div(sub(&#39;ESLIM_011_001_006&#39;, &#39;ESLIM_011_001_008&#39;), &#39;ESLIM_011_001_006&#39;), 100)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_011_001_703&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;mul(div(sub(&#39;ESLIM_011_001_006&#39;, &#39;ESLIM_011_001_009&#39;), &#39;ESLIM_011_001_006&#39;), 100)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_011_001_704&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;mul(div(sub(&#39;ESLIM_011_001_006&#39;, &#39;ESLIM_011_001_010&#39;), &#39;ESLIM_011_001_006&#39;), 100)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_011_001_705&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;mul(div(sub(&#39;ESLIM_011_001_006&#39;, div(sum(&#39;ESLIM_011_001_007&#39;,&#39;ESLIM_011_001_008&#39;,&#39;ESLIM_011_001_009&#39;,&#39;ESLIM_011_001_010&#39;),4)),&#39;ESLIM_011_001_006&#39;),100)&#34;,
+        },
+        # ESLIM_009 derivations
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_009_001_701&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;meanOfIncrements(&#39;ESLIM_009_001_001&#39;)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_009_001_702&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;meanOfIncrements(&#39;ESLIM_009_001_002&#39;)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_009_001_703&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;div(meanOfIncrements(&#39;ESLIM_009_001_001&#39;), &#39;ESLIM_009_001_003&#39;)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_009_001_704&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;div(meanOfIncrements(&#39;ESLIM_009_001_002&#39;), &#39;ESLIM_009_001_003&#39;)&#34;,
+        },
+        # ESLIM_005 derivations
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_005_001_701&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;div(&#39;ESLIM_005_001_005&#39;, &#39;ESLIM_005_001_001&#39;)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_005_001_702&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;div(&#39;ESLIM_005_001_003&#39;, &#39;ESLIM_005_001_001&#39;)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_005_001_703&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;div(&#39;ESLIM_005_001_002&#39;, &#39;ESLIM_005_001_001&#39;)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_005_001_704&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;div(&#39;ESLIM_005_001_005&#39;, &#39;ESLIM_005_001_004&#39;)&#34;,
+        },
+        # ESLIM_004 derivations
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_004_001_701&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;areaUnderCurve(&#39;ESLIM_004_001_002&#39;)&#34;,
+        },
+    ]
+    &#34;&#34;&#34;
+    Some Legacy derived parameters haven&#39;t been ported to the newer derivation syntax.
+    This map attempts to map them as good as possible.
+    &#34;&#34;&#34;
+
+    PROCEDURE_LIFE_STAGE_MAPPER = [
+        {
+            &#34;lifeStage&#34;: &#34;E9.5&#34;,
+            &#34;lifeStageAcc&#34;: &#34;IMPCLS:0001&#34;,
+            &#34;procedures&#34;: [&#34;GEL_&#34;, &#34;EVL_&#34;, &#34;HPL_&#34;, &#34;EOL_&#34;, &#34;EML_&#34;, &#34;HEL_&#34;, &#34;GPL_&#34;],
+        },
+        {
+            &#34;lifeStage&#34;: &#34;E12.5&#34;,
+            &#34;lifeStageAcc&#34;: &#34;IMPCLS:0002&#34;,
+            &#34;procedures&#34;: [&#34;GEM_&#34;, &#34;ELZ_&#34;, &#34;GPM_&#34;, &#34;EVM_&#34;],
+        },
+        {
+            &#34;lifeStage&#34;: &#34;E15.5&#34;,
+            &#34;lifeStageAcc&#34;: &#34;IMPCLS:0003&#34;,
+            &#34;procedures&#34;: [&#34;EVO&#34;, &#34;GPO&#34;, &#34;MAA_&#34;, &#34;EMO_&#34;, &#34;GEO_&#34;],
+        },
+        {
+            &#34;lifeStage&#34;: &#34;E18.5&#34;,
+            &#34;lifeStageAcc&#34;: &#34;IMPCLS:0004&#34;,
+            &#34;procedures&#34;: [&#34;EVP&#34;, &#34;EMA&#34;, &#34;GEP_&#34;, &#34;GPP_&#34;],
+        },
+        {
+            &#34;lifeStage&#34;: &#34;Middle aged adult&#34;,
+            &#34;lifeStageAcc&#34;: &#34;IMPCLS:0006&#34;,
+            &#34;procedures&#34;: [&#34;IP_&#34;],
+        },
+        {
+            &#34;lifeStage&#34;: &#34;Late adult&#34;,
+            &#34;lifeStageAcc&#34;: &#34;IMPCLS:0007&#34;,
+            &#34;procedures&#34;: [&#34;LA_&#34;],
+        },
+    ]
+    &#34;&#34;&#34;
+    Maps procedures to specific life stages.
+    &#34;&#34;&#34;
+
+    UMASS_GENES = [
+        &#34;4933427D14Rik&#34;,
+        &#34;Actr8&#34;,
+        &#34;Alg14&#34;,
+        &#34;Ap2s1&#34;,
+        &#34;Atp2b1&#34;,
+        &#34;B4gat1&#34;,
+        &#34;Bc052040&#34;,
+        &#34;Bcs1l&#34;,
+        &#34;Borcs6&#34;,
+        &#34;Casc3&#34;,
+        &#34;Ccdc59&#34;,
+        &#34;Cenpo&#34;,
+        &#34;Clpx&#34;,
+        &#34;Dbr1&#34;,
+        &#34;Dctn6&#34;,
+        &#34;Ddx59&#34;,
+        &#34;Dnaaf2&#34;,
+        &#34;Dolk&#34;,
+        &#34;Elof1&#34;,
+        &#34;Exoc2&#34;,
+        &#34;Fastkd6&#34;,
+        &#34;Glrx3&#34;,
+        &#34;Hlcs&#34;,
+        &#34;Ipo11&#34;,
+        &#34;Isca1&#34;,
+        &#34;mars2&#34;,
+        &#34;Mcrs1&#34;,
+        &#34;med20&#34;,
+        &#34;Mepce&#34;,
+        &#34;Mrm3&#34;,
+        &#34;Mrpl22&#34;,
+        &#34;Mrpl3&#34;,
+        &#34;Mrpl44&#34;,
+        &#34;Mrps18c&#34;,
+        &#34;Mrps22&#34;,
+        &#34;Mrps25&#34;,
+        &#34;mtpap&#34;,
+        &#34;Nars2&#34;,
+        &#34;Ndufa9&#34;,
+        &#34;Ndufs8&#34;,
+        &#34;Orc6&#34;,
+        &#34;Pmpcb&#34;,
+        &#34;Pold2&#34;,
+        &#34;Polr1a&#34;,
+        &#34;Polr1d&#34;,
+        &#34;Ppp1r35&#34;,
+        &#34;Prim1&#34;,
+        &#34;Prpf4b&#34;,
+        &#34;Rab11a&#34;,
+        &#34;Ranbp2&#34;,
+        &#34;Rbbp4&#34;,
+        &#34;Riok1&#34;,
+        &#34;Rpain&#34;,
+        &#34;Sars&#34;,
+        &#34;Sdhaf2&#34;,
+        &#34;Ska2&#34;,
+        &#34;Snapc2&#34;,
+        &#34;Sptssa&#34;,
+        &#34;Strn3&#34;,
+        &#34;Timm22&#34;,
+        &#34;tmx2&#34;,
+        &#34;Tpk1&#34;,
+        &#34;Trit1&#34;,
+        &#34;Tubgcp4&#34;,
+        &#34;Ube2m&#34;,
+        &#34;Washc4&#34;,
+        &#34;Ylpm1&#34;,
+        &#34;Zc3h4&#34;,
+        &#34;Zfp407&#34;,
+        &#34;Zwint&#34;,
+    ]
+    &#34;&#34;&#34;
+    List of genes in the UMASS project.
+    &#34;&#34;&#34;
+
+    IDG_GENES = [
+        &#34;MGI:1098687&#34;,
+        &#34;MGI:1197518&#34;,
+        &#34;MGI:87859&#34;,
+        &#34;MGI:87860&#34;,
+        &#34;MGI:1097689&#34;,
+        &#34;MGI:1891697&#34;,
+        &#34;MGI:109562&#34;,
+        &#34;MGI:2181676&#34;,
+        &#34;MGI:87911&#34;,
+        &#34;MGI:1338944&#34;,
+        &#34;MGI:2661081&#34;,
+        &#34;MGI:102806&#34;,
+        &#34;MGI:87912&#34;,
+        &#34;MGI:1338946&#34;,
+        &#34;MGI:1919363&#34;,
+        &#34;MGI:1889336&#34;,
+        &#34;MGI:2679274&#34;,
+        &#34;MGI:108449&#34;,
+        &#34;MGI:1277167&#34;,
+        &#34;MGI:1925810&#34;,
+        &#34;MGI:1917943&#34;,
+        &#34;MGI:1933736&#34;,
+        &#34;MGI:2451244&#34;,
+        &#34;MGI:2441837&#34;,
+        &#34;MGI:3041203&#34;,
+        &#34;MGI:106912&#34;,
+        &#34;MGI:1347095&#34;,
+        &#34;MGI:1924846&#34;,
+        &#34;MGI:2182728&#34;,
+        &#34;MGI:2685887&#34;,
+        &#34;MGI:1925499&#34;,
+        &#34;MGI:2182928&#34;,
+        &#34;MGI:1340051&#34;,
+        &#34;MGI:2446854&#34;,
+        &#34;MGI:1859670&#34;,
+        &#34;MGI:2685213&#34;,
+        &#34;MGI:2685955&#34;,
+        &#34;MGI:1916151&#34;,
+        &#34;MGI:2441732&#34;,
+        &#34;MGI:1929461&#34;,
+        &#34;MGI:2139714&#34;,
+        &#34;MGI:2441950&#34;,
+        &#34;MGI:2655562&#34;,
+        &#34;MGI:1274784&#34;,
+        &#34;MGI:87930&#34;,
+        &#34;MGI:99401&#34;,
+        &#34;MGI:99402&#34;,
+        &#34;MGI:99403&#34;,
+        &#34;MGI:1919391&#34;,
+        &#34;MGI:104773&#34;,
+        &#34;MGI:104774&#34;,
+        &#34;MGI:106673&#34;,
+        &#34;MGI:87934&#34;,
+        &#34;MGI:87936&#34;,
+        &#34;MGI:87937&#34;,
+        &#34;MGI:87938&#34;,
+        &#34;MGI:87939&#34;,
+        &#34;MGI:87965&#34;,
+        &#34;MGI:87964&#34;,
+        &#34;MGI:87966&#34;,
+        &#34;MGI:87977&#34;,
+        &#34;MGI:87978&#34;,
+        &#34;MGI:1860835&#34;,
+        &#34;MGI:87979&#34;,
+        &#34;MGI:2677491&#34;,
+        &#34;MGI:1916120&#34;,
+        &#34;MGI:2685080&#34;,
+        &#34;MGI:87986&#34;,
+        &#34;MGI:104874&#34;,
+        &#34;MGI:1345147&#34;,
+        &#34;MGI:103305&#34;,
+        &#34;MGI:1918731&#34;,
+        &#34;MGI:2449492&#34;,
+        &#34;MGI:2151224&#34;,
+        &#34;MGI:105062&#34;,
+        &#34;MGI:3045301&#34;,
+        &#34;MGI:2142149&#34;,
+        &#34;MGI:2387214&#34;,
+        &#34;MGI:2145890&#34;,
+        &#34;MGI:1346086&#34;,
+        &#34;MGI:88065&#34;,
+        &#34;MGI:1194915&#34;,
+        &#34;MGI:1100867&#34;,
+        &#34;MGI:2159339&#34;,
+        &#34;MGI:2652846&#34;,
+        &#34;MGI:1929259&#34;,
+        &#34;MGI:107202&#34;,
+        &#34;MGI:108028&#34;,
+        &#34;MGI:894678&#34;,
+        &#34;MGI:107168&#34;,
+        &#34;MGI:1859216&#34;,
+        &#34;MGI:1347010&#34;,
+        &#34;MGI:88123&#34;,
+        &#34;MGI:1347244&#34;,
+        &#34;MGI:1276121&#34;,
+        &#34;MGI:88144&#34;,
+        &#34;MGI:102845&#34;,
+        &#34;MGI:1346332&#34;,
+        &#34;MGI:2387588&#34;,
+        &#34;MGI:3580298&#34;,
+    ]
+    &#34;&#34;&#34;
+    List of genes in the IDG project.
+    &#34;&#34;&#34;
+
+    DERIVED_PARAMETER_BANLIST = []
+
+    BACKGROUND_STRAIN_MAPPER = {
+        &#34;B6NTac&#34;: &#34;C57BL/6NTac&#34;,
+        &#34;129/Sv&#34;: &#34;129&#34;,
+        &#34;129S5&#34;: &#34;129S5/SvEvBrd&#34;,
+        &#34;C57BL/6NTacDen&#34;: &#34;C57BL/6Dnk&#34;,
+        &#34;C57BL/6JTyr&#34;: &#34;C57BL/6Brd-Tyr&lt;c-Brd&gt;&#34;,
+        &#34;129P2&#34;: &#34;129P2/OlaHsd&#34;,
+        &#34;B6J.129S2&#34;: &#34;129S2&#34;,
+        &#34;129/SvEv&#34;: &#34;129S/SvEv&#34;,
+        &#34;129SvJ-Iso&#34;: &#34;129X1/SvJ&#34;,
+        &#34;C3H/NHG&#34;: &#34;C3H&#34;,
+        &#34;129/SvPas&#34;: &#34;129S2/SvPas&#34;,
+        &#34;C57BL/6NTac-ICS-USA(ImportedLive)&#34;: &#34;C57BL/6NTac&#34;,
+        &#34;C57BL/6NTac-ICS-Denmark(ImportedLive)&#34;: &#34;C57BL/6Dnk&#34;,
+    }
+    &#34;&#34;&#34;
+    Some line sin the legacy data need to be mapped to newer strain names.
+    This list was manually curated with help from people of the Centers part of the EuroPhenome project.
+    &#34;&#34;&#34;</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="impc_etl.config.constants.Constants"><code class="flex name class">
+<span>class <span class="ident">Constants</span></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Constants:
+    SKIPPED_PROCEDURES = {
+        &#34;SLM_SLM&#34;,
+        &#34;SLM_AGS&#34;,
+        &#34;TRC_TRC&#34;,
+        &#34;DSS_DSS&#34;,
+        &#34;MGP_ANA&#34;,
+        &#34;MGP_BCI&#34;,
+        &#34;MGP_BMI&#34;,
+        &#34;MGP_EEI&#34;,
+        &#34;MGP_MLN&#34;,
+        &#34;MGP_PBI&#34;,
+        &#34;MGP_IMM&#34;,
+    }
+    &#34;&#34;&#34;
+    List of procedure that we don&#39;t load. These are Legacy pipelines procedures.
+    &#34;&#34;&#34;
+    VALID_PROJECT_IDS = {
+        &#34;BaSH&#34;,
+        &#34;DTCC&#34;,
+        &#34;EUMODIC&#34;,
+        &#34;EUCOMM-EUMODIC&#34;,
+        &#34;Helmholtz GMC&#34;,
+        &#34;JAX&#34;,
+        &#34;NING&#34;,
+        &#34;MARC&#34;,
+        &#34;MGP&#34;,
+        &#34;MGP Legacy&#34;,
+        &#34;MRC&#34;,
+        &#34;NorCOMM2&#34;,
+        &#34;Phenomin&#34;,
+        &#34;RIKEN BRC&#34;,
+        &#34;KMPC&#34;,
+        &#34;Kmpc&#34;,
+        &#34;3i&#34;,
+        &#34;IMPC&#34;,
+    }
+    &#34;&#34;&#34;
+    List of valid project identifiers coming from the DCC XML files.
+    These are used to determine if an experiment should be marked as MGP or not.
+    &#34;&#34;&#34;
+    EUROPHENOME_VALID_COLONIES = {
+        &#34;EPD0013_1_G11_10613&#34;,
+        &#34;EPD0019_1_A05_10494&#34;,
+        &#34;EPD0023_1_F07_10481&#34;,
+        &#34;EPD0033_3_F04_10955&#34;,
+        &#34;EPD0037_1_E07_10471&#34;,
+        &#34;EPD0037_3_G01_10533&#34;,
+        &#34;EPD0039_1_B01_10470&#34;,
+        &#34;EPD0057_2_C02_10474&#34;,
+        &#34;EPD0065_2_E04_10968&#34;,
+        &#34;EPD0089_4_F11_10538&#34;,
+        &#34;EPD0100_4_A06_10472&#34;,
+        &#34;EPD0135_1_A05_10967&#34;,
+        &#34;EPD0156_1_B01_10970&#34;,
+        &#34;EPD0242_4_B03_10958&#34;,
+        &#34;EPD0011_3_B08_10331&#34;,
+        &#34;EPD0017_3_E02_71&#34;,
+        &#34;EPD0019_1_A05_10574&#34;,
+        &#34;EPD0023_1_F07_10553&#34;,
+        &#34;EPD0033_3_F04_10514&#34;,
+        &#34;EPD0037_1_B03_10395&#34;,
+        &#34;EPD0037_1_E07_10554&#34;,
+        &#34;EPD0038_2_B10_10557&#34;,
+        &#34;EPD0057_1_H01_10556&#34;,
+        &#34;EPD0057_2_C02_10549&#34;,
+        &#34;EPD0065_2_E04_10515&#34;,
+        &#34;EPD0065_5_A04_10523&#34;,
+        &#34;EPD0089_4_F11_320&#34;,
+        &#34;EPD0100_4_A06_10380&#34;,
+        &#34;EPD0135_1_A05_10581&#34;,
+        &#34;EPD0145_4_B09_10343&#34;,
+        &#34;EPD0156_1_B01_10099&#34;,
+        &#34;EPD0242_4_B03_10521&#34;,
+        &#34;EPD0023_1_F07_10594&#34;,
+        &#34;EPD0037_1_B03_10632&#34;,
+        &#34;EPD0037_1_E07_10595&#34;,
+        &#34;EPD0038_2_B10_10026&#34;,
+        &#34;EPD0046_2_F02_216&#34;,
+        &#34;EPD0057_1_H01_134&#34;,
+        &#34;EPD0057_2_C02_10630&#34;,
+        &#34;EPD0065_2_E04_10028&#34;,
+        &#34;EPD0065_5_A04_141&#34;,
+        &#34;EPD0089_4_F11_10578&#34;,
+        &#34;EPD0100_4_A06_10519&#34;,
+        &#34;EPD0135_1_A05_10631&#34;,
+        &#34;EPD0156_1_B01_10517&#34;,
+        &#34;EPD0242_4_B03_10579&#34;,
+        &#34;EPD0011_3_B08_28&#34;,
+        &#34;EPD0013_1_G11_10560&#34;,
+        &#34;EPD0017_3_E02_10220&#34;,
+        &#34;EPD0019_1_A05_73&#34;,
+        &#34;EPD0033_3_F04_10232&#34;,
+        &#34;EPD0037_1_B03_10234&#34;,
+        &#34;EPD0037_3_G01_10649&#34;,
+        &#34;EPD0039_1_B01_157&#34;,
+        &#34;EPD0046_2_F02_10658&#34;,
+        &#34;EPD0135_1_A05_10562&#34;,
+        &#34;EPD0145_4_B09_10826&#34;,
+        &#34;EPD0242_4_B03_10233&#34;,
+        &#34;Dll1_C3H_113&#34;,
+        &#34;Dll1_C3H_10333&#34;,
+        &#34;EPD0059_2_C08_10660&#34;,
+    }
+    &#34;&#34;&#34;
+    Some EuroPhenome colonies have to be stripped to remove a spurious suffix,
+    this list of valid IDs should not be modified by the ETL.
+    &#34;&#34;&#34;
+
+    BODY_WEIGHT_CURVE_PARAMETERS = {
+        &#34;IMPC_BWT_008_001&#34;: {
+            &#34;parameters&#34;: [
+                &#34;IMPC_GRS_003_001&#34;,
+                &#34;IMPC_CAL_001_001&#34;,
+                &#34;IMPC_DXA_001_001&#34;,
+                &#34;IMPC_HWT_007_001&#34;,
+                &#34;IMPC_PAT_049_001&#34;,
+                &#34;IMPC_BWT_001_001&#34;,
+                &#34;IMPC_ABR_001_001&#34;,
+                &#34;IMPC_CHL_001_001&#34;,
+                &#34;TCP_CHL_001_001&#34;,
+                &#34;HMGU_ROT_004_001&#34;,
+            ],
+            &#34;procedure_stable_id&#34;: &#34;IMPC_BWT_001&#34;,
+            &#34;procedure_group&#34;: &#34;IMPC_BWT&#34;,
+            &#34;procedure_name&#34;: &#34;Body Weight&#34;,
+            &#34;parameter_name&#34;: &#34;Body weight curve&#34;,
+            &#34;pipeline_stable_id&#34;: &#34;IMPC_001&#34;,
+            &#34;pipeline_name&#34;: &#34;IMPC Pipeline&#34;,
+        },
+        &#34;ESLIM_022_001_701&#34;: {
+            &#34;parameters&#34;: [
+                &#34;ESLIM_001_001_001&#34;,
+                &#34;ESLIM_002_001_001&#34;,
+                &#34;ESLIM_003_001_001&#34;,
+                &#34;ESLIM_004_001_001&#34;,
+                &#34;ESLIM_005_001_001&#34;,
+                &#34;ESLIM_020_001_001&#34;,
+            ],
+            &#34;procedure_stable_id&#34;: &#34;ESLIM_022_001&#34;,
+            &#34;procedure_group&#34;: &#34;ESLIM_022&#34;,
+            &#34;procedure_name&#34;: &#34;Body Weight&#34;,
+            &#34;parameter_name&#34;: &#34;Body Weight Curve Pipeline One&#34;,
+            &#34;pipeline_stable_id&#34;: &#34;ESLIM_001&#34;,
+            &#34;pipeline_name&#34;: &#34;EUMODIC Pipeline 1&#34;,
+        },
+        &#34;ESLIM_022_001_702&#34;: {
+            &#34;parameters&#34;: [
+                &#34;ESLIM_009_001_003&#34;,
+                &#34;ESLIM_010_001_003&#34;,
+                &#34;ESLIM_011_001_011&#34;,
+                &#34;ESLIM_012_001_005&#34;,
+                &#34;ESLIM_013_001_018&#34;,
+                &#34;ESLIM_022_001_001&#34;,
+            ],
+            &#34;procedure_stable_id&#34;: &#34;ESLIM_022_001&#34;,
+            &#34;procedure_group&#34;: &#34;ESLIM_022&#34;,
+            &#34;procedure_name&#34;: &#34;Body Weight&#34;,
+            &#34;parameter_name&#34;: &#34;Body Weight Curve Pipeline Two&#34;,
+            &#34;pipeline_stable_id&#34;: &#34;ESLIM_002&#34;,
+            &#34;pipeline_name&#34;: &#34;EUMODIC Pipeline 2&#34;,
+        },
+    }
+    &#34;&#34;&#34;
+    This map is used to generate the BWT Curve parameters,
+    the key is the target parameter and it contains a list of source parameters and the target parameter metadata values.
+    &#34;&#34;&#34;
+
+    CENTRE_ID_MAP = {
+        &#34;bcm&#34;: &#34;BCM&#34;,
+        &#34;gmc&#34;: &#34;HMGU&#34;,
+        &#34;h&#34;: &#34;MRC Harwell&#34;,
+        &#34;harwell&#34;: &#34;MRC Harwell&#34;,
+        &#34;hmgu&#34;: &#34;HMGU&#34;,
+        &#34;ics&#34;: &#34;ICS&#34;,
+        &#34;j&#34;: &#34;JAX&#34;,
+        &#34;jax&#34;: &#34;JAX&#34;,
+        &#34;ncom&#34;: &#34;CMHD&#34;,
+        &#34;norcomm&#34;: &#34;CMHD&#34;,
+        &#34;ning&#34;: &#34;MARC&#34;,
+        &#34;marc&#34;: &#34;MARC&#34;,
+        &#34;rbrc&#34;: &#34;RBRC&#34;,
+        &#34;tcp&#34;: &#34;TCP&#34;,
+        &#34;ucd&#34;: &#34;UC Davis&#34;,
+        &#34;wtsi&#34;: &#34;WTSI&#34;,
+        &#34;wsi&#34;: &#34;WTSI&#34;,
+        &#34;kmpc&#34;: &#34;KMPC&#34;,
+        &#34;biat&#34;: &#34;BIAT&#34;,
+        &#34;ph&#34;: &#34;PH&#34;,
+        &#34;cdta&#34;: &#34;CDTA&#34;,
+        &#34;crl&#34;: &#34;Crl&#34;,
+        &#34;riken brc&#34;: &#34;RBRC&#34;,
+        &#34;ccp-img&#34;: &#34;CCP-IMG&#34;,
+        &#34;ccpcz&#34;: &#34;CCP-IMG&#34;,
+        &#34;ccp&#34;: &#34;CCP-IMG&#34;,
+        &#34;monterotondo&#34;: &#34;Monterotondo&#34;,
+        &#34;narlabs&#34;: &#34;NARLabs&#34;,
+    }
+    &#34;&#34;&#34;
+    This map is used to translate the centre IDs coming in the XML files to the ones we use on the website. 
+    &#34;&#34;&#34;
+
+    PROJECT_ID_MAP = {
+        &#34;bash&#34;: &#34;BaSH&#34;,
+        &#34;dtcc&#34;: &#34;DTCC&#34;,
+        &#34;eumodic&#34;: &#34;EUMODIC&#34;,
+        &#34;eucomm-eumodic&#34;: &#34;EUMODIC&#34;,
+        &#34;eucomm-eucomm-eumodic&#34;: &#34;EUMODIC&#34;,
+        &#34;helmholtz gmc&#34;: &#34;Helmholtz GMC&#34;,
+        &#34;jax&#34;: &#34;JAX&#34;,
+        &#34;ning&#34;: &#34;MARC&#34;,
+        &#34;marc&#34;: &#34;MARC&#34;,
+        &#34;mgp&#34;: &#34;MGP&#34;,
+        &#34;mgp legacy&#34;: &#34;MGP Legacy&#34;,
+        &#34;mrc&#34;: &#34;MRC&#34;,
+        &#34;norcomm2&#34;: &#34;NorCOMM2&#34;,
+        &#34;phenomin&#34;: &#34;Phenomin&#34;,
+        &#34;riken brc&#34;: &#34;RBRC&#34;,
+        &#34;kmpc&#34;: &#34;KMPC&#34;,
+        &#34;3i&#34;: &#34;3i&#34;,
+        &#34;impc&#34;: &#34;IMPC&#34;,
+        &#34;ccp-img&#34;: &#34;CCP-IMG&#34;,
+        &#34;norcomm&#34;: &#34;NorCOMM&#34;,
+        &#34;ucd-komp&#34;: &#34;UC Davis&#34;,
+        &#34;eucommtoolscre&#34;: &#34;EUCOMMToolsCre&#34;,
+        &#34;monterotondo&#34;: &#34;Monterotondo&#34;,
+        &#34;infrafrontier-i3&#34;: &#34;Infrafrontier-I3&#34;,
+        &#34;komp&#34;: &#34;KOMP&#34;,
+        &#34;narlabs&#34;: &#34;NARLabs&#34;,
+        &#34;ccpcz&#34;: &#34;CCP-IMG&#34;,
+        &#34;ccp&#34;: &#34;CCP-IMG&#34;,
+        &#34;tobeloadedfromimits&#34;: &#34;tobeloadedfromimits&#34;,
+    }
+    &#34;&#34;&#34;
+    This map is used to translate the project IDs coming in the XML files to the ones we use on the website. 
+    &#34;&#34;&#34;
+
+    EXPERIMENTER_IDS = {
+        &#34;LHl&#34;: &#34;131&#34;,
+        &#34;OH&#34;: &#34;132&#34;,
+        &#34;jiangman, wangchenhao&#34;: &#34;jiangman,wangchenhao&#34;,
+        &#34;jiangman wangchenhao&#34;: &#34;jiangman,wangchenhao&#34;,
+        &#34;jianman  wangchenhao&#34;: &#34;jiangman,wangchenhao&#34;,
+        &#34;JMC_301_304&#34;: &#34;JMC301,JMC304&#34;,
+        &#34;JMC601,JMC602JMC603&#34;: &#34;JMC601,JMC602,JMC603&#34;,
+        &#34;JCM601,JCM602,JCM603&#34;: &#34;JMC601,JMC602,JMC603&#34;,
+        &#34;JCM601,JCM603&#34;: &#34;JMC601,JMC603&#34;,
+        &#34;JMC601,JCM603&#34;: &#34;JMC601,JMC603&#34;,
+        &#34;JCM602,JCM603&#34;: &#34;JMC602,JMC603&#34;,
+        &#34;JMC602,JCM603&#34;: &#34;JMC602,JMC603&#34;,
+        &#34;JCM603&#34;: &#34;JMC603&#34;,
+        &#34;qixin;jiangman&#34;: &#34;qixin,jiangman&#34;,
+        &#34;Chenhao Wang&#34;: &#34;wangchenhao&#34;,
+        &#34;wangchenhao  jiangman&#34;: &#34;wangchenhao,jiangman&#34;,
+    }
+    &#34;&#34;&#34;
+    Some experiment IDs from legacy experiment files need to be mapped to a standardized version so they match.
+    &#34;&#34;&#34;
+
+    EFO_EMBRYONIC_STAGES = {
+        &#34;0&#34;: &#34;EFO:0XXXXXX&#34;,
+        &#34;8.25&#34;: &#34;EFO:0002561&#34;,
+        &#34;8.5&#34;: &#34;EFO:85XXXXXX&#34;,
+        &#34;9&#34;: &#34;EFO:0002561&#34;,
+        &#34;9.5&#34;: &#34;EFO:0007641&#34;,
+        &#34;10.5&#34;: &#34;EFO:0007643&#34;,
+        &#34;11.5&#34;: &#34;EFO:0002562&#34;,
+        &#34;12&#34;: &#34;EFO:0007640&#34;,
+        &#34;12.5&#34;: &#34;EFO:0002563&#34;,
+        &#34;13&#34;: &#34;EFO:0007642&#34;,
+        &#34;13.5&#34;: &#34;EFO:0002564&#34;,
+        &#34;14.5&#34;: &#34;EFO:0002565&#34;,
+        &#34;15.5&#34;: &#34;EFO:0002566&#34;,
+        &#34;16.5&#34;: &#34;EFO:0002567&#34;,
+        &#34;17.5&#34;: &#34;EFO:0002568&#34;,
+        &#34;18&#34;: &#34;EFO:0002569&#34;,
+        &#34;18.5&#34;: &#34;EFO:0002570&#34;,
+    }
+    &#34;&#34;&#34;
+    Maps IMPC embryonic stages to EFO ontology term IDs.
+    &#34;&#34;&#34;
+
+    EXPERIMENT_TO_OBSERVATION_MAP = {
+        &#34;source_phenotyping_status&#34;: &#34;experiment._sourcePhenotypingStatus&#34;,
+        &#34;project_name&#34;: &#34;experiment._project&#34;,
+        &#34;age_in_days&#34;: &#34;experiment.ageInDays&#34;,
+        &#34;age_in_weeks&#34;: &#34;experiment.ageInWeeks&#34;,
+        &#34;date_of_experiment&#34;: &#34;experiment._dateOfExperiment&#34;,
+        &#34;metadata_group&#34;: &#34;experiment.metadataGroup&#34;,
+        &#34;procedure_sequence_id&#34;: &#34;experiment._sequenceID&#34;,
+        &#34;experiment_source_id&#34;: &#34;experiment._experimentID&#34;,
+        &#34;external_sample_id&#34;: &#34;specimen._specimenID&#34;,
+        &#34;sex&#34;: &#34;specimen._gender&#34;,
+        &#34;allelic_composition&#34;: &#34;specimen.allelicComposition&#34;,
+        &#34;production_center&#34;: &#34;specimen._productionCentre&#34;,
+        &#34;phenotyping_center&#34;: &#34;specimen._phenotypingCentre&#34;,
+        &#34;phenotyping_cons&#34;: &#34;colony.phenotyping_consortium&#34;,
+        &#34;litter_id&#34;: &#34;specimen._litterId&#34;,
+        &#34;date_of_birth&#34;: &#34;specimen._DOB&#34;,
+        &#34;strain_accession_id&#34;: &#34;strain.mgiStrainID&#34;,  ## Fallback to Imits
+    }
+    &#34;&#34;&#34;
+    Maps columns names coming from the Experiment Parquet file
+    to the column names in the schema of the Observations Parquet file.
+    &#34;&#34;&#34;
+
+    LINE_TO_OBSERVATION_MAP = {
+        &#34;source_phenotyping_status&#34;: &#34;_sourcePhenotypingStatus&#34;,
+        &#34;project_name&#34;: &#34;_project&#34;,
+        &#34;age_in_days&#34;: None,
+        &#34;age_in_weeks&#34;: None,
+        &#34;developmental_stage_name&#34;: None,
+        &#34;developmental_stage_acc&#34;: None,
+        &#34;date_of_experiment&#34;: None,
+        &#34;metadata_group&#34;: &#34;metadataGroup&#34;,
+        &#34;procedure_sequence_id&#34;: None,
+        &#34;experiment_source_id&#34;: &#34;_experimentID&#34;,
+        &#34;external_sample_id&#34;: None,
+        &#34;sex&#34;: None,
+        &#34;allelic_composition&#34;: &#34;allelicComposition&#34;,
+        &#34;production_center&#34;: None,
+        &#34;phenotyping_center&#34;: &#34;colony.phenotyping_centre&#34;,
+        &#34;phenotyping_cons&#34;: &#34;colony.phenotyping_consortium&#34;,
+        &#34;litter_id&#34;: None,
+        &#34;date_of_birth&#34;: None,
+        &#34;specimen_source_file&#34;: None,
+        &#34;strain_accession_id&#34;: &#34;strain.mgiStrainID&#34;,
+        &#34;strain_name&#34;: &#34;colony.colony_background_strain&#34;,
+        &#34;allele_symbol&#34;: &#34;colony.allele_symbol&#34;,
+        &#34;gene_symbol&#34;: &#34;colony.marker_symbol&#34;,
+        &#34;gene_accession_id&#34;: &#34;colony.mgi_accession_id&#34;,
+        &#34;genetic_background&#34;: &#34;colony.genetic_background&#34;,
+        &#34;colony_id&#34;: &#34;_colonyID&#34;,
+        &#34;weight&#34;: None,
+        &#34;weight_date&#34;: None,
+        &#34;weight_days_old&#34;: None,
+        &#34;weight_parameter_stable_id&#34;: None,
+    }
+    &#34;&#34;&#34;
+    Maps columns names coming from the Line Experiment Parquet file
+    to the column names in the schema of the Observations Parquet file.
+    &#34;&#34;&#34;
+
+    OBSERVATION_COLUMNS = [
+        &#34;experiment_source_file&#34;,
+        &#34;specimen_source_file&#34;,
+        &#34;source_phenotyping_status&#34;,
+        &#34;experiment_id&#34;,
+        &#34;specimen_id&#34;,
+        &#34;observation_id&#34;,
+        &#34;allele_accession_id&#34;,
+        &#34;gene_accession_id&#34;,
+        &#34;project_name&#34;,
+        &#34;strain_accession_id&#34;,
+        &#34;litter_id&#34;,
+        &#34;phenotyping_center&#34;,
+        &#34;phenotyping_cons&#34;,
+        &#34;external_sample_id&#34;,
+        &#34;developmental_stage_name&#34;,
+        &#34;developmental_stage_acc&#34;,
+        &#34;datasource_name&#34;,
+        &#34;age_in_days&#34;,
+        &#34;date_of_birth&#34;,
+        &#34;metadata&#34;,
+        &#34;metadata_group&#34;,
+        &#34;procedure_sequence_id&#34;,
+        &#34;sequence_id&#34;,
+        &#34;experiment_source_id&#34;,
+        &#34;gene_symbol&#34;,
+        &#34;biological_sample_group&#34;,
+        &#34;sex&#34;,
+        &#34;allele_symbol&#34;,
+        &#34;production_center&#34;,
+        &#34;age_in_weeks&#34;,
+        &#34;weight&#34;,
+        &#34;weight_date&#34;,
+        &#34;weight_days_old&#34;,
+        &#34;weight_parameter_stable_id&#34;,
+        &#34;colony_id&#34;,
+        &#34;zygosity&#34;,
+        &#34;allelic_composition&#34;,
+        &#34;pipeline_name&#34;,
+        &#34;pipeline_stable_id&#34;,
+        &#34;procedure_name&#34;,
+        &#34;procedure_stable_id&#34;,
+        &#34;procedure_group&#34;,
+        &#34;parameter_name&#34;,
+        &#34;parameter_stable_id&#34;,
+        &#34;parameter_status&#34;,
+        &#34;observation_type&#34;,
+        &#34;data_point&#34;,
+        &#34;text_value&#34;,
+        &#34;category&#34;,
+        &#34;strain_name&#34;,
+        &#34;genetic_background&#34;,
+        &#34;date_of_experiment&#34;,
+        &#34;sub_term_name&#34;,
+        &#34;sub_term_id&#34;,
+        &#34;sub_term_description&#34;,
+        &#34;discrete_point&#34;,
+        &#34;time_point&#34;,
+        &#34;download_file_path&#34;,
+        &#34;file_type&#34;,
+        &#34;image_link&#34;,
+        &#34;increment_value&#34;,
+        &#34;parameter_association_stable_id&#34;,
+        &#34;parameter_association_sequence_id&#34;,
+        &#34;parameter_association_name&#34;,
+        &#34;parameter_association_value&#34;,
+    ]
+    &#34;&#34;&#34;
+    List of columns for the Observations parquet output schema.
+    &#34;&#34;&#34;
+
+    PARAMETER_SPECIFIC_FIELDS = {
+        &#34;data_point&#34;: StringType(),
+        &#34;text_value&#34;: StringType(),
+        &#34;category&#34;: StringType(),
+        &#34;sequence_id&#34;: StringType(),
+        &#34;sub_term_name&#34;: ArrayType(StringType()),
+        &#34;sub_term_id&#34;: ArrayType(StringType()),
+        &#34;sub_term_description&#34;: ArrayType(StringType()),
+        &#34;discrete_point&#34;: StringType(),
+        &#34;time_point&#34;: StringType(),
+        &#34;download_file_path&#34;: StringType(),
+        &#34;image_link&#34;: StringType(),
+        &#34;file_type&#34;: StringType(),
+        &#34;increment_value&#34;: StringType(),
+        &#34;parameter_association_stable_id&#34;: ArrayType(StringType()),
+        &#34;parameter_association_sequence_id&#34;: ArrayType(StringType()),
+        &#34;parameter_association_name&#34;: ArrayType(StringType()),
+        &#34;parameter_association_value&#34;: ArrayType(StringType()),
+    }
+    &#34;&#34;&#34;
+    PySpark schema dictionary to represent IMPReSS parameters in the Observations Parquet schema.
+    &#34;&#34;&#34;
+
+    DATE_FORMATS = [
+        &#34;yyyy-MM-dd&#39;T&#39;HH:mm:ssXXX&#34;,
+        &#34;yyyy-MM-dd&#39;T&#39;HH:mm:ssX&#34;,
+        &#34;yyyy-MM-dd&#39;T&#39;HH:mm:ssZ&#34;,
+        &#34;yyyy-MM-dd&#39; &#39;HH:mm:ssZ&#34;,
+        &#34;yyyy-MM-dd&#39;T&#39;HH:mm:ss&#39;Z&#39;&#34;,
+        &#34;yyyy-MM-dd&#39; &#39;HH:mm:ss&#39;Z&#39;&#34;,
+        &#34;yyyy-MM-dd&#39;T&#39;HH:mm:ss&#34;,
+        &#34;yyyy-MM-dd&#39; &#39;HH:mm:ss&#34;,
+        &#34;yyyy-MM-dd&#39; &#39;HH:mm&#34;,
+    ]
+    &#34;&#34;&#34;
+    List of valid data formats for Time Series parameters.
+    &#34;&#34;&#34;
+
+    FEMALE_LINE_PARAMETERS = [
+        &#34;IMPC_FER_019_001&#34;,
+        &#34;IMPC_FER_011_001&#34;,
+        &#34;IMPC_FER_010_001&#34;,
+        &#34;IMPC_FER_012_001&#34;,
+        &#34;IMPC_FER_013_001&#34;,
+        &#34;IMPC_VIA_026_001&#34;,
+        &#34;IMPC_VIA_036_001&#34;,
+        &#34;IMPC_VIA_038_001&#34;,
+        &#34;IMPC_VIA_039_001&#34;,
+        &#34;IMPC_VIA_042_001&#34;,
+        &#34;IMPC_VIA_044_001&#34;,
+        &#34;IMPC_VIA_046_001&#34;,
+        &#34;IMPC_VIA_048_001&#34;,
+        &#34;IMPC_VIA_050_001&#34;,
+        &#34;IMPC_VIA_052_001&#34;,
+        &#34;IMPC_VIA_054_001&#34;,
+        &#34;IMPC_VIA_056_001&#34;,
+        &#34;IMPC_VIA_062_001&#34;,
+        &#34;IMPC_VIA_064_001&#34;,
+    ]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID,
+    so we use this list to determine if the line parameter is sex specific (female).
+    &#34;&#34;&#34;
+
+    MALE_LINE_PARAMETERS = [
+        &#34;IMPC_FER_001_001&#34;,
+        &#34;IMPC_FER_007_001&#34;,
+        &#34;IMPC_FER_006_001&#34;,
+        &#34;IMPC_FER_008_001&#34;,
+        &#34;IMPC_FER_009_001&#34;,
+        &#34;IMPC_VIA_035_001&#34;,
+        &#34;IMPC_VIA_037_001&#34;,
+        &#34;IMPC_VIA_041_001&#34;,
+        &#34;IMPC_VIA_043_001&#34;,
+        &#34;IMPC_VIA_045_001&#34;,
+        &#34;IMPC_VIA_047_001&#34;,
+        &#34;IMPC_VIA_061_001&#34;,
+        &#34;IMPC_VIA_049_001&#34;,
+        &#34;IMPC_VIA_051_001&#34;,
+        &#34;IMPC_VIA_053_001&#34;,
+        &#34;IMPC_VIA_055_001&#34;,
+        &#34;IMPC_VIA_061_001&#34;,
+        &#34;IMPC_VIA_063_001&#34;,
+        &#34;IMPC_VIA_065_001&#34;,
+    ]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID, so we don&#39;t know the sex of the specimens
+    so we use this list to determine if the line parameter is sex specific (male).
+    &#34;&#34;&#34;
+
+    HET_LINE_PARAMETERS = [
+        &#34;IMPC_VIA_043_001&#34;,
+        &#34;IMPC_VIA_044_001&#34;,
+        &#34;IMPC_VIA_051_001&#34;,
+        &#34;IMPC_VIA_052_001&#34;,
+        &#34;IMPC_VIA_059_001&#34;,
+        &#34;IMPC_VIA_066_001&#34;,
+    ]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID, so we don&#39;t know the zygosity of the specimens
+    so we use this list to determine if the line parameter is for HET only.
+    &#34;&#34;&#34;
+
+    HOM_LINE_PARAMETERS = [
+        &#34;IMPC_VIA_045_001&#34;,
+        &#34;IMPC_VIA_046_001&#34;,
+        &#34;IMPC_VIA_053_001&#34;,
+        &#34;IMPC_VIA_054_001&#34;,
+        &#34;IMPC_VIA_060_001&#34;,
+        &#34;IMPC_VIA_063_001&#34;,
+        &#34;IMPC_VIA_064_001&#34;,
+        &#34;IMPC_VIA_067_001&#34;,
+    ]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID, so we don&#39;t know the zygosity of the specimens
+    so we use this list to determine if the line parameter is for HOM only.
+    &#34;&#34;&#34;
+
+    HEM_LINE_PARAMETERS = [&#34;IMPC_VIA_047_001&#34;, &#34;IMPC_VIA_055_001&#34;, &#34;IMPC_VIA_065_001&#34;]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID, so we don&#39;t know the zygosity of the specimens
+    so we use this list to determine if the line parameter is for HEM only.
+    &#34;&#34;&#34;
+
+    ANZ_LINE_PARAMETERS = [&#34;IMPC_VIA_048_001&#34;, &#34;IMPC_VIA_056_001&#34;]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID, so we don&#39;t know the zygosity of the specimens
+    so we use this list to determine if the line parameter is for ANZ only.
+    &#34;&#34;&#34;
+
+    ZYG_NA_LINE_PARAMETERS = [
+        &#34;IMPC_VIA_057_001&#34;,
+        &#34;IMPC_VIA_061_001&#34;,
+        &#34;IMPC_VIA_062_001&#34;,
+    ]
+    &#34;&#34;&#34;
+    Line experiments don&#39;t have a Specimen ID, so we don&#39;t know the zygosity of the specimens
+    so we use this list to determine if the line parameter does not have a zygosity.
+    &#34;&#34;&#34;
+
+    EUROPHENOME_DERIVATIONS = [
+        # ESLIM_011 derivations
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_011_001_701&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;mul(div(sub(&#39;ESLIM_011_001_006&#39;, &#39;ESLIM_011_001_007&#39;), &#39;ESLIM_011_001_006&#39;), 100)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_011_001_702&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;mul(div(sub(&#39;ESLIM_011_001_006&#39;, &#39;ESLIM_011_001_008&#39;), &#39;ESLIM_011_001_006&#39;), 100)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_011_001_703&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;mul(div(sub(&#39;ESLIM_011_001_006&#39;, &#39;ESLIM_011_001_009&#39;), &#39;ESLIM_011_001_006&#39;), 100)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_011_001_704&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;mul(div(sub(&#39;ESLIM_011_001_006&#39;, &#39;ESLIM_011_001_010&#39;), &#39;ESLIM_011_001_006&#39;), 100)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_011_001_705&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;mul(div(sub(&#39;ESLIM_011_001_006&#39;, div(sum(&#39;ESLIM_011_001_007&#39;,&#39;ESLIM_011_001_008&#39;,&#39;ESLIM_011_001_009&#39;,&#39;ESLIM_011_001_010&#39;),4)),&#39;ESLIM_011_001_006&#39;),100)&#34;,
+        },
+        # ESLIM_009 derivations
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_009_001_701&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;meanOfIncrements(&#39;ESLIM_009_001_001&#39;)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_009_001_702&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;meanOfIncrements(&#39;ESLIM_009_001_002&#39;)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_009_001_703&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;div(meanOfIncrements(&#39;ESLIM_009_001_001&#39;), &#39;ESLIM_009_001_003&#39;)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_009_001_704&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;div(meanOfIncrements(&#39;ESLIM_009_001_002&#39;), &#39;ESLIM_009_001_003&#39;)&#34;,
+        },
+        # ESLIM_005 derivations
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_005_001_701&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;div(&#39;ESLIM_005_001_005&#39;, &#39;ESLIM_005_001_001&#39;)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_005_001_702&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;div(&#39;ESLIM_005_001_003&#39;, &#39;ESLIM_005_001_001&#39;)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_005_001_703&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;div(&#39;ESLIM_005_001_002&#39;, &#39;ESLIM_005_001_001&#39;)&#34;,
+        },
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_005_001_704&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;div(&#39;ESLIM_005_001_005&#39;, &#39;ESLIM_005_001_004&#39;)&#34;,
+        },
+        # ESLIM_004 derivations
+        {
+            &#34;europhenomeParameter&#34;: &#34;ESLIM_004_001_701&#34;,
+            &#34;europhenomeDerivation&#34;: &#34;areaUnderCurve(&#39;ESLIM_004_001_002&#39;)&#34;,
+        },
+    ]
+    &#34;&#34;&#34;
+    Some Legacy derived parameters haven&#39;t been ported to the newer derivation syntax.
+    This map attempts to map them as good as possible.
+    &#34;&#34;&#34;
+
+    PROCEDURE_LIFE_STAGE_MAPPER = [
+        {
+            &#34;lifeStage&#34;: &#34;E9.5&#34;,
+            &#34;lifeStageAcc&#34;: &#34;IMPCLS:0001&#34;,
+            &#34;procedures&#34;: [&#34;GEL_&#34;, &#34;EVL_&#34;, &#34;HPL_&#34;, &#34;EOL_&#34;, &#34;EML_&#34;, &#34;HEL_&#34;, &#34;GPL_&#34;],
+        },
+        {
+            &#34;lifeStage&#34;: &#34;E12.5&#34;,
+            &#34;lifeStageAcc&#34;: &#34;IMPCLS:0002&#34;,
+            &#34;procedures&#34;: [&#34;GEM_&#34;, &#34;ELZ_&#34;, &#34;GPM_&#34;, &#34;EVM_&#34;],
+        },
+        {
+            &#34;lifeStage&#34;: &#34;E15.5&#34;,
+            &#34;lifeStageAcc&#34;: &#34;IMPCLS:0003&#34;,
+            &#34;procedures&#34;: [&#34;EVO&#34;, &#34;GPO&#34;, &#34;MAA_&#34;, &#34;EMO_&#34;, &#34;GEO_&#34;],
+        },
+        {
+            &#34;lifeStage&#34;: &#34;E18.5&#34;,
+            &#34;lifeStageAcc&#34;: &#34;IMPCLS:0004&#34;,
+            &#34;procedures&#34;: [&#34;EVP&#34;, &#34;EMA&#34;, &#34;GEP_&#34;, &#34;GPP_&#34;],
+        },
+        {
+            &#34;lifeStage&#34;: &#34;Middle aged adult&#34;,
+            &#34;lifeStageAcc&#34;: &#34;IMPCLS:0006&#34;,
+            &#34;procedures&#34;: [&#34;IP_&#34;],
+        },
+        {
+            &#34;lifeStage&#34;: &#34;Late adult&#34;,
+            &#34;lifeStageAcc&#34;: &#34;IMPCLS:0007&#34;,
+            &#34;procedures&#34;: [&#34;LA_&#34;],
+        },
+    ]
+    &#34;&#34;&#34;
+    Maps procedures to specific life stages.
+    &#34;&#34;&#34;
+
+    UMASS_GENES = [
+        &#34;4933427D14Rik&#34;,
+        &#34;Actr8&#34;,
+        &#34;Alg14&#34;,
+        &#34;Ap2s1&#34;,
+        &#34;Atp2b1&#34;,
+        &#34;B4gat1&#34;,
+        &#34;Bc052040&#34;,
+        &#34;Bcs1l&#34;,
+        &#34;Borcs6&#34;,
+        &#34;Casc3&#34;,
+        &#34;Ccdc59&#34;,
+        &#34;Cenpo&#34;,
+        &#34;Clpx&#34;,
+        &#34;Dbr1&#34;,
+        &#34;Dctn6&#34;,
+        &#34;Ddx59&#34;,
+        &#34;Dnaaf2&#34;,
+        &#34;Dolk&#34;,
+        &#34;Elof1&#34;,
+        &#34;Exoc2&#34;,
+        &#34;Fastkd6&#34;,
+        &#34;Glrx3&#34;,
+        &#34;Hlcs&#34;,
+        &#34;Ipo11&#34;,
+        &#34;Isca1&#34;,
+        &#34;mars2&#34;,
+        &#34;Mcrs1&#34;,
+        &#34;med20&#34;,
+        &#34;Mepce&#34;,
+        &#34;Mrm3&#34;,
+        &#34;Mrpl22&#34;,
+        &#34;Mrpl3&#34;,
+        &#34;Mrpl44&#34;,
+        &#34;Mrps18c&#34;,
+        &#34;Mrps22&#34;,
+        &#34;Mrps25&#34;,
+        &#34;mtpap&#34;,
+        &#34;Nars2&#34;,
+        &#34;Ndufa9&#34;,
+        &#34;Ndufs8&#34;,
+        &#34;Orc6&#34;,
+        &#34;Pmpcb&#34;,
+        &#34;Pold2&#34;,
+        &#34;Polr1a&#34;,
+        &#34;Polr1d&#34;,
+        &#34;Ppp1r35&#34;,
+        &#34;Prim1&#34;,
+        &#34;Prpf4b&#34;,
+        &#34;Rab11a&#34;,
+        &#34;Ranbp2&#34;,
+        &#34;Rbbp4&#34;,
+        &#34;Riok1&#34;,
+        &#34;Rpain&#34;,
+        &#34;Sars&#34;,
+        &#34;Sdhaf2&#34;,
+        &#34;Ska2&#34;,
+        &#34;Snapc2&#34;,
+        &#34;Sptssa&#34;,
+        &#34;Strn3&#34;,
+        &#34;Timm22&#34;,
+        &#34;tmx2&#34;,
+        &#34;Tpk1&#34;,
+        &#34;Trit1&#34;,
+        &#34;Tubgcp4&#34;,
+        &#34;Ube2m&#34;,
+        &#34;Washc4&#34;,
+        &#34;Ylpm1&#34;,
+        &#34;Zc3h4&#34;,
+        &#34;Zfp407&#34;,
+        &#34;Zwint&#34;,
+    ]
+    &#34;&#34;&#34;
+    List of genes in the UMASS project.
+    &#34;&#34;&#34;
+
+    IDG_GENES = [
+        &#34;MGI:1098687&#34;,
+        &#34;MGI:1197518&#34;,
+        &#34;MGI:87859&#34;,
+        &#34;MGI:87860&#34;,
+        &#34;MGI:1097689&#34;,
+        &#34;MGI:1891697&#34;,
+        &#34;MGI:109562&#34;,
+        &#34;MGI:2181676&#34;,
+        &#34;MGI:87911&#34;,
+        &#34;MGI:1338944&#34;,
+        &#34;MGI:2661081&#34;,
+        &#34;MGI:102806&#34;,
+        &#34;MGI:87912&#34;,
+        &#34;MGI:1338946&#34;,
+        &#34;MGI:1919363&#34;,
+        &#34;MGI:1889336&#34;,
+        &#34;MGI:2679274&#34;,
+        &#34;MGI:108449&#34;,
+        &#34;MGI:1277167&#34;,
+        &#34;MGI:1925810&#34;,
+        &#34;MGI:1917943&#34;,
+        &#34;MGI:1933736&#34;,
+        &#34;MGI:2451244&#34;,
+        &#34;MGI:2441837&#34;,
+        &#34;MGI:3041203&#34;,
+        &#34;MGI:106912&#34;,
+        &#34;MGI:1347095&#34;,
+        &#34;MGI:1924846&#34;,
+        &#34;MGI:2182728&#34;,
+        &#34;MGI:2685887&#34;,
+        &#34;MGI:1925499&#34;,
+        &#34;MGI:2182928&#34;,
+        &#34;MGI:1340051&#34;,
+        &#34;MGI:2446854&#34;,
+        &#34;MGI:1859670&#34;,
+        &#34;MGI:2685213&#34;,
+        &#34;MGI:2685955&#34;,
+        &#34;MGI:1916151&#34;,
+        &#34;MGI:2441732&#34;,
+        &#34;MGI:1929461&#34;,
+        &#34;MGI:2139714&#34;,
+        &#34;MGI:2441950&#34;,
+        &#34;MGI:2655562&#34;,
+        &#34;MGI:1274784&#34;,
+        &#34;MGI:87930&#34;,
+        &#34;MGI:99401&#34;,
+        &#34;MGI:99402&#34;,
+        &#34;MGI:99403&#34;,
+        &#34;MGI:1919391&#34;,
+        &#34;MGI:104773&#34;,
+        &#34;MGI:104774&#34;,
+        &#34;MGI:106673&#34;,
+        &#34;MGI:87934&#34;,
+        &#34;MGI:87936&#34;,
+        &#34;MGI:87937&#34;,
+        &#34;MGI:87938&#34;,
+        &#34;MGI:87939&#34;,
+        &#34;MGI:87965&#34;,
+        &#34;MGI:87964&#34;,
+        &#34;MGI:87966&#34;,
+        &#34;MGI:87977&#34;,
+        &#34;MGI:87978&#34;,
+        &#34;MGI:1860835&#34;,
+        &#34;MGI:87979&#34;,
+        &#34;MGI:2677491&#34;,
+        &#34;MGI:1916120&#34;,
+        &#34;MGI:2685080&#34;,
+        &#34;MGI:87986&#34;,
+        &#34;MGI:104874&#34;,
+        &#34;MGI:1345147&#34;,
+        &#34;MGI:103305&#34;,
+        &#34;MGI:1918731&#34;,
+        &#34;MGI:2449492&#34;,
+        &#34;MGI:2151224&#34;,
+        &#34;MGI:105062&#34;,
+        &#34;MGI:3045301&#34;,
+        &#34;MGI:2142149&#34;,
+        &#34;MGI:2387214&#34;,
+        &#34;MGI:2145890&#34;,
+        &#34;MGI:1346086&#34;,
+        &#34;MGI:88065&#34;,
+        &#34;MGI:1194915&#34;,
+        &#34;MGI:1100867&#34;,
+        &#34;MGI:2159339&#34;,
+        &#34;MGI:2652846&#34;,
+        &#34;MGI:1929259&#34;,
+        &#34;MGI:107202&#34;,
+        &#34;MGI:108028&#34;,
+        &#34;MGI:894678&#34;,
+        &#34;MGI:107168&#34;,
+        &#34;MGI:1859216&#34;,
+        &#34;MGI:1347010&#34;,
+        &#34;MGI:88123&#34;,
+        &#34;MGI:1347244&#34;,
+        &#34;MGI:1276121&#34;,
+        &#34;MGI:88144&#34;,
+        &#34;MGI:102845&#34;,
+        &#34;MGI:1346332&#34;,
+        &#34;MGI:2387588&#34;,
+        &#34;MGI:3580298&#34;,
+    ]
+    &#34;&#34;&#34;
+    List of genes in the IDG project.
+    &#34;&#34;&#34;
+
+    DERIVED_PARAMETER_BANLIST = []
+
+    BACKGROUND_STRAIN_MAPPER = {
+        &#34;B6NTac&#34;: &#34;C57BL/6NTac&#34;,
+        &#34;129/Sv&#34;: &#34;129&#34;,
+        &#34;129S5&#34;: &#34;129S5/SvEvBrd&#34;,
+        &#34;C57BL/6NTacDen&#34;: &#34;C57BL/6Dnk&#34;,
+        &#34;C57BL/6JTyr&#34;: &#34;C57BL/6Brd-Tyr&lt;c-Brd&gt;&#34;,
+        &#34;129P2&#34;: &#34;129P2/OlaHsd&#34;,
+        &#34;B6J.129S2&#34;: &#34;129S2&#34;,
+        &#34;129/SvEv&#34;: &#34;129S/SvEv&#34;,
+        &#34;129SvJ-Iso&#34;: &#34;129X1/SvJ&#34;,
+        &#34;C3H/NHG&#34;: &#34;C3H&#34;,
+        &#34;129/SvPas&#34;: &#34;129S2/SvPas&#34;,
+        &#34;C57BL/6NTac-ICS-USA(ImportedLive)&#34;: &#34;C57BL/6NTac&#34;,
+        &#34;C57BL/6NTac-ICS-Denmark(ImportedLive)&#34;: &#34;C57BL/6Dnk&#34;,
+    }
+    &#34;&#34;&#34;
+    Some line sin the legacy data need to be mapped to newer strain names.
+    This list was manually curated with help from people of the Centers part of the EuroPhenome project.
+    &#34;&#34;&#34;</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.config.constants.Constants.ANZ_LINE_PARAMETERS"><code class="name">var <span class="ident">ANZ_LINE_PARAMETERS</span></code></dt>
+<dd>
+<div class="desc"><p>Line experiments don't have a Specimen ID, so we don't know the zygosity of the specimens
+so we use this list to determine if the line parameter is for ANZ only.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.BACKGROUND_STRAIN_MAPPER"><code class="name">var <span class="ident">BACKGROUND_STRAIN_MAPPER</span></code></dt>
+<dd>
+<div class="desc"><p>Some line sin the legacy data need to be mapped to newer strain names.
+This list was manually curated with help from people of the Centers part of the EuroPhenome project.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.BODY_WEIGHT_CURVE_PARAMETERS"><code class="name">var <span class="ident">BODY_WEIGHT_CURVE_PARAMETERS</span></code></dt>
+<dd>
+<div class="desc"><p>This map is used to generate the BWT Curve parameters,
+the key is the target parameter and it contains a list of source parameters and the target parameter metadata values.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.CENTRE_ID_MAP"><code class="name">var <span class="ident">CENTRE_ID_MAP</span></code></dt>
+<dd>
+<div class="desc"><p>This map is used to translate the centre IDs coming in the XML files to the ones we use on the website.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.DATE_FORMATS"><code class="name">var <span class="ident">DATE_FORMATS</span></code></dt>
+<dd>
+<div class="desc"><p>List of valid data formats for Time Series parameters.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.DERIVED_PARAMETER_BANLIST"><code class="name">var <span class="ident">DERIVED_PARAMETER_BANLIST</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.EFO_EMBRYONIC_STAGES"><code class="name">var <span class="ident">EFO_EMBRYONIC_STAGES</span></code></dt>
+<dd>
+<div class="desc"><p>Maps IMPC embryonic stages to EFO ontology term IDs.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.EUROPHENOME_DERIVATIONS"><code class="name">var <span class="ident">EUROPHENOME_DERIVATIONS</span></code></dt>
+<dd>
+<div class="desc"><p>Some Legacy derived parameters haven't been ported to the newer derivation syntax.
+This map attempts to map them as good as possible.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.EUROPHENOME_VALID_COLONIES"><code class="name">var <span class="ident">EUROPHENOME_VALID_COLONIES</span></code></dt>
+<dd>
+<div class="desc"><p>Some EuroPhenome colonies have to be stripped to remove a spurious suffix,
+this list of valid IDs should not be modified by the ETL.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.EXPERIMENTER_IDS"><code class="name">var <span class="ident">EXPERIMENTER_IDS</span></code></dt>
+<dd>
+<div class="desc"><p>Some experiment IDs from legacy experiment files need to be mapped to a standardized version so they match.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.EXPERIMENT_TO_OBSERVATION_MAP"><code class="name">var <span class="ident">EXPERIMENT_TO_OBSERVATION_MAP</span></code></dt>
+<dd>
+<div class="desc"><p>Maps columns names coming from the Experiment Parquet file
+to the column names in the schema of the Observations Parquet file.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.FEMALE_LINE_PARAMETERS"><code class="name">var <span class="ident">FEMALE_LINE_PARAMETERS</span></code></dt>
+<dd>
+<div class="desc"><p>Line experiments don't have a Specimen ID,
+so we use this list to determine if the line parameter is sex specific (female).</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.HEM_LINE_PARAMETERS"><code class="name">var <span class="ident">HEM_LINE_PARAMETERS</span></code></dt>
+<dd>
+<div class="desc"><p>Line experiments don't have a Specimen ID, so we don't know the zygosity of the specimens
+so we use this list to determine if the line parameter is for HEM only.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.HET_LINE_PARAMETERS"><code class="name">var <span class="ident">HET_LINE_PARAMETERS</span></code></dt>
+<dd>
+<div class="desc"><p>Line experiments don't have a Specimen ID, so we don't know the zygosity of the specimens
+so we use this list to determine if the line parameter is for HET only.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.HOM_LINE_PARAMETERS"><code class="name">var <span class="ident">HOM_LINE_PARAMETERS</span></code></dt>
+<dd>
+<div class="desc"><p>Line experiments don't have a Specimen ID, so we don't know the zygosity of the specimens
+so we use this list to determine if the line parameter is for HOM only.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.IDG_GENES"><code class="name">var <span class="ident">IDG_GENES</span></code></dt>
+<dd>
+<div class="desc"><p>List of genes in the IDG project.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.LINE_TO_OBSERVATION_MAP"><code class="name">var <span class="ident">LINE_TO_OBSERVATION_MAP</span></code></dt>
+<dd>
+<div class="desc"><p>Maps columns names coming from the Line Experiment Parquet file
+to the column names in the schema of the Observations Parquet file.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.MALE_LINE_PARAMETERS"><code class="name">var <span class="ident">MALE_LINE_PARAMETERS</span></code></dt>
+<dd>
+<div class="desc"><p>Line experiments don't have a Specimen ID, so we don't know the sex of the specimens
+so we use this list to determine if the line parameter is sex specific (male).</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.OBSERVATION_COLUMNS"><code class="name">var <span class="ident">OBSERVATION_COLUMNS</span></code></dt>
+<dd>
+<div class="desc"><p>List of columns for the Observations parquet output schema.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.PARAMETER_SPECIFIC_FIELDS"><code class="name">var <span class="ident">PARAMETER_SPECIFIC_FIELDS</span></code></dt>
+<dd>
+<div class="desc"><p>PySpark schema dictionary to represent IMPReSS parameters in the Observations Parquet schema.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.PROCEDURE_LIFE_STAGE_MAPPER"><code class="name">var <span class="ident">PROCEDURE_LIFE_STAGE_MAPPER</span></code></dt>
+<dd>
+<div class="desc"><p>Maps procedures to specific life stages.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.PROJECT_ID_MAP"><code class="name">var <span class="ident">PROJECT_ID_MAP</span></code></dt>
+<dd>
+<div class="desc"><p>This map is used to translate the project IDs coming in the XML files to the ones we use on the website.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.SKIPPED_PROCEDURES"><code class="name">var <span class="ident">SKIPPED_PROCEDURES</span></code></dt>
+<dd>
+<div class="desc"><p>List of procedure that we don't load. These are Legacy pipelines procedures.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.UMASS_GENES"><code class="name">var <span class="ident">UMASS_GENES</span></code></dt>
+<dd>
+<div class="desc"><p>List of genes in the UMASS project.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.VALID_PROJECT_IDS"><code class="name">var <span class="ident">VALID_PROJECT_IDS</span></code></dt>
+<dd>
+<div class="desc"><p>List of valid project identifiers coming from the DCC XML files.
+These are used to determine if an experiment should be marked as MGP or not.</p></div>
+</dd>
+<dt id="impc_etl.config.constants.Constants.ZYG_NA_LINE_PARAMETERS"><code class="name">var <span class="ident">ZYG_NA_LINE_PARAMETERS</span></code></dt>
+<dd>
+<div class="desc"><p>Line experiments don't have a Specimen ID, so we don't know the zygosity of the specimens
+so we use this list to determine if the line parameter does not have a zygosity.</p></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<header>
+<div style="max-width: 300px, text-align: center">
+<img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
+</div>
+</header>
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="impc_etl.config" href="index.html">impc_etl.config</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.config.constants.Constants" href="#impc_etl.config.constants.Constants">Constants</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.config.constants.Constants.ANZ_LINE_PARAMETERS" href="#impc_etl.config.constants.Constants.ANZ_LINE_PARAMETERS">ANZ_LINE_PARAMETERS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.BACKGROUND_STRAIN_MAPPER" href="#impc_etl.config.constants.Constants.BACKGROUND_STRAIN_MAPPER">BACKGROUND_STRAIN_MAPPER</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.BODY_WEIGHT_CURVE_PARAMETERS" href="#impc_etl.config.constants.Constants.BODY_WEIGHT_CURVE_PARAMETERS">BODY_WEIGHT_CURVE_PARAMETERS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.CENTRE_ID_MAP" href="#impc_etl.config.constants.Constants.CENTRE_ID_MAP">CENTRE_ID_MAP</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.DATE_FORMATS" href="#impc_etl.config.constants.Constants.DATE_FORMATS">DATE_FORMATS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.DERIVED_PARAMETER_BANLIST" href="#impc_etl.config.constants.Constants.DERIVED_PARAMETER_BANLIST">DERIVED_PARAMETER_BANLIST</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.EFO_EMBRYONIC_STAGES" href="#impc_etl.config.constants.Constants.EFO_EMBRYONIC_STAGES">EFO_EMBRYONIC_STAGES</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.EUROPHENOME_DERIVATIONS" href="#impc_etl.config.constants.Constants.EUROPHENOME_DERIVATIONS">EUROPHENOME_DERIVATIONS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.EUROPHENOME_VALID_COLONIES" href="#impc_etl.config.constants.Constants.EUROPHENOME_VALID_COLONIES">EUROPHENOME_VALID_COLONIES</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.EXPERIMENTER_IDS" href="#impc_etl.config.constants.Constants.EXPERIMENTER_IDS">EXPERIMENTER_IDS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.EXPERIMENT_TO_OBSERVATION_MAP" href="#impc_etl.config.constants.Constants.EXPERIMENT_TO_OBSERVATION_MAP">EXPERIMENT_TO_OBSERVATION_MAP</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.FEMALE_LINE_PARAMETERS" href="#impc_etl.config.constants.Constants.FEMALE_LINE_PARAMETERS">FEMALE_LINE_PARAMETERS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.HEM_LINE_PARAMETERS" href="#impc_etl.config.constants.Constants.HEM_LINE_PARAMETERS">HEM_LINE_PARAMETERS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.HET_LINE_PARAMETERS" href="#impc_etl.config.constants.Constants.HET_LINE_PARAMETERS">HET_LINE_PARAMETERS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.HOM_LINE_PARAMETERS" href="#impc_etl.config.constants.Constants.HOM_LINE_PARAMETERS">HOM_LINE_PARAMETERS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.IDG_GENES" href="#impc_etl.config.constants.Constants.IDG_GENES">IDG_GENES</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.LINE_TO_OBSERVATION_MAP" href="#impc_etl.config.constants.Constants.LINE_TO_OBSERVATION_MAP">LINE_TO_OBSERVATION_MAP</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.MALE_LINE_PARAMETERS" href="#impc_etl.config.constants.Constants.MALE_LINE_PARAMETERS">MALE_LINE_PARAMETERS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.OBSERVATION_COLUMNS" href="#impc_etl.config.constants.Constants.OBSERVATION_COLUMNS">OBSERVATION_COLUMNS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.PARAMETER_SPECIFIC_FIELDS" href="#impc_etl.config.constants.Constants.PARAMETER_SPECIFIC_FIELDS">PARAMETER_SPECIFIC_FIELDS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.PROCEDURE_LIFE_STAGE_MAPPER" href="#impc_etl.config.constants.Constants.PROCEDURE_LIFE_STAGE_MAPPER">PROCEDURE_LIFE_STAGE_MAPPER</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.PROJECT_ID_MAP" href="#impc_etl.config.constants.Constants.PROJECT_ID_MAP">PROJECT_ID_MAP</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.SKIPPED_PROCEDURES" href="#impc_etl.config.constants.Constants.SKIPPED_PROCEDURES">SKIPPED_PROCEDURES</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.UMASS_GENES" href="#impc_etl.config.constants.Constants.UMASS_GENES">UMASS_GENES</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.VALID_PROJECT_IDS" href="#impc_etl.config.constants.Constants.VALID_PROJECT_IDS">VALID_PROJECT_IDS</a></code></li>
+<li><code><a title="impc_etl.config.constants.Constants.ZYG_NA_LINE_PARAMETERS" href="#impc_etl.config.constants.Constants.ZYG_NA_LINE_PARAMETERS">ZYG_NA_LINE_PARAMETERS</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p><span></span></p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

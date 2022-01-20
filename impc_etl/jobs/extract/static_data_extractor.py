@@ -94,7 +94,7 @@ def parse_ontology(ontology: Ontology, schema=OntologySchema) -> List[dict]:
     """
     Parse an ontology from owlready2.Ontology to a list of dicts with
     the domain fields forOntologyTerm
-    By default it use the OBO Schema for the definition and synonyms annotations.
+    By default it uses the OBO Schema for the definition and synonyms annotations.
     :param ontology: owlready2.Ontology to parse
     :param schema: schema class extending OntologySchema
     :return ontology_terms: list of dicts containing ontology terms

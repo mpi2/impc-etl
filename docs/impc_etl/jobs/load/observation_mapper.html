@@ -1,0 +1,2689 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>impc_etl.jobs.load.observation_mapper API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>impc_etl.jobs.load.observation_mapper</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import datetime
+import sys
+
+from pyspark.sql import DataFrame, SparkSession, Window
+from pyspark.sql.functions import (
+    concat,
+    col,
+    when,
+    lit,
+    explode,
+    lower,
+    regexp_replace,
+    regexp_extract,
+    collect_list,
+    max,
+    md5,
+    unix_timestamp,
+    from_unixtime,
+    udf,
+    array,
+    substring,
+    upper,
+)
+from pyspark.sql.types import DoubleType, StringType, IntegerType, LongType
+
+from impc_etl.config.constants import Constants
+from impc_etl.shared.utils import has_column
+
+
+def main(argv):
+    experiment_parquet_path = argv[1]
+    line_experiment_parquet_path = argv[2]
+    mouse_parquet_path = argv[3]
+    embryo_parquet_path = argv[4]
+    allele_parquet_path = argv[5]
+    colony_parquet_path = argv[6]
+    pipeline_parquet_path = argv[7]
+    strain_parquet_path = argv[8]
+    ontology_parquet_path = argv[9]
+    output_path = argv[10]
+    spark = SparkSession.builder.getOrCreate()
+    experiment_df = spark.read.parquet(experiment_parquet_path)
+    line_experiment_df = spark.read.parquet(line_experiment_parquet_path)
+    mouse_df = spark.read.parquet(mouse_parquet_path)
+    embryo_df = spark.read.parquet(embryo_parquet_path)
+    allele_df = spark.read.parquet(allele_parquet_path)
+    colony_df = spark.read.parquet(colony_parquet_path)
+    pipeline_df = spark.read.parquet(pipeline_parquet_path)
+    strain_df = spark.read.parquet(strain_parquet_path)
+    ontology_df = spark.read.parquet(ontology_parquet_path)
+
+    observations_df = map_experiments_to_observations(
+        experiment_df,
+        line_experiment_df,
+        mouse_df,
+        embryo_df,
+        allele_df,
+        colony_df,
+        pipeline_df,
+        strain_df,
+        ontology_df,
+    )
+    observations_df = observations_df.where(
+        ~(
+            (col(&#34;datasource_name&#34;) == &#34;EuroPhenome&#34;)
+            &amp; (col(&#34;parameter_stable_id&#34;) == &#34;ESLIM_001_001_125&#34;)
+            &amp; (col(&#34;sex&#34;) == &#34;male&#34;)
+            &amp; (col(&#34;category&#34;) == &#34;present&#34;)
+            &amp; (col(&#34;phenotyping_center&#34;) == &#34;ICS&#34;)
+        )
+    )
+    observations_df = observations_df.where(
+        ~(
+            col(&#34;procedure_stable_id&#34;).contains(&#34;_EYE_002&#34;)
+            &amp; col(&#34;parameter_stable_id&#34;).contains(&#34;EYE_092_001&#34;)
+        )
+    )
+    observations_df = observations_df.where(
+        col(&#34;category&#34;).isNull() | (col(&#34;category&#34;) != &#34;INCOMPLETE_INPUT_STR&#34;)
+    )
+    observations_df = observations_df.where(
+        col(&#34;strain_name&#34;).isNotNull() | (col(&#34;biological_sample_group&#34;) == &#34;control&#34;)
+    )
+    observations_df = observations_df.where(
+        (~col(&#34;text_value&#34;).like(&#39;%outcome&#34;: null%&#39;)) | col(&#34;text_value&#34;).isNull()
+    )
+    weight_columns = [
+        &#34;weight&#34;,
+        &#34;weight_date&#34;,
+        &#34;weight_days_old&#34;,
+        &#34;weight_parameter_stable_id&#34;,
+    ]
+    parameters = pipeline_df.select(
+        &#34;pipelineKey&#34;,
+        &#34;procedure.procedureKey&#34;,
+        &#34;parameter.parameterKey&#34;,
+        &#34;parameter.analysisWithBodyweight&#34;,
+    ).distinct()
+    not_use_body_weight_parameters = parameters.where(
+        col(&#34;analysisWithBodyweight&#34;).isin(
+            [
+                &#34;do_not_use_body_weight_covariate&#34;,
+                &#34;is_body_weight&#34;,
+                &#34;is_fasted_body_weight&#34;,
+            ]
+        )
+    )
+    not_use_body_weight_parameters = not_use_body_weight_parameters.alias(&#34;bw&#34;)
+    observations_df = observations_df.alias(&#34;obs&#34;)
+    observations_df = observations_df.join(
+        not_use_body_weight_parameters,
+        (
+            (
+                observations_df[&#34;pipeline_stable_id&#34;]
+                == not_use_body_weight_parameters[&#34;pipelineKey&#34;]
+            )
+            &amp; (
+                observations_df[&#34;procedure_stable_id&#34;]
+                == not_use_body_weight_parameters[&#34;procedureKey&#34;]
+            )
+            &amp; (
+                observations_df[&#34;parameter_stable_id&#34;]
+                == not_use_body_weight_parameters[&#34;parameterKey&#34;]
+            )
+        ),
+        &#34;left_outer&#34;,
+    )
+    for weight_column in weight_columns:
+        observations_df = observations_df.withColumn(
+            weight_column,
+            when(col(&#34;analysisWithBodyweight&#34;).isNull(), col(weight_column)).otherwise(
+                lit(None)
+            ),
+        )
+    observations_df = observations_df.select(&#34;obs.*&#34;, *weight_columns)
+    observations_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
+
+
+def map_line_columns(line_df: DataFrame):
+    for field, value in Constants.LINE_TO_OBSERVATION_MAP.items():
+        if value is not None:
+            line_df = line_df.withColumn(field, col(value))
+        else:
+            line_df = line_df.withColumn(field, lit(None))
+    line_df = line_df.withColumn(&#34;biological_sample_group&#34;, lit(&#34;experimental&#34;))
+    line_df = line_df.withColumn(
+        &#34;datasource_name&#34;,
+        when(col(&#34;_dataSource&#34;) == &#34;impc&#34;, lit(&#34;IMPC&#34;)).otherwise(
+            when(col(&#34;_dataSource&#34;) == &#34;europhenome&#34;, lit(&#34;EuroPhenome&#34;)).otherwise(
+                col(&#34;_dataSource&#34;)
+            )
+        ),
+    )
+    line_df = line_df.withColumn(
+        &#34;allele_accession_id&#34;,
+        when(col(&#34;biological_sample_group&#34;) == &#34;control&#34;, lit(None)).otherwise(
+            when(
+                col(&#34;allele.mgiAlleleID&#34;).isNull(),
+                concat(
+                    lit(&#34;NOT-RELEASED-&#34;),
+                    substring(md5(line_df[&#34;allele_symbol&#34;]), 0, 10),
+                ),
+            ).otherwise(col(&#34;allele.mgiAlleleID&#34;))
+        ),
+    )
+    line_df = line_df.withColumn(
+        &#34;strain_accession_id&#34;,
+        when(
+            col(&#34;strain_accession_id&#34;).isNull(),
+            concat(
+                lit(&#34;IMPC-CURATE-&#34;), upper(substring(md5(line_df[&#34;strain_name&#34;]), 0, 5))
+            ),
+        ).otherwise(col(&#34;strain_accession_id&#34;)),
+    )
+    return line_df
+
+
+def map_experiment_columns(exp_df: DataFrame):
+    for field in Constants.EXPERIMENT_TO_OBSERVATION_MAP:
+        exp_df = exp_df.withColumn(
+            field, col(Constants.EXPERIMENT_TO_OBSERVATION_MAP[field])
+        )
+    exp_df = exp_df.withColumnRenamed(&#34;weight&#34;, &#34;weightStruct&#34;)
+    exp_df = exp_df.withColumn(&#34;weight&#34;, col(&#34;weightStruct.weightValue&#34;))
+    exp_df = exp_df.withColumn(&#34;weight_date&#34;, col(&#34;weightStruct.weightDate&#34;))
+    exp_df = exp_df.withColumn(&#34;weight_days_old&#34;, col(&#34;weightStruct.weightDaysOld&#34;))
+    exp_df = exp_df.withColumn(
+        &#34;weight_parameter_stable_id&#34;, col(&#34;weightStruct.weightParameterID&#34;)
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;biological_sample_group&#34;,
+        when(col(&#34;_isBaseline&#34;) == True, lit(&#34;control&#34;)).otherwise(&#34;experimental&#34;),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;allele_symbol&#34;,
+        when(col(&#34;biological_sample_group&#34;) == &#34;control&#34;, lit(None)).otherwise(
+            when(
+                exp_df[&#34;allele.alleleSymbol&#34;].isNull(), exp_df[&#34;colony.allele_symbol&#34;]
+            ).otherwise(exp_df[&#34;allele.alleleSymbol&#34;])
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;allele_accession_id&#34;,
+        when(col(&#34;biological_sample_group&#34;) == &#34;control&#34;, lit(None)).otherwise(
+            when(
+                col(&#34;allele.mgiAlleleID&#34;).isNull(),
+                concat(
+                    lit(&#34;NOT-RELEASED-&#34;), substring(md5(exp_df[&#34;allele_symbol&#34;]), 0, 10)
+                ),
+            ).otherwise(col(&#34;allele.mgiAlleleID&#34;))
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;mgiMarkerAccessionID&#34;,
+        when(col(&#34;mgiMarkerAccessionID&#34;).isNull(), col(&#34;mgi_accession_id&#34;)).otherwise(
+            col(&#34;mgiMarkerAccessionID&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;gene_accession_id&#34;,
+        when(col(&#34;biological_sample_group&#34;) == &#34;control&#34;, lit(None)).otherwise(
+            col(&#34;mgiMarkerAccessionID&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;gene_symbol&#34;,
+        when(col(&#34;biological_sample_group&#34;) == &#34;control&#34;, lit(None)).otherwise(
+            when(
+                col(&#34;allele.markerSymbol&#34;).isNull(), exp_df[&#34;colony.marker_symbol&#34;]
+            ).otherwise(col(&#34;allele.markerSymbol&#34;))
+        ),
+    )
+
+    exp_df = exp_df.withColumn(&#34;zygosity&#34;, col(&#34;specimen._zygosity&#34;))
+
+    exp_df = exp_df.withColumn(
+        &#34;zygosity&#34;,
+        when(col(&#34;zygosity&#34;) == &#34;heterozygous&#34;, lit(&#34;heterozygote&#34;)).otherwise(
+            col(&#34;zygosity&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;zygosity&#34;,
+        when(col(&#34;zygosity&#34;) == &#34;homozygous&#34;, lit(&#34;homozygote&#34;)).otherwise(
+            col(&#34;zygosity&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;zygosity&#34;,
+        when(col(&#34;zygosity&#34;) == &#34;hemizygous&#34;, lit(&#34;hemizygote&#34;)).otherwise(
+            col(&#34;zygosity&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;zygosity&#34;,
+        when(col(&#34;zygosity&#34;) == &#34;wild type&#34;, lit(&#34;homozygote&#34;)).otherwise(
+            col(&#34;zygosity&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;datasource_name&#34;,
+        when(col(&#34;experiment._dataSource&#34;) == &#34;impc&#34;, lit(&#34;IMPC&#34;)).otherwise(
+            when(
+                col(&#34;experiment._dataSource&#34;) == &#34;europhenome&#34;, lit(&#34;EuroPhenome&#34;)
+            ).otherwise(col(&#34;experiment._dataSource&#34;))
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;colony_id&#34;,
+        when(lower(col(&#34;specimen._colonyID&#34;)) == &#34;baseline&#34;, lit(&#34;baseline&#34;)).otherwise(
+            when(col(&#34;specimen._colonyID&#34;).isNull(), &#34;unknown&#34;).otherwise(
+                col(&#34;specimen._colonyID&#34;)
+            )
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;strain_name&#34;,
+        when(col(&#34;strain.strainName&#34;).isNotNull(), col(&#34;strain.strainName&#34;)).otherwise(
+            col(&#34;specimen._strainID&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;genetic_background&#34;,
+        when(
+            (col(&#34;colony_id&#34;) == &#34;baseline&#34;) | (col(&#34;specimen._isBaseline&#34;) == True),
+            concat(lit(&#34;involves: &#34;), col(&#34;strain.strainName&#34;)),
+        ).otherwise(col(&#34;colony.genetic_background&#34;)),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;strain_accession_id&#34;,
+        when(
+            col(&#34;strain_accession_id&#34;).isNull(),
+            concat(
+                lit(&#34;IMPC-CURATE-&#34;), upper(substring(md5(exp_df[&#34;strain_name&#34;]), 0, 5))
+            ),
+        ).otherwise(col(&#34;strain_accession_id&#34;)),
+    )
+
+    return exp_df
+
+
+def unify_schema(obs_df: DataFrame):
+    for column in Constants.OBSERVATION_COLUMNS:
+        if column not in obs_df.columns:
+            col_schema = Constants.PARAMETER_SPECIFIC_FIELDS[column]
+            obs_df = obs_df.withColumn(column, lit(None).cast(col_schema))
+    return obs_df
+
+
+def add_impress_info(
+    experiments_df, pipeline_df, parameter_type, exp_type=&#34;experiment&#34;
+):
+    pipeline_columns = [
+        &#34;pipeline.parameter&#34;,
+        &#34;pipeline.procedure&#34;,
+        &#34;pipeline.name&#34;,
+        &#34;pipeline.pipelineKey&#34;,
+    ]
+    pipeline_df = (
+        pipeline_df.drop(&#34;weight&#34;)
+        .alias(&#34;pipeline&#34;)
+        .select(pipeline_columns)
+        .drop_duplicates()
+    )
+    experiments_df = experiments_df.join(
+        pipeline_df,
+        (
+            col(parameter_type + &#34;._parameterID&#34;)
+            == col(&#34;pipeline.parameter.parameterKey&#34;)
+        )
+        &amp; (col(&#34;_procedureID&#34;) == col(&#34;pipeline.procedure.procedureKey&#34;))
+        &amp; (col(&#34;experiment._pipeline&#34;) == col(&#34;pipeline.pipelineKey&#34;)),
+        &#34;left_outer&#34;,
+    )
+    experiments_df = experiments_df.withColumn(&#34;pipeline_name&#34;, col(&#34;pipeline.name&#34;))
+    experiments_df = experiments_df.withColumn(
+        &#34;pipeline_stable_id&#34;, col(&#34;pipeline.pipelineKey&#34;)
+    )
+
+    experiments_df = experiments_df.withColumn(
+        &#34;procedure_name&#34;, col(&#34;pipeline.procedure.name&#34;)
+    )
+    experiments_df = experiments_df.withColumn(
+        &#34;procedure_stable_id&#34;, col(&#34;pipeline.procedure.procedureKey&#34;)
+    )
+    experiments_df = experiments_df.withColumn(
+        &#34;procedure_group&#34;, regexp_extract(col(&#34;procedure_stable_id&#34;), &#34;(.+_.+)_.+&#34;, 1)
+    )
+
+    experiments_df = experiments_df.withColumn(
+        &#34;parameter_name&#34;, col(&#34;pipeline.parameter.name&#34;)
+    )
+    experiments_df = experiments_df.withColumn(
+        &#34;parameter_stable_id&#34;, col(&#34;pipeline.parameter.parameterKey&#34;)
+    )
+    if exp_type == &#34;experiment&#34;:
+        experiments_df = experiments_df.withColumn(
+            &#34;sex&#34;, when(col(&#34;sex&#34;).isNull(), lit(&#34;no_data&#34;)).otherwise(col(&#34;sex&#34;))
+        )
+    else:
+        experiments_df = experiments_df.withColumn(
+            &#34;sex&#34;,
+            when(
+                col(&#34;sex&#34;).isNull(),
+                when(
+                    col(&#34;parameter_stable_id&#34;).isin(Constants.FEMALE_LINE_PARAMETERS),
+                    lit(&#34;female&#34;),
+                )
+                .when(
+                    col(&#34;parameter_stable_id&#34;).isin(Constants.MALE_LINE_PARAMETERS),
+                    lit(&#34;male&#34;),
+                )
+                .otherwise(lit(&#34;both&#34;)),
+            ).otherwise(col(&#34;sex&#34;)),
+        )
+        experiments_df = experiments_df.withColumn(
+            &#34;zygosity&#34;,
+            when(
+                col(&#34;parameter_stable_id&#34;).isin(Constants.HET_LINE_PARAMETERS),
+                lit(&#34;heterozygote&#34;),
+            )
+            .when(
+                col(&#34;parameter_stable_id&#34;).isin(Constants.HEM_LINE_PARAMETERS),
+                lit(&#34;hemizygote&#34;),
+            )
+            .when(
+                col(&#34;parameter_stable_id&#34;).isin(Constants.ANZ_LINE_PARAMETERS),
+                lit(&#34;anzygote&#34;),
+            )
+            .when(
+                col(&#34;parameter_stable_id&#34;).isin(Constants.ZYG_NA_LINE_PARAMETERS),
+                lit(&#34;not_applicable&#34;),
+            )
+            .otherwise(lit(&#34;homozygote&#34;)),
+        )
+    return experiments_df
+
+
+def add_observation_type(experiments_df):
+    experiments_df = experiments_df.withColumn(
+        &#34;observation_type&#34;,
+        when(
+            (col(&#34;pipeline.parameter.isOption&#34;) == True)
+            | (col(&#34;pipeline.parameter.parameterKey&#34;).contains(&#34;EYE_092_001&#34;)),
+            lit(&#34;categorical&#34;),
+        ).otherwise(
+            when(
+                (col(&#34;pipeline.parameter.valueType&#34;) != &#34;TEXT&#34;)
+                | (
+                    col(&#34;parameter_stable_id&#34;).isin(
+                        [
+                            &#34;ESLIM_006_001_035&#34;,
+                            &#34;M-G-P_022_001_001_001&#34;,
+                            &#34;M-G-P_022_001_001&#34;,
+                        ]
+                    )
+                ),
+                lit(&#34;unidimensional&#34;),
+            ).otherwise(lit(&#34;text&#34;))
+        ),
+    )
+    return experiments_df
+
+
+def resolve_simple_value(exp_df, pipeline_df):
+    options_df = pipeline_df.select(&#34;option.*&#34;).distinct().alias(&#34;options&#34;)
+    if has_column(exp_df, &#34;simpleParameter._sequenceID&#34;):
+        exp_df = exp_df.withColumn(&#34;sequence_id&#34;, col(&#34;simpleParameter._sequenceID&#34;))
+    exp_df = exp_df.join(
+        options_df,
+        (
+            col(&#34;pipeline.parameter.optionCollection&#34;).getItem(
+                regexp_replace(&#34;simpleParameter.value&#34;, &#34;.0&#34;, &#34;&#34;).cast(IntegerType())
+            )
+            == col(&#34;options.optionId&#34;)
+        ),
+        &#34;left_outer&#34;,
+    )
+    exp_df = exp_df.withColumn(
+        &#34;category&#34;,
+        when(
+            col(&#34;observation_type&#34;) == &#34;categorical&#34;,
+            when(
+                (col(&#34;pipeline.parameter.valueType&#34;) == &#34;TEXT&#34;)
+                | (~col(&#34;simpleParameter.value&#34;).rlike(&#34;(^\d+.\d+$)|(^\d+$)&#34;)),
+                col(&#34;simpleParameter.value&#34;),
+            ).otherwise(
+                when(
+                    (
+                        col(&#34;options.name&#34;).rlike(&#34;^\d+$&#34;)
+                        &amp; col(&#34;options.description&#34;).isNotNull()
+                    ),
+                    col(&#34;options.description&#34;),
+                ).otherwise(col(&#34;options.name&#34;))
+            ),
+        ).otherwise(lit(None)),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;data_point&#34;,
+        when(
+            col(&#34;observation_type&#34;) == &#34;unidimensional&#34;,
+            when(
+                col(&#34;simpleParameter.value&#34;).like(&#34;%.%&#34;), col(&#34;simpleParameter.value&#34;)
+            ).otherwise(concat(col(&#34;simpleParameter.value&#34;), lit(&#34;.0&#34;))),
+        ).otherwise(lit(None)),
+    )
+
+    exp_df = exp_df.withColumn(&#34;data_point&#34;, col(&#34;data_point&#34;).cast(DoubleType()))
+    exp_df = exp_df.where(
+        ((col(&#34;observation_type&#34;) == &#34;unidimensional&#34;) &amp; col(&#34;data_point&#34;).isNotNull())
+        | (col(&#34;observation_type&#34;) != &#34;unidimensional&#34;)
+    )
+    exp_df = exp_df.withColumn(
+        &#34;text_value&#34;,
+        when(col(&#34;observation_type&#34;) == &#34;text&#34;, col(&#34;simpleParameter.value&#34;)).otherwise(
+            lit(None)
+        ),
+    )
+    return exp_df
+
+
+def resolve_ontology_value(ontological_observation_df, ontology_df):
+    ontology_df = ontology_df.distinct().alias(&#34;onto&#34;)
+    if has_column(ontology_df, &#34;ontologyParameter._sequenceID&#34;):
+        ontology_df = ontology_df.withColumn(
+            &#34;sequence_id&#34;, col(&#34;ontologyParameter._sequenceID&#34;)
+        )
+    id_vs_terms_df = (
+        ontological_observation_df.withColumn(&#34;term&#34;, explode(&#34;ontologyParameter.term&#34;))
+        .withColumnRenamed(&#34;pos&#34;, &#34;ontologyPos&#34;)
+        .select(
+            &#34;observation_id&#34;,
+            &#34;ontologyParameter._parameterID&#34;,
+            &#34;ontologyParameter._sequenceID&#34;,
+            &#34;term&#34;,
+        )
+        .alias(&#34;temp&#34;)
+    )
+    id_vs_terms_df = id_vs_terms_df.join(
+        ontology_df,
+        (regexp_extract(col(&#34;temp.term&#34;), &#34;([A-Z]+:\d+)[\s:]*&#34;, 1) == col(&#34;onto.acc&#34;)),
+    )
+    id_vs_terms_df = id_vs_terms_df.withColumn(&#34;sub_term_id&#34;, col(&#34;onto.acc&#34;))
+    id_vs_terms_df = id_vs_terms_df.withColumn(&#34;sub_term_name&#34;, col(&#34;onto.name&#34;))
+    id_vs_terms_df = id_vs_terms_df.withColumn(
+        &#34;sub_term_description&#34;, col(&#34;onto.description&#34;)
+    ).dropDuplicates()
+    id_vs_terms_df = id_vs_terms_df.groupBy(
+        col(&#34;observation_id&#34;), col(&#34;temp._parameterID&#34;), col(&#34;temp._sequenceID&#34;)
+    ).agg(
+        collect_list(&#34;sub_term_id&#34;).alias(&#34;sub_term_id&#34;),
+        collect_list(&#34;sub_term_name&#34;).alias(&#34;sub_term_name&#34;),
+        collect_list(&#34;sub_term_description&#34;).alias(&#34;sub_term_description&#34;),
+    )
+    ontological_observation_df = ontological_observation_df.join(
+        id_vs_terms_df, &#34;observation_id&#34;, &#34;left_outer&#34;
+    )
+    ontological_observation_df = ontological_observation_df.withColumn(
+        &#34;observation_type&#34;, lit(&#34;ontological&#34;)
+    )
+    return ontological_observation_df
+
+
+def resolve_time_series_value(time_series_observation_df: DataFrame):
+    time_series_observation_df = time_series_observation_df.selectExpr(
+        &#34;*&#34;,
+        &#34;posexplode(seriesParameter.value) as (seriesParameterPos, seriesParameterValue)&#34;,
+    )
+
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;observation_id&#34;,
+        md5(
+            concat(
+                col(&#34;observation_id&#34;),
+                lit(&#34;_seriesParameterValue_&#34;),
+                col(&#34;seriesParameterPos&#34;),
+            )
+        ),
+    )
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;data_point&#34;, col(&#34;seriesParameterValue._VALUE&#34;)
+    ).where(col(&#34;data_point&#34;).isNotNull())
+    time_point_expr = None
+
+    for index, format_str in enumerate(Constants.DATE_FORMATS):
+        unix_timestamp_column = unix_timestamp(
+            col(&#34;seriesParameterValue._incrementValue&#34;), format_str
+        )
+        if time_point_expr is None:
+            time_point_expr = when(
+                unix_timestamp_column.isNotNull(), unix_timestamp_column
+            )
+        else:
+            time_point_expr = time_point_expr.when(
+                unix_timestamp_column.isNotNull(), unix_timestamp_column
+            )
+        if index == len(Constants.DATE_FORMATS) - 1:
+            time_point_expr = time_point_expr.otherwise(lit(None))
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;measured_at&#34;, time_point_expr
+    )
+
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;time_point&#34;, from_unixtime(time_point_expr)
+    )
+
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;date_of_experiment_seconds&#34;,
+        unix_timestamp(col(&#34;date_of_experiment&#34;), &#34;yyyy-MM-dd&#34;),
+    )
+
+    resolve_lights_out_udf = udf(_resolve_lights_out, LongType())
+
+    lights_out_expr = (
+        when(
+            col(&#34;_dataSource&#34;) == &#34;impc&#34;,
+            when(
+                col(&#34;procedure_stable_id&#34;).like(&#34;%IMPC_CAL%&#34;),
+                resolve_lights_out_udf(
+                    &#34;procedureMetadata&#34;, &#34;date_of_experiment_seconds&#34;
+                ),
+            ).otherwise(unix_timestamp(col(&#34;date_of_experiment&#34;))),
+        )
+        .when(
+            col(&#34;_dataSource&#34;) == &#34;europhenome&#34;,
+            when(
+                col(&#34;phenotyping_center&#34;) == &#34;HMGU&#34;,
+                col(&#34;date_of_experiment_seconds&#34;) + lit(18 * 60 * 60),
+            )
+            .when(
+                col(&#34;phenotyping_center&#34;).isin([&#34;MRC&#34;, &#34;WTSI&#34;, &#34;ICS&#34;]),
+                col(&#34;date_of_experiment_seconds&#34;) + lit(19 * 60 * 60),
+            )
+            .otherwise(col(&#34;date_of_experiment_seconds&#34;)),
+        )
+        .otherwise(lit(0.0))
+    )
+
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;lights_out&#34;, lights_out_expr
+    )
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;discrete_point&#34;,
+        when(
+            col(&#34;time_point&#34;).isNull(), col(&#34;seriesParameterValue._incrementValue&#34;)
+        ).otherwise((col(&#34;measured_at&#34;) - col(&#34;lights_out&#34;)) / 3600),
+    )
+    if has_column(time_series_observation_df, &#34;_dateOfExperiment&#34;):
+        time_series_observation_df = time_series_observation_df.withColumn(
+            &#34;time_point&#34;,
+            when(col(&#34;time_point&#34;).isNull(), col(&#34;_dateOfExperiment&#34;)).otherwise(
+                col(&#34;time_point&#34;)
+            ),
+        )
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;observation_type&#34;, lit(&#34;time_series&#34;)
+    )
+    return time_series_observation_df
+
+
+def _resolve_lights_out(metadata_values, date_of_experiment_seconds):
+    if metadata_values is None:
+        return None
+    lights_out = None
+    lights_out_parameters = {
+        &#34;IMPC_CAL_010_001&#34;: &#34;%H:%M %p&#34;,
+        &#34;IMPC_CAL_010_002&#34;: &#34;%H:%M:%S&#34;,
+        &#34;IMPC_CAL_010_003&#34;: &#34;%Y-%m-%dT%H:%M:%S%z&#34;,
+    }
+    for metadata_value in metadata_values:
+        if metadata_value[&#34;_parameterID&#34;] in lights_out_parameters.keys():
+            if metadata_value[&#34;_parameterID&#34;] == &#34;IMPC_CAL_010_003&#34;:
+                date_str = metadata_value[&#34;value&#34;]
+                pattern_str = lights_out_parameters[metadata_value[&#34;_parameterID&#34;]]
+                if date_str.count(&#34;:&#34;) &gt; 2:
+                    date_str = date_str.rsplit(&#34;:&#34;, 1)
+                    date_str = &#34;&#34;.join(date_str)
+                if date_str.count(&#34;:&#34;) == 1:
+                    pattern_str = &#34;%Y-%m-%dT%H:%M&#34;
+                if date_str.endswith(&#34;Z&#34;):
+                    pattern_str = &#34;%Y-%m-%dT%H:%M:%SZ&#34;
+                lights_out = datetime.datetime.strptime(
+                    date_str, pattern_str
+                ).timestamp()
+            else:
+                lights_out = datetime.datetime.strptime(
+                    metadata_value[&#34;value&#34;],
+                    lights_out_parameters[metadata_value[&#34;_parameterID&#34;]],
+                ).time()
+                lights_out = datetime.timedelta(
+                    hours=lights_out.hour,
+                    minutes=lights_out.minute,
+                    seconds=lights_out.second,
+                ).total_seconds()
+                lights_out += date_of_experiment_seconds
+            break
+    return int(lights_out) if lights_out is not None else None
+
+
+def resolve_image_record_value(image_record_observation_df: DataFrame):
+    image_record_observation_df = image_record_observation_df.selectExpr(
+        &#34;*&#34;,
+        &#34;posexplode(seriesMediaParameter.value) as (seriesMediaParameterPos, seriesMediaParameterValue)&#34;,
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        &#34;observation_id&#34;,
+        md5(
+            concat(
+                col(&#34;observation_id&#34;),
+                lit(&#34;_seriesMediaParameterValue_&#34;),
+                col(&#34;seriesMediaParameterPos&#34;),
+            )
+        ),
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        &#34;download_file_path&#34;, col(&#34;seriesMediaParameterValue._URI&#34;)
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        &#34;file_type&#34;, col(&#34;seriesMediaParameterValue._fileType&#34;)
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        &#34;increment_value&#34;, col(&#34;seriesMediaParameterValue._incrementValue&#34;)
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        &#34;image_link&#34;, col(&#34;seriesMediaParameterValue._link&#34;)
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        &#34;observation_type&#34;, lit(&#34;image_record&#34;)
+    )
+    return image_record_observation_df
+
+
+def resolve_image_record_parameter_association(
+    image_record_observation_df: DataFrame, simple_observations_df: DataFrame
+):
+    simple_df = simple_observations_df.alias(&#34;simple&#34;)
+    image_df = image_record_observation_df.alias(&#34;image&#34;).withColumn(
+        &#34;parameterAsc&#34;, explode(&#34;image.seriesMediaParameterValue.parameterAssociation&#34;)
+    )
+    image_df = image_df.select(&#34;parameterAsc.*&#34;, &#34;*&#34;)
+    image_vs_simple_parameters_df = image_df.join(
+        simple_df,
+        (col(&#34;simple.experiment_id&#34;) == col(&#34;image.experiment_id&#34;))
+        &amp; (col(&#34;simple.parameter_stable_id&#34;) == col(&#34;_parameterID&#34;)),
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramName&#34;, col(&#34;simple.parameter_name&#34;)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramSeq&#34;, col(&#34;image._sequenceID&#34;)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramValue&#34;,
+        when(col(&#34;data_point&#34;).isNotNull(), col(&#34;data_point&#34;)).otherwise(
+            when(col(&#34;category&#34;).isNotNull(), col(&#34;category&#34;)).otherwise(
+                col(&#34;text_value&#34;)
+            )
+        ),
+    )
+    window = Window.partitionBy(
+        &#34;image.observation_id&#34;, &#34;image.parameter_stable_id&#34;
+    ).orderBy(&#34;_parameterID&#34;)
+
+    # image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
+    #     col(&#34;image.observation_id&#34;), col(&#34;image.parameter_stable_id&#34;)
+    # ).agg(
+    #     collect_list(&#34;_parameterID&#34;).over(window).alias(&#34;paramIDs&#34;),
+    #     collect_list(&#34;paramName&#34;).over(window).alias(&#34;paramNames&#34;),
+    #     collect_set(&#34;paramSeq&#34;).over(window).alias(&#34;paramSeqs&#34;),
+    #     collect_set(&#34;paramValue&#34;).over(window).alias(&#34;paramValues&#34;)
+    # )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramIDs&#34;, collect_list(&#34;_parameterID&#34;).over(window)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramNames&#34;, collect_list(&#34;paramName&#34;).over(window)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramSeqs&#34;, collect_list(&#34;paramSeq&#34;).over(window)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramValues&#34;, collect_list(&#34;paramValue&#34;).over(window)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.select(
+        &#34;image.observation_id&#34;,
+        &#34;image.parameter_stable_id&#34;,
+        &#34;paramIDs&#34;,
+        &#34;paramNames&#34;,
+        &#34;paramSeqs&#34;,
+        &#34;paramValues&#34;,
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
+        &#34;image.observation_id&#34;, &#34;image.parameter_stable_id&#34;
+    ).agg(
+        max(&#34;paramIDs&#34;).alias(&#34;paramIDs&#34;),
+        max(&#34;paramNames&#34;).alias(&#34;paramNames&#34;),
+        max(&#34;paramSeqs&#34;).alias(&#34;paramSeqs&#34;),
+        max(&#34;paramValues&#34;).alias(&#34;paramValues&#34;),
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumnRenamed(
+        &#34;observation_id&#34;, &#34;img_observation_id&#34;
+    ).withColumnRenamed(&#34;parameter_stable_id&#34;, &#34;img_parameter_stable_id&#34;)
+    image_record_observation_df = image_record_observation_df.join(
+        image_vs_simple_parameters_df,
+        (
+            image_record_observation_df[&#34;observation_id&#34;]
+            == image_vs_simple_parameters_df[&#34;img_observation_id&#34;]
+        )
+        &amp; (
+            image_record_observation_df[&#34;parameter_stable_id&#34;]
+            == image_vs_simple_parameters_df[&#34;img_parameter_stable_id&#34;]
+        ),
+        &#34;left_outer&#34;,
+    )
+    image_record_observation_df = (
+        image_record_observation_df.withColumnRenamed(
+            &#34;paramIDs&#34;, &#34;parameter_association_stable_id&#34;
+        )
+        .withColumnRenamed(&#34;paramNames&#34;, &#34;parameter_association_name&#34;)
+        .withColumnRenamed(&#34;paramSeqs&#34;, &#34;parameter_association_sequence_id&#34;)
+        .withColumnRenamed(&#34;paramValues&#34;, &#34;parameter_association_value&#34;)
+    )
+    return image_record_observation_df
+
+
+def resolve_simple_media_value(media_parameter_df):
+    media_parameter_df = media_parameter_df.withColumn(
+        &#34;download_file_path&#34;, col(&#34;mediaParameter._URI&#34;)
+    )
+    media_parameter_df = media_parameter_df.withColumn(
+        &#34;file_type&#34;, col(&#34;mediaParameter._fileType&#34;)
+    )
+    media_parameter_df = media_parameter_df.withColumn(
+        &#34;observation_type&#34;, lit(&#34;image_record&#34;)
+    )
+    return media_parameter_df
+
+
+def format_columns(experiments_df):
+    experiments_df = experiments_df.withColumn(
+        &#34;weight&#34;,
+        when(col(&#34;weight&#34;).like(&#34;%.%&#34;), col(&#34;weight&#34;)).otherwise(
+            concat(col(&#34;weight&#34;), lit(&#34;.0&#34;))
+        ),
+    )
+
+    date_columns = [&#34;date_of_birth&#34;, &#34;weight_date&#34;, &#34;date_of_experiment&#34;, &#34;time_point&#34;]
+
+    for column in date_columns:
+        experiments_df = experiments_df.withColumn(
+            column,
+            when(
+                col(column).rlike(
+                    &#34;[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z&#34;
+                ),
+                col(column),
+            ).otherwise(concat(col(column), lit(&#34;T00:00:00Z&#34;))),
+        )
+    return experiments_df
+
+
+def process_parameter_values(
+    exp_df, pipeline_df, parameter_column, exp_type=&#34;experiment&#34;
+):
+    parameter_cols = [
+        &#34;simpleParameter&#34;,
+        &#34;mediaParameter&#34;,
+        &#34;ontologyParameter&#34;,
+        &#34;seriesMediaParameter&#34;,
+        &#34;seriesParameter&#34;,
+    ]
+    if parameter_column not in exp_df.columns:
+        return None
+    parameter_observation_df = exp_df
+    for column in parameter_cols:
+        if column is not parameter_column:
+            parameter_observation_df = parameter_observation_df.drop(column)
+    parameter_observation_df = (
+        parameter_observation_df.selectExpr(
+            &#34;*&#34;,
+            &#34;posexplode(&#34;
+            + parameter_column
+            + &#34;) as (experimentPos, &#34;
+            + parameter_column
+            + &#34;Exploded )&#34;,
+        )
+        .withColumn(parameter_column, col(parameter_column + &#34;Exploded&#34;))
+        .drop(parameter_column + &#34;Exploded&#34;)
+    )
+    parameter_observation_df = parameter_observation_df.withColumn(
+        &#34;observation_id&#34;,
+        md5(
+            concat(
+                col(&#34;experiment_id&#34;),
+                lit(&#34;_&#34; + parameter_column + &#34;_&#34;),
+                col(&#34;experimentPos&#34;),
+            )
+        ),
+    )
+    if exp_type == &#34;experiment&#34;:
+        parameter_observation_df = map_experiment_columns(parameter_observation_df)
+    else:
+        parameter_observation_df = map_line_columns(parameter_observation_df)
+
+    parameter_observation_df = add_impress_info(
+        parameter_observation_df, pipeline_df, parameter_column, exp_type=exp_type
+    )
+    if has_column(parameter_observation_df, parameter_column + &#34;.parameterStatus&#34;):
+        parameter_observation_df = parameter_observation_df.withColumn(
+            &#34;parameter_status&#34;, col(parameter_column + &#34;.parameterStatus&#34;)
+        )
+    else:
+        parameter_observation_df = parameter_observation_df.withColumn(
+            &#34;parameter_status&#34;, lit(None)
+        )
+    return parameter_observation_df
+
+
+def get_body_weight_curve_observations(
+    unidimensional_observations_df: DataFrame, pipeline_df: DataFrame
+):
+    body_weight_curve_df = None
+    for (
+        parameter_stable_id,
+        parameter_data,
+    ) in Constants.BODY_WEIGHT_CURVE_PARAMETERS.items():
+        parameters = pipeline_df.select(
+            &#34;pipelineKey&#34;,
+            &#34;procedure.procedureKey&#34;,
+            &#34;parameter.parameterKey&#34;,
+            &#34;parameter.analysisWithBodyweight&#34;,
+        ).distinct()
+        body_weight_parameters = parameters.where(
+            col(&#34;analysisWithBodyweight&#34;) == &#34;is_body_weight&#34;
+        )
+        if &#34;ESLIM&#34; in parameter_stable_id:
+            body_weight_parameters = body_weight_parameters.where(
+                col(&#34;pipelineKey&#34;) == parameter_data[&#34;pipeline_stable_id&#34;]
+            )
+        else:
+            body_weight_parameters = body_weight_parameters.where(
+                ~col(&#34;pipelineKey&#34;).contains(&#34;ESLIM&#34;)
+            )
+        bwt_observations = unidimensional_observations_df.join(
+            body_weight_parameters,
+            (
+                (
+                    unidimensional_observations_df[&#34;pipeline_stable_id&#34;]
+                    == body_weight_parameters[&#34;pipelineKey&#34;]
+                )
+                &amp; (
+                    unidimensional_observations_df[&#34;procedure_stable_id&#34;]
+                    == body_weight_parameters[&#34;procedureKey&#34;]
+                )
+                &amp; (
+                    unidimensional_observations_df[&#34;parameter_stable_id&#34;]
+                    == body_weight_parameters[&#34;parameterKey&#34;]
+                )
+            ),
+        )
+        bwt_observations = bwt_observations.drop(
+            &#34;pipelineKey&#34;, &#34;procedureKey&#34;, &#34;parameterKey&#34;, &#34;analysisWithBodyweight&#34;
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;pipeline_stable_id&#34;, lit(parameter_data[&#34;pipeline_stable_id&#34;])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;pipeline_name&#34;, lit(parameter_data[&#34;pipeline_name&#34;])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;procedure_stable_id&#34;, lit(parameter_data[&#34;procedure_stable_id&#34;])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;parameter_stable_id&#34;, lit(parameter_stable_id)
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;procedure_group&#34;, lit(parameter_data[&#34;procedure_group&#34;])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;procedure_name&#34;, lit(parameter_data[&#34;procedure_name&#34;])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;parameter_name&#34;, lit(parameter_data[&#34;parameter_name&#34;])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;observation_id&#34;,
+            md5(concat(lit(parameter_stable_id + &#34;_&#34;), col(&#34;observation_id&#34;))),
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;experiment_source_id&#34;,
+            concat(lit(parameter_stable_id + &#34;_&#34;), col(&#34;experiment_source_id&#34;)),
+        )
+        bwt_observations = bwt_observations.withColumn(&#34;metadata_group&#34;, md5(lit(&#34;&#34;)))
+        bwt_observations = bwt_observations.withColumn(
+            &#34;metadata&#34;,
+            array(concat(lit(&#34;Source experiment id: &#34;), col(&#34;experiment_id&#34;))),
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;experiment_id&#34;,
+            md5(concat(lit(parameter_stable_id + &#34;_&#34;), col(&#34;experiment_id&#34;))),
+        )
+
+        bwt_observations = bwt_observations.withColumn(
+            &#34;observation_type&#34;, lit(&#34;time_series&#34;)
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;discrete_point&#34;, col(&#34;age_in_weeks&#34;)
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;time_point&#34;, col(&#34;date_of_experiment&#34;)
+        )
+        if body_weight_curve_df is None:
+            body_weight_curve_df = bwt_observations
+        else:
+            body_weight_curve_df = body_weight_curve_df.union(bwt_observations)
+    return body_weight_curve_df.drop_duplicates()
+
+
+def map_experiments_to_observations(
+    experiment_df: DataFrame,
+    line_df: DataFrame,
+    mouse_df: DataFrame,
+    embryo_df,
+    allele_df: DataFrame,
+    colony_df: DataFrame,
+    pipeline_df: DataFrame,
+    strain_df: DataFrame,
+    ontology_df: DataFrame,
+):
+    experiment_df = experiment_df.withColumnRenamed(
+        &#34;_sourceFile&#34;, &#34;experiment_source_file&#34;
+    )
+    experiment_df = experiment_df.withColumnRenamed(&#34;unique_id&#34;, &#34;experiment_id&#34;)
+    experiment_df = experiment_df.alias(&#34;experiment&#34;)
+
+    colony_df = colony_df.alias(&#34;colony&#34;)
+    embryo_df = embryo_df.withColumn(&#34;_DOB&#34;, lit(None).cast(StringType()))
+    embryo_df = embryo_df.withColumn(&#34;_VALUE&#34;, lit(None).cast(StringType()))
+    mouse_df = mouse_df.withColumn(&#34;_stage&#34;, lit(None).cast(StringType()))
+    mouse_df = mouse_df.withColumn(&#34;_stageUnit&#34;, lit(None).cast(StringType()))
+    specimen_df = mouse_df.union(embryo_df.select(mouse_df.columns))
+    # TODO remove strain mapping for legacy phenotype data
+    # map_strain_name_udf = udf(map_strain_name, StringType())
+    # specimen_df = specimen_df.withColumn(
+    #     &#34;_strainID&#34;,
+    #     when(
+    #         ((lower(col(&#34;_colonyID&#34;)) == &#34;baseline&#34;) | (col(&#34;_isBaseline&#34;) == True)),
+    #         map_strain_name_udf(&#34;_strainID&#34;),
+    #     ).otherwise(col(&#34;_strainID&#34;)),
+    # )
+    specimen_df = specimen_df.withColumnRenamed(&#34;_sourceFile&#34;, &#34;specimen_source_file&#34;)
+    specimen_df = specimen_df.withColumnRenamed(&#34;unique_id&#34;, &#34;specimen_id&#34;)
+    specimen_df = specimen_df.alias(&#34;specimen&#34;)
+
+    allele_df = allele_df.alias(&#34;allele&#34;)
+    strain_df = strain_df.alias(&#34;strain&#34;)
+
+    observation_df: DataFrame = experiment_df.join(
+        specimen_df,
+        (experiment_df[&#34;experiment._centreID&#34;] == specimen_df[&#34;specimen._centreID&#34;])
+        &amp; (
+            experiment_df[&#34;experiment.specimenID&#34;]
+            == specimen_df[&#34;specimen._specimenID&#34;]
+        ),
+        &#34;left_outer&#34;,
+    )
+    observation_df = observation_df.join(
+        colony_df,
+        (observation_df[&#34;specimen._colonyID&#34;] == colony_df[&#34;colony.colony_name&#34;]),
+        &#34;left_outer&#34;,
+    )
+    observation_df = observation_df.where(
+        col(&#34;colony.colony_name&#34;).isNotNull()
+        | (
+            (lower(col(&#34;specimen._colonyID&#34;)) == &#34;baseline&#34;)
+            | (col(&#34;specimen._isBaseline&#34;) == True)
+        )
+    )
+    observation_df = observation_df.join(
+        allele_df,
+        observation_df[&#34;colony.allele_symbol&#34;] == allele_df[&#34;allele.alleleSymbol&#34;],
+        &#34;left_outer&#34;,
+    )
+
+    experimental_observation_df = observation_df.where(
+        (lower(col(&#34;specimen._colonyID&#34;)) != &#34;baseline&#34;)
+        &amp; (col(&#34;specimen._isBaseline&#34;) != True)
+    ).join(
+        strain_df,
+        (col(&#34;colony.colony_background_strain&#34;) == col(&#34;strain.strainName&#34;))
+        | (concat(lit(&#34;MGI:&#34;), col(&#34;specimen._strainID&#34;)) == col(&#34;strain.mgiStrainID&#34;))
+        | (col(&#34;specimen._strainID&#34;) == col(&#34;strain.strainName&#34;)),
+        &#34;left_outer&#34;,
+    )
+
+    baseline_observation_df = observation_df.where(
+        (lower(col(&#34;specimen._colonyID&#34;)) == &#34;baseline&#34;)
+        | (col(&#34;specimen._isBaseline&#34;) == True)
+    ).join(
+        strain_df,
+        (concat(lit(&#34;MGI:&#34;), col(&#34;specimen._strainID&#34;)) == col(&#34;strain.mgiStrainID&#34;))
+        | (col(&#34;specimen._strainID&#34;) == col(&#34;strain.strainName&#34;)),
+        &#34;left_outer&#34;,
+    )
+
+    ## TODO fallback to imits when its missing and do the join again
+
+    observation_df = baseline_observation_df.union(experimental_observation_df)
+
+    simple_observation_df = process_parameter_values(
+        observation_df, pipeline_df, &#34;simpleParameter&#34;
+    )
+    simple_observation_df = add_observation_type(simple_observation_df)
+    simple_observation_df = resolve_simple_value(simple_observation_df, pipeline_df)
+    simple_observation_df = unify_schema(simple_observation_df).select(
+        Constants.OBSERVATION_COLUMNS
+    )
+
+    line_df = (
+        line_df.withColumnRenamed(&#34;_sourceFile&#34;, &#34;experiment_source_file&#34;)
+        .withColumnRenamed(&#34;unique_id&#34;, &#34;experiment_id&#34;)
+        .withColumn(&#34;specimen_source_file&#34;, lit(None))
+        .alias(&#34;experiment&#34;)
+    )
+
+    line_observation_df = line_df.join(
+        colony_df, line_df[&#34;_colonyID&#34;] == colony_df[&#34;colony.colony_name&#34;]
+    )
+
+    line_observation_df = line_observation_df.join(
+        strain_df,
+        col(&#34;colony.colony_background_strain&#34;) == col(&#34;strain.strainName&#34;),
+        &#34;left_outer&#34;,
+    )
+
+    line_observation_df = line_observation_df.join(
+        allele_df,
+        observation_df[&#34;colony.allele_symbol&#34;] == allele_df[&#34;allele.alleleSymbol&#34;],
+        &#34;left_outer&#34;,
+    )
+    line_simple_observation_df = process_parameter_values(
+        line_observation_df, pipeline_df, &#34;simpleParameter&#34;, exp_type=&#34;line&#34;
+    )
+    line_simple_observation_df = add_observation_type(line_simple_observation_df)
+    line_simple_observation_df = resolve_simple_value(
+        line_simple_observation_df, pipeline_df
+    )
+    line_simple_observation_df = line_simple_observation_df.withColumn(
+        &#34;specimen_id&#34;, lit(None)
+    )
+    line_simple_observation_df = unify_schema(line_simple_observation_df).select(
+        Constants.OBSERVATION_COLUMNS
+    )
+
+    simple_observation_df = simple_observation_df.union(line_simple_observation_df)
+
+    body_weight_curve_observation_df = get_body_weight_curve_observations(
+        simple_observation_df.where(col(&#34;observation_type&#34;) == &#34;unidimensional&#34;),
+        pipeline_df,
+    )
+
+    simple_media_observation_df = process_parameter_values(
+        observation_df, pipeline_df, &#34;mediaParameter&#34;
+    )
+    if simple_media_observation_df is not None:
+        simple_media_observation_df = resolve_simple_media_value(
+            simple_media_observation_df
+        )
+        simple_media_observation_df = unify_schema(simple_media_observation_df).select(
+            Constants.OBSERVATION_COLUMNS
+        )
+
+    ontological_observation_df = process_parameter_values(
+        observation_df, pipeline_df, &#34;ontologyParameter&#34;
+    )
+    ontological_observation_df = resolve_ontology_value(
+        ontological_observation_df, ontology_df
+    )
+    ontological_observation_df = unify_schema(ontological_observation_df).select(
+        Constants.OBSERVATION_COLUMNS
+    )
+
+    time_series_observation_df = process_parameter_values(
+        observation_df, pipeline_df, &#34;seriesParameter&#34;
+    )
+    time_series_observation_df = resolve_time_series_value(time_series_observation_df)
+    time_series_observation_df = unify_schema(time_series_observation_df).select(
+        Constants.OBSERVATION_COLUMNS
+    )
+
+    line_time_series_observation_df = process_parameter_values(
+        line_observation_df, pipeline_df, &#34;seriesParameter&#34;, exp_type=&#34;line&#34;
+    )
+    if line_time_series_observation_df is not None:
+        line_time_series_observation_df = resolve_time_series_value(
+            line_time_series_observation_df
+        )
+        line_time_series_observation_df = line_time_series_observation_df.withColumn(
+            &#34;specimen_id&#34;, lit(None)
+        )
+        line_time_series_observation_df = unify_schema(
+            line_time_series_observation_df
+        ).select(Constants.OBSERVATION_COLUMNS)
+        time_series_observation_df = time_series_observation_df.union(
+            line_time_series_observation_df
+        )
+
+    image_record_observation_df = process_parameter_values(
+        observation_df, pipeline_df, &#34;seriesMediaParameter&#34;
+    )
+    image_record_observation_df = resolve_image_record_value(
+        image_record_observation_df
+    )
+    image_record_observation_df = resolve_image_record_parameter_association(
+        image_record_observation_df, simple_observation_df
+    )
+    image_record_observation_df = unify_schema(image_record_observation_df).select(
+        Constants.OBSERVATION_COLUMNS
+    )
+
+    observation_df = (
+        simple_observation_df.union(ontological_observation_df)
+        .union(image_record_observation_df)
+        .union(time_series_observation_df)
+        .union(body_weight_curve_observation_df)
+    )
+    if simple_media_observation_df is not None:
+        observation_df = observation_df.union(simple_media_observation_df)
+    observation_df = observation_df.where(col(&#34;parameter_status&#34;).isNull())
+    observation_df = format_columns(observation_df).drop_duplicates()
+    observation_df = observation_df.withColumn(
+        &#34;experiment_source_file&#34;,
+        regexp_extract(col(&#34;experiment_source_file&#34;), &#34;(.*\/)(.*\/.*\.xml)&#34;, idx=2),
+    )
+    observation_df = observation_df.withColumn(
+        &#34;specimen_source_file&#34;,
+        regexp_extract(col(&#34;specimen_source_file&#34;), &#34;(.*\/)(.*\/.*\.xml)&#34;, idx=2),
+    )
+    observation_df = observation_df.withColumn(&#34;life_stage_name&#34;, lit(None))
+    observation_df = observation_df.withColumn(&#34;life_stage_acc&#34;, lit(None))
+    for life_stage in Constants.PROCEDURE_LIFE_STAGE_MAPPER:
+        life_stage_name = life_stage[&#34;lifeStage&#34;]
+        observation_df = observation_df.withColumn(
+            &#34;life_stage_name&#34;,
+            when(
+                col(&#34;life_stage_name&#34;).isNull(),
+                when(
+                    (
+                        col(&#34;procedure_stable_id&#34;).rlike(
+                            &#34;|&#34;.join([f&#34;({proc})&#34; for proc in life_stage[&#34;procedures&#34;]])
+                        )
+                        | (col(&#34;developmental_stage_name&#34;) == life_stage_name)
+                    ),
+                    lit(life_stage_name),
+                ).otherwise(lit(None)),
+            ).otherwise(col(&#34;life_stage_name&#34;)),
+        )
+        observation_df = observation_df.withColumn(
+            &#34;life_stage_acc&#34;,
+            when(
+                col(&#34;life_stage_acc&#34;).isNull(),
+                when(
+                    (
+                        col(&#34;procedure_stable_id&#34;).rlike(
+                            &#34;|&#34;.join([f&#34;({proc})&#34; for proc in life_stage[&#34;procedures&#34;]])
+                        )
+                        | (col(&#34;developmental_stage_name&#34;) == life_stage_name)
+                    ),
+                    lit(life_stage[&#34;lifeStageAcc&#34;]),
+                ).otherwise(lit(None)),
+            ).otherwise(col(&#34;life_stage_acc&#34;)),
+        )
+    observation_df = observation_df.withColumn(
+        &#34;life_stage_name&#34;,
+        when((col(&#34;life_stage_name&#34;).isNull()), lit(&#34;Early adult&#34;)).otherwise(
+            col(&#34;life_stage_name&#34;)
+        ),
+    )
+    observation_df = observation_df.withColumn(
+        &#34;life_stage_acc&#34;,
+        when((col(&#34;life_stage_acc&#34;).isNull()), lit(&#34;IMPCLS:0005&#34;)).otherwise(
+            col(&#34;life_stage_acc&#34;)
+        ),
+    )
+    return observation_df
+
+
+if __name__ == &#34;__main__&#34;:
+    sys.exit(main(sys.argv))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="impc_etl.jobs.load.observation_mapper.add_impress_info"><code class="name flex">
+<span>def <span class="ident">add_impress_info</span></span>(<span>experiments_df, pipeline_df, parameter_type, exp_type='experiment')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_impress_info(
+    experiments_df, pipeline_df, parameter_type, exp_type=&#34;experiment&#34;
+):
+    pipeline_columns = [
+        &#34;pipeline.parameter&#34;,
+        &#34;pipeline.procedure&#34;,
+        &#34;pipeline.name&#34;,
+        &#34;pipeline.pipelineKey&#34;,
+    ]
+    pipeline_df = (
+        pipeline_df.drop(&#34;weight&#34;)
+        .alias(&#34;pipeline&#34;)
+        .select(pipeline_columns)
+        .drop_duplicates()
+    )
+    experiments_df = experiments_df.join(
+        pipeline_df,
+        (
+            col(parameter_type + &#34;._parameterID&#34;)
+            == col(&#34;pipeline.parameter.parameterKey&#34;)
+        )
+        &amp; (col(&#34;_procedureID&#34;) == col(&#34;pipeline.procedure.procedureKey&#34;))
+        &amp; (col(&#34;experiment._pipeline&#34;) == col(&#34;pipeline.pipelineKey&#34;)),
+        &#34;left_outer&#34;,
+    )
+    experiments_df = experiments_df.withColumn(&#34;pipeline_name&#34;, col(&#34;pipeline.name&#34;))
+    experiments_df = experiments_df.withColumn(
+        &#34;pipeline_stable_id&#34;, col(&#34;pipeline.pipelineKey&#34;)
+    )
+
+    experiments_df = experiments_df.withColumn(
+        &#34;procedure_name&#34;, col(&#34;pipeline.procedure.name&#34;)
+    )
+    experiments_df = experiments_df.withColumn(
+        &#34;procedure_stable_id&#34;, col(&#34;pipeline.procedure.procedureKey&#34;)
+    )
+    experiments_df = experiments_df.withColumn(
+        &#34;procedure_group&#34;, regexp_extract(col(&#34;procedure_stable_id&#34;), &#34;(.+_.+)_.+&#34;, 1)
+    )
+
+    experiments_df = experiments_df.withColumn(
+        &#34;parameter_name&#34;, col(&#34;pipeline.parameter.name&#34;)
+    )
+    experiments_df = experiments_df.withColumn(
+        &#34;parameter_stable_id&#34;, col(&#34;pipeline.parameter.parameterKey&#34;)
+    )
+    if exp_type == &#34;experiment&#34;:
+        experiments_df = experiments_df.withColumn(
+            &#34;sex&#34;, when(col(&#34;sex&#34;).isNull(), lit(&#34;no_data&#34;)).otherwise(col(&#34;sex&#34;))
+        )
+    else:
+        experiments_df = experiments_df.withColumn(
+            &#34;sex&#34;,
+            when(
+                col(&#34;sex&#34;).isNull(),
+                when(
+                    col(&#34;parameter_stable_id&#34;).isin(Constants.FEMALE_LINE_PARAMETERS),
+                    lit(&#34;female&#34;),
+                )
+                .when(
+                    col(&#34;parameter_stable_id&#34;).isin(Constants.MALE_LINE_PARAMETERS),
+                    lit(&#34;male&#34;),
+                )
+                .otherwise(lit(&#34;both&#34;)),
+            ).otherwise(col(&#34;sex&#34;)),
+        )
+        experiments_df = experiments_df.withColumn(
+            &#34;zygosity&#34;,
+            when(
+                col(&#34;parameter_stable_id&#34;).isin(Constants.HET_LINE_PARAMETERS),
+                lit(&#34;heterozygote&#34;),
+            )
+            .when(
+                col(&#34;parameter_stable_id&#34;).isin(Constants.HEM_LINE_PARAMETERS),
+                lit(&#34;hemizygote&#34;),
+            )
+            .when(
+                col(&#34;parameter_stable_id&#34;).isin(Constants.ANZ_LINE_PARAMETERS),
+                lit(&#34;anzygote&#34;),
+            )
+            .when(
+                col(&#34;parameter_stable_id&#34;).isin(Constants.ZYG_NA_LINE_PARAMETERS),
+                lit(&#34;not_applicable&#34;),
+            )
+            .otherwise(lit(&#34;homozygote&#34;)),
+        )
+    return experiments_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.add_observation_type"><code class="name flex">
+<span>def <span class="ident">add_observation_type</span></span>(<span>experiments_df)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_observation_type(experiments_df):
+    experiments_df = experiments_df.withColumn(
+        &#34;observation_type&#34;,
+        when(
+            (col(&#34;pipeline.parameter.isOption&#34;) == True)
+            | (col(&#34;pipeline.parameter.parameterKey&#34;).contains(&#34;EYE_092_001&#34;)),
+            lit(&#34;categorical&#34;),
+        ).otherwise(
+            when(
+                (col(&#34;pipeline.parameter.valueType&#34;) != &#34;TEXT&#34;)
+                | (
+                    col(&#34;parameter_stable_id&#34;).isin(
+                        [
+                            &#34;ESLIM_006_001_035&#34;,
+                            &#34;M-G-P_022_001_001_001&#34;,
+                            &#34;M-G-P_022_001_001&#34;,
+                        ]
+                    )
+                ),
+                lit(&#34;unidimensional&#34;),
+            ).otherwise(lit(&#34;text&#34;))
+        ),
+    )
+    return experiments_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.format_columns"><code class="name flex">
+<span>def <span class="ident">format_columns</span></span>(<span>experiments_df)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def format_columns(experiments_df):
+    experiments_df = experiments_df.withColumn(
+        &#34;weight&#34;,
+        when(col(&#34;weight&#34;).like(&#34;%.%&#34;), col(&#34;weight&#34;)).otherwise(
+            concat(col(&#34;weight&#34;), lit(&#34;.0&#34;))
+        ),
+    )
+
+    date_columns = [&#34;date_of_birth&#34;, &#34;weight_date&#34;, &#34;date_of_experiment&#34;, &#34;time_point&#34;]
+
+    for column in date_columns:
+        experiments_df = experiments_df.withColumn(
+            column,
+            when(
+                col(column).rlike(
+                    &#34;[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z&#34;
+                ),
+                col(column),
+            ).otherwise(concat(col(column), lit(&#34;T00:00:00Z&#34;))),
+        )
+    return experiments_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.get_body_weight_curve_observations"><code class="name flex">
+<span>def <span class="ident">get_body_weight_curve_observations</span></span>(<span>unidimensional_observations_df: pyspark.sql.dataframe.DataFrame, pipeline_df: pyspark.sql.dataframe.DataFrame)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_body_weight_curve_observations(
+    unidimensional_observations_df: DataFrame, pipeline_df: DataFrame
+):
+    body_weight_curve_df = None
+    for (
+        parameter_stable_id,
+        parameter_data,
+    ) in Constants.BODY_WEIGHT_CURVE_PARAMETERS.items():
+        parameters = pipeline_df.select(
+            &#34;pipelineKey&#34;,
+            &#34;procedure.procedureKey&#34;,
+            &#34;parameter.parameterKey&#34;,
+            &#34;parameter.analysisWithBodyweight&#34;,
+        ).distinct()
+        body_weight_parameters = parameters.where(
+            col(&#34;analysisWithBodyweight&#34;) == &#34;is_body_weight&#34;
+        )
+        if &#34;ESLIM&#34; in parameter_stable_id:
+            body_weight_parameters = body_weight_parameters.where(
+                col(&#34;pipelineKey&#34;) == parameter_data[&#34;pipeline_stable_id&#34;]
+            )
+        else:
+            body_weight_parameters = body_weight_parameters.where(
+                ~col(&#34;pipelineKey&#34;).contains(&#34;ESLIM&#34;)
+            )
+        bwt_observations = unidimensional_observations_df.join(
+            body_weight_parameters,
+            (
+                (
+                    unidimensional_observations_df[&#34;pipeline_stable_id&#34;]
+                    == body_weight_parameters[&#34;pipelineKey&#34;]
+                )
+                &amp; (
+                    unidimensional_observations_df[&#34;procedure_stable_id&#34;]
+                    == body_weight_parameters[&#34;procedureKey&#34;]
+                )
+                &amp; (
+                    unidimensional_observations_df[&#34;parameter_stable_id&#34;]
+                    == body_weight_parameters[&#34;parameterKey&#34;]
+                )
+            ),
+        )
+        bwt_observations = bwt_observations.drop(
+            &#34;pipelineKey&#34;, &#34;procedureKey&#34;, &#34;parameterKey&#34;, &#34;analysisWithBodyweight&#34;
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;pipeline_stable_id&#34;, lit(parameter_data[&#34;pipeline_stable_id&#34;])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;pipeline_name&#34;, lit(parameter_data[&#34;pipeline_name&#34;])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;procedure_stable_id&#34;, lit(parameter_data[&#34;procedure_stable_id&#34;])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;parameter_stable_id&#34;, lit(parameter_stable_id)
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;procedure_group&#34;, lit(parameter_data[&#34;procedure_group&#34;])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;procedure_name&#34;, lit(parameter_data[&#34;procedure_name&#34;])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;parameter_name&#34;, lit(parameter_data[&#34;parameter_name&#34;])
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;observation_id&#34;,
+            md5(concat(lit(parameter_stable_id + &#34;_&#34;), col(&#34;observation_id&#34;))),
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;experiment_source_id&#34;,
+            concat(lit(parameter_stable_id + &#34;_&#34;), col(&#34;experiment_source_id&#34;)),
+        )
+        bwt_observations = bwt_observations.withColumn(&#34;metadata_group&#34;, md5(lit(&#34;&#34;)))
+        bwt_observations = bwt_observations.withColumn(
+            &#34;metadata&#34;,
+            array(concat(lit(&#34;Source experiment id: &#34;), col(&#34;experiment_id&#34;))),
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;experiment_id&#34;,
+            md5(concat(lit(parameter_stable_id + &#34;_&#34;), col(&#34;experiment_id&#34;))),
+        )
+
+        bwt_observations = bwt_observations.withColumn(
+            &#34;observation_type&#34;, lit(&#34;time_series&#34;)
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;discrete_point&#34;, col(&#34;age_in_weeks&#34;)
+        )
+        bwt_observations = bwt_observations.withColumn(
+            &#34;time_point&#34;, col(&#34;date_of_experiment&#34;)
+        )
+        if body_weight_curve_df is None:
+            body_weight_curve_df = bwt_observations
+        else:
+            body_weight_curve_df = body_weight_curve_df.union(bwt_observations)
+    return body_weight_curve_df.drop_duplicates()</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>argv)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(argv):
+    experiment_parquet_path = argv[1]
+    line_experiment_parquet_path = argv[2]
+    mouse_parquet_path = argv[3]
+    embryo_parquet_path = argv[4]
+    allele_parquet_path = argv[5]
+    colony_parquet_path = argv[6]
+    pipeline_parquet_path = argv[7]
+    strain_parquet_path = argv[8]
+    ontology_parquet_path = argv[9]
+    output_path = argv[10]
+    spark = SparkSession.builder.getOrCreate()
+    experiment_df = spark.read.parquet(experiment_parquet_path)
+    line_experiment_df = spark.read.parquet(line_experiment_parquet_path)
+    mouse_df = spark.read.parquet(mouse_parquet_path)
+    embryo_df = spark.read.parquet(embryo_parquet_path)
+    allele_df = spark.read.parquet(allele_parquet_path)
+    colony_df = spark.read.parquet(colony_parquet_path)
+    pipeline_df = spark.read.parquet(pipeline_parquet_path)
+    strain_df = spark.read.parquet(strain_parquet_path)
+    ontology_df = spark.read.parquet(ontology_parquet_path)
+
+    observations_df = map_experiments_to_observations(
+        experiment_df,
+        line_experiment_df,
+        mouse_df,
+        embryo_df,
+        allele_df,
+        colony_df,
+        pipeline_df,
+        strain_df,
+        ontology_df,
+    )
+    observations_df = observations_df.where(
+        ~(
+            (col(&#34;datasource_name&#34;) == &#34;EuroPhenome&#34;)
+            &amp; (col(&#34;parameter_stable_id&#34;) == &#34;ESLIM_001_001_125&#34;)
+            &amp; (col(&#34;sex&#34;) == &#34;male&#34;)
+            &amp; (col(&#34;category&#34;) == &#34;present&#34;)
+            &amp; (col(&#34;phenotyping_center&#34;) == &#34;ICS&#34;)
+        )
+    )
+    observations_df = observations_df.where(
+        ~(
+            col(&#34;procedure_stable_id&#34;).contains(&#34;_EYE_002&#34;)
+            &amp; col(&#34;parameter_stable_id&#34;).contains(&#34;EYE_092_001&#34;)
+        )
+    )
+    observations_df = observations_df.where(
+        col(&#34;category&#34;).isNull() | (col(&#34;category&#34;) != &#34;INCOMPLETE_INPUT_STR&#34;)
+    )
+    observations_df = observations_df.where(
+        col(&#34;strain_name&#34;).isNotNull() | (col(&#34;biological_sample_group&#34;) == &#34;control&#34;)
+    )
+    observations_df = observations_df.where(
+        (~col(&#34;text_value&#34;).like(&#39;%outcome&#34;: null%&#39;)) | col(&#34;text_value&#34;).isNull()
+    )
+    weight_columns = [
+        &#34;weight&#34;,
+        &#34;weight_date&#34;,
+        &#34;weight_days_old&#34;,
+        &#34;weight_parameter_stable_id&#34;,
+    ]
+    parameters = pipeline_df.select(
+        &#34;pipelineKey&#34;,
+        &#34;procedure.procedureKey&#34;,
+        &#34;parameter.parameterKey&#34;,
+        &#34;parameter.analysisWithBodyweight&#34;,
+    ).distinct()
+    not_use_body_weight_parameters = parameters.where(
+        col(&#34;analysisWithBodyweight&#34;).isin(
+            [
+                &#34;do_not_use_body_weight_covariate&#34;,
+                &#34;is_body_weight&#34;,
+                &#34;is_fasted_body_weight&#34;,
+            ]
+        )
+    )
+    not_use_body_weight_parameters = not_use_body_weight_parameters.alias(&#34;bw&#34;)
+    observations_df = observations_df.alias(&#34;obs&#34;)
+    observations_df = observations_df.join(
+        not_use_body_weight_parameters,
+        (
+            (
+                observations_df[&#34;pipeline_stable_id&#34;]
+                == not_use_body_weight_parameters[&#34;pipelineKey&#34;]
+            )
+            &amp; (
+                observations_df[&#34;procedure_stable_id&#34;]
+                == not_use_body_weight_parameters[&#34;procedureKey&#34;]
+            )
+            &amp; (
+                observations_df[&#34;parameter_stable_id&#34;]
+                == not_use_body_weight_parameters[&#34;parameterKey&#34;]
+            )
+        ),
+        &#34;left_outer&#34;,
+    )
+    for weight_column in weight_columns:
+        observations_df = observations_df.withColumn(
+            weight_column,
+            when(col(&#34;analysisWithBodyweight&#34;).isNull(), col(weight_column)).otherwise(
+                lit(None)
+            ),
+        )
+    observations_df = observations_df.select(&#34;obs.*&#34;, *weight_columns)
+    observations_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.map_experiment_columns"><code class="name flex">
+<span>def <span class="ident">map_experiment_columns</span></span>(<span>exp_df: pyspark.sql.dataframe.DataFrame)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def map_experiment_columns(exp_df: DataFrame):
+    for field in Constants.EXPERIMENT_TO_OBSERVATION_MAP:
+        exp_df = exp_df.withColumn(
+            field, col(Constants.EXPERIMENT_TO_OBSERVATION_MAP[field])
+        )
+    exp_df = exp_df.withColumnRenamed(&#34;weight&#34;, &#34;weightStruct&#34;)
+    exp_df = exp_df.withColumn(&#34;weight&#34;, col(&#34;weightStruct.weightValue&#34;))
+    exp_df = exp_df.withColumn(&#34;weight_date&#34;, col(&#34;weightStruct.weightDate&#34;))
+    exp_df = exp_df.withColumn(&#34;weight_days_old&#34;, col(&#34;weightStruct.weightDaysOld&#34;))
+    exp_df = exp_df.withColumn(
+        &#34;weight_parameter_stable_id&#34;, col(&#34;weightStruct.weightParameterID&#34;)
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;biological_sample_group&#34;,
+        when(col(&#34;_isBaseline&#34;) == True, lit(&#34;control&#34;)).otherwise(&#34;experimental&#34;),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;allele_symbol&#34;,
+        when(col(&#34;biological_sample_group&#34;) == &#34;control&#34;, lit(None)).otherwise(
+            when(
+                exp_df[&#34;allele.alleleSymbol&#34;].isNull(), exp_df[&#34;colony.allele_symbol&#34;]
+            ).otherwise(exp_df[&#34;allele.alleleSymbol&#34;])
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;allele_accession_id&#34;,
+        when(col(&#34;biological_sample_group&#34;) == &#34;control&#34;, lit(None)).otherwise(
+            when(
+                col(&#34;allele.mgiAlleleID&#34;).isNull(),
+                concat(
+                    lit(&#34;NOT-RELEASED-&#34;), substring(md5(exp_df[&#34;allele_symbol&#34;]), 0, 10)
+                ),
+            ).otherwise(col(&#34;allele.mgiAlleleID&#34;))
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;mgiMarkerAccessionID&#34;,
+        when(col(&#34;mgiMarkerAccessionID&#34;).isNull(), col(&#34;mgi_accession_id&#34;)).otherwise(
+            col(&#34;mgiMarkerAccessionID&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;gene_accession_id&#34;,
+        when(col(&#34;biological_sample_group&#34;) == &#34;control&#34;, lit(None)).otherwise(
+            col(&#34;mgiMarkerAccessionID&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;gene_symbol&#34;,
+        when(col(&#34;biological_sample_group&#34;) == &#34;control&#34;, lit(None)).otherwise(
+            when(
+                col(&#34;allele.markerSymbol&#34;).isNull(), exp_df[&#34;colony.marker_symbol&#34;]
+            ).otherwise(col(&#34;allele.markerSymbol&#34;))
+        ),
+    )
+
+    exp_df = exp_df.withColumn(&#34;zygosity&#34;, col(&#34;specimen._zygosity&#34;))
+
+    exp_df = exp_df.withColumn(
+        &#34;zygosity&#34;,
+        when(col(&#34;zygosity&#34;) == &#34;heterozygous&#34;, lit(&#34;heterozygote&#34;)).otherwise(
+            col(&#34;zygosity&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;zygosity&#34;,
+        when(col(&#34;zygosity&#34;) == &#34;homozygous&#34;, lit(&#34;homozygote&#34;)).otherwise(
+            col(&#34;zygosity&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;zygosity&#34;,
+        when(col(&#34;zygosity&#34;) == &#34;hemizygous&#34;, lit(&#34;hemizygote&#34;)).otherwise(
+            col(&#34;zygosity&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;zygosity&#34;,
+        when(col(&#34;zygosity&#34;) == &#34;wild type&#34;, lit(&#34;homozygote&#34;)).otherwise(
+            col(&#34;zygosity&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;datasource_name&#34;,
+        when(col(&#34;experiment._dataSource&#34;) == &#34;impc&#34;, lit(&#34;IMPC&#34;)).otherwise(
+            when(
+                col(&#34;experiment._dataSource&#34;) == &#34;europhenome&#34;, lit(&#34;EuroPhenome&#34;)
+            ).otherwise(col(&#34;experiment._dataSource&#34;))
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;colony_id&#34;,
+        when(lower(col(&#34;specimen._colonyID&#34;)) == &#34;baseline&#34;, lit(&#34;baseline&#34;)).otherwise(
+            when(col(&#34;specimen._colonyID&#34;).isNull(), &#34;unknown&#34;).otherwise(
+                col(&#34;specimen._colonyID&#34;)
+            )
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;strain_name&#34;,
+        when(col(&#34;strain.strainName&#34;).isNotNull(), col(&#34;strain.strainName&#34;)).otherwise(
+            col(&#34;specimen._strainID&#34;)
+        ),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;genetic_background&#34;,
+        when(
+            (col(&#34;colony_id&#34;) == &#34;baseline&#34;) | (col(&#34;specimen._isBaseline&#34;) == True),
+            concat(lit(&#34;involves: &#34;), col(&#34;strain.strainName&#34;)),
+        ).otherwise(col(&#34;colony.genetic_background&#34;)),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;strain_accession_id&#34;,
+        when(
+            col(&#34;strain_accession_id&#34;).isNull(),
+            concat(
+                lit(&#34;IMPC-CURATE-&#34;), upper(substring(md5(exp_df[&#34;strain_name&#34;]), 0, 5))
+            ),
+        ).otherwise(col(&#34;strain_accession_id&#34;)),
+    )
+
+    return exp_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.map_experiments_to_observations"><code class="name flex">
+<span>def <span class="ident">map_experiments_to_observations</span></span>(<span>experiment_df: pyspark.sql.dataframe.DataFrame, line_df: pyspark.sql.dataframe.DataFrame, mouse_df: pyspark.sql.dataframe.DataFrame, embryo_df, allele_df: pyspark.sql.dataframe.DataFrame, colony_df: pyspark.sql.dataframe.DataFrame, pipeline_df: pyspark.sql.dataframe.DataFrame, strain_df: pyspark.sql.dataframe.DataFrame, ontology_df: pyspark.sql.dataframe.DataFrame)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def map_experiments_to_observations(
+    experiment_df: DataFrame,
+    line_df: DataFrame,
+    mouse_df: DataFrame,
+    embryo_df,
+    allele_df: DataFrame,
+    colony_df: DataFrame,
+    pipeline_df: DataFrame,
+    strain_df: DataFrame,
+    ontology_df: DataFrame,
+):
+    experiment_df = experiment_df.withColumnRenamed(
+        &#34;_sourceFile&#34;, &#34;experiment_source_file&#34;
+    )
+    experiment_df = experiment_df.withColumnRenamed(&#34;unique_id&#34;, &#34;experiment_id&#34;)
+    experiment_df = experiment_df.alias(&#34;experiment&#34;)
+
+    colony_df = colony_df.alias(&#34;colony&#34;)
+    embryo_df = embryo_df.withColumn(&#34;_DOB&#34;, lit(None).cast(StringType()))
+    embryo_df = embryo_df.withColumn(&#34;_VALUE&#34;, lit(None).cast(StringType()))
+    mouse_df = mouse_df.withColumn(&#34;_stage&#34;, lit(None).cast(StringType()))
+    mouse_df = mouse_df.withColumn(&#34;_stageUnit&#34;, lit(None).cast(StringType()))
+    specimen_df = mouse_df.union(embryo_df.select(mouse_df.columns))
+    # TODO remove strain mapping for legacy phenotype data
+    # map_strain_name_udf = udf(map_strain_name, StringType())
+    # specimen_df = specimen_df.withColumn(
+    #     &#34;_strainID&#34;,
+    #     when(
+    #         ((lower(col(&#34;_colonyID&#34;)) == &#34;baseline&#34;) | (col(&#34;_isBaseline&#34;) == True)),
+    #         map_strain_name_udf(&#34;_strainID&#34;),
+    #     ).otherwise(col(&#34;_strainID&#34;)),
+    # )
+    specimen_df = specimen_df.withColumnRenamed(&#34;_sourceFile&#34;, &#34;specimen_source_file&#34;)
+    specimen_df = specimen_df.withColumnRenamed(&#34;unique_id&#34;, &#34;specimen_id&#34;)
+    specimen_df = specimen_df.alias(&#34;specimen&#34;)
+
+    allele_df = allele_df.alias(&#34;allele&#34;)
+    strain_df = strain_df.alias(&#34;strain&#34;)
+
+    observation_df: DataFrame = experiment_df.join(
+        specimen_df,
+        (experiment_df[&#34;experiment._centreID&#34;] == specimen_df[&#34;specimen._centreID&#34;])
+        &amp; (
+            experiment_df[&#34;experiment.specimenID&#34;]
+            == specimen_df[&#34;specimen._specimenID&#34;]
+        ),
+        &#34;left_outer&#34;,
+    )
+    observation_df = observation_df.join(
+        colony_df,
+        (observation_df[&#34;specimen._colonyID&#34;] == colony_df[&#34;colony.colony_name&#34;]),
+        &#34;left_outer&#34;,
+    )
+    observation_df = observation_df.where(
+        col(&#34;colony.colony_name&#34;).isNotNull()
+        | (
+            (lower(col(&#34;specimen._colonyID&#34;)) == &#34;baseline&#34;)
+            | (col(&#34;specimen._isBaseline&#34;) == True)
+        )
+    )
+    observation_df = observation_df.join(
+        allele_df,
+        observation_df[&#34;colony.allele_symbol&#34;] == allele_df[&#34;allele.alleleSymbol&#34;],
+        &#34;left_outer&#34;,
+    )
+
+    experimental_observation_df = observation_df.where(
+        (lower(col(&#34;specimen._colonyID&#34;)) != &#34;baseline&#34;)
+        &amp; (col(&#34;specimen._isBaseline&#34;) != True)
+    ).join(
+        strain_df,
+        (col(&#34;colony.colony_background_strain&#34;) == col(&#34;strain.strainName&#34;))
+        | (concat(lit(&#34;MGI:&#34;), col(&#34;specimen._strainID&#34;)) == col(&#34;strain.mgiStrainID&#34;))
+        | (col(&#34;specimen._strainID&#34;) == col(&#34;strain.strainName&#34;)),
+        &#34;left_outer&#34;,
+    )
+
+    baseline_observation_df = observation_df.where(
+        (lower(col(&#34;specimen._colonyID&#34;)) == &#34;baseline&#34;)
+        | (col(&#34;specimen._isBaseline&#34;) == True)
+    ).join(
+        strain_df,
+        (concat(lit(&#34;MGI:&#34;), col(&#34;specimen._strainID&#34;)) == col(&#34;strain.mgiStrainID&#34;))
+        | (col(&#34;specimen._strainID&#34;) == col(&#34;strain.strainName&#34;)),
+        &#34;left_outer&#34;,
+    )
+
+    ## TODO fallback to imits when its missing and do the join again
+
+    observation_df = baseline_observation_df.union(experimental_observation_df)
+
+    simple_observation_df = process_parameter_values(
+        observation_df, pipeline_df, &#34;simpleParameter&#34;
+    )
+    simple_observation_df = add_observation_type(simple_observation_df)
+    simple_observation_df = resolve_simple_value(simple_observation_df, pipeline_df)
+    simple_observation_df = unify_schema(simple_observation_df).select(
+        Constants.OBSERVATION_COLUMNS
+    )
+
+    line_df = (
+        line_df.withColumnRenamed(&#34;_sourceFile&#34;, &#34;experiment_source_file&#34;)
+        .withColumnRenamed(&#34;unique_id&#34;, &#34;experiment_id&#34;)
+        .withColumn(&#34;specimen_source_file&#34;, lit(None))
+        .alias(&#34;experiment&#34;)
+    )
+
+    line_observation_df = line_df.join(
+        colony_df, line_df[&#34;_colonyID&#34;] == colony_df[&#34;colony.colony_name&#34;]
+    )
+
+    line_observation_df = line_observation_df.join(
+        strain_df,
+        col(&#34;colony.colony_background_strain&#34;) == col(&#34;strain.strainName&#34;),
+        &#34;left_outer&#34;,
+    )
+
+    line_observation_df = line_observation_df.join(
+        allele_df,
+        observation_df[&#34;colony.allele_symbol&#34;] == allele_df[&#34;allele.alleleSymbol&#34;],
+        &#34;left_outer&#34;,
+    )
+    line_simple_observation_df = process_parameter_values(
+        line_observation_df, pipeline_df, &#34;simpleParameter&#34;, exp_type=&#34;line&#34;
+    )
+    line_simple_observation_df = add_observation_type(line_simple_observation_df)
+    line_simple_observation_df = resolve_simple_value(
+        line_simple_observation_df, pipeline_df
+    )
+    line_simple_observation_df = line_simple_observation_df.withColumn(
+        &#34;specimen_id&#34;, lit(None)
+    )
+    line_simple_observation_df = unify_schema(line_simple_observation_df).select(
+        Constants.OBSERVATION_COLUMNS
+    )
+
+    simple_observation_df = simple_observation_df.union(line_simple_observation_df)
+
+    body_weight_curve_observation_df = get_body_weight_curve_observations(
+        simple_observation_df.where(col(&#34;observation_type&#34;) == &#34;unidimensional&#34;),
+        pipeline_df,
+    )
+
+    simple_media_observation_df = process_parameter_values(
+        observation_df, pipeline_df, &#34;mediaParameter&#34;
+    )
+    if simple_media_observation_df is not None:
+        simple_media_observation_df = resolve_simple_media_value(
+            simple_media_observation_df
+        )
+        simple_media_observation_df = unify_schema(simple_media_observation_df).select(
+            Constants.OBSERVATION_COLUMNS
+        )
+
+    ontological_observation_df = process_parameter_values(
+        observation_df, pipeline_df, &#34;ontologyParameter&#34;
+    )
+    ontological_observation_df = resolve_ontology_value(
+        ontological_observation_df, ontology_df
+    )
+    ontological_observation_df = unify_schema(ontological_observation_df).select(
+        Constants.OBSERVATION_COLUMNS
+    )
+
+    time_series_observation_df = process_parameter_values(
+        observation_df, pipeline_df, &#34;seriesParameter&#34;
+    )
+    time_series_observation_df = resolve_time_series_value(time_series_observation_df)
+    time_series_observation_df = unify_schema(time_series_observation_df).select(
+        Constants.OBSERVATION_COLUMNS
+    )
+
+    line_time_series_observation_df = process_parameter_values(
+        line_observation_df, pipeline_df, &#34;seriesParameter&#34;, exp_type=&#34;line&#34;
+    )
+    if line_time_series_observation_df is not None:
+        line_time_series_observation_df = resolve_time_series_value(
+            line_time_series_observation_df
+        )
+        line_time_series_observation_df = line_time_series_observation_df.withColumn(
+            &#34;specimen_id&#34;, lit(None)
+        )
+        line_time_series_observation_df = unify_schema(
+            line_time_series_observation_df
+        ).select(Constants.OBSERVATION_COLUMNS)
+        time_series_observation_df = time_series_observation_df.union(
+            line_time_series_observation_df
+        )
+
+    image_record_observation_df = process_parameter_values(
+        observation_df, pipeline_df, &#34;seriesMediaParameter&#34;
+    )
+    image_record_observation_df = resolve_image_record_value(
+        image_record_observation_df
+    )
+    image_record_observation_df = resolve_image_record_parameter_association(
+        image_record_observation_df, simple_observation_df
+    )
+    image_record_observation_df = unify_schema(image_record_observation_df).select(
+        Constants.OBSERVATION_COLUMNS
+    )
+
+    observation_df = (
+        simple_observation_df.union(ontological_observation_df)
+        .union(image_record_observation_df)
+        .union(time_series_observation_df)
+        .union(body_weight_curve_observation_df)
+    )
+    if simple_media_observation_df is not None:
+        observation_df = observation_df.union(simple_media_observation_df)
+    observation_df = observation_df.where(col(&#34;parameter_status&#34;).isNull())
+    observation_df = format_columns(observation_df).drop_duplicates()
+    observation_df = observation_df.withColumn(
+        &#34;experiment_source_file&#34;,
+        regexp_extract(col(&#34;experiment_source_file&#34;), &#34;(.*\/)(.*\/.*\.xml)&#34;, idx=2),
+    )
+    observation_df = observation_df.withColumn(
+        &#34;specimen_source_file&#34;,
+        regexp_extract(col(&#34;specimen_source_file&#34;), &#34;(.*\/)(.*\/.*\.xml)&#34;, idx=2),
+    )
+    observation_df = observation_df.withColumn(&#34;life_stage_name&#34;, lit(None))
+    observation_df = observation_df.withColumn(&#34;life_stage_acc&#34;, lit(None))
+    for life_stage in Constants.PROCEDURE_LIFE_STAGE_MAPPER:
+        life_stage_name = life_stage[&#34;lifeStage&#34;]
+        observation_df = observation_df.withColumn(
+            &#34;life_stage_name&#34;,
+            when(
+                col(&#34;life_stage_name&#34;).isNull(),
+                when(
+                    (
+                        col(&#34;procedure_stable_id&#34;).rlike(
+                            &#34;|&#34;.join([f&#34;({proc})&#34; for proc in life_stage[&#34;procedures&#34;]])
+                        )
+                        | (col(&#34;developmental_stage_name&#34;) == life_stage_name)
+                    ),
+                    lit(life_stage_name),
+                ).otherwise(lit(None)),
+            ).otherwise(col(&#34;life_stage_name&#34;)),
+        )
+        observation_df = observation_df.withColumn(
+            &#34;life_stage_acc&#34;,
+            when(
+                col(&#34;life_stage_acc&#34;).isNull(),
+                when(
+                    (
+                        col(&#34;procedure_stable_id&#34;).rlike(
+                            &#34;|&#34;.join([f&#34;({proc})&#34; for proc in life_stage[&#34;procedures&#34;]])
+                        )
+                        | (col(&#34;developmental_stage_name&#34;) == life_stage_name)
+                    ),
+                    lit(life_stage[&#34;lifeStageAcc&#34;]),
+                ).otherwise(lit(None)),
+            ).otherwise(col(&#34;life_stage_acc&#34;)),
+        )
+    observation_df = observation_df.withColumn(
+        &#34;life_stage_name&#34;,
+        when((col(&#34;life_stage_name&#34;).isNull()), lit(&#34;Early adult&#34;)).otherwise(
+            col(&#34;life_stage_name&#34;)
+        ),
+    )
+    observation_df = observation_df.withColumn(
+        &#34;life_stage_acc&#34;,
+        when((col(&#34;life_stage_acc&#34;).isNull()), lit(&#34;IMPCLS:0005&#34;)).otherwise(
+            col(&#34;life_stage_acc&#34;)
+        ),
+    )
+    return observation_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.map_line_columns"><code class="name flex">
+<span>def <span class="ident">map_line_columns</span></span>(<span>line_df: pyspark.sql.dataframe.DataFrame)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def map_line_columns(line_df: DataFrame):
+    for field, value in Constants.LINE_TO_OBSERVATION_MAP.items():
+        if value is not None:
+            line_df = line_df.withColumn(field, col(value))
+        else:
+            line_df = line_df.withColumn(field, lit(None))
+    line_df = line_df.withColumn(&#34;biological_sample_group&#34;, lit(&#34;experimental&#34;))
+    line_df = line_df.withColumn(
+        &#34;datasource_name&#34;,
+        when(col(&#34;_dataSource&#34;) == &#34;impc&#34;, lit(&#34;IMPC&#34;)).otherwise(
+            when(col(&#34;_dataSource&#34;) == &#34;europhenome&#34;, lit(&#34;EuroPhenome&#34;)).otherwise(
+                col(&#34;_dataSource&#34;)
+            )
+        ),
+    )
+    line_df = line_df.withColumn(
+        &#34;allele_accession_id&#34;,
+        when(col(&#34;biological_sample_group&#34;) == &#34;control&#34;, lit(None)).otherwise(
+            when(
+                col(&#34;allele.mgiAlleleID&#34;).isNull(),
+                concat(
+                    lit(&#34;NOT-RELEASED-&#34;),
+                    substring(md5(line_df[&#34;allele_symbol&#34;]), 0, 10),
+                ),
+            ).otherwise(col(&#34;allele.mgiAlleleID&#34;))
+        ),
+    )
+    line_df = line_df.withColumn(
+        &#34;strain_accession_id&#34;,
+        when(
+            col(&#34;strain_accession_id&#34;).isNull(),
+            concat(
+                lit(&#34;IMPC-CURATE-&#34;), upper(substring(md5(line_df[&#34;strain_name&#34;]), 0, 5))
+            ),
+        ).otherwise(col(&#34;strain_accession_id&#34;)),
+    )
+    return line_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.process_parameter_values"><code class="name flex">
+<span>def <span class="ident">process_parameter_values</span></span>(<span>exp_df, pipeline_df, parameter_column, exp_type='experiment')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def process_parameter_values(
+    exp_df, pipeline_df, parameter_column, exp_type=&#34;experiment&#34;
+):
+    parameter_cols = [
+        &#34;simpleParameter&#34;,
+        &#34;mediaParameter&#34;,
+        &#34;ontologyParameter&#34;,
+        &#34;seriesMediaParameter&#34;,
+        &#34;seriesParameter&#34;,
+    ]
+    if parameter_column not in exp_df.columns:
+        return None
+    parameter_observation_df = exp_df
+    for column in parameter_cols:
+        if column is not parameter_column:
+            parameter_observation_df = parameter_observation_df.drop(column)
+    parameter_observation_df = (
+        parameter_observation_df.selectExpr(
+            &#34;*&#34;,
+            &#34;posexplode(&#34;
+            + parameter_column
+            + &#34;) as (experimentPos, &#34;
+            + parameter_column
+            + &#34;Exploded )&#34;,
+        )
+        .withColumn(parameter_column, col(parameter_column + &#34;Exploded&#34;))
+        .drop(parameter_column + &#34;Exploded&#34;)
+    )
+    parameter_observation_df = parameter_observation_df.withColumn(
+        &#34;observation_id&#34;,
+        md5(
+            concat(
+                col(&#34;experiment_id&#34;),
+                lit(&#34;_&#34; + parameter_column + &#34;_&#34;),
+                col(&#34;experimentPos&#34;),
+            )
+        ),
+    )
+    if exp_type == &#34;experiment&#34;:
+        parameter_observation_df = map_experiment_columns(parameter_observation_df)
+    else:
+        parameter_observation_df = map_line_columns(parameter_observation_df)
+
+    parameter_observation_df = add_impress_info(
+        parameter_observation_df, pipeline_df, parameter_column, exp_type=exp_type
+    )
+    if has_column(parameter_observation_df, parameter_column + &#34;.parameterStatus&#34;):
+        parameter_observation_df = parameter_observation_df.withColumn(
+            &#34;parameter_status&#34;, col(parameter_column + &#34;.parameterStatus&#34;)
+        )
+    else:
+        parameter_observation_df = parameter_observation_df.withColumn(
+            &#34;parameter_status&#34;, lit(None)
+        )
+    return parameter_observation_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.resolve_image_record_parameter_association"><code class="name flex">
+<span>def <span class="ident">resolve_image_record_parameter_association</span></span>(<span>image_record_observation_df: pyspark.sql.dataframe.DataFrame, simple_observations_df: pyspark.sql.dataframe.DataFrame)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def resolve_image_record_parameter_association(
+    image_record_observation_df: DataFrame, simple_observations_df: DataFrame
+):
+    simple_df = simple_observations_df.alias(&#34;simple&#34;)
+    image_df = image_record_observation_df.alias(&#34;image&#34;).withColumn(
+        &#34;parameterAsc&#34;, explode(&#34;image.seriesMediaParameterValue.parameterAssociation&#34;)
+    )
+    image_df = image_df.select(&#34;parameterAsc.*&#34;, &#34;*&#34;)
+    image_vs_simple_parameters_df = image_df.join(
+        simple_df,
+        (col(&#34;simple.experiment_id&#34;) == col(&#34;image.experiment_id&#34;))
+        &amp; (col(&#34;simple.parameter_stable_id&#34;) == col(&#34;_parameterID&#34;)),
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramName&#34;, col(&#34;simple.parameter_name&#34;)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramSeq&#34;, col(&#34;image._sequenceID&#34;)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramValue&#34;,
+        when(col(&#34;data_point&#34;).isNotNull(), col(&#34;data_point&#34;)).otherwise(
+            when(col(&#34;category&#34;).isNotNull(), col(&#34;category&#34;)).otherwise(
+                col(&#34;text_value&#34;)
+            )
+        ),
+    )
+    window = Window.partitionBy(
+        &#34;image.observation_id&#34;, &#34;image.parameter_stable_id&#34;
+    ).orderBy(&#34;_parameterID&#34;)
+
+    # image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
+    #     col(&#34;image.observation_id&#34;), col(&#34;image.parameter_stable_id&#34;)
+    # ).agg(
+    #     collect_list(&#34;_parameterID&#34;).over(window).alias(&#34;paramIDs&#34;),
+    #     collect_list(&#34;paramName&#34;).over(window).alias(&#34;paramNames&#34;),
+    #     collect_set(&#34;paramSeq&#34;).over(window).alias(&#34;paramSeqs&#34;),
+    #     collect_set(&#34;paramValue&#34;).over(window).alias(&#34;paramValues&#34;)
+    # )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramIDs&#34;, collect_list(&#34;_parameterID&#34;).over(window)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramNames&#34;, collect_list(&#34;paramName&#34;).over(window)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramSeqs&#34;, collect_list(&#34;paramSeq&#34;).over(window)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        &#34;paramValues&#34;, collect_list(&#34;paramValue&#34;).over(window)
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.select(
+        &#34;image.observation_id&#34;,
+        &#34;image.parameter_stable_id&#34;,
+        &#34;paramIDs&#34;,
+        &#34;paramNames&#34;,
+        &#34;paramSeqs&#34;,
+        &#34;paramValues&#34;,
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
+        &#34;image.observation_id&#34;, &#34;image.parameter_stable_id&#34;
+    ).agg(
+        max(&#34;paramIDs&#34;).alias(&#34;paramIDs&#34;),
+        max(&#34;paramNames&#34;).alias(&#34;paramNames&#34;),
+        max(&#34;paramSeqs&#34;).alias(&#34;paramSeqs&#34;),
+        max(&#34;paramValues&#34;).alias(&#34;paramValues&#34;),
+    )
+    image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumnRenamed(
+        &#34;observation_id&#34;, &#34;img_observation_id&#34;
+    ).withColumnRenamed(&#34;parameter_stable_id&#34;, &#34;img_parameter_stable_id&#34;)
+    image_record_observation_df = image_record_observation_df.join(
+        image_vs_simple_parameters_df,
+        (
+            image_record_observation_df[&#34;observation_id&#34;]
+            == image_vs_simple_parameters_df[&#34;img_observation_id&#34;]
+        )
+        &amp; (
+            image_record_observation_df[&#34;parameter_stable_id&#34;]
+            == image_vs_simple_parameters_df[&#34;img_parameter_stable_id&#34;]
+        ),
+        &#34;left_outer&#34;,
+    )
+    image_record_observation_df = (
+        image_record_observation_df.withColumnRenamed(
+            &#34;paramIDs&#34;, &#34;parameter_association_stable_id&#34;
+        )
+        .withColumnRenamed(&#34;paramNames&#34;, &#34;parameter_association_name&#34;)
+        .withColumnRenamed(&#34;paramSeqs&#34;, &#34;parameter_association_sequence_id&#34;)
+        .withColumnRenamed(&#34;paramValues&#34;, &#34;parameter_association_value&#34;)
+    )
+    return image_record_observation_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.resolve_image_record_value"><code class="name flex">
+<span>def <span class="ident">resolve_image_record_value</span></span>(<span>image_record_observation_df: pyspark.sql.dataframe.DataFrame)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def resolve_image_record_value(image_record_observation_df: DataFrame):
+    image_record_observation_df = image_record_observation_df.selectExpr(
+        &#34;*&#34;,
+        &#34;posexplode(seriesMediaParameter.value) as (seriesMediaParameterPos, seriesMediaParameterValue)&#34;,
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        &#34;observation_id&#34;,
+        md5(
+            concat(
+                col(&#34;observation_id&#34;),
+                lit(&#34;_seriesMediaParameterValue_&#34;),
+                col(&#34;seriesMediaParameterPos&#34;),
+            )
+        ),
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        &#34;download_file_path&#34;, col(&#34;seriesMediaParameterValue._URI&#34;)
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        &#34;file_type&#34;, col(&#34;seriesMediaParameterValue._fileType&#34;)
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        &#34;increment_value&#34;, col(&#34;seriesMediaParameterValue._incrementValue&#34;)
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        &#34;image_link&#34;, col(&#34;seriesMediaParameterValue._link&#34;)
+    )
+    image_record_observation_df = image_record_observation_df.withColumn(
+        &#34;observation_type&#34;, lit(&#34;image_record&#34;)
+    )
+    return image_record_observation_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.resolve_ontology_value"><code class="name flex">
+<span>def <span class="ident">resolve_ontology_value</span></span>(<span>ontological_observation_df, ontology_df)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def resolve_ontology_value(ontological_observation_df, ontology_df):
+    ontology_df = ontology_df.distinct().alias(&#34;onto&#34;)
+    if has_column(ontology_df, &#34;ontologyParameter._sequenceID&#34;):
+        ontology_df = ontology_df.withColumn(
+            &#34;sequence_id&#34;, col(&#34;ontologyParameter._sequenceID&#34;)
+        )
+    id_vs_terms_df = (
+        ontological_observation_df.withColumn(&#34;term&#34;, explode(&#34;ontologyParameter.term&#34;))
+        .withColumnRenamed(&#34;pos&#34;, &#34;ontologyPos&#34;)
+        .select(
+            &#34;observation_id&#34;,
+            &#34;ontologyParameter._parameterID&#34;,
+            &#34;ontologyParameter._sequenceID&#34;,
+            &#34;term&#34;,
+        )
+        .alias(&#34;temp&#34;)
+    )
+    id_vs_terms_df = id_vs_terms_df.join(
+        ontology_df,
+        (regexp_extract(col(&#34;temp.term&#34;), &#34;([A-Z]+:\d+)[\s:]*&#34;, 1) == col(&#34;onto.acc&#34;)),
+    )
+    id_vs_terms_df = id_vs_terms_df.withColumn(&#34;sub_term_id&#34;, col(&#34;onto.acc&#34;))
+    id_vs_terms_df = id_vs_terms_df.withColumn(&#34;sub_term_name&#34;, col(&#34;onto.name&#34;))
+    id_vs_terms_df = id_vs_terms_df.withColumn(
+        &#34;sub_term_description&#34;, col(&#34;onto.description&#34;)
+    ).dropDuplicates()
+    id_vs_terms_df = id_vs_terms_df.groupBy(
+        col(&#34;observation_id&#34;), col(&#34;temp._parameterID&#34;), col(&#34;temp._sequenceID&#34;)
+    ).agg(
+        collect_list(&#34;sub_term_id&#34;).alias(&#34;sub_term_id&#34;),
+        collect_list(&#34;sub_term_name&#34;).alias(&#34;sub_term_name&#34;),
+        collect_list(&#34;sub_term_description&#34;).alias(&#34;sub_term_description&#34;),
+    )
+    ontological_observation_df = ontological_observation_df.join(
+        id_vs_terms_df, &#34;observation_id&#34;, &#34;left_outer&#34;
+    )
+    ontological_observation_df = ontological_observation_df.withColumn(
+        &#34;observation_type&#34;, lit(&#34;ontological&#34;)
+    )
+    return ontological_observation_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.resolve_simple_media_value"><code class="name flex">
+<span>def <span class="ident">resolve_simple_media_value</span></span>(<span>media_parameter_df)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def resolve_simple_media_value(media_parameter_df):
+    media_parameter_df = media_parameter_df.withColumn(
+        &#34;download_file_path&#34;, col(&#34;mediaParameter._URI&#34;)
+    )
+    media_parameter_df = media_parameter_df.withColumn(
+        &#34;file_type&#34;, col(&#34;mediaParameter._fileType&#34;)
+    )
+    media_parameter_df = media_parameter_df.withColumn(
+        &#34;observation_type&#34;, lit(&#34;image_record&#34;)
+    )
+    return media_parameter_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.resolve_simple_value"><code class="name flex">
+<span>def <span class="ident">resolve_simple_value</span></span>(<span>exp_df, pipeline_df)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def resolve_simple_value(exp_df, pipeline_df):
+    options_df = pipeline_df.select(&#34;option.*&#34;).distinct().alias(&#34;options&#34;)
+    if has_column(exp_df, &#34;simpleParameter._sequenceID&#34;):
+        exp_df = exp_df.withColumn(&#34;sequence_id&#34;, col(&#34;simpleParameter._sequenceID&#34;))
+    exp_df = exp_df.join(
+        options_df,
+        (
+            col(&#34;pipeline.parameter.optionCollection&#34;).getItem(
+                regexp_replace(&#34;simpleParameter.value&#34;, &#34;.0&#34;, &#34;&#34;).cast(IntegerType())
+            )
+            == col(&#34;options.optionId&#34;)
+        ),
+        &#34;left_outer&#34;,
+    )
+    exp_df = exp_df.withColumn(
+        &#34;category&#34;,
+        when(
+            col(&#34;observation_type&#34;) == &#34;categorical&#34;,
+            when(
+                (col(&#34;pipeline.parameter.valueType&#34;) == &#34;TEXT&#34;)
+                | (~col(&#34;simpleParameter.value&#34;).rlike(&#34;(^\d+.\d+$)|(^\d+$)&#34;)),
+                col(&#34;simpleParameter.value&#34;),
+            ).otherwise(
+                when(
+                    (
+                        col(&#34;options.name&#34;).rlike(&#34;^\d+$&#34;)
+                        &amp; col(&#34;options.description&#34;).isNotNull()
+                    ),
+                    col(&#34;options.description&#34;),
+                ).otherwise(col(&#34;options.name&#34;))
+            ),
+        ).otherwise(lit(None)),
+    )
+
+    exp_df = exp_df.withColumn(
+        &#34;data_point&#34;,
+        when(
+            col(&#34;observation_type&#34;) == &#34;unidimensional&#34;,
+            when(
+                col(&#34;simpleParameter.value&#34;).like(&#34;%.%&#34;), col(&#34;simpleParameter.value&#34;)
+            ).otherwise(concat(col(&#34;simpleParameter.value&#34;), lit(&#34;.0&#34;))),
+        ).otherwise(lit(None)),
+    )
+
+    exp_df = exp_df.withColumn(&#34;data_point&#34;, col(&#34;data_point&#34;).cast(DoubleType()))
+    exp_df = exp_df.where(
+        ((col(&#34;observation_type&#34;) == &#34;unidimensional&#34;) &amp; col(&#34;data_point&#34;).isNotNull())
+        | (col(&#34;observation_type&#34;) != &#34;unidimensional&#34;)
+    )
+    exp_df = exp_df.withColumn(
+        &#34;text_value&#34;,
+        when(col(&#34;observation_type&#34;) == &#34;text&#34;, col(&#34;simpleParameter.value&#34;)).otherwise(
+            lit(None)
+        ),
+    )
+    return exp_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.resolve_time_series_value"><code class="name flex">
+<span>def <span class="ident">resolve_time_series_value</span></span>(<span>time_series_observation_df: pyspark.sql.dataframe.DataFrame)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def resolve_time_series_value(time_series_observation_df: DataFrame):
+    time_series_observation_df = time_series_observation_df.selectExpr(
+        &#34;*&#34;,
+        &#34;posexplode(seriesParameter.value) as (seriesParameterPos, seriesParameterValue)&#34;,
+    )
+
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;observation_id&#34;,
+        md5(
+            concat(
+                col(&#34;observation_id&#34;),
+                lit(&#34;_seriesParameterValue_&#34;),
+                col(&#34;seriesParameterPos&#34;),
+            )
+        ),
+    )
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;data_point&#34;, col(&#34;seriesParameterValue._VALUE&#34;)
+    ).where(col(&#34;data_point&#34;).isNotNull())
+    time_point_expr = None
+
+    for index, format_str in enumerate(Constants.DATE_FORMATS):
+        unix_timestamp_column = unix_timestamp(
+            col(&#34;seriesParameterValue._incrementValue&#34;), format_str
+        )
+        if time_point_expr is None:
+            time_point_expr = when(
+                unix_timestamp_column.isNotNull(), unix_timestamp_column
+            )
+        else:
+            time_point_expr = time_point_expr.when(
+                unix_timestamp_column.isNotNull(), unix_timestamp_column
+            )
+        if index == len(Constants.DATE_FORMATS) - 1:
+            time_point_expr = time_point_expr.otherwise(lit(None))
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;measured_at&#34;, time_point_expr
+    )
+
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;time_point&#34;, from_unixtime(time_point_expr)
+    )
+
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;date_of_experiment_seconds&#34;,
+        unix_timestamp(col(&#34;date_of_experiment&#34;), &#34;yyyy-MM-dd&#34;),
+    )
+
+    resolve_lights_out_udf = udf(_resolve_lights_out, LongType())
+
+    lights_out_expr = (
+        when(
+            col(&#34;_dataSource&#34;) == &#34;impc&#34;,
+            when(
+                col(&#34;procedure_stable_id&#34;).like(&#34;%IMPC_CAL%&#34;),
+                resolve_lights_out_udf(
+                    &#34;procedureMetadata&#34;, &#34;date_of_experiment_seconds&#34;
+                ),
+            ).otherwise(unix_timestamp(col(&#34;date_of_experiment&#34;))),
+        )
+        .when(
+            col(&#34;_dataSource&#34;) == &#34;europhenome&#34;,
+            when(
+                col(&#34;phenotyping_center&#34;) == &#34;HMGU&#34;,
+                col(&#34;date_of_experiment_seconds&#34;) + lit(18 * 60 * 60),
+            )
+            .when(
+                col(&#34;phenotyping_center&#34;).isin([&#34;MRC&#34;, &#34;WTSI&#34;, &#34;ICS&#34;]),
+                col(&#34;date_of_experiment_seconds&#34;) + lit(19 * 60 * 60),
+            )
+            .otherwise(col(&#34;date_of_experiment_seconds&#34;)),
+        )
+        .otherwise(lit(0.0))
+    )
+
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;lights_out&#34;, lights_out_expr
+    )
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;discrete_point&#34;,
+        when(
+            col(&#34;time_point&#34;).isNull(), col(&#34;seriesParameterValue._incrementValue&#34;)
+        ).otherwise((col(&#34;measured_at&#34;) - col(&#34;lights_out&#34;)) / 3600),
+    )
+    if has_column(time_series_observation_df, &#34;_dateOfExperiment&#34;):
+        time_series_observation_df = time_series_observation_df.withColumn(
+            &#34;time_point&#34;,
+            when(col(&#34;time_point&#34;).isNull(), col(&#34;_dateOfExperiment&#34;)).otherwise(
+                col(&#34;time_point&#34;)
+            ),
+        )
+    time_series_observation_df = time_series_observation_df.withColumn(
+        &#34;observation_type&#34;, lit(&#34;time_series&#34;)
+    )
+    return time_series_observation_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.observation_mapper.unify_schema"><code class="name flex">
+<span>def <span class="ident">unify_schema</span></span>(<span>obs_df: pyspark.sql.dataframe.DataFrame)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def unify_schema(obs_df: DataFrame):
+    for column in Constants.OBSERVATION_COLUMNS:
+        if column not in obs_df.columns:
+            col_schema = Constants.PARAMETER_SPECIFIC_FIELDS[column]
+            obs_df = obs_df.withColumn(column, lit(None).cast(col_schema))
+    return obs_df</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<header>
+<div style="max-width: 300px, text-align: center">
+<img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
+</div>
+</header>
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="impc_etl.jobs.load" href="index.html">impc_etl.jobs.load</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="impc_etl.jobs.load.observation_mapper.add_impress_info" href="#impc_etl.jobs.load.observation_mapper.add_impress_info">add_impress_info</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.add_observation_type" href="#impc_etl.jobs.load.observation_mapper.add_observation_type">add_observation_type</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.format_columns" href="#impc_etl.jobs.load.observation_mapper.format_columns">format_columns</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.get_body_weight_curve_observations" href="#impc_etl.jobs.load.observation_mapper.get_body_weight_curve_observations">get_body_weight_curve_observations</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.main" href="#impc_etl.jobs.load.observation_mapper.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.map_experiment_columns" href="#impc_etl.jobs.load.observation_mapper.map_experiment_columns">map_experiment_columns</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.map_experiments_to_observations" href="#impc_etl.jobs.load.observation_mapper.map_experiments_to_observations">map_experiments_to_observations</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.map_line_columns" href="#impc_etl.jobs.load.observation_mapper.map_line_columns">map_line_columns</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.process_parameter_values" href="#impc_etl.jobs.load.observation_mapper.process_parameter_values">process_parameter_values</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.resolve_image_record_parameter_association" href="#impc_etl.jobs.load.observation_mapper.resolve_image_record_parameter_association">resolve_image_record_parameter_association</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.resolve_image_record_value" href="#impc_etl.jobs.load.observation_mapper.resolve_image_record_value">resolve_image_record_value</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.resolve_ontology_value" href="#impc_etl.jobs.load.observation_mapper.resolve_ontology_value">resolve_ontology_value</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.resolve_simple_media_value" href="#impc_etl.jobs.load.observation_mapper.resolve_simple_media_value">resolve_simple_media_value</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.resolve_simple_value" href="#impc_etl.jobs.load.observation_mapper.resolve_simple_value">resolve_simple_value</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.resolve_time_series_value" href="#impc_etl.jobs.load.observation_mapper.resolve_time_series_value">resolve_time_series_value</a></code></li>
+<li><code><a title="impc_etl.jobs.load.observation_mapper.unify_schema" href="#impc_etl.jobs.load.observation_mapper.unify_schema">unify_schema</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p><span></span></p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

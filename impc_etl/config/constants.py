@@ -1,3 +1,8 @@
+"""
+Runtime constants file, these constants are usually stable and don't change between Data Releases.
+
+"""
+
 from pyspark.sql.types import StringType, ArrayType
 
 
@@ -15,6 +20,9 @@ class Constants:
         "MGP_PBI",
         "MGP_IMM",
     }
+    """
+    List of procedure that we don't load. These are Legacy pipelines procedures.
+    """
     VALID_PROJECT_IDS = {
         "BaSH",
         "DTCC",
@@ -35,6 +43,10 @@ class Constants:
         "3i",
         "IMPC",
     }
+    """
+    List of valid project identifiers coming from the DCC XML files.
+    These are used to determine if an experiment should be marked as MGP or not.
+    """
     EUROPHENOME_VALID_COLONIES = {
         "EPD0013_1_G11_10613",
         "EPD0019_1_A05_10494",
@@ -98,132 +110,10 @@ class Constants:
         "Dll1_C3H_10333",
         "EPD0059_2_C08_10660",
     }
-
-    WEIGHT_PARAMETERS = [
-        "BCMLA_ABR_001_001",
-        "BCMLA_DXA_001_001",
-        "BCMLA_GRS_003_001",
-        "BCMLA_PAT_049_002",
-        "BCMLA_HWT_007_001",
-        "BCMLA_CAL_001_001",
-        "BCMLA_IPG_001_001",
-        "BCMLA_OWT_001_001",
-        "IMPC_ABR_001_001",
-        "IMPC_DXA_001_001",
-        "IMPC_CHL_001_001",
-        "IMPC_GRS_003_001",
-        "IMPC_PAT_049_002",
-        "IMPC_HWT_007_001",
-        "IMPC_CAL_001_001",
-        "IMPC_IPG_001_001",
-        "IMPC_OWT_001_001",
-        "CCP_LFO_001_001",
-        "IMPC_PAT_049_001",
-        "HMGU_ROT_004_001",
-        "HMGULA_DXA_001_001",
-        "HMGULA_DYS_067_001",
-        "HMGULA_GRS_003_001",
-        "HMGULA_PAT_049_002",
-        "HMGULA_HWT_007_001",
-        "HMGULA_CAL_001_001",
-        "HMGULA_OWT_001_001",
-        "HMGULA_ROT_004_001",
-        "HMGULA_SHI_001_001",
-        "HMGULA_VDR_004_001",
-        "HRWL_HOT_001_001",
-        "HRWLLA_DXA_001_001",
-        "HRWLLA_GRS_003_001",
-        "HRWLLA_PAT_049_002",
-        "HRWLLA_IPG_001_001",
-        "HRWLLA_HWT_007_001",
-        "ICS_HOT_002_001",
-        "ICS_ROT_004_001",
-        "ICSLA_ABR_001_001",
-        "ICSLA_DXA_001_001",
-        "ICSLA_GRS_003_001",
-        "ICSLA_PAT_049_002",
-        "ICSLA_HWT_007_001",
-        "ICSLA_HOT_002_001",
-        "ICSLA_CAL_001_001",
-        "ICSLA_IPG_001_001",
-        "ICSLA_ROT_004_001",
-        "JAXLA_DXA_001_001",
-        "JAXLA_GRS_003_001",
-        "JAXLA_PAT_049_002",
-        "JAXLA_HWT_007_001",
-        "JAXLA_IPG_001_001",
-        "KMPCLA_ABR_001_001",
-        "KMPCLA_DXA_001_001",
-        "KMPCLA_GRS_003_001",
-        "KMPCLA_PAT_049_002",
-        "KMPCLA_HWT_007_001",
-        "KMPCLA_CAL_001_001",
-        "KMPCLA_IPG_001_001",
-        "MGP_IPG_001_001",
-        "NINGLA_ABR_001_001",
-        "NINGLA_DXA_001_001",
-        "NINGLA_GRS_003_001",
-        "NINGLA_PAT_049_002",
-        "NINGLA_HWT_007_001",
-        "NINGLA_CAL_001_001",
-        "NINGLA_IPG_001_001",
-        "RBRCIP_ABR_001_001",
-        "RBRCLA_ABR_001_001",
-        "RBRCLA_DXA_001_001",
-        "RBRCLA_GRS_003_001",
-        "RBRCLA_PAT_049_002",
-        "RBRCLA_HWT_007_001",
-        "RBRCLA_CAL_001_001",
-        "RBRCLA_IPG_001_001",
-        "RBRCLA_OWT_001_001",
-        "TCPIP_GRS_003_001",
-        "TCPLA_DXA_001_001",
-        "TCPLA_GRS_003_001",
-        "TCPLA_PAT_049_002",
-        "TCPLA_HWT_007_001",
-        "TCPLA_IPG_001_001",
-        "TCP_CHL_001_001",
-        "UCDIP_GRS_003_001",
-        "UCDLA_DXA_001_001",
-        "UCDLA_GRS_003_001",
-        "UCDLA_PAT_049_002",
-        "UCDLA_HWT_007_001",
-        "UCDLA_IPG_001_001",
-        "UCD_OWT_001_001",
-        "ESLIM_001_001_001",
-        "ESLIM_002_001_001",
-        "ESLIM_003_001_001",
-        "ESLIM_004_001_001",
-        "ESLIM_005_001_001",
-        "ESLIM_009_001_003",
-        "ESLIM_010_001_003",
-        "ESLIM_011_001_011",
-        "ESLIM_012_001_005",
-        "ESLIM_013_001_018",
-        "ESLIM_020_001_001",
-        "ESLIM_022_001_001",
-        "GMC_900_001_001",
-        "GMC_902_001_003",
-        "GMC_908_001_001",
-        "GMC_909_001_002",
-        "GMC_912_001_018",
-        "GMC_914_001_001",
-        "GMC_916_001_022",
-        "GMC_917_001_001",
-        "GMC_920_001_001",
-        "GMC_921_001_002",
-        "GMC_922_001_002",
-        "GMC_923_001_001",
-        "GMC_926_001_003",
-        "M-G-P_003_001_001",
-        "M-G-P_004_001_001",
-        "M-G-P_005_001_001",
-        "M-G-P_009_001_003",
-        "M-G-P_012_001_005",
-        "M-G-P_013_001_018",
-        "M-G-P_020_001_001",
-        "M-G-P_022_001_001",
-    ]
+    """
+    Some EuroPhenome colonies have to be stripped to remove a spurious suffix,
+    this list of valid IDs should not be modified by the ETL.
+    """
 
     BODY_WEIGHT_CURVE_PARAMETERS = {
         "IMPC_BWT_008_001": {
@@ -279,40 +169,10 @@ class Constants:
             "pipeline_name": "EUMODIC Pipeline 2",
         },
     }
-
-    # IMPC_BWT_008_001
-    IMPC_BWT_BODY_WEIGHT_CURVE_PARAMETERS = [
-        "IMPC_GRS_003_001",
-        "IMPC_CAL_001_001",
-        "IMPC_DXA_001_001",
-        "IMPC_HWT_007_001",
-        "IMPC_PAT_049_001",
-        "IMPC_BWT_001_001",
-        "IMPC_ABR_001_001",
-        "IMPC_CHL_001_001",
-        "TCP_CHL_001_001",
-        "HMGU_ROT_004_001",
-    ]
-
-    # ESLIM_022_001_701
-    ESLIM_701_BODY_WEIGHT_CURVE_PARAMETERS = [
-        "ESLIM_001_001_001",
-        "ESLIM_002_001_001",
-        "ESLIM_003_001_001",
-        "ESLIM_004_001_001",
-        "ESLIM_005_001_001",
-        "ESLIM_020_001_001",
-    ]
-
-    # ESLIM_022_001_702
-    ESLIM_702_BODY_WEIGHT_CURVE_PARAMETERS = [
-        "ESLIM_009_001_003",
-        "ESLIM_010_001_003",
-        "ESLIM_011_001_011",
-        "ESLIM_012_001_005",
-        "ESLIM_013_001_018",
-        "ESLIM_022_001_001",
-    ]
+    """
+    This map is used to generate the BWT Curve parameters,
+    the key is the target parameter and it contains a list of source parameters and the target parameter metadata values.
+    """
 
     CENTRE_ID_MAP = {
         "bcm": "BCM",
@@ -344,6 +204,9 @@ class Constants:
         "monterotondo": "Monterotondo",
         "narlabs": "NARLabs",
     }
+    """
+    This map is used to translate the centre IDs coming in the XML files to the ones we use on the website. 
+    """
 
     PROJECT_ID_MAP = {
         "bash": "BaSH",
@@ -376,6 +239,9 @@ class Constants:
         "ccp": "CCP-IMG",
         "tobeloadedfromimits": "tobeloadedfromimits",
     }
+    """
+    This map is used to translate the project IDs coming in the XML files to the ones we use on the website. 
+    """
 
     EXPERIMENTER_IDS = {
         "LHl": "131",
@@ -395,6 +261,9 @@ class Constants:
         "Chenhao Wang": "wangchenhao",
         "wangchenhao  jiangman": "wangchenhao,jiangman",
     }
+    """
+    Some experiment IDs from legacy experiment files need to be mapped to a standardized version so they match.
+    """
 
     EFO_EMBRYONIC_STAGES = {
         "0": "EFO:0XXXXXX",
@@ -415,6 +284,9 @@ class Constants:
         "18": "EFO:0002569",
         "18.5": "EFO:0002570",
     }
+    """
+    Maps IMPC embryonic stages to EFO ontology term IDs.
+    """
 
     EXPERIMENT_TO_OBSERVATION_MAP = {
         "source_phenotyping_status": "experiment._sourcePhenotypingStatus",
@@ -435,6 +307,10 @@ class Constants:
         "date_of_birth": "specimen._DOB",
         "strain_accession_id": "strain.mgiStrainID",  ## Fallback to Imits
     }
+    """
+    Maps columns names coming from the Experiment Parquet file
+    to the column names in the schema of the Observations Parquet file.
+    """
 
     LINE_TO_OBSERVATION_MAP = {
         "source_phenotyping_status": "_sourcePhenotypingStatus",
@@ -468,6 +344,10 @@ class Constants:
         "weight_days_old": None,
         "weight_parameter_stable_id": None,
     }
+    """
+    Maps columns names coming from the Line Experiment Parquet file
+    to the column names in the schema of the Observations Parquet file.
+    """
 
     OBSERVATION_COLUMNS = [
         "experiment_source_file",
@@ -536,6 +416,9 @@ class Constants:
         "parameter_association_name",
         "parameter_association_value",
     ]
+    """
+    List of columns for the Observations parquet output schema.
+    """
 
     PARAMETER_SPECIFIC_FIELDS = {
         "data_point": StringType(),
@@ -556,6 +439,9 @@ class Constants:
         "parameter_association_name": ArrayType(StringType()),
         "parameter_association_value": ArrayType(StringType()),
     }
+    """
+    PySpark schema dictionary to represent IMPReSS parameters in the Observations Parquet schema.
+    """
 
     DATE_FORMATS = [
         "yyyy-MM-dd'T'HH:mm:ssXXX",
@@ -568,6 +454,9 @@ class Constants:
         "yyyy-MM-dd' 'HH:mm:ss",
         "yyyy-MM-dd' 'HH:mm",
     ]
+    """
+    List of valid data formats for Time Series parameters.
+    """
 
     FEMALE_LINE_PARAMETERS = [
         "IMPC_FER_019_001",
@@ -590,6 +479,10 @@ class Constants:
         "IMPC_VIA_062_001",
         "IMPC_VIA_064_001",
     ]
+    """
+    Line experiments don't have a Specimen ID,
+    so we use this list to determine if the line parameter is sex specific (female).
+    """
 
     MALE_LINE_PARAMETERS = [
         "IMPC_FER_001_001",
@@ -612,6 +505,10 @@ class Constants:
         "IMPC_VIA_063_001",
         "IMPC_VIA_065_001",
     ]
+    """
+    Line experiments don't have a Specimen ID, so we don't know the sex of the specimens
+    so we use this list to determine if the line parameter is sex specific (male).
+    """
 
     HET_LINE_PARAMETERS = [
         "IMPC_VIA_043_001",
@@ -621,6 +518,10 @@ class Constants:
         "IMPC_VIA_059_001",
         "IMPC_VIA_066_001",
     ]
+    """
+    Line experiments don't have a Specimen ID, so we don't know the zygosity of the specimens
+    so we use this list to determine if the line parameter is for HET only.
+    """
 
     HOM_LINE_PARAMETERS = [
         "IMPC_VIA_045_001",
@@ -632,16 +533,32 @@ class Constants:
         "IMPC_VIA_064_001",
         "IMPC_VIA_067_001",
     ]
+    """
+    Line experiments don't have a Specimen ID, so we don't know the zygosity of the specimens
+    so we use this list to determine if the line parameter is for HOM only.
+    """
 
     HEM_LINE_PARAMETERS = ["IMPC_VIA_047_001", "IMPC_VIA_055_001", "IMPC_VIA_065_001"]
+    """
+    Line experiments don't have a Specimen ID, so we don't know the zygosity of the specimens
+    so we use this list to determine if the line parameter is for HEM only.
+    """
 
     ANZ_LINE_PARAMETERS = ["IMPC_VIA_048_001", "IMPC_VIA_056_001"]
+    """
+    Line experiments don't have a Specimen ID, so we don't know the zygosity of the specimens
+    so we use this list to determine if the line parameter is for ANZ only.
+    """
 
     ZYG_NA_LINE_PARAMETERS = [
         "IMPC_VIA_057_001",
         "IMPC_VIA_061_001",
         "IMPC_VIA_062_001",
     ]
+    """
+    Line experiments don't have a Specimen ID, so we don't know the zygosity of the specimens
+    so we use this list to determine if the line parameter does not have a zygosity.
+    """
 
     EUROPHENOME_DERIVATIONS = [
         # ESLIM_011 derivations
@@ -705,6 +622,10 @@ class Constants:
             "europhenomeDerivation": "areaUnderCurve('ESLIM_004_001_002')",
         },
     ]
+    """
+    Some Legacy derived parameters haven't been ported to the newer derivation syntax.
+    This map attempts to map them as good as possible.
+    """
 
     PROCEDURE_LIFE_STAGE_MAPPER = [
         {
@@ -738,6 +659,9 @@ class Constants:
             "procedures": ["LA_"],
         },
     ]
+    """
+    Maps procedures to specific life stages.
+    """
 
     UMASS_GENES = [
         "4933427D14Rik",
@@ -811,6 +735,9 @@ class Constants:
         "Zfp407",
         "Zwint",
     ]
+    """
+    List of genes in the UMASS project.
+    """
 
     IDG_GENES = [
         "MGI:1098687",
@@ -914,6 +841,9 @@ class Constants:
         "MGI:2387588",
         "MGI:3580298",
     ]
+    """
+    List of genes in the IDG project.
+    """
 
     DERIVED_PARAMETER_BANLIST = []
 
@@ -932,3 +862,7 @@ class Constants:
         "C57BL/6NTac-ICS-USA(ImportedLive)": "C57BL/6NTac",
         "C57BL/6NTac-ICS-Denmark(ImportedLive)": "C57BL/6Dnk",
     }
+    """
+    Some line sin the legacy data need to be mapped to newer strain names.
+    This list was manually curated with help from people of the Centers part of the EuroPhenome project.
+    """
