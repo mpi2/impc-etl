@@ -1,14 +1,12 @@
 """
-    Colony tracking extraction task. Extracts information from colony tracking systems reports (e.g. IMITS and GenTar).
+    Colony tracking extraction task. Extracts information from GenTar.
 """
 from pyspark import SparkContext
-from pyspark.sql.functions import col, lit
 from impc_etl.shared import utils
 from impc_etl.workflow.config import ImpcConfig
 from pyspark.sql.session import SparkSession
 import luigi
 from luigi.contrib.spark import PySparkTask
-from pyspark.sql.types import StringType
 
 
 class ColonyTrackingExtractor(PySparkTask):
@@ -20,8 +18,6 @@ class ColonyTrackingExtractor(PySparkTask):
 
         name: str
             Name of the Spark task
-        imits_colonies_tsv_path: luigi.Parameter
-            Path in the filesystem (local or HDFS) to the IMITS colonies report
         gentar_colonies_tsv_path: luigi.Parameter
             Path in the filesystem (local or HDFS) to the GenTar colonies report
         output_path: luigi.Parameter
@@ -29,22 +25,20 @@ class ColonyTrackingExtractor(PySparkTask):
     """
 
     name = "IMPC_Colony_Tracking_Extractor"
-    imits_colonies_tsv_path = luigi.Parameter()
     gentar_colonies_tsv_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def output(self):
         """
-        Returns the full parquet path as an output for the Luigi Task (e.g. impc/dr15.2/parquet/all_colonies_parquet)
+        Returns the full parquet path as an output for the Luigi Task (e.g. impc/dr15.2/parquet/colonies_tracking_parquet)
         """
-        return ImpcConfig().get_target(f"{self.output_path}all_colonies_parquet")
+        return ImpcConfig().get_target(f"{self.output_path}colonies_tracking_parquet")
 
     def app_options(self):
         """
         Generates the options pass to the PySpark job
         """
         return [
-            self.imits_colonies_tsv_path,
             self.gentar_colonies_tsv_path,
             self.output().path,
         ]
@@ -55,15 +49,13 @@ class ColonyTrackingExtractor(PySparkTask):
         """
         spark = SparkSession(sc)
         # Parsing app options
-        imits_tsv_path = args[0]
-        gentar_tsv_path = args[1]
-        output_path = args[2]
+        gentar_tsv_path = args[0]
+        output_path = args[1]
 
         # Load the data form TSV to a Spark DataFrame
-        imits_df = utils.extract_tsv(spark, imits_tsv_path)
         gentar_df = utils.extract_tsv(spark, gentar_tsv_path)
 
-        # Map GenTar Column names to match the ones on the Imits Report
+        # Map GenTar Column names to match the ones on the Observations Schema Report
         gentar_col_mapping = {
             "Phenotyping External Reference": "colony_name",
             "Background Strain": "colony_background_strain",
@@ -83,26 +75,4 @@ class ColonyTrackingExtractor(PySparkTask):
             else:
                 new_col_names.append(col_name.replace(" ", "_").lower())
         gentar_df = gentar_df.toDF(*new_col_names)
-        imits_df = imits_df.toDF(
-            *[column_name.replace(" ", "_").lower() for column_name in imits_df.columns]
-        )
-
-        # Check for duplications coming from the different reports
-        imits_df = imits_df.alias("imits")
-        gentar_tmp_df = gentar_df.alias("gentar")
-        imits_df = imits_df.join(gentar_tmp_df, "colony_name", "left_outer")
-        imits_df = imits_df.where(col("gentar.marker_symbol").isNull())
-        imits_df = imits_df.select("imits.*")
-        imits_df = imits_df.drop_duplicates()
-
-        # Make the schemas of the two files match by adding null values on the missing colonies
-        for col_name in imits_df.columns:
-            if col_name not in gentar_df.columns:
-                gentar_df = gentar_df.withColumn(col_name, lit(None).cast(StringType()))
-        for col_name in gentar_df.columns:
-            if col_name not in imits_df.columns:
-                imits_df = imits_df.withColumn(col_name, lit(None).cast(StringType()))
-
-        # Merge both reports data
-        colonies_df = imits_df.union(gentar_df.select(*imits_df.columns))
-        colonies_df.write.parquet(output_path)
+        gentar_df.write.parquet(output_path)

@@ -4,6 +4,7 @@ from pyspark.sql import SparkSession
 
 from impc_etl.jobs.extract.dcc_experiment_extractor import DCCExperimentExtractor
 from impc_etl.jobs.extract.dcc_specimen_extractor import DCCSpecimenExtractor
+from impc_etl.jobs.extract.colony_tracking_extractor import ColonyTrackingExtractor
 from impc_etl.workflow.config import ImpcConfig
 
 
