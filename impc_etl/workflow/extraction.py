@@ -2,50 +2,25 @@ import luigi
 from luigi.contrib.spark import SparkSubmitTask, PySparkTask
 from pyspark.sql import SparkSession
 
+from impc_etl.jobs.extract.dcc_experiment_extractor import DCCExperimentExtractor
+from impc_etl.jobs.extract.dcc_specimen_extractor import DCCSpecimenExtractor
 from impc_etl.workflow.config import ImpcConfig
 
 
-class DCCExtractor(SparkSubmitTask):
-    name = "IMPC_DCC_Extractor"
-    app = "impc_etl/jobs/extract/dcc_extractor.py"
-    resources = {"overwrite_resource": 1}
-    file_type = luigi.Parameter()
-    dcc_xml_path = luigi.Parameter()
-    entity_type = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + "/"
-            if not self.output_path.endswith("/")
-            else self.output_path
-        )
-        return ImpcConfig().get_target(
-            f"{self.output_path}{self.entity_type}_raw_parquet"
-        )
-
-    def app_options(self):
-        return [self.dcc_xml_path, self.output().path, self.file_type, self.entity_type]
+class MouseSpecimenExtractor(DCCSpecimenExtractor):
+    specimen_type = "mouse"
 
 
-class MouseExtractor(DCCExtractor):
-    file_type = "specimen"
-    entity_type = "mouse"
+class EmbryoSpecimenExtractor(DCCSpecimenExtractor):
+    specimen_type = "embryo"
 
 
-class EmbryoExtractor(DCCExtractor):
-    file_type = "specimen"
-    entity_type = "embryo"
+class SpecimenExperimentExtractor(DCCExperimentExtractor):
+    experiment_type = "specimen_level"
 
 
-class ExperimentExtractor(DCCExtractor):
-    file_type = "experiment"
-    entity_type = "experiment"
-
-
-class LineExperimentExtractor(DCCExtractor):
-    file_type = "experiment"
-    entity_type = "line"
+class LineExperimentExtractor(DCCExperimentExtractor):
+    experiment_type = "line_level"
 
 
 class ImitsExtractor(SparkSubmitTask):
