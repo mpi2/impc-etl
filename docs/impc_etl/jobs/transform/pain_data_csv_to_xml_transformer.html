@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>impc_etl.jobs.transform.pain_data_csv_to_xml_transformer API documentation</title>
+<meta name="description" content="Python task to transform the Pain Working Group data (Formalin, VonFrey and Hargreaves procedures)
+from the CSV format provided by them to a standard …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>impc_etl.jobs.transform.pain_data_csv_to_xml_transformer</code></h1>
+</header>
+<section id="section-intro">
+<p>Python task to transform the Pain Working Group data (Formalin, VonFrey and Hargreaves procedures)
+from the CSV format provided by them to a standard experimental data XML.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+Python task to transform the Pain Working Group data (Formalin, VonFrey and Hargreaves procedures)
+from the CSV format provided by them to a standard experimental data XML.
+&#34;&#34;&#34;
+import csv
+import os
+import sys
+from xml.etree.ElementTree import Element, ElementTree
+
+import luigi
+from lxml import etree
+
+from impc_etl.workflow.config import ImpcConfig
+
+CENTRE_ID_MAP = {&#34;JAX&#34;: &#34;J&#34;, &#34;HAR&#34;: &#34;H&#34;, &#34;BCM&#34;: &#34;Bcm&#34;, &#34;UCD&#34;: &#34;Ucd&#34;, &#34;TCP&#34;: &#34;Tcp&#34;}
+CENTRE_PROJECT_MAP = {
+    &#34;JAX&#34;: &#34;PWG&#34;,
+    &#34;HAR&#34;: &#34;PWG&#34;,
+    &#34;BCM&#34;: &#34;PWG&#34;,
+    &#34;UCD&#34;: &#34;PWG&#34;,
+    &#34;TCP&#34;: &#34;PWG&#34;,
+}
+CENTRE_PIPELINE_MAP = {
+    &#34;JAX&#34;: &#34;JAX_001&#34;,
+    &#34;HAR&#34;: &#34;HRWL_001&#34;,
+    &#34;BCM&#34;: &#34;BCM_001&#34;,
+    &#34;UCD&#34;: &#34;UCD_001&#34;,
+    &#34;TCP&#34;: &#34;TCP_001&#34;,
+}
+CENTRE_PROCEDURE_MAP = {
+    &#34;JAX&#34;: {&#34;VFR&#34;: &#34;JAX_VFR_001&#34;, &#34;HRG&#34;: &#34;JAX_HRG_001&#34;, &#34;FOR&#34;: &#34;JAX_FOR_001&#34;},
+    &#34;HAR&#34;: {&#34;VFR&#34;: &#34;HRWL_VFR_001&#34;, &#34;FOR&#34;: &#34;HRWL_FOR_001&#34;},
+    &#34;BCM&#34;: {&#34;FOR&#34;: &#34;BCM_FOR_001&#34;},
+    &#34;UCD&#34;: {&#34;HRG&#34;: &#34;UCD_HRG_001&#34;, &#34;VFR&#34;: &#34;UCD_VFR_001&#34;},
+    &#34;TCP&#34;: {&#34;HRG&#34;: &#34;TCP_HRG_001&#34;, &#34;VFR&#34;: &#34;TCP_VFR_001&#34;},
+}
+SIMPLE_PARAMETERS = [
+    &#34;JAX_VFR_001_001&#34;,
+    &#34;JAX_VFR_002_001&#34;,
+    &#34;JAX_VFR_003_001&#34;,
+    &#34;JAX_VFR_004_001&#34;,
+    &#34;JAX_VFR_005_001&#34;,
+    &#34;JAX_VFR_006_001&#34;,
+    &#34;JAX_VFR_007_001&#34;,
+    &#34;JAX_VFR_008_001&#34;,
+    &#34;JAX_VFR_009_001&#34;,
+    &#34;JAX_VFR_010_001&#34;,
+    &#34;JAX_VFR_011_001&#34;,
+    &#34;JAX_VFR_012_001&#34;,
+    &#34;JAX_HRG_002_001&#34;,
+    &#34;JAX_HRG_004_001&#34;,
+    &#34;JAX_HRG_006_001&#34;,
+    &#34;JAX_FOR_002_001&#34;,
+    &#34;HRWL_VFR_005_001&#34;,
+    &#34;HRWL_VFR_006_001&#34;,
+    &#34;HRWL_VFR_011_001&#34;,
+    &#34;HRWL_VFR_012_001&#34;,
+    &#34;HRWL_VFR_017_001&#34;,
+    &#34;HRWL_VFR_018_001&#34;,
+    &#34;HRWL_FOR_002_001&#34;,
+    &#34;HRWL_FOR_024_001&#34;,
+    &#34;HRWL_FOR_026_001&#34;,
+    &#34;HRWL_FOR_027_001&#34;,
+    &#34;BCM_FOR_002_001&#34;,
+    &#34;BCM_FOR_024_001&#34;,
+    &#34;BCM_FOR_026_001&#34;,
+    &#34;BCM_FOR_027_001&#34;,
+    &#34;BCM_FOR_029_001&#34;,
+    &#34;BCM_FOR_030_001&#34;,
+    &#34;UCD_HRG_002_001&#34;,
+    &#34;UCD_HRG_004_001&#34;,
+    &#34;UCD_HRG_006_001&#34;,
+    &#34;UCD_VFR_003_001&#34;,
+    &#34;UCD_VFR_005_001&#34;,
+    &#34;UCD_VFR_008_001&#34;,
+    &#34;UCD_VFR_010_001&#34;,
+    &#34;UCD_VFR_013_001&#34;,
+    &#34;UCD_VFR_015_001&#34;,
+    &#34;TCP_HRG_002_001&#34;,
+    &#34;TCP_HRG_004_001&#34;,
+    &#34;TCP_HRG_006_001&#34;,
+    &#34;TCP_VFR_003_001&#34;,
+    &#34;TCP_VFR_005_001&#34;,
+    &#34;TCP_VFR_008_001&#34;,
+    &#34;TCP_VFR_010_001&#34;,
+    &#34;TCP_VFR_013_001&#34;,
+    &#34;TCP_VFR_015_001&#34;,
+]
+SERIES_PARAMETERS = [
+    &#34;JAX_HRG_001_001&#34;,
+    &#34;JAX_HRG_003_001&#34;,
+    &#34;JAX_HRG_005_001&#34;,
+    &#34;JAX_FOR_001_001&#34;,
+    &#34;HRWL_VFR_001_001&#34;,
+    &#34;HRWL_VFR_002_001&#34;,
+    &#34;HRWL_VFR_003_001&#34;,
+    &#34;HRWL_VFR_004_001&#34;,
+    &#34;HRWL_VFR_007_001&#34;,
+    &#34;HRWL_VFR_008_001&#34;,
+    &#34;HRWL_VFR_009_001&#34;,
+    &#34;HRWL_VFR_010_001&#34;,
+    &#34;HRWL_VFR_013_001&#34;,
+    &#34;HRWL_VFR_014_001&#34;,
+    &#34;HRWL_VFR_015_001&#34;,
+    &#34;HRWL_VFR_016_001&#34;,
+    &#34;HRWL_FOR_001_001&#34;,
+    &#34;HRWL_FOR_025_001&#34;,
+    &#34;BCM_FOR_001_001&#34;,
+    &#34;BCM_FOR_025_001&#34;,
+    &#34;BCM_FOR_028_001&#34;,
+    &#34;UCD_HRG_001_001&#34;,
+    &#34;UCD_HRG_003_001&#34;,
+    &#34;UCD_HRG_005_001&#34;,
+    &#34;UCD_VFR_001_001&#34;,
+    &#34;UCD_VFR_002_001&#34;,
+    &#34;UCD_VFR_004_001&#34;,
+    &#34;UCD_VFR_006_001&#34;,
+    &#34;UCD_VFR_007_001&#34;,
+    &#34;UCD_VFR_009_001&#34;,
+    &#34;UCD_VFR_011_001&#34;,
+    &#34;UCD_VFR_012_001&#34;,
+    &#34;UCD_VFR_014_001&#34;,
+    &#34;TCP_HRG_001_001&#34;,
+    &#34;TCP_HRG_003_001&#34;,
+    &#34;TCP_HRG_005_001&#34;,
+    &#34;TCP_VFR_001_001&#34;,
+    &#34;TCP_VFR_002_001&#34;,
+    &#34;TCP_VFR_004_001&#34;,
+    &#34;TCP_VFR_006_001&#34;,
+    &#34;TCP_VFR_007_001&#34;,
+    &#34;TCP_VFR_009_001&#34;,
+    &#34;TCP_VFR_011_001&#34;,
+    &#34;TCP_VFR_012_001&#34;,
+    &#34;TCP_VFR_014_001&#34;,
+]
+METADATA_PARAMETERS = [
+    &#34;JAX_VFR_013_001&#34;,
+    &#34;JAX_VFR_014_001&#34;,
+    &#34;JAX_VFR_015_001&#34;,
+    &#34;JAX_VFR_016_001&#34;,
+    &#34;JAX_VFR_017_001&#34;,
+    &#34;JAX_VFR_018_001&#34;,
+    &#34;JAX_VFR_019_001&#34;,
+    &#34;JAX_VFR_020_001&#34;,
+    &#34;JAX_VFR_021_001&#34;,
+    &#34;JAX_VFR_022_001&#34;,
+    &#34;JAX_VFR_023_001&#34;,
+    &#34;JAX_VFR_024_001&#34;,
+    &#34;JAX_VFR_025_001&#34;,
+    &#34;JAX_VFR_026_001&#34;,
+    &#34;JAX_VFR_027_001&#34;,
+    &#34;JAX_VFR_028_001&#34;,
+    &#34;JAX_VFR_029_001&#34;,
+    &#34;JAX_VFR_030_001&#34;,
+    &#34;JAX_VFR_031_001&#34;,
+    &#34;JAX_VFR_032_001&#34;,
+    &#34;JAX_VFR_033_001&#34;,
+    &#34;JAX_VFR_034_001&#34;,
+    &#34;JAX_VFR_035_001&#34;,
+    &#34;JAX_VFR_036_001&#34;,
+    &#34;JAX_VFR_037_001&#34;,
+    &#34;JAX_VFR_038_001&#34;,
+    &#34;JAX_VFR_039_001&#34;,
+    &#34;JAX_VFR_040_001&#34;,
+    &#34;JAX_HRG_007_001&#34;,
+    &#34;JAX_HRG_008_001&#34;,
+    &#34;JAX_HRG_009_001&#34;,
+    &#34;JAX_HRG_010_001&#34;,
+    &#34;JAX_HRG_011_001&#34;,
+    &#34;JAX_HRG_012_001&#34;,
+    &#34;JAX_HRG_013_001&#34;,
+    &#34;JAX_HRG_014_001&#34;,
+    &#34;JAX_HRG_015_001&#34;,
+    &#34;JAX_HRG_016_001&#34;,
+    &#34;JAX_HRG_017_001&#34;,
+    &#34;JAX_HRG_018_001&#34;,
+    &#34;JAX_HRG_019_001&#34;,
+    &#34;JAX_HRG_020_001&#34;,
+    &#34;JAX_HRG_021_001&#34;,
+    &#34;JAX_HRG_022_001&#34;,
+    &#34;JAX_HRG_023_001&#34;,
+    &#34;JAX_HRG_024_001&#34;,
+    &#34;JAX_HRG_025_001&#34;,
+    &#34;JAX_HRG_026_001&#34;,
+    &#34;JAX_HRG_027_001&#34;,
+    &#34;JAX_HRG_028_001&#34;,
+    &#34;JAX_HRG_029_001&#34;,
+    &#34;JAX_HRG_030_001&#34;,
+    &#34;JAX_HRG_031_001&#34;,
+    &#34;JAX_HRG_032_001&#34;,
+    &#34;JAX_HRG_033_001&#34;,
+    &#34;JAX_HRG_034_001&#34;,
+    &#34;JAX_HRG_035_001&#34;,
+    &#34;JAX_FOR_008_001&#34;,
+    &#34;JAX_FOR_009_001&#34;,
+    &#34;JAX_FOR_011_001&#34;,
+    &#34;JAX_FOR_007_001&#34;,
+    &#34;JAX_FOR_017_001&#34;,
+    &#34;JAX_FOR_020_001&#34;,
+    &#34;JAX_FOR_021_001&#34;,
+    &#34;JAX_FOR_013_001&#34;,
+    &#34;JAX_FOR_022_001&#34;,
+    &#34;JAX_FOR_019_001&#34;,
+    &#34;JAX_FOR_023_001&#34;,
+    &#34;HRWL_VFR_019_001&#34;,
+    &#34;HRWL_VFR_020_001&#34;,
+    &#34;HRWL_VFR_021_001&#34;,
+    &#34;HRWL_VFR_022_001&#34;,
+    &#34;HRWL_VFR_023_001&#34;,
+    &#34;HRWL_VFR_024_001&#34;,
+    &#34;HRWL_VFR_025_001&#34;,
+    &#34;HRWL_VFR_026_001&#34;,
+    &#34;HRWL_VFR_027_001&#34;,
+    &#34;HRWL_VFR_028_001&#34;,
+    &#34;HRWL_VFR_029_001&#34;,
+    &#34;HRWL_VFR_030_001&#34;,
+    &#34;HRWL_VFR_031_001&#34;,
+    &#34;HRWL_VFR_032_001&#34;,
+    &#34;HRWL_VFR_033_001&#34;,
+    &#34;HRWL_VFR_034_001&#34;,
+    &#34;HRWL_VFR_035_001&#34;,
+    &#34;HRWL_VFR_036_001&#34;,
+    &#34;HRWL_VFR_037_001&#34;,
+    &#34;HRWL_VFR_038_001&#34;,
+    &#34;HRWL_VFR_039_001&#34;,
+    &#34;HRWL_VFR_040_001&#34;,
+    &#34;HRWL_VFR_041_001&#34;,
+    &#34;HRWL_VFR_042_001&#34;,
+    &#34;HRWL_FOR_008_001&#34;,
+    &#34;HRWL_FOR_009_001&#34;,
+    &#34;HRWL_FOR_011_001&#34;,
+    &#34;HRWL_FOR_007_001&#34;,
+    &#34;HRWL_FOR_017_001&#34;,
+    &#34;HRWL_FOR_020_001&#34;,
+    &#34;HRWL_FOR_021_001&#34;,
+    &#34;HRWL_FOR_013_001&#34;,
+    &#34;HRWL_FOR_022_001&#34;,
+    &#34;HRWL_FOR_019_001&#34;,
+    &#34;HRWL_FOR_023_001&#34;,
+    &#34;HRWL_FOR_024_001&#34;,
+    &#34;HRWL_FOR_025_001&#34;,
+    &#34;HRWL_FOR_026_001&#34;,
+    &#34;HRWL_FOR_027_001&#34;,
+    &#34;BCM_FOR_008_001&#34;,
+    &#34;BCM_FOR_009_001&#34;,
+    &#34;BCM_FOR_011_001&#34;,
+    &#34;BCM_FOR_007_001&#34;,
+    &#34;BCM_FOR_017_001&#34;,
+    &#34;BCM_FOR_020_001&#34;,
+    &#34;BCM_FOR_021_001&#34;,
+    &#34;BCM_FOR_013_001&#34;,
+    &#34;BCM_FOR_022_001&#34;,
+    &#34;BCM_FOR_019_001&#34;,
+    &#34;BCM_FOR_023_001&#34;,
+    &#34;UCD_HRG_007_001&#34;,
+    &#34;UCD_HRG_008_001&#34;,
+    &#34;UCD_HRG_009_001&#34;,
+    &#34;UCD_HRG_010_001&#34;,
+    &#34;UCD_HRG_011_001&#34;,
+    &#34;UCD_HRG_012_001&#34;,
+    &#34;UCD_HRG_013_001&#34;,
+    &#34;UCD_HRG_014_001&#34;,
+    &#34;UCD_HRG_015_001&#34;,
+    &#34;UCD_HRG_016_001&#34;,
+    &#34;UCD_HRG_017_001&#34;,
+    &#34;UCD_HRG_018_001&#34;,
+    &#34;UCD_HRG_019_001&#34;,
+    &#34;UCD_HRG_020_001&#34;,
+    &#34;UCD_HRG_021_001&#34;,
+    &#34;UCD_HRG_022_001&#34;,
+    &#34;UCD_HRG_023_001&#34;,
+    &#34;UCD_HRG_024_001&#34;,
+    &#34;UCD_HRG_025_001&#34;,
+    &#34;UCD_HRG_026_001&#34;,
+    &#34;UCD_HRG_027_001&#34;,
+    &#34;UCD_HRG_028_001&#34;,
+    &#34;UCD_HRG_029_001&#34;,
+    &#34;UCD_HRG_030_001&#34;,
+    &#34;UCD_HRG_031_001&#34;,
+    &#34;UCD_HRG_032_001&#34;,
+    &#34;UCD_HRG_033_001&#34;,
+    &#34;UCD_HRG_034_001&#34;,
+    &#34;UCD_HRG_035_001&#34;,
+    &#34;UCD_VFR_016_001&#34;,
+    &#34;UCD_VFR_017_001&#34;,
+    &#34;UCD_VFR_018_001&#34;,
+    &#34;UCD_VFR_019_001&#34;,
+    &#34;UCD_VFR_020_001&#34;,
+    &#34;UCD_VFR_021_001&#34;,
+    &#34;UCD_VFR_022_001&#34;,
+    &#34;UCD_VFR_023_001&#34;,
+    &#34;UCD_VFR_024_001&#34;,
+    &#34;UCD_VFR_025_001&#34;,
+    &#34;UCD_VFR_026_001&#34;,
+    &#34;UCD_VFR_027_001&#34;,
+    &#34;UCD_VFR_028_001&#34;,
+    &#34;UCD_VFR_029_001&#34;,
+    &#34;UCD_VFR_030_001&#34;,
+    &#34;UCD_VFR_031_001&#34;,
+    &#34;UCD_VFR_032_001&#34;,
+    &#34;UCD_VFR_033_001&#34;,
+    &#34;UCD_VFR_034_001&#34;,
+    &#34;UCD_VFR_035_001&#34;,
+    &#34;UCD_VFR_036_001&#34;,
+    &#34;UCD_VFR_037_001&#34;,
+    &#34;UCD_VFR_038_001&#34;,
+    &#34;UCD_VFR_039_001&#34;,
+    &#34;UCD_VFR_040_001&#34;,
+    &#34;UCD_VFR_041_001&#34;,
+    &#34;UCD_VFR_042_001&#34;,
+    &#34;UCD_VFR_043_001&#34;,
+    &#34;UCD_VFR_044_001&#34;,
+    &#34;UCD_VFR_045_001&#34;,
+    &#34;UCD_VFR_046_001&#34;,
+    &#34;UCD_VFR_047_001&#34;,
+    &#34;TCP_HRG_007_001&#34;,
+    &#34;TCP_HRG_008_001&#34;,
+    &#34;TCP_HRG_009_001&#34;,
+    &#34;TCP_HRG_010_001&#34;,
+    &#34;TCP_HRG_011_001&#34;,
+    &#34;TCP_HRG_012_001&#34;,
+    &#34;TCP_HRG_013_001&#34;,
+    &#34;TCP_HRG_014_001&#34;,
+    &#34;TCP_HRG_015_001&#34;,
+    &#34;TCP_HRG_016_001&#34;,
+    &#34;TCP_HRG_017_001&#34;,
+    &#34;TCP_HRG_018_001&#34;,
+    &#34;TCP_HRG_019_001&#34;,
+    &#34;TCP_HRG_020_001&#34;,
+    &#34;TCP_HRG_021_001&#34;,
+    &#34;TCP_HRG_022_001&#34;,
+    &#34;TCP_HRG_023_001&#34;,
+    &#34;TCP_HRG_024_001&#34;,
+    &#34;TCP_HRG_025_001&#34;,
+    &#34;TCP_HRG_026_001&#34;,
+    &#34;TCP_HRG_027_001&#34;,
+    &#34;TCP_HRG_028_001&#34;,
+    &#34;TCP_HRG_029_001&#34;,
+    &#34;TCP_HRG_030_001&#34;,
+    &#34;TCP_HRG_031_001&#34;,
+    &#34;TCP_HRG_032_001&#34;,
+    &#34;TCP_HRG_033_001&#34;,
+    &#34;TCP_HRG_034_001&#34;,
+    &#34;TCP_HRG_035_001&#34;,
+    &#34;TCP_VFR_016_001&#34;,
+    &#34;TCP_VFR_017_001&#34;,
+    &#34;TCP_VFR_018_001&#34;,
+    &#34;TCP_VFR_019_001&#34;,
+    &#34;TCP_VFR_020_001&#34;,
+    &#34;TCP_VFR_021_001&#34;,
+    &#34;TCP_VFR_022_001&#34;,
+    &#34;TCP_VFR_023_001&#34;,
+    &#34;TCP_VFR_024_001&#34;,
+    &#34;TCP_VFR_025_001&#34;,
+    &#34;TCP_VFR_026_001&#34;,
+    &#34;TCP_VFR_027_001&#34;,
+    &#34;TCP_VFR_028_001&#34;,
+    &#34;TCP_VFR_029_001&#34;,
+    &#34;TCP_VFR_030_001&#34;,
+    &#34;TCP_VFR_031_001&#34;,
+    &#34;TCP_VFR_032_001&#34;,
+    &#34;TCP_VFR_033_001&#34;,
+    &#34;TCP_VFR_034_001&#34;,
+    &#34;TCP_VFR_035_001&#34;,
+    &#34;TCP_VFR_036_001&#34;,
+    &#34;TCP_VFR_037_001&#34;,
+    &#34;TCP_VFR_038_001&#34;,
+    &#34;TCP_VFR_039_001&#34;,
+    &#34;TCP_VFR_040_001&#34;,
+    &#34;TCP_VFR_041_001&#34;,
+    &#34;TCP_VFR_042_001&#34;,
+    &#34;TCP_VFR_043_001&#34;,
+    &#34;TCP_VFR_044_001&#34;,
+    &#34;TCP_VFR_045_001&#34;,
+    &#34;TCP_VFR_046_001&#34;,
+    &#34;TCP_VFR_047_001&#34;,
+]
+
+PARAMETERS_UNITS = {
+    &#34;JAX_VFR_002_001&#34;: &#34;g&#34;,
+    &#34;JAX_VFR_003_001&#34;: &#34;g&#34;,
+    &#34;JAX_VFR_006_001&#34;: &#34;g&#34;,
+    &#34;JAX_VFR_007_001&#34;: &#34;g&#34;,
+    &#34;JAX_VFR_010_001&#34;: &#34;g&#34;,
+    &#34;JAX_VFR_011_001&#34;: &#34;g&#34;,
+    &#34;JAX_VFR_018_001&#34;: &#34;min&#34;,
+    &#34;JAX_VFR_020_001&#34;: &#34;Hours&#34;,
+    &#34;JAX_VFR_022_001&#34;: &#34;Hours&#34;,
+    &#34;JAX_VFR_023_001&#34;: &#34;Hours&#34;,
+    &#34;JAX_VFR_024_001&#34;: &#34;Hours&#34;,
+    &#34;JAX_VFR_026_001&#34;: &#34;cm&#34;,
+    &#34;JAX_VFR_032_001&#34;: &#34;mm&#34;,
+    &#34;JAX_VFR_036_001&#34;: &#34;g&#34;,
+    &#34;JAX_VFR_037_001&#34;: &#34;g&#34;,
+    &#34;JAX_HRG_001_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_002_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_003_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_004_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_005_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_006_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_007_001&#34;: &#34;min&#34;,
+    &#34;JAX_HRG_009_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_011_001&#34;: &#34;min&#34;,
+    &#34;JAX_HRG_015_001&#34;: &#34;Hours&#34;,
+    &#34;JAX_HRG_016_001&#34;: &#34;Hours&#34;,
+    &#34;JAX_HRG_017_001&#34;: &#34;Hours&#34;,
+    &#34;JAX_HRG_018_001&#34;: &#34;C&#34;,
+    &#34;JAX_HRG_020_001&#34;: &#34;%&#34;,
+    &#34;JAX_HRG_021_001&#34;: &#34;%&#34;,
+    &#34;JAX_HRG_029_001&#34;: &#34;cm&#34;,
+    &#34;JAX_FOR_001_001&#34;: &#34;s&#34;,
+    &#34;JAX_FOR_002_001&#34;: &#34;s&#34;,
+    &#34;JAX_FOR_009_001&#34;: &#34;ul&#34;,
+    &#34;JAX_FOR_013_001&#34;: &#34;mm&#34;,
+    &#34;JAX_FOR_017_001&#34;: &#34;min&#34;,
+    &#34;HRWL_VFR_002_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_003_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_005_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_008_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_009_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_011_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_014_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_015_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_017_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_021_001&#34;: &#34;min&#34;,
+    &#34;HRWL_VFR_023_001&#34;: &#34;Hours&#34;,
+    &#34;HRWL_VFR_025_001&#34;: &#34;Hours&#34;,
+    &#34;HRWL_VFR_026_001&#34;: &#34;Hours&#34;,
+    &#34;HRWL_VFR_028_001&#34;: &#34;cm&#34;,
+    &#34;HRWL_VFR_034_001&#34;: &#34;mm&#34;,
+    &#34;HRWL_VFR_038_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_039_001&#34;: &#34;g&#34;,
+    &#34;HRWL_FOR_001_001&#34;: &#34;s&#34;,
+    &#34;HRWL_FOR_002_001&#34;: &#34;s&#34;,
+    &#34;HRWL_FOR_009_001&#34;: &#34;ul&#34;,
+    &#34;HRWL_FOR_013_001&#34;: &#34;mm&#34;,
+    &#34;HRWL_FOR_017_001&#34;: &#34;min&#34;,
+    &#34;HRWL_FOR_025_001&#34;: &#34;s&#34;,
+    &#34;HRWL_FOR_026_001&#34;: &#34;s&#34;,
+    &#34;HRWL_FOR_027_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_001_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_002_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_009_001&#34;: &#34;ul&#34;,
+    &#34;BCM_FOR_013_001&#34;: &#34;mm&#34;,
+    &#34;BCM_FOR_017_001&#34;: &#34;min&#34;,
+    &#34;BCM_FOR_025_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_026_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_027_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_028_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_029_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_001_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_002_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_003_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_004_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_005_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_006_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_007_001&#34;: &#34;min&#34;,
+    &#34;UCD_HRG_009_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_011_001&#34;: &#34;min&#34;,
+    &#34;UCD_HRG_015_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_HRG_016_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_HRG_017_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_HRG_018_001&#34;: &#34;C&#34;,
+    &#34;UCD_HRG_020_001&#34;: &#34;%&#34;,
+    &#34;UCD_HRG_021_001&#34;: &#34;%&#34;,
+    &#34;UCD_HRG_029_001&#34;: &#34;cm&#34;,
+    &#34;UCD_VFR_004_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_009_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_014_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_005_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_010_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_015_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_021_001&#34;: &#34;min&#34;,
+    &#34;UCD_VFR_023_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_VFR_025_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_VFR_026_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_VFR_027_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_VFR_029_001&#34;: &#34;cm&#34;,
+    &#34;UCD_VFR_035_001&#34;: &#34;mm&#34;,
+    &#34;UCD_VFR_039_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_040_001&#34;: &#34;g&#34;,
+    &#34;TCP_HRG_001_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_002_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_003_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_004_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_005_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_006_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_007_001&#34;: &#34;min&#34;,
+    &#34;TCP_HRG_009_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_011_001&#34;: &#34;min&#34;,
+    &#34;TCP_HRG_015_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_HRG_016_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_HRG_017_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_HRG_018_001&#34;: &#34;C&#34;,
+    &#34;TCP_HRG_020_001&#34;: &#34;%&#34;,
+    &#34;TCP_HRG_021_001&#34;: &#34;%&#34;,
+    &#34;TCP_HRG_029_001&#34;: &#34;cm&#34;,
+    &#34;TCP_VFR_004_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_009_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_014_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_005_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_010_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_015_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_021_001&#34;: &#34;min&#34;,
+    &#34;TCP_VFR_023_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_VFR_025_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_VFR_026_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_VFR_027_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_VFR_029_001&#34;: &#34;cm&#34;,
+    &#34;TCP_VFR_035_001&#34;: &#34;mm&#34;,
+    &#34;TCP_VFR_039_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_040_001&#34;: &#34;g&#34;,
+}
+
+
+class PainDataCsvToXml(luigi.Task):
+    name = &#34;IMPC_Pain_Data_CSV_to_XML_Transformer&#34;
+    pain_csv_raw_data_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def output(self):
+        return ImpcConfig().get_target(f&#34;{self.output_path}/pain-xml/&#34;)
+
+    def run(self):
+        file_name = os.path.basename(self.pain_csv_raw_data_path)
+        centre = str(file_name).split(&#34;_&#34;)[0]
+        centre_id = CENTRE_ID_MAP[centre]
+        pipeline_id = CENTRE_PIPELINE_MAP[centre]
+        project_id = CENTRE_PROJECT_MAP[centre]
+        procedure = str(file_name).split(&#34;_&#34;)[1]
+        procedure_stable_id = CENTRE_PROCEDURE_MAP[centre][procedure]
+        exp_id_prefix = f&#34;{centre}_{procedure_stable_id}&#34;
+        with open(self.pain_csv_raw_data_path) as csv_file:
+            csv_dict_reader = csv.DictReader(csv_file)
+            centre_procedure_set_tag: Element = etree.Element(
+                &#34;centreProcedureSet&#34;,
+                xmlns=&#34;http://www.mousephenotype.org/dcc/exportlibrary/datastructure/core/procedure&#34;,
+            )
+            centre_tag = etree.Element(
+                &#34;centre&#34;, centreID=centre_id, pipeline=pipeline_id, project=project_id
+            )
+            centre_procedure_set_tag.append(centre_tag)
+            row_index = 1
+            for row in csv_dict_reader:
+                specimen_id = row[&#34;Animal name&#34;]
+                if specimen_id is None or specimen_id == &#34;&#34;:
+                    continue
+                experiment_id = f&#34;{exp_id_prefix}_{specimen_id}_{row_index}&#34;
+                # TODO parse different date formats
+                date_of_experiment = row[&#34;Date of experiment&#34;].replace(&#34;/&#34;, &#34;-&#34;)
+                row_index += 1
+
+                experiment_tag: Element = etree.Element(
+                    &#34;experiment&#34;,
+                    experimentID=experiment_id,
+                    dateOfExperiment=date_of_experiment,
+                )
+                centre_tag.append(experiment_tag)
+
+                specimen_tag: Element = etree.Element(&#34;specimenID&#34;)
+                specimen_tag.text = specimen_id
+                experiment_tag.append(specimen_tag)
+                procedure_tag: Element = etree.Element(
+                    &#34;procedure&#34;, procedureID=procedure_stable_id
+                )
+                experiment_tag.append(procedure_tag)
+                parameter_columns = list(row.keys())[12:]
+                parameter_tags = {}
+                for parameter_col_name in parameter_columns:
+                    if &#34;-&#34; in parameter_col_name:
+                        col_name_parts = parameter_col_name.split(&#34;-INCREMENT:&#34;)
+                        parameter_stable_id = col_name_parts[0]
+                        increment_value = col_name_parts[1]
+                    else:
+                        parameter_stable_id = parameter_col_name
+                        increment_value = 0
+                    parameter_value = row[parameter_col_name]
+                    if parameter_value is None or parameter_value == &#34;&#34;:
+                        continue
+                    parameter_unit = (
+                        PARAMETERS_UNITS[parameter_stable_id]
+                        if parameter_stable_id in PARAMETERS_UNITS
+                        else None
+                    )
+                    if parameter_stable_id not in parameter_tags:
+                        parameter_tag: Element = etree.Element(&#34;dummmy&#34;)
+                        if parameter_stable_id in SIMPLE_PARAMETERS:
+                            parameter_tag = etree.Element(
+                                &#34;simpleParameter&#34;, parameterID=parameter_stable_id
+                            )
+                        elif parameter_stable_id in SERIES_PARAMETERS:
+                            parameter_tag = etree.Element(
+                                &#34;seriesParameter&#34;, parameterID=parameter_stable_id
+                            )
+                        elif parameter_stable_id in METADATA_PARAMETERS:
+                            parameter_tag = etree.Element(
+                                &#34;procedureMetadata&#34;, parameterID=parameter_stable_id
+                            )
+                        else:
+                            print(parameter_stable_id)
+                            raise Exception
+                        parameter_tags[parameter_stable_id] = parameter_tag
+                        procedure_tag.append(parameter_tag)
+                    else:
+                        parameter_tag = parameter_tags[parameter_stable_id]
+                    if parameter_unit:
+                        parameter_tag.attrib[&#34;unit&#34;] = parameter_unit
+                    value_tag: Element = etree.Element(&#34;value&#34;)
+                    if parameter_stable_id in SERIES_PARAMETERS:
+                        value_tag.attrib[&#34;incrementValue&#34;] = str(increment_value)
+                    value_tag.text = parameter_value
+                    parameter_tag.append(value_tag)
+        full_tree: ElementTree = etree.ElementTree(centre_procedure_set_tag)
+        f = open(&#34;test.xml&#34;, &#34;ab&#34;)
+        f.write(etree.tostring(centre_procedure_set_tag, pretty_print=True))
+        f.close()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml"><code class="flex name class">
+<span>class <span class="ident">PainDataCsvToXml</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is the base class of all Luigi Tasks, the base unit of work in Luigi.</p>
+<p>A Luigi Task describes a unit or work.</p>
+<p>The key methods of a Task, which must be implemented in a subclass are:</p>
+<ul>
+<li>:py:meth:<code>run</code> - the computation done by this task.</li>
+<li>:py:meth:<code>requires</code> - the list of Tasks that this Task depends on.</li>
+<li>:py:meth:<code>output</code> - the output :py:class:<code>Target</code> that this Task creates.</li>
+</ul>
+<p>Each :py:class:<code>~luigi.Parameter</code> of the Task should be declared as members:</p>
+<div class="admonition code">
+<p class="admonition-title">Code:&ensp;python</p>
+<p>class MyTask(luigi.Task):
+count = luigi.IntParameter()
+second_param = luigi.Parameter()</p>
+</div>
+<p>In addition to any declared properties and methods, there are a few
+non-declared properties, which are created by the :py:class:<code>Register</code>
+metaclass:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PainDataCsvToXml(luigi.Task):
+    name = &#34;IMPC_Pain_Data_CSV_to_XML_Transformer&#34;
+    pain_csv_raw_data_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def output(self):
+        return ImpcConfig().get_target(f&#34;{self.output_path}/pain-xml/&#34;)
+
+    def run(self):
+        file_name = os.path.basename(self.pain_csv_raw_data_path)
+        centre = str(file_name).split(&#34;_&#34;)[0]
+        centre_id = CENTRE_ID_MAP[centre]
+        pipeline_id = CENTRE_PIPELINE_MAP[centre]
+        project_id = CENTRE_PROJECT_MAP[centre]
+        procedure = str(file_name).split(&#34;_&#34;)[1]
+        procedure_stable_id = CENTRE_PROCEDURE_MAP[centre][procedure]
+        exp_id_prefix = f&#34;{centre}_{procedure_stable_id}&#34;
+        with open(self.pain_csv_raw_data_path) as csv_file:
+            csv_dict_reader = csv.DictReader(csv_file)
+            centre_procedure_set_tag: Element = etree.Element(
+                &#34;centreProcedureSet&#34;,
+                xmlns=&#34;http://www.mousephenotype.org/dcc/exportlibrary/datastructure/core/procedure&#34;,
+            )
+            centre_tag = etree.Element(
+                &#34;centre&#34;, centreID=centre_id, pipeline=pipeline_id, project=project_id
+            )
+            centre_procedure_set_tag.append(centre_tag)
+            row_index = 1
+            for row in csv_dict_reader:
+                specimen_id = row[&#34;Animal name&#34;]
+                if specimen_id is None or specimen_id == &#34;&#34;:
+                    continue
+                experiment_id = f&#34;{exp_id_prefix}_{specimen_id}_{row_index}&#34;
+                # TODO parse different date formats
+                date_of_experiment = row[&#34;Date of experiment&#34;].replace(&#34;/&#34;, &#34;-&#34;)
+                row_index += 1
+
+                experiment_tag: Element = etree.Element(
+                    &#34;experiment&#34;,
+                    experimentID=experiment_id,
+                    dateOfExperiment=date_of_experiment,
+                )
+                centre_tag.append(experiment_tag)
+
+                specimen_tag: Element = etree.Element(&#34;specimenID&#34;)
+                specimen_tag.text = specimen_id
+                experiment_tag.append(specimen_tag)
+                procedure_tag: Element = etree.Element(
+                    &#34;procedure&#34;, procedureID=procedure_stable_id
+                )
+                experiment_tag.append(procedure_tag)
+                parameter_columns = list(row.keys())[12:]
+                parameter_tags = {}
+                for parameter_col_name in parameter_columns:
+                    if &#34;-&#34; in parameter_col_name:
+                        col_name_parts = parameter_col_name.split(&#34;-INCREMENT:&#34;)
+                        parameter_stable_id = col_name_parts[0]
+                        increment_value = col_name_parts[1]
+                    else:
+                        parameter_stable_id = parameter_col_name
+                        increment_value = 0
+                    parameter_value = row[parameter_col_name]
+                    if parameter_value is None or parameter_value == &#34;&#34;:
+                        continue
+                    parameter_unit = (
+                        PARAMETERS_UNITS[parameter_stable_id]
+                        if parameter_stable_id in PARAMETERS_UNITS
+                        else None
+                    )
+                    if parameter_stable_id not in parameter_tags:
+                        parameter_tag: Element = etree.Element(&#34;dummmy&#34;)
+                        if parameter_stable_id in SIMPLE_PARAMETERS:
+                            parameter_tag = etree.Element(
+                                &#34;simpleParameter&#34;, parameterID=parameter_stable_id
+                            )
+                        elif parameter_stable_id in SERIES_PARAMETERS:
+                            parameter_tag = etree.Element(
+                                &#34;seriesParameter&#34;, parameterID=parameter_stable_id
+                            )
+                        elif parameter_stable_id in METADATA_PARAMETERS:
+                            parameter_tag = etree.Element(
+                                &#34;procedureMetadata&#34;, parameterID=parameter_stable_id
+                            )
+                        else:
+                            print(parameter_stable_id)
+                            raise Exception
+                        parameter_tags[parameter_stable_id] = parameter_tag
+                        procedure_tag.append(parameter_tag)
+                    else:
+                        parameter_tag = parameter_tags[parameter_stable_id]
+                    if parameter_unit:
+                        parameter_tag.attrib[&#34;unit&#34;] = parameter_unit
+                    value_tag: Element = etree.Element(&#34;value&#34;)
+                    if parameter_stable_id in SERIES_PARAMETERS:
+                        value_tag.attrib[&#34;incrementValue&#34;] = str(increment_value)
+                    value_tag.text = parameter_value
+                    parameter_tag.append(value_tag)
+        full_tree: ElementTree = etree.ElementTree(centre_procedure_set_tag)
+        f = open(&#34;test.xml&#34;, &#34;ab&#34;)
+        f.write(etree.tostring(centre_procedure_set_tag, pretty_print=True))
+        f.close()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.pain_csv_raw_data_path"><code class="name">var <span class="ident">pain_csv_raw_data_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    return ImpcConfig().get_target(f&#34;{self.output_path}/pain-xml/&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.run"><code class="name flex">
+<span>def <span class="ident">run</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The task run method, to be overridden in a subclass.</p>
+<p>See :ref:<code>Task.run</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def run(self):
+    file_name = os.path.basename(self.pain_csv_raw_data_path)
+    centre = str(file_name).split(&#34;_&#34;)[0]
+    centre_id = CENTRE_ID_MAP[centre]
+    pipeline_id = CENTRE_PIPELINE_MAP[centre]
+    project_id = CENTRE_PROJECT_MAP[centre]
+    procedure = str(file_name).split(&#34;_&#34;)[1]
+    procedure_stable_id = CENTRE_PROCEDURE_MAP[centre][procedure]
+    exp_id_prefix = f&#34;{centre}_{procedure_stable_id}&#34;
+    with open(self.pain_csv_raw_data_path) as csv_file:
+        csv_dict_reader = csv.DictReader(csv_file)
+        centre_procedure_set_tag: Element = etree.Element(
+            &#34;centreProcedureSet&#34;,
+            xmlns=&#34;http://www.mousephenotype.org/dcc/exportlibrary/datastructure/core/procedure&#34;,
+        )
+        centre_tag = etree.Element(
+            &#34;centre&#34;, centreID=centre_id, pipeline=pipeline_id, project=project_id
+        )
+        centre_procedure_set_tag.append(centre_tag)
+        row_index = 1
+        for row in csv_dict_reader:
+            specimen_id = row[&#34;Animal name&#34;]
+            if specimen_id is None or specimen_id == &#34;&#34;:
+                continue
+            experiment_id = f&#34;{exp_id_prefix}_{specimen_id}_{row_index}&#34;
+            # TODO parse different date formats
+            date_of_experiment = row[&#34;Date of experiment&#34;].replace(&#34;/&#34;, &#34;-&#34;)
+            row_index += 1
+
+            experiment_tag: Element = etree.Element(
+                &#34;experiment&#34;,
+                experimentID=experiment_id,
+                dateOfExperiment=date_of_experiment,
+            )
+            centre_tag.append(experiment_tag)
+
+            specimen_tag: Element = etree.Element(&#34;specimenID&#34;)
+            specimen_tag.text = specimen_id
+            experiment_tag.append(specimen_tag)
+            procedure_tag: Element = etree.Element(
+                &#34;procedure&#34;, procedureID=procedure_stable_id
+            )
+            experiment_tag.append(procedure_tag)
+            parameter_columns = list(row.keys())[12:]
+            parameter_tags = {}
+            for parameter_col_name in parameter_columns:
+                if &#34;-&#34; in parameter_col_name:
+                    col_name_parts = parameter_col_name.split(&#34;-INCREMENT:&#34;)
+                    parameter_stable_id = col_name_parts[0]
+                    increment_value = col_name_parts[1]
+                else:
+                    parameter_stable_id = parameter_col_name
+                    increment_value = 0
+                parameter_value = row[parameter_col_name]
+                if parameter_value is None or parameter_value == &#34;&#34;:
+                    continue
+                parameter_unit = (
+                    PARAMETERS_UNITS[parameter_stable_id]
+                    if parameter_stable_id in PARAMETERS_UNITS
+                    else None
+                )
+                if parameter_stable_id not in parameter_tags:
+                    parameter_tag: Element = etree.Element(&#34;dummmy&#34;)
+                    if parameter_stable_id in SIMPLE_PARAMETERS:
+                        parameter_tag = etree.Element(
+                            &#34;simpleParameter&#34;, parameterID=parameter_stable_id
+                        )
+                    elif parameter_stable_id in SERIES_PARAMETERS:
+                        parameter_tag = etree.Element(
+                            &#34;seriesParameter&#34;, parameterID=parameter_stable_id
+                        )
+                    elif parameter_stable_id in METADATA_PARAMETERS:
+                        parameter_tag = etree.Element(
+                            &#34;procedureMetadata&#34;, parameterID=parameter_stable_id
+                        )
+                    else:
+                        print(parameter_stable_id)
+                        raise Exception
+                    parameter_tags[parameter_stable_id] = parameter_tag
+                    procedure_tag.append(parameter_tag)
+                else:
+                    parameter_tag = parameter_tags[parameter_stable_id]
+                if parameter_unit:
+                    parameter_tag.attrib[&#34;unit&#34;] = parameter_unit
+                value_tag: Element = etree.Element(&#34;value&#34;)
+                if parameter_stable_id in SERIES_PARAMETERS:
+                    value_tag.attrib[&#34;incrementValue&#34;] = str(increment_value)
+                value_tag.text = parameter_value
+                parameter_tag.append(value_tag)
+    full_tree: ElementTree = etree.ElementTree(centre_procedure_set_tag)
+    f = open(&#34;test.xml&#34;, &#34;ab&#34;)
+    f.write(etree.tostring(centre_procedure_set_tag, pretty_print=True))
+    f.close()</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<header>
+<div style="max-width: 300px, text-align: center">
+<img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
+</div>
+</header>
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="impc_etl.jobs.transform" href="index.html">impc_etl.jobs.transform</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml" href="#impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml">PainDataCsvToXml</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.name" href="#impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.output" href="#impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.output_path" href="#impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.pain_csv_raw_data_path" href="#impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.pain_csv_raw_data_path">pain_csv_raw_data_path</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.run" href="#impc_etl.jobs.transform.pain_data_csv_to_xml_transformer.PainDataCsvToXml.run">run</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p><span></span></p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

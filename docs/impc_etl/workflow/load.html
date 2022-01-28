@@ -1,0 +1,3607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>impc_etl.workflow.load API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>impc_etl.workflow.load</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import os
+
+from luigi.contrib.webhdfs import WebHdfsClient
+from luigi.task import flatten
+
+from impc_etl.jobs.extract.gene_production_status_extractor import (
+    GeneProductionStatusExtractor,
+)
+from impc_etl.jobs.transform.experiment_bw_age import ExperimentBWAgeProcessor
+from impc_etl.jobs.transform.experiment_parameter_derivator import (
+    ExperimentParameterDerivator,
+    LineParameterDerivator,
+)
+from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
+from impc_etl.workflow.normalization import *
+
+
+class ObservationsMapper(SparkSubmitTask):
+    name = &#34;IMPC_Observations_Mapper&#34;
+    app = &#34;impc_etl/jobs/load/observation_mapper.py&#34;
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            ExperimentBWAgeProcessor(),
+            LineParameterDerivator(),
+            MouseNormalizer(
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                dcc_xml_path=self.dcc_xml_path,
+                output_path=self.output_path,
+            ),
+            EmbryoNormalizer(
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                dcc_xml_path=self.dcc_xml_path,
+                output_path=self.output_path,
+            ),
+            MGIAlleleExtractor(
+                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
+            ),
+            ColonyCleaner(
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+            ),
+            ImpressExtractor(output_path=self.output_path),
+            MGIStrainExtractor(
+                mgi_input_path=self.mgi_strain_input_path, output_path=self.output_path
+            ),
+            OntologyMetadataExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}observations_parquet&#34;)
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.input()[3].path,
+            self.input()[4].path,
+            self.input()[5].path,
+            self.input()[6].path,
+            self.input()[7].path,
+            self.input()[8].path,
+            self.output().path,
+        ]
+
+
+class PipelineCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_PipelineCore_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/pipeline_mapper.py&#34;
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            ImpressExtractor(output_path=self.output_path),
+            ObservationsMapper(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+            ),
+            OntologyExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}pipeline_core_parquet&#34;)
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.emap_emapa_csv_path,
+            self.emapa_metadata_csv_path,
+            self.ma_metadata_csv_path,
+            self.output().path,
+        ]
+
+
+class StatsResultsCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_StatsResults_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/stats_results_mapper.py&#34;
+
+    openstats_jdbc_connection = luigi.Parameter()
+    openstats_db_user = luigi.Parameter()
+    openstats_db_password = luigi.Parameter()
+    data_release_version = luigi.Parameter()
+    use_cache = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
+    threei_stats_results_csv = luigi.Parameter()
+    raw_data_in_output = luigi.Parameter()
+    extract_windowed_data = luigi.Parameter()
+    http_proxy = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            OpenStatsExtractor(
+                openstats_jdbc_connection=self.openstats_jdbc_connection,
+                openstats_db_user=self.openstats_db_user,
+                openstats_db_password=self.openstats_db_password,
+                data_release_version=self.data_release_version,
+                use_cache=self.use_cache,
+                extract_windowed_data=self.extract_windowed_data,
+                raw_data_in_output=self.raw_data_in_output,
+                output_path=self.output_path,
+            ),
+            ObservationsMapper(),
+            OntologyExtractor(),
+            ImpressExtractor(output_path=self.output_path),
+            PipelineCoreLoader(),
+            AlleleExtractor(
+                imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
+            ),
+            MPChooserLoader(
+                http_proxy=self.http_proxy,
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        if self.extract_windowed_data == &#34;true&#34;:
+            return ImpcConfig().get_target(
+                f&#34;{self.output_path}stats_results_parquet_with_windowing&#34;
+            )
+        else:
+            return ImpcConfig().get_target(f&#34;{self.output_path}stats_results_parquet&#34;)
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.input()[3].path,
+            self.input()[4].path,
+            self.input()[5].path,
+            self.input()[6].path,
+            self.threei_stats_results_csv,
+            self.mpath_metadata_csv_path,
+            self.raw_data_in_output,
+            self.extract_windowed_data,
+            self.output().path,
+        ]
+
+
+class GenotypePhenotypeCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_StatsResults_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/genotype_phenotype_mapper.py&#34;
+    openstats_jdbc_connection = luigi.Parameter()
+    openstats_db_user = luigi.Parameter()
+    openstats_db_password = luigi.Parameter()
+    data_release_version = luigi.Parameter()
+    use_cache = luigi.Parameter()
+    raw_data_in_output = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
+    threei_stats_results_csv = luigi.Parameter()
+    http_proxy = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            StatsResultsCoreLoader(),
+            OntologyExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}genotype_phenotype_parquet&#34;)
+
+    def app_options(self):
+        return [self.input()[0].path, self.input()[1].path, self.output().path]
+
+
+class MGIPhenotypeCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_MGI_Phenotype_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/mgi_phenotype_mapper.py&#34;
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_gene_pheno_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            MGIGenePhenoExtractor(
+                mgi_input_path=self.mgi_gene_pheno_input_path,
+                output_path=self.output_path,
+            ),
+            MGIAlleleExtractor(
+                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
+            ),
+            OntologyExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}mgi_phenotype_parquet&#34;)
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.output().path,
+        ]
+
+
+class MPChooserLoader(SparkSubmitTask):
+    name = &#34;IMPC_MP_Chooser_Mapper&#34;
+    app = &#34;impc_etl/jobs/load/mp_chooser_mapper.py&#34;
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    http_proxy = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            PipelineCoreLoader(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            )
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}mp_chooser.json&#34;)
+
+    def app_options(self):
+        return [self.input()[0].path, self.http_proxy, self.output().path]
+
+
+class MPCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_MGI_Phenotype_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/mp_mapper.py&#34;
+
+    ontology_input_path = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    impc_search_index_csv_path = luigi.Parameter()
+    mp_relation_augmented_metadata_table_csv_path = luigi.Parameter()
+    mp_hp_matches_csv_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            OntologyExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+            ObservationsMapper(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+            ),
+            PipelineCoreLoader(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}mp_parquet&#34;)
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.impc_search_index_csv_path,
+            self.mp_relation_augmented_metadata_table_csv_path,
+            self.mp_hp_matches_csv_path,
+            self.output().path,
+        ]
+
+
+class GeneCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_Gene_Core_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/gene_mapper.py&#34;
+    mgi_homologene_input_path = luigi.Parameter()
+    mgi_mrk_list_input_path = luigi.Parameter()
+    embryo_data_json_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    dcc_xml_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    openstats_jdbc_connection = luigi.Parameter()
+    openstats_db_user = luigi.Parameter()
+    openstats_db_password = luigi.Parameter()
+    data_release_version = luigi.Parameter()
+    use_cache = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
+    threei_stats_results_csv = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    http_proxy = luigi.Parameter()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}gene_core_parquet&#34;)
+
+    def requires(self):
+        return [
+            GeneExtractor(
+                imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
+            ),
+            AlleleExtractor(
+                imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
+            ),
+            MGIHomoloGeneExtractor(
+                mgi_input_path=self.mgi_homologene_input_path,
+                output_path=self.output_path,
+            ),
+            MGIMrkListExtractor(
+                mgi_input_path=self.mgi_mrk_list_input_path,
+                output_path=self.output_path,
+            ),
+            ObservationsMapper(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+            ),
+            StatsResultsCoreLoader(),
+            OntologyMetadataExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+            GeneProductionStatusExtractor(),
+        ]
+
+    def complete(self):
+        outputs = flatten(self.output())
+        success = all(map(lambda output: output.exists(), outputs))
+        gene_production_status_task = self.input()[-1]
+        if success:
+            if ImpcConfig.deploy_mode not in [&#34;local&#34;, &#34;client&#34;]:
+                gene_production_status_task.remove(skip_trash=True)
+            else:
+                gene_production_status_task.remove()
+        return success
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.input()[3].path,
+            self.embryo_data_json_path,
+            self.input()[4].path,
+            self.input()[5].path,
+            self.input()[6].path,
+            self.input()[7].path,
+            self.output().path,
+        ]
+
+
+class ImpcImagesCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_Images_Core_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/impc_images_mapper.py&#34;
+    omero_ids_csv_path = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}impc_images_core_parquet&#34;)
+
+    def requires(self):
+        return [
+            ObservationsMapper(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+            ),
+            PipelineCoreLoader(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            ),
+        ]
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.omero_ids_csv_path,
+            self.output().path,
+        ]
+
+
+class Parquet2Solr(SparkSubmitTask):
+    app = &#34;lib/parquet2solr-03082021.jar&#34;
+    name = &#34;Parquet2Solr&#34;
+    input_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+    parquet_name = &#34;&#34;
+    solr_core_name = &#34;&#34;
+    parquet_solr_map = {
+        &#34;observations_parquet&#34;: &#34;experiment&#34;,
+        &#34;stats_results_parquet&#34;: &#34;statistical-result&#34;,
+        &#34;stats_results_parquet_with_windowing&#34;: &#34;statistical-result&#34;,
+        &#34;stats_results_parquet_raw_data&#34;: &#34;statistical-raw-data&#34;,
+        &#34;stats_results_parquet_with_windowing_raw_data&#34;: &#34;statistical-raw-data&#34;,
+        &#34;gene_core_parquet&#34;: &#34;gene&#34;,
+        &#34;imits_allele2_raw_parquet&#34;: &#34;allele2&#34;,
+        &#34;genotype_phenotype_parquet&#34;: &#34;genotype-phenotype&#34;,
+        &#34;mp_parquet&#34;: &#34;mp&#34;,
+        &#34;pipeline_core_parquet&#34;: &#34;pipeline&#34;,
+        &#34;product_report_raw_parquet&#34;: &#34;product&#34;,
+        &#34;mgi_phenotype_parquet&#34;: &#34;mgi-phenotype&#34;,
+        &#34;impc_images_core_parquet&#34;: &#34;impc_images&#34;,
+    }
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        self.parquet_name = os.path.basename(os.path.normpath(self.input_path))
+        self.solr_core_name = self.parquet_solr_map[self.parquet_name]
+        return ImpcConfig().get_target(f&#34;{self.output_path}{self.solr_core_name}_index&#34;)
+
+    def app_options(self):
+        return [
+            self.app,
+            self.input_path,
+            self.solr_core_name,
+            &#34;false&#34;,
+            &#34;false&#34;,
+            self.output().path,
+        ]
+
+
+class ImpcCopyIndexParts(luigi.Task):
+    remote_host = luigi.Parameter()
+    parquet_path = luigi.Parameter()
+    solr_path = luigi.Parameter()
+    local_path = luigi.Parameter()
+    solr_core_name = &#34;&#34;
+
+    def requires(self):
+        return [
+            Parquet2Solr(input_path=self.parquet_path, output_path=self.solr_path),
+        ]
+
+    def output(self):
+        self.local_path = (
+            self.local_path + &#34;/&#34;
+            if not self.local_path.endswith(&#34;/&#34;)
+            else self.local_path
+        )
+        self.solr_core_name = os.path.basename(os.path.normpath(self.input()[0].path))
+        return luigi.LocalTarget(f&#34;{self.local_path}{self.solr_core_name}&#34;)
+
+    def run(self):
+        client = WebHdfsClient()
+        client.download(self.input()[0].path, self.output().path, n_threads=50)
+
+
+class ImpcMergeIndex(LSFExternalJobTask):
+    remote_host = luigi.Parameter()
+    parquet_path = luigi.Parameter()
+    solr_path = luigi.Parameter()
+    local_path = luigi.Parameter()
+    solr_core_name = &#34;&#34;
+    n_cpu_flag = 56
+    shared_tmp_dir = &#34;/scratch&#34;
+    memory_flag = &#34;210000&#34;
+    resource_flag = &#34;mem=16000&#34;
+    extra_bsub_args = &#34;-R span[ptile=14]&#34;
+    runtime_flag = 240
+
+    def init_local(self):
+        self.app = (
+            &#34;java -jar -Xmx209920m &#34;
+            + os.getcwd()
+            + &#34;/lib/impc-merge-index-1.0-SNAPSHOT.jar&#34;
+        )
+
+    def requires(self):
+        return [
+            ImpcCopyIndexParts(
+                remote_host=self.remote_host,
+                parquet_path=self.parquet_path,
+                solr_path=self.solr_path,
+                local_path=self.local_path,
+            ),
+        ]
+
+    def output(self):
+        self.local_path = (
+            self.local_path + &#34;/&#34;
+            if not self.local_path.endswith(&#34;/&#34;)
+            else self.local_path
+        )
+        self.solr_core_name = os.path.basename(os.path.normpath(self.input()[0].path))
+        return luigi.LocalTarget(f&#34;{self.local_path}{self.solr_core_name}_merged&#34;)
+
+    def app_options(self):
+        return [self.output().path, self.input()[0].path + &#34;/*/data/index/&#34;]</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="impc_etl.workflow.load.GeneCoreLoader"><code class="flex name class">
+<span>class <span class="ident">GeneCoreLoader</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Template task for running a Spark job</p>
+<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
+<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
+for more information</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class GeneCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_Gene_Core_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/gene_mapper.py&#34;
+    mgi_homologene_input_path = luigi.Parameter()
+    mgi_mrk_list_input_path = luigi.Parameter()
+    embryo_data_json_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    dcc_xml_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    openstats_jdbc_connection = luigi.Parameter()
+    openstats_db_user = luigi.Parameter()
+    openstats_db_password = luigi.Parameter()
+    data_release_version = luigi.Parameter()
+    use_cache = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
+    threei_stats_results_csv = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    http_proxy = luigi.Parameter()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}gene_core_parquet&#34;)
+
+    def requires(self):
+        return [
+            GeneExtractor(
+                imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
+            ),
+            AlleleExtractor(
+                imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
+            ),
+            MGIHomoloGeneExtractor(
+                mgi_input_path=self.mgi_homologene_input_path,
+                output_path=self.output_path,
+            ),
+            MGIMrkListExtractor(
+                mgi_input_path=self.mgi_mrk_list_input_path,
+                output_path=self.output_path,
+            ),
+            ObservationsMapper(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+            ),
+            StatsResultsCoreLoader(),
+            OntologyMetadataExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+            GeneProductionStatusExtractor(),
+        ]
+
+    def complete(self):
+        outputs = flatten(self.output())
+        success = all(map(lambda output: output.exists(), outputs))
+        gene_production_status_task = self.input()[-1]
+        if success:
+            if ImpcConfig.deploy_mode not in [&#34;local&#34;, &#34;client&#34;]:
+                gene_production_status_task.remove(skip_trash=True)
+            else:
+                gene_production_status_task.remove()
+        return success
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.input()[3].path,
+            self.embryo_data_json_path,
+            self.input()[4].path,
+            self.input()[5].path,
+            self.input()[6].path,
+            self.input()[7].path,
+            self.output().path,
+        ]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.app"><code class="name">var <span class="ident">app</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.data_release_version"><code class="name">var <span class="ident">data_release_version</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.emap_emapa_csv_path"><code class="name">var <span class="ident">emap_emapa_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.emapa_metadata_csv_path"><code class="name">var <span class="ident">emapa_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.embryo_data_json_path"><code class="name">var <span class="ident">embryo_data_json_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.http_proxy"><code class="name">var <span class="ident">http_proxy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.imits_alleles_tsv_path"><code class="name">var <span class="ident">imits_alleles_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.ma_metadata_csv_path"><code class="name">var <span class="ident">ma_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.mgi_allele_input_path"><code class="name">var <span class="ident">mgi_allele_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.mgi_homologene_input_path"><code class="name">var <span class="ident">mgi_homologene_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.mgi_mrk_list_input_path"><code class="name">var <span class="ident">mgi_mrk_list_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.mgi_strain_input_path"><code class="name">var <span class="ident">mgi_strain_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.mpath_metadata_csv_path"><code class="name">var <span class="ident">mpath_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.ontology_input_path"><code class="name">var <span class="ident">ontology_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.openstats_db_password"><code class="name">var <span class="ident">openstats_db_password</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.openstats_db_user"><code class="name">var <span class="ident">openstats_db_user</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.openstats_jdbc_connection"><code class="name">var <span class="ident">openstats_jdbc_connection</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.threei_stats_results_csv"><code class="name">var <span class="ident">threei_stats_results_csv</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.use_cache"><code class="name">var <span class="ident">use_cache</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [
+        self.input()[0].path,
+        self.input()[1].path,
+        self.input()[2].path,
+        self.input()[3].path,
+        self.embryo_data_json_path,
+        self.input()[4].path,
+        self.input()[5].path,
+        self.input()[6].path,
+        self.input()[7].path,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.complete"><code class="name flex">
+<span>def <span class="ident">complete</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>If the task has any outputs, return <code>True</code> if all outputs exist.
+Otherwise, return <code>False</code>.</p>
+<p>However, you may freely override this method with custom logic.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def complete(self):
+    outputs = flatten(self.output())
+    success = all(map(lambda output: output.exists(), outputs))
+    gene_production_status_task = self.input()[-1]
+    if success:
+        if ImpcConfig.deploy_mode not in [&#34;local&#34;, &#34;client&#34;]:
+            gene_production_status_task.remove(skip_trash=True)
+        else:
+            gene_production_status_task.remove()
+    return success</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    return ImpcConfig().get_target(f&#34;{self.output_path}gene_core_parquet&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.GeneCoreLoader.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return [
+        GeneExtractor(
+            imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
+        ),
+        AlleleExtractor(
+            imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
+        ),
+        MGIHomoloGeneExtractor(
+            mgi_input_path=self.mgi_homologene_input_path,
+            output_path=self.output_path,
+        ),
+        MGIMrkListExtractor(
+            mgi_input_path=self.mgi_mrk_list_input_path,
+            output_path=self.output_path,
+        ),
+        ObservationsMapper(
+            dcc_xml_path=self.dcc_xml_path,
+            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+            output_path=self.output_path,
+            mgi_strain_input_path=self.mgi_strain_input_path,
+            mgi_allele_input_path=self.mgi_allele_input_path,
+            ontology_input_path=self.ontology_input_path,
+        ),
+        StatsResultsCoreLoader(),
+        OntologyMetadataExtractor(
+            ontology_input_path=self.ontology_input_path,
+            output_path=self.output_path,
+        ),
+        GeneProductionStatusExtractor(),
+    ]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader"><code class="flex name class">
+<span>class <span class="ident">GenotypePhenotypeCoreLoader</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Template task for running a Spark job</p>
+<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
+<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
+for more information</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class GenotypePhenotypeCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_StatsResults_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/genotype_phenotype_mapper.py&#34;
+    openstats_jdbc_connection = luigi.Parameter()
+    openstats_db_user = luigi.Parameter()
+    openstats_db_password = luigi.Parameter()
+    data_release_version = luigi.Parameter()
+    use_cache = luigi.Parameter()
+    raw_data_in_output = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
+    threei_stats_results_csv = luigi.Parameter()
+    http_proxy = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            StatsResultsCoreLoader(),
+            OntologyExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}genotype_phenotype_parquet&#34;)
+
+    def app_options(self):
+        return [self.input()[0].path, self.input()[1].path, self.output().path]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.app"><code class="name">var <span class="ident">app</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.data_release_version"><code class="name">var <span class="ident">data_release_version</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.emap_emapa_csv_path"><code class="name">var <span class="ident">emap_emapa_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.emapa_metadata_csv_path"><code class="name">var <span class="ident">emapa_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.http_proxy"><code class="name">var <span class="ident">http_proxy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.imits_alleles_tsv_path"><code class="name">var <span class="ident">imits_alleles_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.ma_metadata_csv_path"><code class="name">var <span class="ident">ma_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.mgi_allele_input_path"><code class="name">var <span class="ident">mgi_allele_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.mgi_strain_input_path"><code class="name">var <span class="ident">mgi_strain_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.mpath_metadata_csv_path"><code class="name">var <span class="ident">mpath_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.ontology_input_path"><code class="name">var <span class="ident">ontology_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.openstats_db_password"><code class="name">var <span class="ident">openstats_db_password</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.openstats_db_user"><code class="name">var <span class="ident">openstats_db_user</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.openstats_jdbc_connection"><code class="name">var <span class="ident">openstats_jdbc_connection</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.raw_data_in_output"><code class="name">var <span class="ident">raw_data_in_output</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.threei_stats_results_csv"><code class="name">var <span class="ident">threei_stats_results_csv</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.use_cache"><code class="name">var <span class="ident">use_cache</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [self.input()[0].path, self.input()[1].path, self.output().path]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    return ImpcConfig().get_target(f&#34;{self.output_path}genotype_phenotype_parquet&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return [
+        StatsResultsCoreLoader(),
+        OntologyExtractor(
+            ontology_input_path=self.ontology_input_path,
+            output_path=self.output_path,
+        ),
+    ]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcCopyIndexParts"><code class="flex name class">
+<span>class <span class="ident">ImpcCopyIndexParts</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is the base class of all Luigi Tasks, the base unit of work in Luigi.</p>
+<p>A Luigi Task describes a unit or work.</p>
+<p>The key methods of a Task, which must be implemented in a subclass are:</p>
+<ul>
+<li>:py:meth:<code>run</code> - the computation done by this task.</li>
+<li>:py:meth:<code>requires</code> - the list of Tasks that this Task depends on.</li>
+<li>:py:meth:<code>output</code> - the output :py:class:<code>Target</code> that this Task creates.</li>
+</ul>
+<p>Each :py:class:<code>~luigi.Parameter</code> of the Task should be declared as members:</p>
+<div class="admonition code">
+<p class="admonition-title">Code:&ensp;python</p>
+<p>class MyTask(luigi.Task):
+count = luigi.IntParameter()
+second_param = luigi.Parameter()</p>
+</div>
+<p>In addition to any declared properties and methods, there are a few
+non-declared properties, which are created by the :py:class:<code>Register</code>
+metaclass:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ImpcCopyIndexParts(luigi.Task):
+    remote_host = luigi.Parameter()
+    parquet_path = luigi.Parameter()
+    solr_path = luigi.Parameter()
+    local_path = luigi.Parameter()
+    solr_core_name = &#34;&#34;
+
+    def requires(self):
+        return [
+            Parquet2Solr(input_path=self.parquet_path, output_path=self.solr_path),
+        ]
+
+    def output(self):
+        self.local_path = (
+            self.local_path + &#34;/&#34;
+            if not self.local_path.endswith(&#34;/&#34;)
+            else self.local_path
+        )
+        self.solr_core_name = os.path.basename(os.path.normpath(self.input()[0].path))
+        return luigi.LocalTarget(f&#34;{self.local_path}{self.solr_core_name}&#34;)
+
+    def run(self):
+        client = WebHdfsClient()
+        client.download(self.input()[0].path, self.output().path, n_threads=50)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.workflow.load.ImpcCopyIndexParts.local_path"><code class="name">var <span class="ident">local_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcCopyIndexParts.parquet_path"><code class="name">var <span class="ident">parquet_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcCopyIndexParts.remote_host"><code class="name">var <span class="ident">remote_host</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcCopyIndexParts.solr_core_name"><code class="name">var <span class="ident">solr_core_name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcCopyIndexParts.solr_path"><code class="name">var <span class="ident">solr_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.workflow.load.ImpcCopyIndexParts.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.local_path = (
+        self.local_path + &#34;/&#34;
+        if not self.local_path.endswith(&#34;/&#34;)
+        else self.local_path
+    )
+    self.solr_core_name = os.path.basename(os.path.normpath(self.input()[0].path))
+    return luigi.LocalTarget(f&#34;{self.local_path}{self.solr_core_name}&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcCopyIndexParts.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return [
+        Parquet2Solr(input_path=self.parquet_path, output_path=self.solr_path),
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcCopyIndexParts.run"><code class="name flex">
+<span>def <span class="ident">run</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The task run method, to be overridden in a subclass.</p>
+<p>See :ref:<code>Task.run</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def run(self):
+    client = WebHdfsClient()
+    client.download(self.input()[0].path, self.output().path, n_threads=50)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader"><code class="flex name class">
+<span>class <span class="ident">ImpcImagesCoreLoader</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Template task for running a Spark job</p>
+<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
+<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
+for more information</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ImpcImagesCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_Images_Core_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/impc_images_mapper.py&#34;
+    omero_ids_csv_path = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}impc_images_core_parquet&#34;)
+
+    def requires(self):
+        return [
+            ObservationsMapper(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+            ),
+            PipelineCoreLoader(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            ),
+        ]
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.omero_ids_csv_path,
+            self.output().path,
+        ]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.app"><code class="name">var <span class="ident">app</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.emap_emapa_csv_path"><code class="name">var <span class="ident">emap_emapa_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.emapa_metadata_csv_path"><code class="name">var <span class="ident">emapa_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.imits_alleles_tsv_path"><code class="name">var <span class="ident">imits_alleles_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.ma_metadata_csv_path"><code class="name">var <span class="ident">ma_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.mgi_allele_input_path"><code class="name">var <span class="ident">mgi_allele_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.mgi_strain_input_path"><code class="name">var <span class="ident">mgi_strain_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.omero_ids_csv_path"><code class="name">var <span class="ident">omero_ids_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.ontology_input_path"><code class="name">var <span class="ident">ontology_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [
+        self.input()[0].path,
+        self.input()[1].path,
+        self.omero_ids_csv_path,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    return ImpcConfig().get_target(f&#34;{self.output_path}impc_images_core_parquet&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcImagesCoreLoader.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return [
+        ObservationsMapper(
+            dcc_xml_path=self.dcc_xml_path,
+            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+            output_path=self.output_path,
+            mgi_strain_input_path=self.mgi_strain_input_path,
+            mgi_allele_input_path=self.mgi_allele_input_path,
+            ontology_input_path=self.ontology_input_path,
+        ),
+        PipelineCoreLoader(
+            dcc_xml_path=self.dcc_xml_path,
+            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+            imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+            output_path=self.output_path,
+            mgi_strain_input_path=self.mgi_strain_input_path,
+            mgi_allele_input_path=self.mgi_allele_input_path,
+            ontology_input_path=self.ontology_input_path,
+            emap_emapa_csv_path=self.emap_emapa_csv_path,
+            emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+            ma_metadata_csv_path=self.ma_metadata_csv_path,
+        ),
+    ]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex"><code class="flex name class">
+<span>class <span class="ident">ImpcMergeIndex</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Takes care of uploading and executing an LSF job</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ImpcMergeIndex(LSFExternalJobTask):
+    remote_host = luigi.Parameter()
+    parquet_path = luigi.Parameter()
+    solr_path = luigi.Parameter()
+    local_path = luigi.Parameter()
+    solr_core_name = &#34;&#34;
+    n_cpu_flag = 56
+    shared_tmp_dir = &#34;/scratch&#34;
+    memory_flag = &#34;210000&#34;
+    resource_flag = &#34;mem=16000&#34;
+    extra_bsub_args = &#34;-R span[ptile=14]&#34;
+    runtime_flag = 240
+
+    def init_local(self):
+        self.app = (
+            &#34;java -jar -Xmx209920m &#34;
+            + os.getcwd()
+            + &#34;/lib/impc-merge-index-1.0-SNAPSHOT.jar&#34;
+        )
+
+    def requires(self):
+        return [
+            ImpcCopyIndexParts(
+                remote_host=self.remote_host,
+                parquet_path=self.parquet_path,
+                solr_path=self.solr_path,
+                local_path=self.local_path,
+            ),
+        ]
+
+    def output(self):
+        self.local_path = (
+            self.local_path + &#34;/&#34;
+            if not self.local_path.endswith(&#34;/&#34;)
+            else self.local_path
+        )
+        self.solr_core_name = os.path.basename(os.path.normpath(self.input()[0].path))
+        return luigi.LocalTarget(f&#34;{self.local_path}{self.solr_core_name}_merged&#34;)
+
+    def app_options(self):
+        return [self.output().path, self.input()[0].path + &#34;/*/data/index/&#34;]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="impc_etl.shared.lsf_external_app_task.LSFExternalJobTask" href="../shared/lsf_external_app_task.html#impc_etl.shared.lsf_external_app_task.LSFExternalJobTask">LSFExternalJobTask</a></li>
+<li>luigi.contrib.lsf.LSFJobTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.extra_bsub_args"><code class="name">var <span class="ident">extra_bsub_args</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.local_path"><code class="name">var <span class="ident">local_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.memory_flag"><code class="name">var <span class="ident">memory_flag</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.n_cpu_flag"><code class="name">var <span class="ident">n_cpu_flag</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.parquet_path"><code class="name">var <span class="ident">parquet_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.remote_host"><code class="name">var <span class="ident">remote_host</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.resource_flag"><code class="name">var <span class="ident">resource_flag</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.runtime_flag"><code class="name">var <span class="ident">runtime_flag</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.shared_tmp_dir"><code class="name">var <span class="ident">shared_tmp_dir</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.solr_core_name"><code class="name">var <span class="ident">solr_core_name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.solr_path"><code class="name">var <span class="ident">solr_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [self.output().path, self.input()[0].path + &#34;/*/data/index/&#34;]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.init_local"><code class="name flex">
+<span>def <span class="ident">init_local</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Implement any work to setup any internal datastructure etc here.
+You can add extra input using the requires_local/input_local methods.
+Anything you set on the object will be pickled and available on the compute nodes.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init_local(self):
+    self.app = (
+        &#34;java -jar -Xmx209920m &#34;
+        + os.getcwd()
+        + &#34;/lib/impc-merge-index-1.0-SNAPSHOT.jar&#34;
+    )</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Parameter whose value is a <code>str</code>, and a base class for other parameter types.</p>
+<p>Parameters are objects set on the Task class level to make it possible to parameterize tasks.
+For instance:</p>
+<div class="admonition code">
+<p class="admonition-title">Code:&ensp;python</p>
+<p>class MyTask(luigi.Task):
+foo = luigi.Parameter()</p>
+<p>class RequiringTask(luigi.Task):
+def requires(self):
+return MyTask(foo="hello")</p>
+<pre><code>def run(self):
+    print(self.requires().foo)  # prints "hello"
+</code></pre>
+</div>
+<p>This makes it possible to instantiate multiple tasks, eg <code>MyTask(foo='bar')</code> and
+<code>MyTask(foo='baz')</code>. The task will then have the <code>foo</code> attribute set appropriately.</p>
+<p>When a task is instantiated, it will first use any argument as the value of the parameter, eg.
+if you instantiate <code>a = TaskA(x=44)</code> then <code>a.x == 44</code>. When the value is not provided, the
+value
+will be resolved in this order of falling priority:</p>
+<pre><code>* Any value provided on the command line:
+
+  - To the root task (eg. ``--param xyz``)
+
+  - Then to the class, using the qualified task name syntax (eg. ``--TaskA-param xyz``).
+
+* With ``[TASK_NAME]&gt;PARAM_NAME: &lt;serialized value&gt;`` syntax. See :ref:&lt;code&gt;ParamConfigIngestion&lt;/code&gt;
+
+* Any default value set using the &lt;code&gt;default&lt;/code&gt; flag.
+</code></pre>
+<p>Parameter objects may be reused, but you must then set the <code>positional=False</code> flag.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.local_path = (
+        self.local_path + &#34;/&#34;
+        if not self.local_path.endswith(&#34;/&#34;)
+        else self.local_path
+    )
+    self.solr_core_name = os.path.basename(os.path.normpath(self.input()[0].path))
+    return luigi.LocalTarget(f&#34;{self.local_path}{self.solr_core_name}_merged&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.ImpcMergeIndex.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return [
+        ImpcCopyIndexParts(
+            remote_host=self.remote_host,
+            parquet_path=self.parquet_path,
+            solr_path=self.solr_path,
+            local_path=self.local_path,
+        ),
+    ]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="impc_etl.workflow.load.MGIPhenotypeCoreLoader"><code class="flex name class">
+<span>class <span class="ident">MGIPhenotypeCoreLoader</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Template task for running a Spark job</p>
+<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
+<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
+for more information</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MGIPhenotypeCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_MGI_Phenotype_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/mgi_phenotype_mapper.py&#34;
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_gene_pheno_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            MGIGenePhenoExtractor(
+                mgi_input_path=self.mgi_gene_pheno_input_path,
+                output_path=self.output_path,
+            ),
+            MGIAlleleExtractor(
+                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
+            ),
+            OntologyExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}mgi_phenotype_parquet&#34;)
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.output().path,
+        ]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.workflow.load.MGIPhenotypeCoreLoader.app"><code class="name">var <span class="ident">app</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MGIPhenotypeCoreLoader.mgi_allele_input_path"><code class="name">var <span class="ident">mgi_allele_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MGIPhenotypeCoreLoader.mgi_gene_pheno_input_path"><code class="name">var <span class="ident">mgi_gene_pheno_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MGIPhenotypeCoreLoader.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MGIPhenotypeCoreLoader.ontology_input_path"><code class="name">var <span class="ident">ontology_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MGIPhenotypeCoreLoader.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.workflow.load.MGIPhenotypeCoreLoader.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [
+        self.input()[0].path,
+        self.input()[1].path,
+        self.input()[2].path,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.MGIPhenotypeCoreLoader.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    return ImpcConfig().get_target(f&#34;{self.output_path}mgi_phenotype_parquet&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.MGIPhenotypeCoreLoader.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return [
+        MGIGenePhenoExtractor(
+            mgi_input_path=self.mgi_gene_pheno_input_path,
+            output_path=self.output_path,
+        ),
+        MGIAlleleExtractor(
+            mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
+        ),
+        OntologyExtractor(
+            ontology_input_path=self.ontology_input_path,
+            output_path=self.output_path,
+        ),
+    ]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader"><code class="flex name class">
+<span>class <span class="ident">MPChooserLoader</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Template task for running a Spark job</p>
+<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
+<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
+for more information</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MPChooserLoader(SparkSubmitTask):
+    name = &#34;IMPC_MP_Chooser_Mapper&#34;
+    app = &#34;impc_etl/jobs/load/mp_chooser_mapper.py&#34;
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    http_proxy = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            PipelineCoreLoader(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            )
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}mp_chooser.json&#34;)
+
+    def app_options(self):
+        return [self.input()[0].path, self.http_proxy, self.output().path]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.workflow.load.MPChooserLoader.app"><code class="name">var <span class="ident">app</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.emap_emapa_csv_path"><code class="name">var <span class="ident">emap_emapa_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.emapa_metadata_csv_path"><code class="name">var <span class="ident">emapa_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.http_proxy"><code class="name">var <span class="ident">http_proxy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.imits_alleles_tsv_path"><code class="name">var <span class="ident">imits_alleles_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.ma_metadata_csv_path"><code class="name">var <span class="ident">ma_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.mgi_allele_input_path"><code class="name">var <span class="ident">mgi_allele_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.mgi_strain_input_path"><code class="name">var <span class="ident">mgi_strain_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.ontology_input_path"><code class="name">var <span class="ident">ontology_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.workflow.load.MPChooserLoader.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [self.input()[0].path, self.http_proxy, self.output().path]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    return ImpcConfig().get_target(f&#34;{self.output_path}mp_chooser.json&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.MPChooserLoader.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return [
+        PipelineCoreLoader(
+            dcc_xml_path=self.dcc_xml_path,
+            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+            imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+            output_path=self.output_path,
+            mgi_strain_input_path=self.mgi_strain_input_path,
+            mgi_allele_input_path=self.mgi_allele_input_path,
+            ontology_input_path=self.ontology_input_path,
+            emap_emapa_csv_path=self.emap_emapa_csv_path,
+            emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+            ma_metadata_csv_path=self.ma_metadata_csv_path,
+        )
+    ]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader"><code class="flex name class">
+<span>class <span class="ident">MPCoreLoader</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Template task for running a Spark job</p>
+<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
+<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
+for more information</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MPCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_MGI_Phenotype_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/mp_mapper.py&#34;
+
+    ontology_input_path = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    impc_search_index_csv_path = luigi.Parameter()
+    mp_relation_augmented_metadata_table_csv_path = luigi.Parameter()
+    mp_hp_matches_csv_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            OntologyExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+            ObservationsMapper(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+            ),
+            PipelineCoreLoader(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}mp_parquet&#34;)
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.impc_search_index_csv_path,
+            self.mp_relation_augmented_metadata_table_csv_path,
+            self.mp_hp_matches_csv_path,
+            self.output().path,
+        ]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.workflow.load.MPCoreLoader.app"><code class="name">var <span class="ident">app</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.emap_emapa_csv_path"><code class="name">var <span class="ident">emap_emapa_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.emapa_metadata_csv_path"><code class="name">var <span class="ident">emapa_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.imits_alleles_tsv_path"><code class="name">var <span class="ident">imits_alleles_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.impc_search_index_csv_path"><code class="name">var <span class="ident">impc_search_index_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.ma_metadata_csv_path"><code class="name">var <span class="ident">ma_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.mgi_allele_input_path"><code class="name">var <span class="ident">mgi_allele_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.mgi_strain_input_path"><code class="name">var <span class="ident">mgi_strain_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.mp_hp_matches_csv_path"><code class="name">var <span class="ident">mp_hp_matches_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.mp_relation_augmented_metadata_table_csv_path"><code class="name">var <span class="ident">mp_relation_augmented_metadata_table_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.ontology_input_path"><code class="name">var <span class="ident">ontology_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.workflow.load.MPCoreLoader.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [
+        self.input()[0].path,
+        self.input()[1].path,
+        self.input()[2].path,
+        self.impc_search_index_csv_path,
+        self.mp_relation_augmented_metadata_table_csv_path,
+        self.mp_hp_matches_csv_path,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    return ImpcConfig().get_target(f&#34;{self.output_path}mp_parquet&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.MPCoreLoader.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return [
+        OntologyExtractor(
+            ontology_input_path=self.ontology_input_path,
+            output_path=self.output_path,
+        ),
+        ObservationsMapper(
+            dcc_xml_path=self.dcc_xml_path,
+            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+            output_path=self.output_path,
+            mgi_strain_input_path=self.mgi_strain_input_path,
+            mgi_allele_input_path=self.mgi_allele_input_path,
+            ontology_input_path=self.ontology_input_path,
+        ),
+        PipelineCoreLoader(
+            dcc_xml_path=self.dcc_xml_path,
+            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+            imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+            output_path=self.output_path,
+            mgi_strain_input_path=self.mgi_strain_input_path,
+            mgi_allele_input_path=self.mgi_allele_input_path,
+            ontology_input_path=self.ontology_input_path,
+            emap_emapa_csv_path=self.emap_emapa_csv_path,
+            emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+            ma_metadata_csv_path=self.ma_metadata_csv_path,
+        ),
+    ]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="impc_etl.workflow.load.ObservationsMapper"><code class="flex name class">
+<span>class <span class="ident">ObservationsMapper</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Template task for running a Spark job</p>
+<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
+<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
+for more information</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ObservationsMapper(SparkSubmitTask):
+    name = &#34;IMPC_Observations_Mapper&#34;
+    app = &#34;impc_etl/jobs/load/observation_mapper.py&#34;
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            ExperimentBWAgeProcessor(),
+            LineParameterDerivator(),
+            MouseNormalizer(
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                dcc_xml_path=self.dcc_xml_path,
+                output_path=self.output_path,
+            ),
+            EmbryoNormalizer(
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                dcc_xml_path=self.dcc_xml_path,
+                output_path=self.output_path,
+            ),
+            MGIAlleleExtractor(
+                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
+            ),
+            ColonyCleaner(
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+            ),
+            ImpressExtractor(output_path=self.output_path),
+            MGIStrainExtractor(
+                mgi_input_path=self.mgi_strain_input_path, output_path=self.output_path
+            ),
+            OntologyMetadataExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}observations_parquet&#34;)
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.input()[3].path,
+            self.input()[4].path,
+            self.input()[5].path,
+            self.input()[6].path,
+            self.input()[7].path,
+            self.input()[8].path,
+            self.output().path,
+        ]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.workflow.load.ObservationsMapper.app"><code class="name">var <span class="ident">app</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ObservationsMapper.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ObservationsMapper.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ObservationsMapper.mgi_allele_input_path"><code class="name">var <span class="ident">mgi_allele_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ObservationsMapper.mgi_strain_input_path"><code class="name">var <span class="ident">mgi_strain_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ObservationsMapper.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ObservationsMapper.ontology_input_path"><code class="name">var <span class="ident">ontology_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.ObservationsMapper.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.workflow.load.ObservationsMapper.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [
+        self.input()[0].path,
+        self.input()[1].path,
+        self.input()[2].path,
+        self.input()[3].path,
+        self.input()[4].path,
+        self.input()[5].path,
+        self.input()[6].path,
+        self.input()[7].path,
+        self.input()[8].path,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.ObservationsMapper.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    return ImpcConfig().get_target(f&#34;{self.output_path}observations_parquet&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.ObservationsMapper.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return [
+        ExperimentBWAgeProcessor(),
+        LineParameterDerivator(),
+        MouseNormalizer(
+            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+            dcc_xml_path=self.dcc_xml_path,
+            output_path=self.output_path,
+        ),
+        EmbryoNormalizer(
+            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+            dcc_xml_path=self.dcc_xml_path,
+            output_path=self.output_path,
+        ),
+        MGIAlleleExtractor(
+            mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
+        ),
+        ColonyCleaner(
+            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+            output_path=self.output_path,
+        ),
+        ImpressExtractor(output_path=self.output_path),
+        MGIStrainExtractor(
+            mgi_input_path=self.mgi_strain_input_path, output_path=self.output_path
+        ),
+        OntologyMetadataExtractor(
+            ontology_input_path=self.ontology_input_path,
+            output_path=self.output_path,
+        ),
+    ]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="impc_etl.workflow.load.Parquet2Solr"><code class="flex name class">
+<span>class <span class="ident">Parquet2Solr</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Template task for running a Spark job</p>
+<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
+<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
+for more information</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Parquet2Solr(SparkSubmitTask):
+    app = &#34;lib/parquet2solr-03082021.jar&#34;
+    name = &#34;Parquet2Solr&#34;
+    input_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+    parquet_name = &#34;&#34;
+    solr_core_name = &#34;&#34;
+    parquet_solr_map = {
+        &#34;observations_parquet&#34;: &#34;experiment&#34;,
+        &#34;stats_results_parquet&#34;: &#34;statistical-result&#34;,
+        &#34;stats_results_parquet_with_windowing&#34;: &#34;statistical-result&#34;,
+        &#34;stats_results_parquet_raw_data&#34;: &#34;statistical-raw-data&#34;,
+        &#34;stats_results_parquet_with_windowing_raw_data&#34;: &#34;statistical-raw-data&#34;,
+        &#34;gene_core_parquet&#34;: &#34;gene&#34;,
+        &#34;imits_allele2_raw_parquet&#34;: &#34;allele2&#34;,
+        &#34;genotype_phenotype_parquet&#34;: &#34;genotype-phenotype&#34;,
+        &#34;mp_parquet&#34;: &#34;mp&#34;,
+        &#34;pipeline_core_parquet&#34;: &#34;pipeline&#34;,
+        &#34;product_report_raw_parquet&#34;: &#34;product&#34;,
+        &#34;mgi_phenotype_parquet&#34;: &#34;mgi-phenotype&#34;,
+        &#34;impc_images_core_parquet&#34;: &#34;impc_images&#34;,
+    }
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        self.parquet_name = os.path.basename(os.path.normpath(self.input_path))
+        self.solr_core_name = self.parquet_solr_map[self.parquet_name]
+        return ImpcConfig().get_target(f&#34;{self.output_path}{self.solr_core_name}_index&#34;)
+
+    def app_options(self):
+        return [
+            self.app,
+            self.input_path,
+            self.solr_core_name,
+            &#34;false&#34;,
+            &#34;false&#34;,
+            self.output().path,
+        ]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.workflow.load.Parquet2Solr.app"><code class="name">var <span class="ident">app</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.Parquet2Solr.input_path"><code class="name">var <span class="ident">input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.Parquet2Solr.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.Parquet2Solr.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.Parquet2Solr.parquet_name"><code class="name">var <span class="ident">parquet_name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.Parquet2Solr.parquet_solr_map"><code class="name">var <span class="ident">parquet_solr_map</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.Parquet2Solr.solr_core_name"><code class="name">var <span class="ident">solr_core_name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.workflow.load.Parquet2Solr.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [
+        self.app,
+        self.input_path,
+        self.solr_core_name,
+        &#34;false&#34;,
+        &#34;false&#34;,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.Parquet2Solr.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    self.parquet_name = os.path.basename(os.path.normpath(self.input_path))
+    self.solr_core_name = self.parquet_solr_map[self.parquet_name]
+    return ImpcConfig().get_target(f&#34;{self.output_path}{self.solr_core_name}_index&#34;)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader"><code class="flex name class">
+<span>class <span class="ident">PipelineCoreLoader</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Template task for running a Spark job</p>
+<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
+<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
+for more information</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PipelineCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_PipelineCore_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/pipeline_mapper.py&#34;
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            ImpressExtractor(output_path=self.output_path),
+            ObservationsMapper(
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+            ),
+            OntologyExtractor(
+                ontology_input_path=self.ontology_input_path,
+                output_path=self.output_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}pipeline_core_parquet&#34;)
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.emap_emapa_csv_path,
+            self.emapa_metadata_csv_path,
+            self.ma_metadata_csv_path,
+            self.output().path,
+        ]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.app"><code class="name">var <span class="ident">app</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.emap_emapa_csv_path"><code class="name">var <span class="ident">emap_emapa_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.emapa_metadata_csv_path"><code class="name">var <span class="ident">emapa_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.imits_alleles_tsv_path"><code class="name">var <span class="ident">imits_alleles_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.ma_metadata_csv_path"><code class="name">var <span class="ident">ma_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.mgi_allele_input_path"><code class="name">var <span class="ident">mgi_allele_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.mgi_strain_input_path"><code class="name">var <span class="ident">mgi_strain_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.ontology_input_path"><code class="name">var <span class="ident">ontology_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [
+        self.input()[0].path,
+        self.input()[1].path,
+        self.input()[2].path,
+        self.emap_emapa_csv_path,
+        self.emapa_metadata_csv_path,
+        self.ma_metadata_csv_path,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    return ImpcConfig().get_target(f&#34;{self.output_path}pipeline_core_parquet&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.PipelineCoreLoader.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return [
+        ImpressExtractor(output_path=self.output_path),
+        ObservationsMapper(
+            dcc_xml_path=self.dcc_xml_path,
+            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+            output_path=self.output_path,
+            mgi_strain_input_path=self.mgi_strain_input_path,
+            mgi_allele_input_path=self.mgi_allele_input_path,
+            ontology_input_path=self.ontology_input_path,
+        ),
+        OntologyExtractor(
+            ontology_input_path=self.ontology_input_path,
+            output_path=self.output_path,
+        ),
+    ]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader"><code class="flex name class">
+<span>class <span class="ident">StatsResultsCoreLoader</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Template task for running a Spark job</p>
+<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
+<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
+for more information</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class StatsResultsCoreLoader(SparkSubmitTask):
+    name = &#34;IMPC_StatsResults_Loader&#34;
+    app = &#34;impc_etl/jobs/load/solr/stats_results_mapper.py&#34;
+
+    openstats_jdbc_connection = luigi.Parameter()
+    openstats_db_user = luigi.Parameter()
+    openstats_db_password = luigi.Parameter()
+    data_release_version = luigi.Parameter()
+    use_cache = luigi.Parameter()
+    dcc_xml_path = luigi.Parameter()
+    imits_colonies_tsv_path = luigi.Parameter()
+    imits_alleles_tsv_path = luigi.Parameter()
+    mgi_allele_input_path = luigi.Parameter()
+    mgi_strain_input_path = luigi.Parameter()
+    ontology_input_path = luigi.Parameter()
+    emap_emapa_csv_path = luigi.Parameter()
+    emapa_metadata_csv_path = luigi.Parameter()
+    ma_metadata_csv_path = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
+    threei_stats_results_csv = luigi.Parameter()
+    raw_data_in_output = luigi.Parameter()
+    extract_windowed_data = luigi.Parameter()
+    http_proxy = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return [
+            OpenStatsExtractor(
+                openstats_jdbc_connection=self.openstats_jdbc_connection,
+                openstats_db_user=self.openstats_db_user,
+                openstats_db_password=self.openstats_db_password,
+                data_release_version=self.data_release_version,
+                use_cache=self.use_cache,
+                extract_windowed_data=self.extract_windowed_data,
+                raw_data_in_output=self.raw_data_in_output,
+                output_path=self.output_path,
+            ),
+            ObservationsMapper(),
+            OntologyExtractor(),
+            ImpressExtractor(output_path=self.output_path),
+            PipelineCoreLoader(),
+            AlleleExtractor(
+                imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
+            ),
+            MPChooserLoader(
+                http_proxy=self.http_proxy,
+                dcc_xml_path=self.dcc_xml_path,
+                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+                output_path=self.output_path,
+                mgi_strain_input_path=self.mgi_strain_input_path,
+                mgi_allele_input_path=self.mgi_allele_input_path,
+                ontology_input_path=self.ontology_input_path,
+                emap_emapa_csv_path=self.emap_emapa_csv_path,
+                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+                ma_metadata_csv_path=self.ma_metadata_csv_path,
+            ),
+        ]
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        if self.extract_windowed_data == &#34;true&#34;:
+            return ImpcConfig().get_target(
+                f&#34;{self.output_path}stats_results_parquet_with_windowing&#34;
+            )
+        else:
+            return ImpcConfig().get_target(f&#34;{self.output_path}stats_results_parquet&#34;)
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.input()[3].path,
+            self.input()[4].path,
+            self.input()[5].path,
+            self.input()[6].path,
+            self.threei_stats_results_csv,
+            self.mpath_metadata_csv_path,
+            self.raw_data_in_output,
+            self.extract_windowed_data,
+            self.output().path,
+        ]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.app"><code class="name">var <span class="ident">app</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.data_release_version"><code class="name">var <span class="ident">data_release_version</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.emap_emapa_csv_path"><code class="name">var <span class="ident">emap_emapa_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.emapa_metadata_csv_path"><code class="name">var <span class="ident">emapa_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.extract_windowed_data"><code class="name">var <span class="ident">extract_windowed_data</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.http_proxy"><code class="name">var <span class="ident">http_proxy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.imits_alleles_tsv_path"><code class="name">var <span class="ident">imits_alleles_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.ma_metadata_csv_path"><code class="name">var <span class="ident">ma_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.mgi_allele_input_path"><code class="name">var <span class="ident">mgi_allele_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.mgi_strain_input_path"><code class="name">var <span class="ident">mgi_strain_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.mpath_metadata_csv_path"><code class="name">var <span class="ident">mpath_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.ontology_input_path"><code class="name">var <span class="ident">ontology_input_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.openstats_db_password"><code class="name">var <span class="ident">openstats_db_password</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.openstats_db_user"><code class="name">var <span class="ident">openstats_db_user</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.openstats_jdbc_connection"><code class="name">var <span class="ident">openstats_jdbc_connection</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.raw_data_in_output"><code class="name">var <span class="ident">raw_data_in_output</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.threei_stats_results_csv"><code class="name">var <span class="ident">threei_stats_results_csv</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.use_cache"><code class="name">var <span class="ident">use_cache</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [
+        self.input()[0].path,
+        self.input()[1].path,
+        self.input()[2].path,
+        self.input()[3].path,
+        self.input()[4].path,
+        self.input()[5].path,
+        self.input()[6].path,
+        self.threei_stats_results_csv,
+        self.mpath_metadata_csv_path,
+        self.raw_data_in_output,
+        self.extract_windowed_data,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    if self.extract_windowed_data == &#34;true&#34;:
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}stats_results_parquet_with_windowing&#34;
+        )
+    else:
+        return ImpcConfig().get_target(f&#34;{self.output_path}stats_results_parquet&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.workflow.load.StatsResultsCoreLoader.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return [
+        OpenStatsExtractor(
+            openstats_jdbc_connection=self.openstats_jdbc_connection,
+            openstats_db_user=self.openstats_db_user,
+            openstats_db_password=self.openstats_db_password,
+            data_release_version=self.data_release_version,
+            use_cache=self.use_cache,
+            extract_windowed_data=self.extract_windowed_data,
+            raw_data_in_output=self.raw_data_in_output,
+            output_path=self.output_path,
+        ),
+        ObservationsMapper(),
+        OntologyExtractor(),
+        ImpressExtractor(output_path=self.output_path),
+        PipelineCoreLoader(),
+        AlleleExtractor(
+            imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
+        ),
+        MPChooserLoader(
+            http_proxy=self.http_proxy,
+            dcc_xml_path=self.dcc_xml_path,
+            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
+            imits_alleles_tsv_path=self.imits_alleles_tsv_path,
+            output_path=self.output_path,
+            mgi_strain_input_path=self.mgi_strain_input_path,
+            mgi_allele_input_path=self.mgi_allele_input_path,
+            ontology_input_path=self.ontology_input_path,
+            emap_emapa_csv_path=self.emap_emapa_csv_path,
+            emapa_metadata_csv_path=self.emapa_metadata_csv_path,
+            ma_metadata_csv_path=self.ma_metadata_csv_path,
+        ),
+    ]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<header>
+<div style="max-width: 300px, text-align: center">
+<img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
+</div>
+</header>
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="impc_etl.workflow" href="index.html">impc_etl.workflow</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.workflow.load.GeneCoreLoader" href="#impc_etl.workflow.load.GeneCoreLoader">GeneCoreLoader</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.app" href="#impc_etl.workflow.load.GeneCoreLoader.app">app</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.app_options" href="#impc_etl.workflow.load.GeneCoreLoader.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.complete" href="#impc_etl.workflow.load.GeneCoreLoader.complete">complete</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.data_release_version" href="#impc_etl.workflow.load.GeneCoreLoader.data_release_version">data_release_version</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.dcc_xml_path" href="#impc_etl.workflow.load.GeneCoreLoader.dcc_xml_path">dcc_xml_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.emap_emapa_csv_path" href="#impc_etl.workflow.load.GeneCoreLoader.emap_emapa_csv_path">emap_emapa_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.emapa_metadata_csv_path" href="#impc_etl.workflow.load.GeneCoreLoader.emapa_metadata_csv_path">emapa_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.embryo_data_json_path" href="#impc_etl.workflow.load.GeneCoreLoader.embryo_data_json_path">embryo_data_json_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.http_proxy" href="#impc_etl.workflow.load.GeneCoreLoader.http_proxy">http_proxy</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.imits_alleles_tsv_path" href="#impc_etl.workflow.load.GeneCoreLoader.imits_alleles_tsv_path">imits_alleles_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.imits_colonies_tsv_path" href="#impc_etl.workflow.load.GeneCoreLoader.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.ma_metadata_csv_path" href="#impc_etl.workflow.load.GeneCoreLoader.ma_metadata_csv_path">ma_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.mgi_allele_input_path" href="#impc_etl.workflow.load.GeneCoreLoader.mgi_allele_input_path">mgi_allele_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.mgi_homologene_input_path" href="#impc_etl.workflow.load.GeneCoreLoader.mgi_homologene_input_path">mgi_homologene_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.mgi_mrk_list_input_path" href="#impc_etl.workflow.load.GeneCoreLoader.mgi_mrk_list_input_path">mgi_mrk_list_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.mgi_strain_input_path" href="#impc_etl.workflow.load.GeneCoreLoader.mgi_strain_input_path">mgi_strain_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.mpath_metadata_csv_path" href="#impc_etl.workflow.load.GeneCoreLoader.mpath_metadata_csv_path">mpath_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.name" href="#impc_etl.workflow.load.GeneCoreLoader.name">name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.ontology_input_path" href="#impc_etl.workflow.load.GeneCoreLoader.ontology_input_path">ontology_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.openstats_db_password" href="#impc_etl.workflow.load.GeneCoreLoader.openstats_db_password">openstats_db_password</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.openstats_db_user" href="#impc_etl.workflow.load.GeneCoreLoader.openstats_db_user">openstats_db_user</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.openstats_jdbc_connection" href="#impc_etl.workflow.load.GeneCoreLoader.openstats_jdbc_connection">openstats_jdbc_connection</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.output" href="#impc_etl.workflow.load.GeneCoreLoader.output">output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.output_path" href="#impc_etl.workflow.load.GeneCoreLoader.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.requires" href="#impc_etl.workflow.load.GeneCoreLoader.requires">requires</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.threei_stats_results_csv" href="#impc_etl.workflow.load.GeneCoreLoader.threei_stats_results_csv">threei_stats_results_csv</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GeneCoreLoader.use_cache" href="#impc_etl.workflow.load.GeneCoreLoader.use_cache">use_cache</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader">GenotypePhenotypeCoreLoader</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.app" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.app">app</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.app_options" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.data_release_version" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.data_release_version">data_release_version</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.dcc_xml_path" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.dcc_xml_path">dcc_xml_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.emap_emapa_csv_path" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.emap_emapa_csv_path">emap_emapa_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.emapa_metadata_csv_path" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.emapa_metadata_csv_path">emapa_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.http_proxy" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.http_proxy">http_proxy</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.imits_alleles_tsv_path" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.imits_alleles_tsv_path">imits_alleles_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.imits_colonies_tsv_path" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.ma_metadata_csv_path" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.ma_metadata_csv_path">ma_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.mgi_allele_input_path" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.mgi_allele_input_path">mgi_allele_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.mgi_strain_input_path" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.mgi_strain_input_path">mgi_strain_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.mpath_metadata_csv_path" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.mpath_metadata_csv_path">mpath_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.name" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.name">name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.ontology_input_path" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.ontology_input_path">ontology_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.openstats_db_password" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.openstats_db_password">openstats_db_password</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.openstats_db_user" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.openstats_db_user">openstats_db_user</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.openstats_jdbc_connection" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.openstats_jdbc_connection">openstats_jdbc_connection</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.output" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.output">output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.output_path" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.raw_data_in_output" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.raw_data_in_output">raw_data_in_output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.requires" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.requires">requires</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.threei_stats_results_csv" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.threei_stats_results_csv">threei_stats_results_csv</a></code></li>
+<li><code><a title="impc_etl.workflow.load.GenotypePhenotypeCoreLoader.use_cache" href="#impc_etl.workflow.load.GenotypePhenotypeCoreLoader.use_cache">use_cache</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.workflow.load.ImpcCopyIndexParts" href="#impc_etl.workflow.load.ImpcCopyIndexParts">ImpcCopyIndexParts</a></code></h4>
+<ul class="two-column">
+<li><code><a title="impc_etl.workflow.load.ImpcCopyIndexParts.local_path" href="#impc_etl.workflow.load.ImpcCopyIndexParts.local_path">local_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcCopyIndexParts.output" href="#impc_etl.workflow.load.ImpcCopyIndexParts.output">output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcCopyIndexParts.parquet_path" href="#impc_etl.workflow.load.ImpcCopyIndexParts.parquet_path">parquet_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcCopyIndexParts.remote_host" href="#impc_etl.workflow.load.ImpcCopyIndexParts.remote_host">remote_host</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcCopyIndexParts.requires" href="#impc_etl.workflow.load.ImpcCopyIndexParts.requires">requires</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcCopyIndexParts.run" href="#impc_etl.workflow.load.ImpcCopyIndexParts.run">run</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcCopyIndexParts.solr_core_name" href="#impc_etl.workflow.load.ImpcCopyIndexParts.solr_core_name">solr_core_name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcCopyIndexParts.solr_path" href="#impc_etl.workflow.load.ImpcCopyIndexParts.solr_path">solr_path</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader" href="#impc_etl.workflow.load.ImpcImagesCoreLoader">ImpcImagesCoreLoader</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.app" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.app">app</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.app_options" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.dcc_xml_path" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.dcc_xml_path">dcc_xml_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.emap_emapa_csv_path" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.emap_emapa_csv_path">emap_emapa_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.emapa_metadata_csv_path" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.emapa_metadata_csv_path">emapa_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.imits_alleles_tsv_path" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.imits_alleles_tsv_path">imits_alleles_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.imits_colonies_tsv_path" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.ma_metadata_csv_path" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.ma_metadata_csv_path">ma_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.mgi_allele_input_path" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.mgi_allele_input_path">mgi_allele_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.mgi_strain_input_path" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.mgi_strain_input_path">mgi_strain_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.name" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.name">name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.omero_ids_csv_path" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.omero_ids_csv_path">omero_ids_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.ontology_input_path" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.ontology_input_path">ontology_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.output" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.output">output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.output_path" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcImagesCoreLoader.requires" href="#impc_etl.workflow.load.ImpcImagesCoreLoader.requires">requires</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.workflow.load.ImpcMergeIndex" href="#impc_etl.workflow.load.ImpcMergeIndex">ImpcMergeIndex</a></code></h4>
+<ul class="two-column">
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.app_options" href="#impc_etl.workflow.load.ImpcMergeIndex.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.extra_bsub_args" href="#impc_etl.workflow.load.ImpcMergeIndex.extra_bsub_args">extra_bsub_args</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.init_local" href="#impc_etl.workflow.load.ImpcMergeIndex.init_local">init_local</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.local_path" href="#impc_etl.workflow.load.ImpcMergeIndex.local_path">local_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.memory_flag" href="#impc_etl.workflow.load.ImpcMergeIndex.memory_flag">memory_flag</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.n_cpu_flag" href="#impc_etl.workflow.load.ImpcMergeIndex.n_cpu_flag">n_cpu_flag</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.output" href="#impc_etl.workflow.load.ImpcMergeIndex.output">output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.parquet_path" href="#impc_etl.workflow.load.ImpcMergeIndex.parquet_path">parquet_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.remote_host" href="#impc_etl.workflow.load.ImpcMergeIndex.remote_host">remote_host</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.requires" href="#impc_etl.workflow.load.ImpcMergeIndex.requires">requires</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.resource_flag" href="#impc_etl.workflow.load.ImpcMergeIndex.resource_flag">resource_flag</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.runtime_flag" href="#impc_etl.workflow.load.ImpcMergeIndex.runtime_flag">runtime_flag</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.shared_tmp_dir" href="#impc_etl.workflow.load.ImpcMergeIndex.shared_tmp_dir">shared_tmp_dir</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.solr_core_name" href="#impc_etl.workflow.load.ImpcMergeIndex.solr_core_name">solr_core_name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ImpcMergeIndex.solr_path" href="#impc_etl.workflow.load.ImpcMergeIndex.solr_path">solr_path</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.workflow.load.MGIPhenotypeCoreLoader" href="#impc_etl.workflow.load.MGIPhenotypeCoreLoader">MGIPhenotypeCoreLoader</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.workflow.load.MGIPhenotypeCoreLoader.app" href="#impc_etl.workflow.load.MGIPhenotypeCoreLoader.app">app</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MGIPhenotypeCoreLoader.app_options" href="#impc_etl.workflow.load.MGIPhenotypeCoreLoader.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MGIPhenotypeCoreLoader.mgi_allele_input_path" href="#impc_etl.workflow.load.MGIPhenotypeCoreLoader.mgi_allele_input_path">mgi_allele_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MGIPhenotypeCoreLoader.mgi_gene_pheno_input_path" href="#impc_etl.workflow.load.MGIPhenotypeCoreLoader.mgi_gene_pheno_input_path">mgi_gene_pheno_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MGIPhenotypeCoreLoader.name" href="#impc_etl.workflow.load.MGIPhenotypeCoreLoader.name">name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MGIPhenotypeCoreLoader.ontology_input_path" href="#impc_etl.workflow.load.MGIPhenotypeCoreLoader.ontology_input_path">ontology_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MGIPhenotypeCoreLoader.output" href="#impc_etl.workflow.load.MGIPhenotypeCoreLoader.output">output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MGIPhenotypeCoreLoader.output_path" href="#impc_etl.workflow.load.MGIPhenotypeCoreLoader.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MGIPhenotypeCoreLoader.requires" href="#impc_etl.workflow.load.MGIPhenotypeCoreLoader.requires">requires</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.workflow.load.MPChooserLoader" href="#impc_etl.workflow.load.MPChooserLoader">MPChooserLoader</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.app" href="#impc_etl.workflow.load.MPChooserLoader.app">app</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.app_options" href="#impc_etl.workflow.load.MPChooserLoader.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.dcc_xml_path" href="#impc_etl.workflow.load.MPChooserLoader.dcc_xml_path">dcc_xml_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.emap_emapa_csv_path" href="#impc_etl.workflow.load.MPChooserLoader.emap_emapa_csv_path">emap_emapa_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.emapa_metadata_csv_path" href="#impc_etl.workflow.load.MPChooserLoader.emapa_metadata_csv_path">emapa_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.http_proxy" href="#impc_etl.workflow.load.MPChooserLoader.http_proxy">http_proxy</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.imits_alleles_tsv_path" href="#impc_etl.workflow.load.MPChooserLoader.imits_alleles_tsv_path">imits_alleles_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.imits_colonies_tsv_path" href="#impc_etl.workflow.load.MPChooserLoader.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.ma_metadata_csv_path" href="#impc_etl.workflow.load.MPChooserLoader.ma_metadata_csv_path">ma_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.mgi_allele_input_path" href="#impc_etl.workflow.load.MPChooserLoader.mgi_allele_input_path">mgi_allele_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.mgi_strain_input_path" href="#impc_etl.workflow.load.MPChooserLoader.mgi_strain_input_path">mgi_strain_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.name" href="#impc_etl.workflow.load.MPChooserLoader.name">name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.ontology_input_path" href="#impc_etl.workflow.load.MPChooserLoader.ontology_input_path">ontology_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.output" href="#impc_etl.workflow.load.MPChooserLoader.output">output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.output_path" href="#impc_etl.workflow.load.MPChooserLoader.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPChooserLoader.requires" href="#impc_etl.workflow.load.MPChooserLoader.requires">requires</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.workflow.load.MPCoreLoader" href="#impc_etl.workflow.load.MPCoreLoader">MPCoreLoader</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.app" href="#impc_etl.workflow.load.MPCoreLoader.app">app</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.app_options" href="#impc_etl.workflow.load.MPCoreLoader.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.dcc_xml_path" href="#impc_etl.workflow.load.MPCoreLoader.dcc_xml_path">dcc_xml_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.emap_emapa_csv_path" href="#impc_etl.workflow.load.MPCoreLoader.emap_emapa_csv_path">emap_emapa_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.emapa_metadata_csv_path" href="#impc_etl.workflow.load.MPCoreLoader.emapa_metadata_csv_path">emapa_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.imits_alleles_tsv_path" href="#impc_etl.workflow.load.MPCoreLoader.imits_alleles_tsv_path">imits_alleles_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.imits_colonies_tsv_path" href="#impc_etl.workflow.load.MPCoreLoader.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.impc_search_index_csv_path" href="#impc_etl.workflow.load.MPCoreLoader.impc_search_index_csv_path">impc_search_index_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.ma_metadata_csv_path" href="#impc_etl.workflow.load.MPCoreLoader.ma_metadata_csv_path">ma_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.mgi_allele_input_path" href="#impc_etl.workflow.load.MPCoreLoader.mgi_allele_input_path">mgi_allele_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.mgi_strain_input_path" href="#impc_etl.workflow.load.MPCoreLoader.mgi_strain_input_path">mgi_strain_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.mp_hp_matches_csv_path" href="#impc_etl.workflow.load.MPCoreLoader.mp_hp_matches_csv_path">mp_hp_matches_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.mp_relation_augmented_metadata_table_csv_path" href="#impc_etl.workflow.load.MPCoreLoader.mp_relation_augmented_metadata_table_csv_path">mp_relation_augmented_metadata_table_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.name" href="#impc_etl.workflow.load.MPCoreLoader.name">name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.ontology_input_path" href="#impc_etl.workflow.load.MPCoreLoader.ontology_input_path">ontology_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.output" href="#impc_etl.workflow.load.MPCoreLoader.output">output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.output_path" href="#impc_etl.workflow.load.MPCoreLoader.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.MPCoreLoader.requires" href="#impc_etl.workflow.load.MPCoreLoader.requires">requires</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.workflow.load.ObservationsMapper" href="#impc_etl.workflow.load.ObservationsMapper">ObservationsMapper</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.workflow.load.ObservationsMapper.app" href="#impc_etl.workflow.load.ObservationsMapper.app">app</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ObservationsMapper.app_options" href="#impc_etl.workflow.load.ObservationsMapper.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ObservationsMapper.dcc_xml_path" href="#impc_etl.workflow.load.ObservationsMapper.dcc_xml_path">dcc_xml_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ObservationsMapper.imits_colonies_tsv_path" href="#impc_etl.workflow.load.ObservationsMapper.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ObservationsMapper.mgi_allele_input_path" href="#impc_etl.workflow.load.ObservationsMapper.mgi_allele_input_path">mgi_allele_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ObservationsMapper.mgi_strain_input_path" href="#impc_etl.workflow.load.ObservationsMapper.mgi_strain_input_path">mgi_strain_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ObservationsMapper.name" href="#impc_etl.workflow.load.ObservationsMapper.name">name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ObservationsMapper.ontology_input_path" href="#impc_etl.workflow.load.ObservationsMapper.ontology_input_path">ontology_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ObservationsMapper.output" href="#impc_etl.workflow.load.ObservationsMapper.output">output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ObservationsMapper.output_path" href="#impc_etl.workflow.load.ObservationsMapper.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.ObservationsMapper.requires" href="#impc_etl.workflow.load.ObservationsMapper.requires">requires</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.workflow.load.Parquet2Solr" href="#impc_etl.workflow.load.Parquet2Solr">Parquet2Solr</a></code></h4>
+<ul class="two-column">
+<li><code><a title="impc_etl.workflow.load.Parquet2Solr.app" href="#impc_etl.workflow.load.Parquet2Solr.app">app</a></code></li>
+<li><code><a title="impc_etl.workflow.load.Parquet2Solr.app_options" href="#impc_etl.workflow.load.Parquet2Solr.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.workflow.load.Parquet2Solr.input_path" href="#impc_etl.workflow.load.Parquet2Solr.input_path">input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.Parquet2Solr.name" href="#impc_etl.workflow.load.Parquet2Solr.name">name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.Parquet2Solr.output" href="#impc_etl.workflow.load.Parquet2Solr.output">output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.Parquet2Solr.output_path" href="#impc_etl.workflow.load.Parquet2Solr.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.Parquet2Solr.parquet_name" href="#impc_etl.workflow.load.Parquet2Solr.parquet_name">parquet_name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.Parquet2Solr.parquet_solr_map" href="#impc_etl.workflow.load.Parquet2Solr.parquet_solr_map">parquet_solr_map</a></code></li>
+<li><code><a title="impc_etl.workflow.load.Parquet2Solr.solr_core_name" href="#impc_etl.workflow.load.Parquet2Solr.solr_core_name">solr_core_name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.workflow.load.PipelineCoreLoader" href="#impc_etl.workflow.load.PipelineCoreLoader">PipelineCoreLoader</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.app" href="#impc_etl.workflow.load.PipelineCoreLoader.app">app</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.app_options" href="#impc_etl.workflow.load.PipelineCoreLoader.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.dcc_xml_path" href="#impc_etl.workflow.load.PipelineCoreLoader.dcc_xml_path">dcc_xml_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.emap_emapa_csv_path" href="#impc_etl.workflow.load.PipelineCoreLoader.emap_emapa_csv_path">emap_emapa_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.emapa_metadata_csv_path" href="#impc_etl.workflow.load.PipelineCoreLoader.emapa_metadata_csv_path">emapa_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.imits_alleles_tsv_path" href="#impc_etl.workflow.load.PipelineCoreLoader.imits_alleles_tsv_path">imits_alleles_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.imits_colonies_tsv_path" href="#impc_etl.workflow.load.PipelineCoreLoader.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.ma_metadata_csv_path" href="#impc_etl.workflow.load.PipelineCoreLoader.ma_metadata_csv_path">ma_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.mgi_allele_input_path" href="#impc_etl.workflow.load.PipelineCoreLoader.mgi_allele_input_path">mgi_allele_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.mgi_strain_input_path" href="#impc_etl.workflow.load.PipelineCoreLoader.mgi_strain_input_path">mgi_strain_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.name" href="#impc_etl.workflow.load.PipelineCoreLoader.name">name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.ontology_input_path" href="#impc_etl.workflow.load.PipelineCoreLoader.ontology_input_path">ontology_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.output" href="#impc_etl.workflow.load.PipelineCoreLoader.output">output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.output_path" href="#impc_etl.workflow.load.PipelineCoreLoader.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader.requires" href="#impc_etl.workflow.load.PipelineCoreLoader.requires">requires</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader" href="#impc_etl.workflow.load.StatsResultsCoreLoader">StatsResultsCoreLoader</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.app" href="#impc_etl.workflow.load.StatsResultsCoreLoader.app">app</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.app_options" href="#impc_etl.workflow.load.StatsResultsCoreLoader.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.data_release_version" href="#impc_etl.workflow.load.StatsResultsCoreLoader.data_release_version">data_release_version</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.dcc_xml_path" href="#impc_etl.workflow.load.StatsResultsCoreLoader.dcc_xml_path">dcc_xml_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.emap_emapa_csv_path" href="#impc_etl.workflow.load.StatsResultsCoreLoader.emap_emapa_csv_path">emap_emapa_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.emapa_metadata_csv_path" href="#impc_etl.workflow.load.StatsResultsCoreLoader.emapa_metadata_csv_path">emapa_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.extract_windowed_data" href="#impc_etl.workflow.load.StatsResultsCoreLoader.extract_windowed_data">extract_windowed_data</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.http_proxy" href="#impc_etl.workflow.load.StatsResultsCoreLoader.http_proxy">http_proxy</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.imits_alleles_tsv_path" href="#impc_etl.workflow.load.StatsResultsCoreLoader.imits_alleles_tsv_path">imits_alleles_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.imits_colonies_tsv_path" href="#impc_etl.workflow.load.StatsResultsCoreLoader.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.ma_metadata_csv_path" href="#impc_etl.workflow.load.StatsResultsCoreLoader.ma_metadata_csv_path">ma_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.mgi_allele_input_path" href="#impc_etl.workflow.load.StatsResultsCoreLoader.mgi_allele_input_path">mgi_allele_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.mgi_strain_input_path" href="#impc_etl.workflow.load.StatsResultsCoreLoader.mgi_strain_input_path">mgi_strain_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.mpath_metadata_csv_path" href="#impc_etl.workflow.load.StatsResultsCoreLoader.mpath_metadata_csv_path">mpath_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.name" href="#impc_etl.workflow.load.StatsResultsCoreLoader.name">name</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.ontology_input_path" href="#impc_etl.workflow.load.StatsResultsCoreLoader.ontology_input_path">ontology_input_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.openstats_db_password" href="#impc_etl.workflow.load.StatsResultsCoreLoader.openstats_db_password">openstats_db_password</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.openstats_db_user" href="#impc_etl.workflow.load.StatsResultsCoreLoader.openstats_db_user">openstats_db_user</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.openstats_jdbc_connection" href="#impc_etl.workflow.load.StatsResultsCoreLoader.openstats_jdbc_connection">openstats_jdbc_connection</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.output" href="#impc_etl.workflow.load.StatsResultsCoreLoader.output">output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.output_path" href="#impc_etl.workflow.load.StatsResultsCoreLoader.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.raw_data_in_output" href="#impc_etl.workflow.load.StatsResultsCoreLoader.raw_data_in_output">raw_data_in_output</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.requires" href="#impc_etl.workflow.load.StatsResultsCoreLoader.requires">requires</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.threei_stats_results_csv" href="#impc_etl.workflow.load.StatsResultsCoreLoader.threei_stats_results_csv">threei_stats_results_csv</a></code></li>
+<li><code><a title="impc_etl.workflow.load.StatsResultsCoreLoader.use_cache" href="#impc_etl.workflow.load.StatsResultsCoreLoader.use_cache">use_cache</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p><span></span></p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

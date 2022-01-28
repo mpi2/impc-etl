@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import luigi
+import json
+from luigi.contrib.spark import PySparkTask
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import lit
+from pyspark.sql.types import StringType
+
+from impc_etl.jobs.load.solr.stats_results_mapper import (
+    get_stats_results_core,
+    STATS_RESULTS_COLUMNS,
+)
+from impc_etl.workflow.config import ImpcConfig
+from impc_etl.workflow.extraction import (
+    AlleleExtractor,
+    ImpressExtractor,
+    OntologyExtractor,
+    OpenStatsExtractor,
+)
+from impc_etl.workflow.load import (
+    ObservationsMapper,
+    PipelineCoreLoader,
+    MPChooserLoader,
+)
+from pymongo import MongoClient
+
+
+class ImpcStatsBundleMapper(PySparkTask):
+    name = &#34;IMPC_Stats_Bundle_Mapper&#34;
+    embryo_data_json_path = luigi.Parameter()
+    mongodb_database = luigi.Parameter()
+    output_path = luigi.Parameter()
+    mongodb_connection_uri = luigi.Parameter()
+    mongodb_stats_collection = luigi.Parameter()
+    mongodb_replica_set = luigi.Parameter()
+    threei_stats_results_csv = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
+
+    @property
+    def packages(self):
+        return super().packages + super(PySparkTask, self).packages
+
+    def requires(self):
+        return [
+            OpenStatsExtractor(),
+            ObservationsMapper(),
+            OntologyExtractor(),
+            ImpressExtractor(),
+            PipelineCoreLoader(),
+            AlleleExtractor(),
+            MPChooserLoader(),
+        ]
+
+    def output(self):
+        return ImpcConfig().get_target(f&#34;{self.output_path}stats_bundle_parquet&#34;)
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.input()[3].path,
+            self.input()[4].path,
+            self.input()[5].path,
+            self.input()[6].path,
+            self.threei_stats_results_csv,
+            self.mpath_metadata_csv_path,
+            self.output().path,
+        ]
+
+    def _setup_collections(self):
+        mongo_client = MongoClient(
+            f&#34;{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}&#34;
+        )
+        db = mongo_client[self.mongodb_database]
+        col_stats_name = str(self.mongodb_stats_collection)
+        col_raw_data_name = str(self.mongodb_stats_collection) + &#34;_raw_data&#34;
+        if col_stats_name in db.list_collection_names():
+            col_stats = db[col_stats_name]
+            col_stats.drop()
+        if col_raw_data_name in db.list_collection_names():
+            col_raw_data = db[col_raw_data_name]
+            col_raw_data.drop()
+        col_stats = db[col_stats_name]
+        col_raw_data = db[col_raw_data_name]
+        col_stats.create_index([(&#34;doc_id&#34;, 1)])
+        col_stats.create_index(
+            [
+                (&#34;pipeline_stable_id&#34;, 1),
+                (&#34;procedure_stable_id&#34;, 1),
+                (&#34;parameter_stable_id&#34;, 1),
+                (&#34;marker_accession_id&#34;, 1),
+                (&#34;allele_accession_id&#34;, 1),
+                (&#34;zygosity&#34;, 1),
+            ]
+        )
+        col_raw_data.create_index([(&#34;doc_id&#34;, 1)])
+
+    def main(self, sc, *argv):
+        open_stats_parquet_path = argv[0]
+        observations_parquet_path = argv[1]
+        ontology_parquet_path = argv[2]
+        pipeline_parquet_path = argv[3]
+        pipeline_core_parquet_path = argv[4]
+        allele_parquet_path = argv[5]
+        mp_chooser_path = argv[6]
+        threei_parquet_path = argv[7]
+        mpath_metadata_path = argv[8]
+        output_path = argv[9]
+
+        spark = SparkSession(sc)
+        open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
+        ontology_df = spark.read.parquet(ontology_parquet_path)
+        allele_df = spark.read.parquet(allele_parquet_path)
+        pipeline_df = spark.read.parquet(pipeline_parquet_path)
+        pipeline_core_df = spark.read.parquet(pipeline_core_parquet_path)
+        observations_df = spark.read.parquet(observations_parquet_path)
+        threei_df = spark.read.csv(threei_parquet_path, header=True)
+        mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
+
+        mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path).collect()[
+            0
+        ][1]
+        mp_chooser = json.loads(mp_chooser_txt)
+
+        open_stats_df = get_stats_results_core(
+            open_stats_complete_df,
+            ontology_df,
+            allele_df,
+            pipeline_df,
+            pipeline_core_df,
+            observations_df,
+            threei_df,
+            mpath_metadata_df,
+            mp_chooser,
+            False,
+            &#34;include&#34;,
+        )
+
+        stats_results_column_list = STATS_RESULTS_COLUMNS
+        stats_results_column_list.remove(&#34;observation_ids&#34;)
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
+        for col_name in stats_results_df.columns:
+            if dict(stats_results_df.dtypes)[col_name] == &#34;null&#34;:
+                stats_results_df = stats_results_df.withColumn(
+                    col_name, lit(None).astype(StringType())
+                )
+        stats_results_df.distinct().write.parquet(output_path)
+        raw_data_df = open_stats_df.select(&#34;doc_id&#34;, &#34;raw_data&#34;).distinct()
+        raw_data_df.write.parquet(output_path + &#34;_raw_data&#34;)
+        stats_results_df = spark.read.parquet(output_path)
+        self._setup_collections()
+        stats_results_df.write.format(&#34;mongo&#34;).mode(&#34;append&#34;).option(
+            &#34;spark.mongodb.output.uri&#34;,
+            f&#34;{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}&#34;,
+        ).option(&#34;database&#34;, str(self.mongodb_database)).option(
+            &#34;collection&#34;, str(self.mongodb_stats_collection)
+        ).save()
+        raw_data_df = spark.read.parquet(output_path + &#34;_raw_data&#34;)
+        raw_data_df.write.format(&#34;mongo&#34;).mode(&#34;append&#34;).option(
+            &#34;spark.mongodb.output.uri&#34;,
+            f&#34;{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}&#34;,
+        ).option(&#34;database&#34;, str(self.mongodb_database)).option(
+            &#34;collection&#34;, str(self.mongodb_stats_collection) + &#34;_raw_data&#34;
+        ).save()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper"><code class="flex name class">
+<span>class <span class="ident">ImpcStatsBundleMapper</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Template task for running an inline PySpark job</p>
+<p>Simply implement the <code>main</code> method in your subclass</p>
+<p>You can optionally define package names to be distributed to the cluster
+with <code>py_packages</code> (uses luigi's global py-packages configuration by default)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ImpcStatsBundleMapper(PySparkTask):
+    name = &#34;IMPC_Stats_Bundle_Mapper&#34;
+    embryo_data_json_path = luigi.Parameter()
+    mongodb_database = luigi.Parameter()
+    output_path = luigi.Parameter()
+    mongodb_connection_uri = luigi.Parameter()
+    mongodb_stats_collection = luigi.Parameter()
+    mongodb_replica_set = luigi.Parameter()
+    threei_stats_results_csv = luigi.Parameter()
+    mpath_metadata_csv_path = luigi.Parameter()
+
+    @property
+    def packages(self):
+        return super().packages + super(PySparkTask, self).packages
+
+    def requires(self):
+        return [
+            OpenStatsExtractor(),
+            ObservationsMapper(),
+            OntologyExtractor(),
+            ImpressExtractor(),
+            PipelineCoreLoader(),
+            AlleleExtractor(),
+            MPChooserLoader(),
+        ]
+
+    def output(self):
+        return ImpcConfig().get_target(f&#34;{self.output_path}stats_bundle_parquet&#34;)
+
+    def app_options(self):
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.input()[3].path,
+            self.input()[4].path,
+            self.input()[5].path,
+            self.input()[6].path,
+            self.threei_stats_results_csv,
+            self.mpath_metadata_csv_path,
+            self.output().path,
+        ]
+
+    def _setup_collections(self):
+        mongo_client = MongoClient(
+            f&#34;{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}&#34;
+        )
+        db = mongo_client[self.mongodb_database]
+        col_stats_name = str(self.mongodb_stats_collection)
+        col_raw_data_name = str(self.mongodb_stats_collection) + &#34;_raw_data&#34;
+        if col_stats_name in db.list_collection_names():
+            col_stats = db[col_stats_name]
+            col_stats.drop()
+        if col_raw_data_name in db.list_collection_names():
+            col_raw_data = db[col_raw_data_name]
+            col_raw_data.drop()
+        col_stats = db[col_stats_name]
+        col_raw_data = db[col_raw_data_name]
+        col_stats.create_index([(&#34;doc_id&#34;, 1)])
+        col_stats.create_index(
+            [
+                (&#34;pipeline_stable_id&#34;, 1),
+                (&#34;procedure_stable_id&#34;, 1),
+                (&#34;parameter_stable_id&#34;, 1),
+                (&#34;marker_accession_id&#34;, 1),
+                (&#34;allele_accession_id&#34;, 1),
+                (&#34;zygosity&#34;, 1),
+            ]
+        )
+        col_raw_data.create_index([(&#34;doc_id&#34;, 1)])
+
+    def main(self, sc, *argv):
+        open_stats_parquet_path = argv[0]
+        observations_parquet_path = argv[1]
+        ontology_parquet_path = argv[2]
+        pipeline_parquet_path = argv[3]
+        pipeline_core_parquet_path = argv[4]
+        allele_parquet_path = argv[5]
+        mp_chooser_path = argv[6]
+        threei_parquet_path = argv[7]
+        mpath_metadata_path = argv[8]
+        output_path = argv[9]
+
+        spark = SparkSession(sc)
+        open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
+        ontology_df = spark.read.parquet(ontology_parquet_path)
+        allele_df = spark.read.parquet(allele_parquet_path)
+        pipeline_df = spark.read.parquet(pipeline_parquet_path)
+        pipeline_core_df = spark.read.parquet(pipeline_core_parquet_path)
+        observations_df = spark.read.parquet(observations_parquet_path)
+        threei_df = spark.read.csv(threei_parquet_path, header=True)
+        mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
+
+        mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path).collect()[
+            0
+        ][1]
+        mp_chooser = json.loads(mp_chooser_txt)
+
+        open_stats_df = get_stats_results_core(
+            open_stats_complete_df,
+            ontology_df,
+            allele_df,
+            pipeline_df,
+            pipeline_core_df,
+            observations_df,
+            threei_df,
+            mpath_metadata_df,
+            mp_chooser,
+            False,
+            &#34;include&#34;,
+        )
+
+        stats_results_column_list = STATS_RESULTS_COLUMNS
+        stats_results_column_list.remove(&#34;observation_ids&#34;)
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
+        for col_name in stats_results_df.columns:
+            if dict(stats_results_df.dtypes)[col_name] == &#34;null&#34;:
+                stats_results_df = stats_results_df.withColumn(
+                    col_name, lit(None).astype(StringType())
+                )
+        stats_results_df.distinct().write.parquet(output_path)
+        raw_data_df = open_stats_df.select(&#34;doc_id&#34;, &#34;raw_data&#34;).distinct()
+        raw_data_df.write.parquet(output_path + &#34;_raw_data&#34;)
+        stats_results_df = spark.read.parquet(output_path)
+        self._setup_collections()
+        stats_results_df.write.format(&#34;mongo&#34;).mode(&#34;append&#34;).option(
+            &#34;spark.mongodb.output.uri&#34;,
+            f&#34;{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}&#34;,
+        ).option(&#34;database&#34;, str(self.mongodb_database)).option(
+            &#34;collection&#34;, str(self.mongodb_stats_collection)
+        ).save()
+        raw_data_df = spark.read.parquet(output_path + &#34;_raw_data&#34;)
+        raw_data_df.write.format(&#34;mongo&#34;).mode(&#34;append&#34;).option(
+            &#34;spark.mongodb.output.uri&#34;,
+            f&#34;{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}&#34;,
+        ).option(&#34;database&#34;, str(self.mongodb_database)).option(
+            &#34;collection&#34;, str(self.mongodb_stats_collection) + &#34;_raw_data&#34;
+        ).save()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.embryo_data_json_path"><code class="name">var <span class="ident">embryo_data_json_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mongodb_connection_uri"><code class="name">var <span class="ident">mongodb_connection_uri</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mongodb_database"><code class="name">var <span class="ident">mongodb_database</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mongodb_replica_set"><code class="name">var <span class="ident">mongodb_replica_set</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mongodb_stats_collection"><code class="name">var <span class="ident">mongodb_stats_collection</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mpath_metadata_csv_path"><code class="name">var <span class="ident">mpath_metadata_csv_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.threei_stats_results_csv"><code class="name">var <span class="ident">threei_stats_results_csv</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.packages"><code class="name">var <span class="ident">packages</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def packages(self):
+    return super().packages + super(PySparkTask, self).packages</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [
+        self.input()[0].path,
+        self.input()[1].path,
+        self.input()[2].path,
+        self.input()[3].path,
+        self.input()[4].path,
+        self.input()[5].path,
+        self.input()[6].path,
+        self.threei_stats_results_csv,
+        self.mpath_metadata_csv_path,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>self, sc, *argv)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Called by the pyspark_runner with a SparkContext and any arguments returned by <code>app_options()</code></p>
+<p>:param sc: SparkContext
+:param args: arguments list</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(self, sc, *argv):
+    open_stats_parquet_path = argv[0]
+    observations_parquet_path = argv[1]
+    ontology_parquet_path = argv[2]
+    pipeline_parquet_path = argv[3]
+    pipeline_core_parquet_path = argv[4]
+    allele_parquet_path = argv[5]
+    mp_chooser_path = argv[6]
+    threei_parquet_path = argv[7]
+    mpath_metadata_path = argv[8]
+    output_path = argv[9]
+
+    spark = SparkSession(sc)
+    open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
+    ontology_df = spark.read.parquet(ontology_parquet_path)
+    allele_df = spark.read.parquet(allele_parquet_path)
+    pipeline_df = spark.read.parquet(pipeline_parquet_path)
+    pipeline_core_df = spark.read.parquet(pipeline_core_parquet_path)
+    observations_df = spark.read.parquet(observations_parquet_path)
+    threei_df = spark.read.csv(threei_parquet_path, header=True)
+    mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
+
+    mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path).collect()[
+        0
+    ][1]
+    mp_chooser = json.loads(mp_chooser_txt)
+
+    open_stats_df = get_stats_results_core(
+        open_stats_complete_df,
+        ontology_df,
+        allele_df,
+        pipeline_df,
+        pipeline_core_df,
+        observations_df,
+        threei_df,
+        mpath_metadata_df,
+        mp_chooser,
+        False,
+        &#34;include&#34;,
+    )
+
+    stats_results_column_list = STATS_RESULTS_COLUMNS
+    stats_results_column_list.remove(&#34;observation_ids&#34;)
+    stats_results_df = open_stats_df.select(*stats_results_column_list)
+    for col_name in stats_results_df.columns:
+        if dict(stats_results_df.dtypes)[col_name] == &#34;null&#34;:
+            stats_results_df = stats_results_df.withColumn(
+                col_name, lit(None).astype(StringType())
+            )
+    stats_results_df.distinct().write.parquet(output_path)
+    raw_data_df = open_stats_df.select(&#34;doc_id&#34;, &#34;raw_data&#34;).distinct()
+    raw_data_df.write.parquet(output_path + &#34;_raw_data&#34;)
+    stats_results_df = spark.read.parquet(output_path)
+    self._setup_collections()
+    stats_results_df.write.format(&#34;mongo&#34;).mode(&#34;append&#34;).option(
+        &#34;spark.mongodb.output.uri&#34;,
+        f&#34;{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}&#34;,
+    ).option(&#34;database&#34;, str(self.mongodb_database)).option(
+        &#34;collection&#34;, str(self.mongodb_stats_collection)
+    ).save()
+    raw_data_df = spark.read.parquet(output_path + &#34;_raw_data&#34;)
+    raw_data_df.write.format(&#34;mongo&#34;).mode(&#34;append&#34;).option(
+        &#34;spark.mongodb.output.uri&#34;,
+        f&#34;{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}&#34;,
+    ).option(&#34;database&#34;, str(self.mongodb_database)).option(
+        &#34;collection&#34;, str(self.mongodb_stats_collection) + &#34;_raw_data&#34;
+    ).save()</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    return ImpcConfig().get_target(f&#34;{self.output_path}stats_bundle_parquet&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return [
+        OpenStatsExtractor(),
+        ObservationsMapper(),
+        OntologyExtractor(),
+        ImpressExtractor(),
+        PipelineCoreLoader(),
+        AlleleExtractor(),
+        MPChooserLoader(),
+    ]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<header>
+<div style="max-width: 300px, text-align: center">
+<img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
+</div>
+</header>
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="impc_etl.jobs.load.impc_api" href="index.html">impc_etl.jobs.load.impc_api</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper">ImpcStatsBundleMapper</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.app_options" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.embryo_data_json_path" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.embryo_data_json_path">embryo_data_json_path</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.main" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mongodb_connection_uri" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mongodb_connection_uri">mongodb_connection_uri</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mongodb_database" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mongodb_database">mongodb_database</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mongodb_replica_set" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mongodb_replica_set">mongodb_replica_set</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mongodb_stats_collection" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mongodb_stats_collection">mongodb_stats_collection</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mpath_metadata_csv_path" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.mpath_metadata_csv_path">mpath_metadata_csv_path</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.name" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.output" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.output_path" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.packages" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.packages">packages</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.requires" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.threei_stats_results_csv" href="#impc_etl.jobs.load.impc_api.impc_statistical_results_bundle_mapper.ImpcStatsBundleMapper.threei_stats_results_csv">threei_stats_results_csv</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p><span></span></p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

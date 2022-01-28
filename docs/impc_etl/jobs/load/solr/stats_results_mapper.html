@@ -1,0 +1,3134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>impc_etl.jobs.load.solr.stats_results_mapper API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>impc_etl.jobs.load.solr.stats_results_mapper</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import base64
+import gzip
+import json
+import sys
+from typing import List
+
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import (
+    array_contains,
+    array_sort,
+    col,
+    explode,
+    lit,
+    split,
+    collect_set,
+    to_json,
+    when,
+    udf,
+    expr,
+    struct,
+    lower,
+    regexp_replace,
+    size,
+    array,
+    regexp_extract,
+    flatten,
+    array_distinct,
+    first,
+    from_json,
+    explode_outer,
+    md5,
+    arrays_zip,
+    concat,
+    max,
+    min,
+    least,
+    greatest,
+    concat_ws,
+    collect_list,
+)
+from pyspark.sql.window import Window
+from pyspark.sql.types import (
+    StructType,
+    StructField,
+    StringType,
+    IntegerType,
+    DoubleType,
+    ArrayType,
+    Row,
+)
+
+from impc_etl.shared.utils import convert_to_row
+
+ONTOLOGY_STATS_MAP = {
+    &#34;mp_term_name&#34;: &#34;term&#34;,
+    &#34;top_level_mp_term_id&#34;: &#34;top_level_ids&#34;,
+    &#34;top_level_mp_term_name&#34;: &#34;top_level_terms&#34;,
+    &#34;intermediate_mp_term_id&#34;: &#34;intermediate_ids&#34;,
+    &#34;intermediate_mp_term_name&#34;: &#34;intermediate_terms&#34;,
+}
+
+BAD_MP_MAP = {
+    &#39;[&#34;MP:0000592&#34;,&#34;MP:0000592&#34;]&#39;: &#34;MP:0000592&#34;,
+    &#39;[&#34;MP:0003956&#34;,&#34;MP:0003956&#34;]&#39;: &#34;MP:0003956&#34;,
+    &#39;[&#34;MP:0000589&#34;,&#34;MP:0000589&#34;]&#39;: &#34;MP:0000589&#34;,
+    &#39;[&#34;MP:0010101&#34;,&#34;MP:0004649&#34;]&#39;: &#34;MP:0004649&#34;,
+    &#39;[&#34;MP:0004650&#34;,&#34;MP:0004647&#34;]&#39;: &#34;MP:0004650&#34;,
+}
+
+PIPELINE_STATS_MAP = {
+    &#34;mp_term_id_options&#34;: &#34;mp_id&#34;,
+    &#34;mp_term_name_options&#34;: &#34;mp_term&#34;,
+    &#34;top_level_mp_id_options&#34;: &#34;top_level_mp_id&#34;,
+    &#34;top_level_mp_term_options&#34;: &#34;top_level_mp_term&#34;,
+    &#34;intermediate_mp_id_options&#34;: &#34;intermediate_mp_id&#34;,
+    &#34;intermediate_mp_term_options&#34;: &#34;intermediate_mp_term&#34;,
+    &#34;parameter_stable_key&#34;: &#34;parameter_stable_key&#34;,
+    &#34;procedure_name&#34;: &#34;procedure_name&#34;,
+    &#34;pipeline_stable_key&#34;: &#34;pipeline_stable_key&#34;,
+    &#34;procedure_stable_key&#34;: &#34;procedure_stable_key&#34;,
+}
+
+THREEI_STATS_MAP = {
+    &#34;colony_id&#34;: &#34;Colony.Prefixes&#34;,
+    &#34;parameter_name&#34;: &#34;Parameter.Name&#34;,
+    &#34;marker_symbol&#34;: &#34;Gene&#34;,
+    &#34;procedure_name&#34;: &#34;Procedure.Name&#34;,
+    &#34;procedure_stable_id&#34;: &#34;Procedure.Id&#34;,
+    &#34;parameter_stable_id&#34;: &#34;Parameter.Id&#34;,
+    &#34;classification_tag&#34;: &#34;Call.Type&#34;,
+    &#34;mp_id&#34;: &#34;Annotation.Calls&#34;,
+    &#34;allele_name&#34;: &#34;Construct&#34;,
+    &#34;zygosity&#34;: &#34;Genotype&#34;,
+    &#34;combine_sex_call&#34;: &#34;Combine.Gender.Call&#34;,
+    &#34;sex&#34;: &#34;Gender&#34;,
+}
+
+
+OBSERVATIONS_STATS_MAP = {
+    &#34;genetic_background&#34;: &#34;genetic_background&#34;,
+    &#34;production_center&#34;: &#34;production_center&#34;,
+    &#34;project_name&#34;: &#34;project_name&#34;,
+    &#34;project_fullname&#34;: &#34;project_name&#34;,
+    &#34;strain_name&#34;: &#34;strain_name&#34;,
+    &#34;life_stage_name&#34;: &#34;life_stage_name&#34;,
+    &#34;resource_name&#34;: &#34;datasource_name&#34;,
+    &#34;resource_fullname&#34;: &#34;datasource_name&#34;,
+    &#34;life_stage_acc&#34;: &#34;life_stage_acc&#34;,
+    &#34;experiment_sex&#34;: &#34;sex&#34;,
+    &#34;metadata&#34;: &#34;metadata&#34;,
+}
+
+STATS_OBSERVATIONS_JOIN = [
+    &#34;procedure_group&#34;,
+    &#34;procedure_name&#34;,
+    &#34;parameter_stable_id&#34;,
+    &#34;phenotyping_center&#34;,
+    &#34;pipeline_stable_id&#34;,
+    &#34;colony_id&#34;,
+    &#34;metadata_group&#34;,
+    &#34;zygosity&#34;,
+]
+
+RAW_DATA_COLUMNS = [
+    &#34;observations_body_weight&#34;,
+    &#34;observations_date_of_experiment&#34;,
+    &#34;observations_external_sample_id&#34;,
+    &#34;observations_response&#34;,
+    &#34;observations_sex&#34;,
+    &#34;observations_data_points&#34;,
+    &#34;observations_categories&#34;,
+    &#34;observations_time_point&#34;,
+    &#34;observations_discrete_point&#34;,
+    &#34;observations_id&#34;,
+]
+
+
+ALLELE_STATS_MAP = {&#34;allele_name&#34;: &#34;allele_name&#34;}
+
+STATS_RESULTS_COLUMNS = [
+    &#34;doc_id&#34;,
+    &#34;additional_information&#34;,
+    &#34;allele_accession_id&#34;,
+    &#34;allele_name&#34;,
+    &#34;allele_symbol&#34;,
+    &#34;batch_significant&#34;,
+    &#34;both_mutant_count&#34;,
+    &#34;both_mutant_diversity_in_response&#34;,
+    &#34;both_mutant_mean&#34;,
+    &#34;both_mutant_sd&#34;,
+    &#34;both_mutant_unique_n&#34;,
+    &#34;classification_tag&#34;,
+    &#34;colony_id&#34;,
+    &#34;data_type&#34;,
+    &#34;effect_size&#34;,
+    &#34;female_control_count&#34;,
+    &#34;female_control_diversity_in_response&#34;,
+    &#34;female_control_mean&#34;,
+    &#34;female_control_sd&#34;,
+    &#34;female_control_unique_n&#34;,
+    &#34;female_ko_effect_p_value&#34;,
+    &#34;female_ko_effect_stderr_estimate&#34;,
+    &#34;female_ko_parameter_estimate&#34;,
+    &#34;female_mutant_count&#34;,
+    &#34;female_mutant_diversity_in_response&#34;,
+    &#34;female_mutant_mean&#34;,
+    &#34;female_mutant_sd&#34;,
+    &#34;female_mutant_unique_n&#34;,
+    &#34;female_percentage_change&#34;,
+    &#34;female_pvalue_low_normal_vs_high&#34;,
+    &#34;female_pvalue_low_vs_normal_high&#34;,
+    &#34;female_effect_size_low_normal_vs_high&#34;,
+    &#34;female_effect_size_low_vs_normal_high&#34;,
+    &#34;genotype_effect_p_value&#34;,
+    &#34;genotype_effect_parameter_estimate&#34;,
+    &#34;genotype_effect_size_low_normal_vs_high&#34;,
+    &#34;genotype_effect_size_low_vs_normal_high&#34;,
+    &#34;genotype_effect_stderr_estimate&#34;,
+    &#34;genotype_pvalue_low_normal_vs_high&#34;,
+    &#34;genotype_pvalue_low_vs_normal_high&#34;,
+    &#34;weight_effect_p_value&#34;,
+    &#34;weight_effect_stderr_estimate&#34;,
+    &#34;weight_effect_parameter_estimate&#34;,
+    &#34;group_1_genotype&#34;,
+    &#34;group_1_residuals_normality_test&#34;,
+    &#34;group_2_genotype&#34;,
+    &#34;group_2_residuals_normality_test&#34;,
+    &#34;interaction_effect_p_value&#34;,
+    &#34;interaction_significant&#34;,
+    &#34;intercept_estimate&#34;,
+    &#34;intercept_estimate_stderr_estimate&#34;,
+    &#34;male_control_count&#34;,
+    &#34;male_control_diversity_in_response&#34;,
+    &#34;male_control_mean&#34;,
+    &#34;male_control_sd&#34;,
+    &#34;male_control_unique_n&#34;,
+    &#34;male_ko_effect_p_value&#34;,
+    &#34;male_ko_effect_stderr_estimate&#34;,
+    &#34;male_ko_parameter_estimate&#34;,
+    &#34;male_mutant_count&#34;,
+    &#34;male_mutant_diversity_in_response&#34;,
+    &#34;male_mutant_mean&#34;,
+    &#34;male_mutant_sd&#34;,
+    &#34;male_mutant_unique_n&#34;,
+    &#34;male_percentage_change&#34;,
+    &#34;male_pvalue_low_normal_vs_high&#34;,
+    &#34;male_pvalue_low_vs_normal_high&#34;,
+    &#34;male_effect_size_low_normal_vs_high&#34;,
+    &#34;male_effect_size_low_vs_normal_high&#34;,
+    &#34;marker_accession_id&#34;,
+    &#34;marker_symbol&#34;,
+    &#34;metadata&#34;,
+    &#34;metadata_group&#34;,
+    &#34;percentage_change&#34;,
+    &#34;no_data_control_count&#34;,
+    &#34;no_data_control_diversity_in_response&#34;,
+    &#34;no_data_control_unique_n&#34;,
+    &#34;no_data_mutant_count&#34;,
+    &#34;no_data_mutant_diversity_in_response&#34;,
+    &#34;no_data_mutant_unique_n&#34;,
+    &#34;p_value&#34;,
+    &#34;parameter_name&#34;,
+    &#34;parameter_stable_id&#34;,
+    &#34;phenotype_sex&#34;,
+    &#34;phenotyping_center&#34;,
+    &#34;pipeline_name&#34;,
+    &#34;pipeline_stable_id&#34;,
+    &#34;procedure_group&#34;,
+    &#34;procedure_name&#34;,
+    &#34;procedure_stable_id&#34;,
+    &#34;procedure_stable_key&#34;,
+    &#34;sex_effect_p_value&#34;,
+    &#34;sex_effect_parameter_estimate&#34;,
+    &#34;sex_effect_stderr_estimate&#34;,
+    &#34;statistical_method&#34;,
+    &#34;status&#34;,
+    &#34;strain_accession_id&#34;,
+    &#34;variance_significant&#34;,
+    &#34;zygosity&#34;,
+    &#34;mpath_term_id&#34;,
+    &#34;mpath_term_name&#34;,
+    &#34;mp_term_id&#34;,
+    &#34;mp_term_name&#34;,
+    &#34;mp_term_event&#34;,
+    &#34;mp_term_sex&#34;,
+    &#34;top_level_mp_term_id&#34;,
+    &#34;top_level_mp_term_name&#34;,
+    &#34;intermediate_mp_term_id&#34;,
+    &#34;intermediate_mp_term_name&#34;,
+    &#34;mp_term_id_options&#34;,
+    &#34;mp_term_name_options&#34;,
+    &#34;anatomy_term_id&#34;,
+    &#34;anatomy_term_name&#34;,
+    &#34;anatomy_term_event&#34;,
+    &#34;anatomy_term_sex&#34;,
+    &#34;top_level_anatomy_term_id&#34;,
+    &#34;top_level_anatomy_term_name&#34;,
+    &#34;intermediate_anatomy_term_id&#34;,
+    &#34;intermediate_anatomy_term_name&#34;,
+    &#34;anatomy_term_id_options&#34;,
+    &#34;anatomy_term_name_options&#34;,
+    &#34;parameter_stable_key&#34;,
+    &#34;pipeline_stable_key&#34;,
+    &#34;genetic_background&#34;,
+    &#34;production_center&#34;,
+    &#34;project_name&#34;,
+    &#34;project_fullname&#34;,
+    &#34;resource_name&#34;,
+    &#34;resource_fullname&#34;,
+    &#34;strain_name&#34;,
+    &#34;life_stage_name&#34;,
+    &#34;life_stage_acc&#34;,
+    &#34;sex&#34;,
+    &#34;significant&#34;,
+    &#34;full_mp_term&#34;,
+    &#34;male_effect_size&#34;,
+    &#34;female_effect_size&#34;,
+    &#34;observation_ids&#34;,
+]
+
+WINDOW_COLUMNS = [
+    &#34;soft_windowing_bandwidth&#34;,
+    &#34;soft_windowing_shape&#34;,
+    &#34;soft_windowing_peaks&#34;,
+    &#34;soft_windowing_min_obs_required&#34;,
+    &#34;soft_windowing_total_obs_or_weight&#34;,
+    &#34;soft_windowing_threshold&#34;,
+    &#34;soft_windowing_number_of_doe&#34;,
+    &#34;soft_windowing_doe_note&#34;,
+    &#34;observations_window_weight&#34;,
+]
+
+
+##TODO missing strain name and genetic background
+
+
+def main(argv):
+    &#34;&#34;&#34;
+    Solr Core loader
+    :param list argv: the list elements should be:
+                    [1]: Open stats parquet file
+                    [2]: Observations parquet
+                    [3]: Ontology parquet
+                    [4]: Threei stats results file
+                    [5]: Pipeline core parquet
+                    [6]: Allele parquet
+                    [7]: Output Path
+    &#34;&#34;&#34;
+    open_stats_parquet_path = argv[1]
+    observations_parquet_path = argv[2]
+    ontology_parquet_path = argv[3]
+    pipeline_parquet_path = argv[4]
+    pipeline_core_parquet_path = argv[5]
+    allele_parquet_path = argv[6]
+    mp_chooser_path = argv[7]
+    threei_parquet_path = argv[8]
+    mpath_metadata_path = argv[9]
+    raw_data_in_output = argv[10]
+    extract_windowed_data = argv[11] == &#34;true&#34;
+    output_path = argv[12]
+
+    spark = SparkSession.builder.getOrCreate()
+    open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
+    ontology_df = spark.read.parquet(ontology_parquet_path)
+    allele_df = spark.read.parquet(allele_parquet_path)
+    pipeline_df = spark.read.parquet(pipeline_parquet_path)
+    pipeline_core_df = spark.read.parquet(pipeline_core_parquet_path)
+    observations_df = spark.read.parquet(observations_parquet_path)
+    threei_df = spark.read.csv(threei_parquet_path, header=True)
+    mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
+
+    mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path).collect()[0][1]
+    mp_chooser = json.loads(mp_chooser_txt)
+
+    open_stats_df = get_stats_results_core(
+        open_stats_complete_df,
+        ontology_df,
+        allele_df,
+        pipeline_df,
+        pipeline_core_df,
+        observations_df,
+        threei_df,
+        mpath_metadata_df,
+        mp_chooser,
+        extract_windowed_data,
+        raw_data_in_output,
+    )
+
+    if extract_windowed_data:
+        stats_results_column_list = STATS_RESULTS_COLUMNS + [
+            col_name
+            for col_name in WINDOW_COLUMNS
+            if col_name != &#34;observations_window_weight&#34;
+        ]
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
+    elif raw_data_in_output == &#34;bundled&#34;:
+        stats_results_column_list = STATS_RESULTS_COLUMNS + [&#34;raw_data&#34;]
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
+        stats_results_df = stats_results_df.repartition(20000)
+    else:
+        stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
+    for col_name in stats_results_df.columns:
+        if dict(stats_results_df.dtypes)[col_name] == &#34;null&#34;:
+            stats_results_df = stats_results_df.withColumn(
+                col_name, lit(None).astype(StringType())
+            )
+    stats_results_df.write.parquet(output_path)
+    if raw_data_in_output == &#34;include&#34;:
+        raw_data_df = open_stats_df.select(&#34;doc_id&#34;, &#34;raw_data&#34;)
+        raw_data_df.distinct().write.parquet(output_path + &#34;_raw_data&#34;)
+
+
+def get_stats_results_core(
+    open_stats_complete_df,
+    ontology_df,
+    allele_df,
+    pipeline_df,
+    pipeline_core_df,
+    observations_df,
+    threei_df,
+    mpath_metadata_df,
+    mp_chooser,
+    extract_windowed_data=False,
+    raw_data_in_output=&#34;include&#34;,
+):
+    threei_df = standardize_threei_schema(threei_df)
+
+    embryo_stat_packets = open_stats_complete_df.where(
+        (
+            (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPL&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEL&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPM&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEM&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPO&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEO&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPP&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEP&#34;))
+        )
+    )
+
+    open_stats_df = open_stats_complete_df.where(
+        ~(
+            col(&#34;procedure_stable_id&#34;).contains(&#34;IMPC_FER_001&#34;)
+            | (col(&#34;procedure_stable_id&#34;).contains(&#34;IMPC_VIA_001&#34;))
+            | (col(&#34;procedure_stable_id&#34;).contains(&#34;IMPC_VIA_002&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;_PAT&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;_EVL&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;_EVM&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;_EVO&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;_EVP&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;_ELZ&#34;))
+            | (col(&#34;procedure_name&#34;).startswith(&#34;Histopathology&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPL&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEL&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPM&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEM&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPO&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEO&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPP&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEP&#34;))
+        )
+    )
+
+    fertility_stats = _fertility_stats_results(observations_df, pipeline_df)
+
+    for col_name in open_stats_df.columns:
+        if col_name not in fertility_stats.columns:
+            fertility_stats = fertility_stats.withColumn(col_name, lit(None))
+    fertility_stats = fertility_stats.select(open_stats_df.columns)
+
+    open_stats_df = open_stats_df.union(fertility_stats)
+
+    viability_stats = _viability_stats_results(observations_df, pipeline_df)
+    for col_name in open_stats_df.columns:
+        if col_name not in viability_stats.columns:
+            viability_stats = viability_stats.withColumn(col_name, lit(None))
+    viability_stats = viability_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(viability_stats)
+
+    gross_pathology_stats = _gross_pathology_stats_results(observations_df)
+    for col_name in open_stats_df.columns:
+        if col_name not in gross_pathology_stats.columns:
+            gross_pathology_stats = gross_pathology_stats.withColumn(
+                col_name, lit(None)
+            )
+    gross_pathology_stats = gross_pathology_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(gross_pathology_stats)
+
+    histopathology_stats = _histopathology_stats_results(observations_df)
+    for col_name in open_stats_df.columns:
+        if col_name not in histopathology_stats.columns:
+            histopathology_stats = histopathology_stats.withColumn(col_name, lit(None))
+    histopathology_stats = histopathology_stats.select(open_stats_df.columns).distinct()
+    open_stats_df = open_stats_df.union(histopathology_stats)
+
+    embryo_viability_stats = _embryo_viability_stats_results(
+        observations_df, pipeline_df
+    )
+    for col_name in open_stats_df.columns:
+        if col_name not in embryo_viability_stats.columns:
+            embryo_viability_stats = embryo_viability_stats.withColumn(
+                col_name, lit(None)
+            )
+    embryo_viability_stats = embryo_viability_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(embryo_viability_stats)
+
+    embryo_stats = _embryo_stats_results(
+        observations_df, pipeline_df, embryo_stat_packets
+    )
+    for col_name in open_stats_df.columns:
+        if col_name not in embryo_stats.columns:
+            embryo_stats = embryo_stats.withColumn(col_name, lit(None))
+    embryo_stats = embryo_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(embryo_stats)
+
+    observations_metadata_df = observations_df.select(
+        STATS_OBSERVATIONS_JOIN + list(set(OBSERVATIONS_STATS_MAP.values()))
+    ).dropDuplicates()
+    observations_metadata_df = observations_metadata_df.groupBy(
+        *[
+            col_name
+            for col_name in observations_metadata_df.columns
+            if col_name != &#34;sex&#34;
+        ]
+    ).agg(collect_set(&#34;sex&#34;).alias(&#34;sex&#34;))
+
+    aggregation_expresion = []
+
+    for col_name in list(set(OBSERVATIONS_STATS_MAP.values())):
+        if col_name not in [&#34;datasource_name&#34;, &#34;production_center&#34;]:
+            if col_name == &#34;sex&#34;:
+                aggregation_expresion.append(
+                    array_distinct(flatten(collect_set(col_name))).alias(col_name)
+                )
+            elif col_name in [&#34;strain_name&#34;, &#34;genetic_background&#34;]:
+                aggregation_expresion.append(first(col(col_name)).alias(col_name))
+            else:
+                aggregation_expresion.append(collect_set(col_name).alias(col_name))
+
+    observations_metadata_df = observations_metadata_df.groupBy(
+        STATS_OBSERVATIONS_JOIN + [&#34;datasource_name&#34;, &#34;production_center&#34;]
+    ).agg(*aggregation_expresion)
+    open_stats_df = map_to_stats(
+        open_stats_df,
+        observations_metadata_df,
+        STATS_OBSERVATIONS_JOIN,
+        OBSERVATIONS_STATS_MAP,
+        &#34;observation&#34;,
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;pipeline_stable_id&#34;,
+        when(col(&#34;procedure_stable_id&#34;) == &#34;ESLIM_022_001&#34;, lit(&#34;ESLIM_001&#34;)).otherwise(
+            col(&#34;pipeline_stable_id&#34;)
+        ),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;procedure_stable_id&#34;,
+        when(
+            col(&#34;procedure_stable_id&#34;).contains(&#34;~&#34;),
+            split(col(&#34;procedure_stable_id&#34;), &#34;~&#34;),
+        ).otherwise(array(col(&#34;procedure_stable_id&#34;))),
+    )
+    open_stats_df = open_stats_df.alias(&#34;stats&#34;)
+
+    mp_ancestors_df = ontology_df.select(
+        &#34;id&#34;,
+        struct(&#34;parent_ids&#34;, &#34;intermediate_ids&#34;, &#34;top_level_ids&#34;).alias(&#34;ancestors&#34;),
+    )
+    mp_ancestors_df_1 = mp_ancestors_df.alias(&#34;mp_term_1&#34;)
+    mp_ancestors_df_2 = mp_ancestors_df.alias(&#34;mp_term_2&#34;)
+    open_stats_df = open_stats_df.join(
+        mp_ancestors_df_1,
+        (expr(&#34;mp_term[0].term_id&#34;) == col(&#34;mp_term_1.id&#34;)),
+        &#34;left_outer&#34;,
+    )
+
+    open_stats_df = open_stats_df.join(
+        mp_ancestors_df_2,
+        (expr(&#34;mp_term[1].term_id&#34;) == col(&#34;mp_term_2.id&#34;)),
+        &#34;left_outer&#34;,
+    )
+
+    mp_term_schema = ArrayType(
+        StructType(
+            [
+                StructField(&#34;event&#34;, StringType(), True),
+                StructField(&#34;otherPossibilities&#34;, StringType(), True),
+                StructField(&#34;sex&#34;, StringType(), True),
+                StructField(&#34;term_id&#34;, StringType(), True),
+            ]
+        )
+    )
+    select_collapsed_mp_term_udf = udf(
+        lambda mp_term_array, pipeline, procedure_group, parameter, data_type, first_term_ancestors, second_term_ancestors: _select_collapsed_mp_term(
+            mp_term_array,
+            pipeline,
+            procedure_group,
+            parameter,
+            mp_chooser,
+            data_type,
+            first_term_ancestors,
+            second_term_ancestors,
+        ),
+        mp_term_schema,
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;collapsed_mp_term&#34;,
+        when(
+            expr(
+                &#34;exists(mp_term.sex, sex -&gt; sex = &#39;male&#39;) AND exists(mp_term.sex, sex -&gt; sex = &#39;female&#39;)&#34;
+            )
+            &amp; (col(&#34;data_type&#34;).isin([&#34;categorical&#34;, &#34;unidimensional&#34;])),
+            select_collapsed_mp_term_udf(
+                &#34;mp_term&#34;,
+                &#34;pipeline_stable_id&#34;,
+                &#34;procedure_group&#34;,
+                &#34;parameter_stable_id&#34;,
+                &#34;data_type&#34;,
+                &#34;mp_term_1.ancestors&#34;,
+                &#34;mp_term_2.ancestors&#34;,
+            ),
+        ).otherwise(col(&#34;mp_term&#34;)),
+    )
+    open_stats_df = open_stats_df.drop(&#34;mp_term_1.*&#34;, &#34;mp_term_2.*&#34;)
+    open_stats_df = open_stats_df.withColumn(
+        &#34;collapsed_mp_term&#34;, expr(&#34;collapsed_mp_term[0]&#34;)
+    )
+    open_stats_df = open_stats_df.withColumn(&#34;significant&#34;, lit(False))
+
+    open_stats_df = open_stats_df.join(
+        threei_df,
+        [
+            &#34;resource_name&#34;,
+            &#34;colony_id&#34;,
+            &#34;marker_symbol&#34;,
+            &#34;procedure_stable_id&#34;,
+            &#34;parameter_stable_id&#34;,
+            &#34;zygosity&#34;,
+        ],
+        &#34;left_outer&#34;,
+    )
+    open_stats_df = map_three_i(open_stats_df)
+    open_stats_df = open_stats_df.withColumn(
+        &#34;collapsed_mp_term&#34;,
+        when(
+            col(&#34;threei_collapsed_mp_term&#34;).isNotNull(), col(&#34;threei_collapsed_mp_term&#34;)
+        ).otherwise(col(&#34;collapsed_mp_term&#34;)),
+    )
+
+    open_stats_df = open_stats_df.drop(&#34;threei_collapsed_mp_term&#34;)
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;mp_term_id&#34;, regexp_replace(&#34;collapsed_mp_term.term_id&#34;, &#34; &#34;, &#34;&#34;)
+    )
+    for bad_mp in BAD_MP_MAP.keys():
+        open_stats_df = open_stats_df.withColumn(
+            &#34;mp_term_id&#34;,
+            when(col(&#34;mp_term_id&#34;) == bad_mp, lit(BAD_MP_MAP[bad_mp])).otherwise(
+                col(&#34;mp_term_id&#34;)
+            ),
+        )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;mp_term_event&#34;, col(&#34;collapsed_mp_term.event&#34;)
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;mp_term_sex&#34;, col(&#34;collapsed_mp_term.sex&#34;)
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(&#34;mp_term&#34;, &#34;full_mp_term&#34;)
+    open_stats_df = open_stats_df.withColumn(
+        &#34;full_mp_term&#34;,
+        when(
+            col(&#34;full_mp_term&#34;).isNull() &amp; col(&#34;collapsed_mp_term&#34;).isNotNull(),
+            array(col(&#34;collapsed_mp_term&#34;)),
+        )
+        .when(
+            col(&#34;full_mp_term&#34;).isNull() &amp; col(&#34;collapsed_mp_term&#34;).isNull(), lit(None)
+        )
+        .otherwise(col(&#34;full_mp_term&#34;)),
+    )
+
+    if extract_windowed_data:
+        stats_results_column_list = (
+            STATS_RESULTS_COLUMNS + WINDOW_COLUMNS + RAW_DATA_COLUMNS
+        )
+    elif raw_data_in_output == &#34;exclude&#34;:
+        stats_results_column_list = STATS_RESULTS_COLUMNS
+    else:
+        stats_results_column_list = STATS_RESULTS_COLUMNS + RAW_DATA_COLUMNS
+
+    for col_name in stats_results_column_list:
+        if col_name not in open_stats_df.columns:
+            open_stats_df = open_stats_df.withColumn(col_name, lit(None))
+
+    ontology_df = ontology_df.withColumnRenamed(&#34;id&#34;, &#34;mp_term_id&#34;)
+    open_stats_df = map_to_stats(
+        open_stats_df, ontology_df, [&#34;mp_term_id&#34;], ONTOLOGY_STATS_MAP, &#34;ontology&#34;
+    )
+
+    pipeline_core_join = [
+        &#34;parameter_stable_id&#34;,
+        &#34;pipeline_stable_id&#34;,
+        &#34;procedure_stable_id&#34;,
+    ]
+    pipeline_core_df = (
+        pipeline_core_df.select(
+            [
+                col_name
+                for col_name in pipeline_core_df.columns
+                if col_name in pipeline_core_join
+                or col_name in PIPELINE_STATS_MAP.values()
+            ]
+        )
+        .groupBy(
+            [
+                &#34;parameter_stable_id&#34;,
+                &#34;pipeline_stable_id&#34;,
+                &#34;procedure_stable_id&#34;,
+                &#34;pipeline_stable_key&#34;,
+            ]
+        )
+        .agg(
+            *[
+                array_distinct(flatten(collect_set(col_name))).alias(col_name)
+                if col_name
+                in [
+                    &#34;mp_id&#34;,
+                    &#34;mp_term&#34;,
+                    &#34;top_level_mp_id&#34;,
+                    &#34;top_level_mp_term&#34;,
+                    &#34;intermediate_mp_id&#34;,
+                    &#34;intermediate_mp_term&#34;,
+                ]
+                else collect_set(col_name).alias(col_name)
+                for col_name in list(set(PIPELINE_STATS_MAP.values()))
+                if col_name != &#34;pipeline_stable_key&#34;
+            ]
+        )
+        .dropDuplicates()
+    )
+    pipeline_core_df = pipeline_core_df.withColumnRenamed(
+        &#34;procedure_stable_id&#34;, &#34;proc_id&#34;
+    )
+    pipeline_core_df = pipeline_core_df.withColumn(
+        &#34;procedure_stable_id&#34;, array(col(&#34;proc_id&#34;))
+    )
+    # Fix for VIA_002 missing mp terms
+    pipeline_core_df = _add_via_002_mp_term_options(pipeline_core_df)
+
+    open_stats_df = map_to_stats(
+        open_stats_df,
+        pipeline_core_df,
+        pipeline_core_join,
+        PIPELINE_STATS_MAP,
+        &#34;impress&#34;,
+    )
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;top_level_mp_term_id&#34;,
+        when(
+            col(&#34;top_level_mp_term_id&#34;).isNull(), col(&#34;top_level_mp_id_options&#34;)
+        ).otherwise(col(&#34;top_level_mp_term_id&#34;)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;top_level_mp_term_name&#34;,
+        when(
+            col(&#34;top_level_mp_term_name&#34;).isNull(), col(&#34;top_level_mp_term_options&#34;)
+        ).otherwise(col(&#34;top_level_mp_term_name&#34;)),
+    )
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;intermediate_mp_term_id&#34;,
+        when(
+            col(&#34;intermediate_mp_term_id&#34;).isNull(), col(&#34;intermediate_mp_id_options&#34;)
+        ).otherwise(col(&#34;intermediate_mp_term_id&#34;)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;intermediate_mp_term_name&#34;,
+        when(
+            col(&#34;intermediate_mp_term_name&#34;).isNull(),
+            col(&#34;intermediate_mp_term_options&#34;),
+        ).otherwise(col(&#34;intermediate_mp_term_name&#34;)),
+    )
+
+    allele_df = allele_df.select(
+        [&#34;allele_symbol&#34;] + list(ALLELE_STATS_MAP.values())
+    ).dropDuplicates()
+
+    open_stats_df = map_to_stats(
+        open_stats_df, allele_df, [&#34;allele_symbol&#34;], ALLELE_STATS_MAP, &#34;allele&#34;
+    )
+
+    open_stats_df = open_stats_df.withColumn(&#34;sex&#34;, col(&#34;mp_term_sex&#34;))
+    open_stats_df = open_stats_df.withColumn(
+        &#34;phenotype_sex&#34;,
+        when(col(&#34;phenotype_sex&#34;).isNull(), lit(None))
+        .when(
+            col(&#34;phenotype_sex&#34;).contains(&#34;Both sexes included&#34;),
+            array(lit(&#34;male&#34;), lit(&#34;female&#34;)),
+        )
+        .otherwise(
+            array(
+                lower(
+                    regexp_extract(
+                        col(&#34;phenotype_sex&#34;),
+                        r&#34;Only one sex included in the analysis; (.*)\[.*\]&#34;,
+                        1,
+                    )
+                )
+            )
+        ),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;phenotype_sex&#34;,
+        when(
+            col(&#34;phenotype_sex&#34;).isNull() &amp; col(&#34;mp_term_sex&#34;).isNotNull(),
+            when(
+                col(&#34;mp_term_sex&#34;) == &#34;not_considered&#34;,
+                array(lit(&#34;male&#34;), lit(&#34;female&#34;)),
+            ).otherwise(array(col(&#34;mp_term_sex&#34;))),
+        ).otherwise(col(&#34;phenotype_sex&#34;)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;zygosity&#34;,
+        when(col(&#34;zygosity&#34;) == &#34;homozygous&#34;, lit(&#34;homozygote&#34;)).otherwise(
+            col(&#34;zygosity&#34;)
+        ),
+    )
+
+    open_stats_df = map_ontology_prefix(open_stats_df, &#34;MA:&#34;, &#34;anatomy_&#34;)
+    open_stats_df = map_ontology_prefix(open_stats_df, &#34;EMAP:&#34;, &#34;anatomy_&#34;)
+    open_stats_df = map_ontology_prefix(open_stats_df, &#34;EMAPA:&#34;, &#34;anatomy_&#34;)
+    open_stats_df = open_stats_df.withColumn(
+        &#34;significant&#34;,
+        when(col(&#34;mp_term_id&#34;).isNotNull(), lit(True)).otherwise(lit(False)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;p_value&#34;,
+        when(
+            col(&#34;statistical_method&#34;).startswith(&#34;Reference Range&#34;),
+            least(
+                col(&#34;female_pvalue_low_normal_vs_high&#34;),
+                col(&#34;female_pvalue_low_vs_normal_high&#34;),
+                col(&#34;male_pvalue_low_normal_vs_high&#34;),
+                col(&#34;male_pvalue_low_vs_normal_high&#34;),
+                col(&#34;genotype_pvalue_low_normal_vs_high&#34;),
+                col(&#34;genotype_pvalue_low_vs_normal_high&#34;),
+            ),
+        ).otherwise(col(&#34;p_value&#34;)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;effect_size&#34;,
+        when(
+            col(&#34;statistical_method&#34;).startswith(&#34;Reference Range&#34;),
+            greatest(
+                col(&#34;female_effect_size_low_normal_vs_high&#34;),
+                col(&#34;female_effect_size_low_vs_normal_high&#34;),
+                col(&#34;male_effect_size_low_normal_vs_high&#34;),
+                col(&#34;male_effect_size_low_vs_normal_high&#34;),
+                col(&#34;genotype_effect_size_low_normal_vs_high&#34;),
+                col(&#34;genotype_effect_size_low_vs_normal_high&#34;),
+            ),
+        ).otherwise(col(&#34;effect_size&#34;)),
+    )
+    open_stats_df = map_ontology_prefix(open_stats_df, &#34;MPATH:&#34;, &#34;mpath_&#34;)
+    mpath_metadata_df = mpath_metadata_df.select(
+        col(&#34;acc&#34;).alias(&#34;mpath_term_id&#34;), col(&#34;name&#34;).alias(&#34;mpath_metadata_term_name&#34;)
+    ).distinct()
+    open_stats_df = open_stats_df.join(mpath_metadata_df, &#34;mpath_term_id&#34;, &#34;left_outer&#34;)
+    open_stats_df = open_stats_df.withColumn(
+        &#34;mpath_term_name&#34;, col(&#34;mpath_metadata_term_name&#34;)
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;metadata&#34;,
+        expr(&#34;transform(metadata, metadata_values -&gt; concat_ws(&#39;|&#39;, metadata_values))&#34;),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;significant&#34;,
+        when(col(&#34;data_type&#34;) == &#34;time_series&#34;, lit(False)).otherwise(
+            col(&#34;significant&#34;)
+        ),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;status&#34;,
+        when(col(&#34;data_type&#34;) == &#34;time_series&#34;, lit(&#34;NotProcessed&#34;)).otherwise(
+            col(&#34;status&#34;)
+        ),
+    )
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;procedure_stable_id_str&#34;, concat_ws(&#34;,&#34;, &#34;procedure_stable_id&#34;)
+    )
+    identifying_cols = [
+        &#34;colony_id&#34;,
+        &#34;pipeline_stable_id&#34;,
+        &#34;procedure_stable_id_str&#34;,
+        &#34;parameter_stable_id&#34;,
+        &#34;phenotyping_center&#34;,
+        &#34;production_center&#34;,
+        &#34;metadata_group&#34;,
+        &#34;zygosity&#34;,
+        &#34;strain_accession_id&#34;,
+        &#34;sex&#34;,
+    ]
+    identifying_cols = [
+        when(col(col_name).isNotNull(), col(col_name)).otherwise(lit(&#34;&#34;))
+        for col_name in identifying_cols
+    ]
+    open_stats_df = open_stats_df.withColumn(&#34;doc_id&#34;, md5(concat(*identifying_cols)))
+    if raw_data_in_output == &#34;include&#34; or raw_data_in_output == &#34;bundled&#34;:
+        specimen_dobs = (
+            observations_df.select(&#34;external_sample_id&#34;, &#34;date_of_birth&#34;)
+            .dropDuplicates()
+            .collect()
+        )
+        specimen_dob_dict = [row.asDict() for row in specimen_dobs]
+        specimen_dob_dict = {
+            row[&#34;external_sample_id&#34;]: row[&#34;date_of_birth&#34;] for row in specimen_dob_dict
+        }
+        open_stats_df = _parse_raw_data(
+            open_stats_df,
+            extract_windowed_data,
+            specimen_dob_dict,
+            raw_data_in_output != &#34;bundled&#34;,
+        )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;data_type&#34;,
+        when(
+            col(&#34;procedure_group&#34;).rlike(
+                &#34;|&#34;.join(
+                    [
+                        &#34;IMPC_GPL&#34;,
+                        &#34;IMPC_GEL&#34;,
+                        &#34;IMPC_GPM&#34;,
+                        &#34;IMPC_GEM&#34;,
+                        &#34;IMPC_GPO&#34;,
+                        &#34;IMPC_GEO&#34;,
+                        &#34;IMPC_GPP&#34;,
+                        &#34;IMPC_GEP&#34;,
+                    ]
+                )
+            )
+            &amp; (col(&#34;data_type&#34;) == &#34;categorical&#34;),
+            lit(&#34;embryo&#34;),
+        ).otherwise(col(&#34;data_type&#34;)),
+    )
+    return open_stats_df
+
+
+def _compress_and_encode(json_text):
+    if json_text is None:
+        return None
+    else:
+        return str(base64.b64encode(gzip.compress(bytes(json_text, &#34;utf-8&#34;))), &#34;utf-8&#34;)
+
+
+def _parse_raw_data(
+    open_stats_df, extract_windowed_data, specimen_dob_dict, compress=True
+):
+    compress_and_encode = udf(_compress_and_encode, StringType())
+    open_stats_df = open_stats_df.withColumnRenamed(
+        &#34;observations_biological_sample_group&#34;, &#34;biological_sample_group&#34;
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(
+        &#34;observations_external_sample_id&#34;, &#34;external_sample_id&#34;
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(
+        &#34;observations_date_of_experiment&#34;, &#34;date_of_experiment&#34;
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(&#34;observations_sex&#34;, &#34;specimen_sex&#34;)
+    open_stats_df = open_stats_df.withColumnRenamed(
+        &#34;observations_body_weight&#34;, &#34;body_weight&#34;
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(
+        &#34;observations_time_point&#34;, &#34;time_point&#34;
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(
+        &#34;observations_discrete_point&#34;, &#34;discrete_point&#34;
+    )
+    if extract_windowed_data:
+        open_stats_df = open_stats_df.withColumnRenamed(
+            &#34;observations_window_weight&#34;, &#34;window_weight&#34;
+        )
+    for col_name in [
+        &#34;biological_sample_group&#34;,
+        &#34;date_of_experiment&#34;,
+        &#34;external_sample_id&#34;,
+        &#34;specimen_sex&#34;,
+    ]:
+        open_stats_df = open_stats_df.withColumn(
+            col_name,
+            when(
+                (
+                    col(&#34;data_type&#34;).isin(
+                        [&#34;unidimensional&#34;, &#34;time_series&#34;, &#34;categorical&#34;]
+                    )
+                    &amp; (col(col_name).isNotNull())
+                ),
+                col(col_name),
+            ).otherwise(lit(None)),
+        )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;body_weight&#34;,
+        when(
+            (
+                col(&#34;data_type&#34;).isin([&#34;unidimensional&#34;, &#34;time_series&#34;, &#34;categorical&#34;])
+                &amp; (col(&#34;body_weight&#34;).isNotNull())
+            ),
+            col(&#34;body_weight&#34;),
+        ).otherwise(expr(&#34;transform(external_sample_id, sample_id -&gt; NULL)&#34;)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;data_point&#34;,
+        when(
+            (col(&#34;data_type&#34;).isin([&#34;unidimensional&#34;, &#34;time_series&#34;]))
+            &amp; (col(&#34;observations_response&#34;).isNotNull()),
+            col(&#34;observations_response&#34;),
+        ).otherwise(expr(&#34;transform(external_sample_id, sample_id -&gt; NULL)&#34;)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;category&#34;,
+        when(
+            (col(&#34;data_type&#34;) == &#34;categorical&#34;)
+            &amp; (col(&#34;observations_response&#34;).isNotNull()),
+            col(&#34;observations_response&#34;),
+        ).otherwise(expr(&#34;transform(external_sample_id, sample_id -&gt; NULL)&#34;)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;time_point&#34;,
+        when(
+            (col(&#34;data_type&#34;) == &#34;time_series&#34;) &amp; (col(&#34;time_point&#34;).isNotNull()),
+            col(&#34;time_point&#34;),
+        ).otherwise(expr(&#34;transform(external_sample_id, sample_id -&gt; NULL)&#34;)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;discrete_point&#34;,
+        when(
+            (col(&#34;data_type&#34;) == &#34;time_series&#34;) &amp; (col(&#34;discrete_point&#34;).isNotNull()),
+            col(&#34;discrete_point&#34;),
+        ).otherwise(expr(&#34;transform(external_sample_id, sample_id -&gt; NULL)&#34;)),
+    )
+
+    date_of_birth_udf = (
+        lambda specimen_list: [
+            specimen_dob_dict[specimen] if specimen in specimen_dob_dict else None
+            for specimen in specimen_list
+        ]
+        if specimen_list is not None
+        else []
+    )
+    date_of_birth_udf = udf(date_of_birth_udf, ArrayType(StringType()))
+    open_stats_df = open_stats_df.withColumn(
+        &#34;date_of_birth&#34;, date_of_birth_udf(&#34;external_sample_id&#34;)
+    )
+    if extract_windowed_data:
+        open_stats_df = open_stats_df.withColumn(
+            &#34;window_weight&#34;,
+            when(
+                (col(&#34;data_type&#34;) == &#34;unidimensional&#34;)
+                &amp; (col(&#34;window_weight&#34;).isNotNull()),
+                col(&#34;window_weight&#34;),
+            ).otherwise(expr(&#34;transform(external_sample_id, sample_id -&gt; NULL)&#34;)),
+        )
+    raw_data_cols = [
+        &#34;biological_sample_group&#34;,
+        &#34;date_of_experiment&#34;,
+        &#34;external_sample_id&#34;,
+        &#34;specimen_sex&#34;,
+        &#34;body_weight&#34;,
+        &#34;data_point&#34;,
+        &#34;category&#34;,
+        &#34;time_point&#34;,
+        &#34;discrete_point&#34;,
+    ]
+    if extract_windowed_data:
+        raw_data_cols.append(&#34;window_weight&#34;)
+    open_stats_df = open_stats_df.withColumn(&#34;raw_data&#34;, arrays_zip(*raw_data_cols))
+
+    # to_json_udf = udf(
+    #     lambda row: None
+    #     if row is None
+    #     else json.dumps(
+    #         [
+    #             {raw_data_cols[int(key)]: value for key, value in item.asDict().items()}
+    #             for item in row
+    #         ]
+    #     ),
+    #     StringType(),
+    # )
+    open_stats_df = open_stats_df.withColumn(&#34;raw_data&#34;, to_json(&#34;raw_data&#34;))
+    for idx, col_name in enumerate(raw_data_cols):
+        open_stats_df = open_stats_df.withColumn(
+            &#34;raw_data&#34;, regexp_replace(&#34;raw_data&#34;, f&#39;&#34;{idx}&#34;:&#39;, f&#39;&#34;{col_name}&#34;:&#39;)
+        )
+    if compress:
+        open_stats_df = open_stats_df.withColumn(
+            &#34;raw_data&#34;, compress_and_encode(&#34;raw_data&#34;)
+        )
+    return open_stats_df
+
+
+def map_ontology_prefix(open_stats_df, term_prefix, field_prefix):
+    mapped_columns = [
+        col_name for col_name in STATS_RESULTS_COLUMNS if field_prefix in col_name
+    ]
+    for col_name in mapped_columns:
+        mp_col_name = col_name.replace(field_prefix, &#34;mp_&#34;)
+        open_stats_df = open_stats_df.withColumn(
+            col_name,
+            when(
+                col(col_name).isNull(),
+                when(
+                    col(&#34;mp_term_id&#34;).startswith(term_prefix), col(mp_col_name)
+                ).otherwise(lit(None)),
+            ).otherwise(col(col_name)),
+        )
+    mapped_id = field_prefix + &#34;term_id&#34;
+    for col_name in mapped_columns:
+        mp_col_name = col_name.replace(field_prefix, &#34;mp_&#34;)
+        open_stats_df = open_stats_df.withColumn(
+            mp_col_name,
+            when(col(mapped_id).isNotNull(), lit(None)).otherwise(col(mp_col_name)),
+        )
+    return open_stats_df
+
+
+def map_to_stats(
+    open_stats_df, metadata_df, join_columns, source_stats_map, source_name
+):
+    for col_name in metadata_df.columns:
+        if col_name not in join_columns:
+            metadata_df = metadata_df.withColumnRenamed(
+                col_name, f&#34;{source_name}_{col_name}&#34;
+            )
+    if source_name == &#34;observations&#34;:
+        open_stats_df = open_stats_df.join(metadata_df, join_columns)
+    else:
+        open_stats_df = open_stats_df.join(metadata_df, join_columns, &#34;left_outer&#34;)
+    for column_name, source_column in source_stats_map.items():
+        open_stats_df = open_stats_df.withColumn(
+            column_name, col(f&#34;{source_name}_{source_column}&#34;)
+        )
+    for source_column in source_stats_map.values():
+        open_stats_df = open_stats_df.drop(f&#34;{source_name}_{source_column}&#34;)
+    return open_stats_df
+
+
+def standardize_threei_schema(threei_df: DataFrame):
+    threei_df = threei_df.dropDuplicates()
+    for col_name, threei_column in THREEI_STATS_MAP.items():
+        threei_df = threei_df.withColumnRenamed(threei_column, col_name)
+    threei_df = threei_df.withColumn(&#34;resource_name&#34;, lit(&#34;3i&#34;))
+    threei_df = threei_df.withColumn(
+        &#34;procedure_stable_id&#34;, array(col(&#34;procedure_stable_id&#34;))
+    )
+    threei_df = threei_df.withColumn(
+        &#34;sex&#34;,
+        when(col(&#34;sex&#34;) == &#34;both&#34;, lit(&#34;not_considered&#34;)).otherwise(lower(col(&#34;sex&#34;))),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;zygosity&#34;,
+        when(col(&#34;zygosity&#34;) == &#34;Hom&#34;, lit(&#34;homozygote&#34;))
+        .when(col(&#34;zygosity&#34;) == &#34;Hemi&#34;, lit(&#34;hemizygote&#34;))
+        .otherwise(lit(&#34;heterozygote&#34;)),
+    )
+    threei_df = threei_df.withColumn(&#34;term_id&#34;, regexp_replace(&#34;mp_id&#34;, r&#34;\[&#34;, &#34;&#34;))
+
+    threei_df = threei_df.withColumn(
+        &#34;threei_collapsed_mp_term&#34;,
+        when(
+            (col(&#34;mp_id&#34;) != &#34;NA&#34;) &amp; (col(&#34;mp_id&#34;).isNotNull()),
+            struct(
+                lit(None).cast(StringType()).alias(&#34;event&#34;),
+                lit(None).cast(StringType()).alias(&#34;otherPossibilities&#34;),
+                &#34;sex&#34;,
+                col(&#34;term_id&#34;).alias(&#34;term_id&#34;),
+            ),
+        ).otherwise(lit(None)),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;threei_p_value&#34;,
+        when(col(&#34;classification_tag&#34;) == &#34;Significant&#34;, lit(0.0)).otherwise(lit(1.0)),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;threei_genotype_effect_p_value&#34;,
+        when(col(&#34;classification_tag&#34;) == &#34;Significant&#34;, lit(0.0)).otherwise(lit(1.0)),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;threei_genotype_effect_parameter_estimate&#34;,
+        when(col(&#34;classification_tag&#34;) == &#34;Significant&#34;, lit(1.0)).otherwise(lit(0.0)),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;threei_significant&#34;,
+        when(col(&#34;classification_tag&#34;) == &#34;Significant&#34;, lit(True)).otherwise(
+            lit(False)
+        ),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;threei_status&#34;,
+        when(
+            col(&#34;classification_tag&#34;).isin([&#34;Significant&#34;, &#34;Not Significant&#34;]),
+            lit(&#34;Successful&#34;),
+        ).otherwise(lit(&#34;NotProcessed&#34;)),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;threei_statistical_method&#34;, lit(&#34;Supplied as data&#34;)
+    )
+    threei_df = threei_df.drop(
+        &#34;sex&#34;,
+        &#34;term_id&#34;,
+        &#34;mp_id&#34;,
+        &#34;parameter_name&#34;,
+        &#34;procedure_name&#34;,
+        &#34;combine_sex_call&#34;,
+        &#34;samples&#34;,
+        &#34;allele_name&#34;,
+        &#34;classification_tag&#34;,
+    )
+    return threei_df
+
+
+def map_three_i(open_stats_df):
+    open_stats_df = open_stats_df.withColumn(
+        &#34;genotype_effect_parameter_estimate&#34;,
+        when(
+            col(&#34;threei_genotype_effect_parameter_estimate&#34;).isNotNull(),
+            col(&#34;threei_genotype_effect_parameter_estimate&#34;),
+        ).otherwise(col(&#34;genotype_effect_parameter_estimate&#34;)),
+    )
+    open_stats_df = open_stats_df.drop(&#34;threei_genotype_effect_parameter_estimate&#34;)
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;significant&#34;,
+        when(
+            col(&#34;threei_significant&#34;).isNotNull(), col(&#34;threei_significant&#34;)
+        ).otherwise(col(&#34;significant&#34;)),
+    )
+    open_stats_df = open_stats_df.drop(&#34;threei_significant&#34;)
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;status&#34;,
+        when(col(&#34;threei_status&#34;).isNotNull(), col(&#34;threei_status&#34;)).otherwise(
+            col(&#34;status&#34;)
+        ),
+    )
+    open_stats_df = open_stats_df.drop(&#34;threei_status&#34;)
+    open_stats_df = open_stats_df.withColumn(
+        &#34;statistical_method&#34;,
+        when(
+            col(&#34;threei_statistical_method&#34;).isNotNull(),
+            col(&#34;threei_statistical_method&#34;),
+        ).otherwise(col(&#34;statistical_method&#34;)),
+    )
+    open_stats_df = open_stats_df.drop(&#34;threei_statistical_method&#34;)
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;p_value&#34;,
+        when(col(&#34;threei_p_value&#34;).isNotNull(), col(&#34;threei_p_value&#34;)).otherwise(
+            col(&#34;p_value&#34;)
+        ),
+    )
+    open_stats_df = open_stats_df.drop(&#34;threei_p_value&#34;)
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;genotype_effect_p_value&#34;,
+        when(
+            col(&#34;threei_genotype_effect_p_value&#34;).isNotNull(),
+            col(&#34;threei_genotype_effect_p_value&#34;),
+        ).otherwise(col(&#34;genotype_effect_p_value&#34;)),
+    )
+    open_stats_df = open_stats_df.drop(&#34;threei_genotype_effect_p_value&#34;)
+    return open_stats_df
+
+
+def _fertility_stats_results(observations_df: DataFrame, pipeline_df: DataFrame):
+    fertility_condition = col(&#34;parameter_stable_id&#34;).isin(
+        [&#34;IMPC_FER_001_001&#34;, &#34;IMPC_FER_019_001&#34;]
+    )
+
+    # mp_chooser = (
+    #     pipeline_df.select(
+    #         col(&#34;pipelineKey&#34;).alias(&#34;pipeline_stable_id&#34;),
+    #         col(&#34;procedure.procedureKey&#34;).alias(&#34;procedure_stable_id&#34;),
+    #         col(&#34;parameter.parameterKey&#34;).alias(&#34;parameter_stable_id&#34;),
+    #         col(&#34;parammpterm.optionText&#34;).alias(&#34;category&#34;),
+    #         col(&#34;termAcc&#34;),
+    #     )
+    #     .withColumn(&#34;category&#34;, lower(col(&#34;category&#34;)))
+    #     .distinct()
+    # )
+
+    required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+        &#34;sex&#34;,
+        &#34;procedure_stable_id&#34;,
+        &#34;pipeline_name&#34;,
+        &#34;category&#34;,
+        &#34;allele_accession_id&#34;,
+        &#34;parameter_name&#34;,
+        &#34;allele_symbol&#34;,
+        &#34;marker_accession_id&#34;,
+        &#34;marker_symbol&#34;,
+        &#34;strain_accession_id&#34;,
+    ]
+    fertility_stats_results = (
+        observations_df.where(fertility_condition)
+        .withColumnRenamed(&#34;gene_accession_id&#34;, &#34;marker_accession_id&#34;)
+        .withColumnRenamed(&#34;gene_symbol&#34;, &#34;marker_symbol&#34;)
+        .select(required_stats_columns)
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        &#34;category&#34;, lower(col(&#34;category&#34;))
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        &#34;data_type&#34;, lit(&#34;line&#34;)
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        &#34;effect_size&#34;, lit(1.0)
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        &#34;statistical_method&#34;, lit(&#34;Supplied as data&#34;)
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        &#34;status&#34;, lit(&#34;Successful&#34;)
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(&#34;p_value&#34;, lit(0.0))
+
+    # fertility_stats_results = fertility_stats_results.join(
+    #     mp_chooser,
+    #     [
+    #         &#34;pipeline_stable_id&#34;,
+    #         &#34;procedure_stable_id&#34;,
+    #         &#34;parameter_stable_id&#34;,
+    #         &#34;category&#34;,
+    #     ],
+    #     &#34;left_outer&#34;,
+    # )
+
+    fertility_stats_results = fertility_stats_results.withColumn(
+        &#34;termAcc&#34;,
+        when(
+            col(&#34;category&#34;) == &#34;infertile&#34;,
+            when(
+                col(&#34;parameter_stable_id&#34;) == &#34;IMPC_FER_001_001&#34;, lit(&#34;MP:0001925&#34;)
+            ).otherwise(lit(&#34;MP:0001926&#34;)),
+        ).otherwise(lit(None)),
+    )
+
+    fertility_stats_results = fertility_stats_results.groupBy(
+        required_stats_columns
+        + [&#34;data_type&#34;, &#34;status&#34;, &#34;effect_size&#34;, &#34;statistical_method&#34;, &#34;p_value&#34;]
+    ).agg(
+        collect_set(&#34;category&#34;).alias(&#34;categories&#34;),
+        collect_set(
+            struct(
+                lit(&#34;ABNORMAL&#34;).cast(StringType()).alias(&#34;event&#34;),
+                lit(None).cast(StringType()).alias(&#34;otherPossibilities&#34;),
+                &#34;sex&#34;,
+                col(&#34;termAcc&#34;).alias(&#34;term_id&#34;),
+            )
+        ).alias(&#34;mp_term&#34;),
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        &#34;mp_term&#34;, expr(&#34;filter(mp_term, mp -&gt; mp.term_id IS NOT NULL)&#34;)
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        &#34;mp_term&#34;,
+        when(size(col(&#34;mp_term.term_id&#34;)) == 0, lit(None)).otherwise(col(&#34;mp_term&#34;)),
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        &#34;p_value&#34;, when(col(&#34;mp_term&#34;).isNull(), lit(1.0)).otherwise(col(&#34;p_value&#34;))
+    )
+    fertility_stats_results = fertility_stats_results.withColumn(
+        &#34;effect_size&#34;,
+        when(col(&#34;mp_term&#34;).isNull(), lit(0.0)).otherwise(col(&#34;effect_size&#34;)),
+    )
+    return fertility_stats_results
+
+
+def _embryo_stats_results(
+    observations_df: DataFrame, pipeline_df: DataFrame, embryo_stats_packets: DataFrame
+):
+
+    mp_chooser = pipeline_df.select(
+        &#34;pipelineKey&#34;,
+        &#34;procedure.procedureKey&#34;,
+        &#34;parameter.parameterKey&#34;,
+        &#34;parammpterm.optionText&#34;,
+        &#34;parammpterm.selectionOutcome&#34;,
+        &#34;termAcc&#34;,
+    ).distinct()
+
+    mp_chooser = (
+        mp_chooser.withColumnRenamed(&#34;pipelineKey&#34;, &#34;pipeline_stable_id&#34;)
+        .withColumnRenamed(&#34;procedureKey&#34;, &#34;procedure_stable_id&#34;)
+        .withColumnRenamed(&#34;parameterKey&#34;, &#34;parameter_stable_id&#34;)
+    )
+
+    mp_chooser = mp_chooser.withColumn(
+        &#34;category&#34;,
+        when(col(&#34;optionText&#34;).isNull(), col(&#34;selectionOutcome&#34;)).otherwise(
+            col(&#34;optionText&#34;)
+        ),
+    )
+
+    mp_chooser = mp_chooser.withColumn(&#34;category&#34;, lower(col(&#34;category&#34;)))
+    mp_chooser = mp_chooser.drop(&#34;optionText&#34;, &#34;selectionOutcome&#34;)
+
+    required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+        &#34;sex&#34;,
+        &#34;procedure_stable_id&#34;,
+        &#34;pipeline_name&#34;,
+        &#34;category&#34;,
+        &#34;allele_accession_id&#34;,
+        &#34;parameter_name&#34;,
+        &#34;allele_symbol&#34;,
+        &#34;marker_accession_id&#34;,
+        &#34;marker_symbol&#34;,
+        &#34;strain_accession_id&#34;,
+        &#34;text_value&#34;,
+    ]
+    embryo_stats_results = (
+        observations_df.where(
+            col(&#34;procedure_group&#34;).rlike(
+                &#34;|&#34;.join(
+                    [
+                        &#34;IMPC_GPL&#34;,
+                        &#34;IMPC_GEL&#34;,
+                        &#34;IMPC_GPM&#34;,
+                        &#34;IMPC_GEM&#34;,
+                        &#34;IMPC_GPO&#34;,
+                        &#34;IMPC_GEO&#34;,
+                        &#34;IMPC_GPP&#34;,
+                        &#34;IMPC_GEP&#34;,
+                    ]
+                )
+            )
+            &amp; (col(&#34;biological_sample_group&#34;) == &#34;experimental&#34;)
+            &amp; (col(&#34;observation_type&#34;) == &#34;categorical&#34;)
+        )
+        .withColumnRenamed(&#34;gene_accession_id&#34;, &#34;marker_accession_id&#34;)
+        .withColumnRenamed(&#34;gene_symbol&#34;, &#34;marker_symbol&#34;)
+        .select(required_stats_columns)
+    )
+    embryo_control_data = observations_df.where(
+        col(&#34;procedure_group&#34;).rlike(
+            &#34;|&#34;.join(
+                [
+                    &#34;IMPC_GPL&#34;,
+                    &#34;IMPC_GEL&#34;,
+                    &#34;IMPC_GPM&#34;,
+                    &#34;IMPC_GEM&#34;,
+                    &#34;IMPC_GPO&#34;,
+                    &#34;IMPC_GEO&#34;,
+                    &#34;IMPC_GPP&#34;,
+                    &#34;IMPC_GEP&#34;,
+                ]
+            )
+        )
+        &amp; (col(&#34;biological_sample_group&#34;) == &#34;control&#34;)
+        &amp; (col(&#34;observation_type&#34;) == &#34;categorical&#34;)
+        &amp; (col(&#34;category&#34;).isin([&#34;yes&#34;, &#34;no&#34;]))
+    )
+    embryo_control_data = embryo_control_data.select(
+        &#34;procedure_stable_id&#34;, &#34;parameter_stable_id&#34;, &#34;category&#34;
+    )
+    embryo_control_data = embryo_control_data.groupBy(
+        &#34;procedure_stable_id&#34;, &#34;parameter_stable_id&#34;, &#34;category&#34;
+    ).count()
+    window = Window.partitionBy(&#34;procedure_stable_id&#34;, &#34;parameter_stable_id&#34;).orderBy(
+        col(&#34;count&#34;).desc()
+    )
+    embryo_normal_data = embryo_control_data.select(
+        &#34;procedure_stable_id&#34;,
+        &#34;parameter_stable_id&#34;,
+        first(&#34;category&#34;).over(window).alias(&#34;normal_category&#34;),
+    ).distinct()
+    embryo_stats_results = embryo_stats_results.withColumn(
+        &#34;category&#34;, lower(col(&#34;category&#34;))
+    )
+    embryo_stats_results = embryo_stats_results.join(
+        embryo_normal_data, [&#34;procedure_stable_id&#34;, &#34;parameter_stable_id&#34;], &#34;left_outer&#34;
+    )
+
+    embryo_stats_results = embryo_stats_results.withColumn(
+        &#34;category&#34;,
+        when(
+            col(&#34;category&#34;).isin([&#34;yes&#34;, &#34;no&#34;])
+            &amp; (col(&#34;category&#34;) != col(&#34;normal_category&#34;)),
+            lit(&#34;abnormal&#34;),
+        ).otherwise(col(&#34;category&#34;)),
+    )
+
+    embryo_stats_results = embryo_stats_results.drop(&#34;normal_category&#34;)
+
+    embryo_stats_results = embryo_stats_results.withColumn(
+        &#34;data_type&#34;, lit(&#34;categorical&#34;)
+    )
+    embryo_stats_results = embryo_stats_results.withColumn(&#34;status&#34;, lit(&#34;Successful&#34;))
+    embryo_stats_results = embryo_stats_results.withColumn(
+        &#34;statistical_method&#34;, lit(&#34;Supplied as data&#34;)
+    )
+
+    embryo_stats_results = embryo_stats_results.join(
+        mp_chooser,
+        [
+            &#34;pipeline_stable_id&#34;,
+            &#34;procedure_stable_id&#34;,
+            &#34;parameter_stable_id&#34;,
+            &#34;category&#34;,
+        ],
+        &#34;left_outer&#34;,
+    )
+
+    group_by_cols = [
+        col_name
+        for col_name in required_stats_columns
+        if col_name not in [&#34;category&#34;, &#34;sex&#34;]
+    ]
+    group_by_cols += [&#34;data_type&#34;, &#34;status&#34;, &#34;statistical_method&#34;]
+
+    embryo_stats_results = embryo_stats_results.groupBy(group_by_cols).agg(
+        collect_set(&#34;sex&#34;).alias(&#34;sex&#34;),
+        collect_set(&#34;category&#34;).alias(&#34;categories&#34;),
+        collect_set(
+            struct(
+                lit(&#34;ABNORMAL&#34;).cast(StringType()).alias(&#34;event&#34;),
+                lit(None).cast(StringType()).alias(&#34;otherPossibilities&#34;),
+                col(&#34;sex&#34;),
+                col(&#34;termAcc&#34;).alias(&#34;term_id&#34;),
+            ),
+        ).alias(&#34;mp_term&#34;),
+        collect_list(col(&#34;termAcc&#34;)).alias(&#34;abnormalCalls&#34;),
+    )
+
+    embryo_stats_results = embryo_stats_results.withColumn(
+        &#34;mp_term&#34;, expr(&#34;filter(mp_term, mp -&gt; mp.term_id IS NOT NULL)&#34;)
+    )
+    embryo_stats_results = embryo_stats_results.withColumn(
+        &#34;abnormalCallsCount&#34;,
+        size(expr(&#34;filter(abnormalCalls, mp -&gt; mp IS NOT NULL)&#34;)),
+    )
+    embryo_stats_results = embryo_stats_results.withColumn(
+        &#34;mp_term&#34;,
+        when(
+            ((col(&#34;zygosity&#34;) == &#34;homozygote&#34;) | (col(&#34;zygosity&#34;) == &#34;hemizygote&#34;))
+            &amp; (col(&#34;abnormalCallsCount&#34;) &gt;= 2),
+            col(&#34;mp_term&#34;),
+        )
+        .when(
+            (col(&#34;zygosity&#34;) == &#34;heterozygote&#34;) &amp; (col(&#34;abnormalCallsCount&#34;) &gt;= 4),
+            col(&#34;mp_term&#34;),
+        )
+        .otherwise(lit(None)),
+    )
+    embryo_stats_results = embryo_stats_results.withColumn(
+        &#34;p_value&#34;, when(col(&#34;mp_term&#34;).isNull(), lit(1.0)).otherwise(lit(0.0))
+    )
+    embryo_stats_results = embryo_stats_results.withColumn(
+        &#34;effect_size&#34;, when(col(&#34;mp_term&#34;).isNull(), lit(0.0)).otherwise(lit(1.0))
+    )
+    embryo_stats_results = embryo_stats_results.groupBy(
+        *[
+            col_name
+            for col_name in embryo_stats_results.columns
+            if col_name not in [&#34;mp_term&#34;, &#34;p_value&#34;, &#34;effect_size&#34;]
+        ]
+    ).agg(
+        flatten(collect_set(&#34;mp_term&#34;)).alias(&#34;mp_term&#34;),
+        min(&#34;p_value&#34;).alias(&#34;p_value&#34;),
+        max(&#34;effect_size&#34;).alias(&#34;effect_size&#34;),
+    )
+    for col_name in embryo_stats_packets.columns:
+        if (
+            col_name in embryo_stats_results.columns
+            and col_name not in STATS_OBSERVATIONS_JOIN
+        ):
+            embryo_stats_packets = embryo_stats_packets.drop(col_name)
+    embryo_stats_results = embryo_stats_results.join(
+        embryo_stats_packets, STATS_OBSERVATIONS_JOIN, &#34;left_outer&#34;
+    )
+    return embryo_stats_results
+
+
+def _embryo_viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame):
+
+    mp_chooser = (
+        pipeline_df.select(
+            &#34;pipelineKey&#34;,
+            &#34;procedure.procedureKey&#34;,
+            &#34;parameter.parameterKey&#34;,
+            &#34;parammpterm.optionText&#34;,
+            &#34;termAcc&#34;,
+        )
+        .distinct()
+        .withColumnRenamed(&#34;pipelineKey&#34;, &#34;pipeline_stable_id&#34;)
+        .withColumnRenamed(&#34;procedureKey&#34;, &#34;procedure_stable_id&#34;)
+        .withColumnRenamed(&#34;parameterKey&#34;, &#34;parameter_stable_id&#34;)
+        .withColumnRenamed(&#34;optionText&#34;, &#34;category&#34;)
+    ).withColumn(&#34;category&#34;, lower(col(&#34;category&#34;)))
+
+    required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+        &#34;sex&#34;,
+        &#34;procedure_stable_id&#34;,
+        &#34;pipeline_name&#34;,
+        &#34;category&#34;,
+        &#34;allele_accession_id&#34;,
+        &#34;parameter_name&#34;,
+        &#34;allele_symbol&#34;,
+        &#34;marker_accession_id&#34;,
+        &#34;marker_symbol&#34;,
+        &#34;strain_accession_id&#34;,
+        &#34;text_value&#34;,
+    ]
+    embryo_viability_stats_results = (
+        observations_df.where(
+            col(&#34;parameter_stable_id&#34;).isin(
+                [
+                    &#34;IMPC_EVL_001_001&#34;,
+                    &#34;IMPC_EVM_001_001&#34;,
+                    &#34;IMPC_EVO_001_001&#34;,
+                    &#34;IMPC_EVP_001_001&#34;,
+                ]
+            )
+        )
+        .withColumnRenamed(&#34;gene_accession_id&#34;, &#34;marker_accession_id&#34;)
+        .withColumnRenamed(&#34;gene_symbol&#34;, &#34;marker_symbol&#34;)
+        .select(required_stats_columns)
+    )
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        &#34;category&#34;, lower(col(&#34;category&#34;))
+    )
+
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        &#34;data_type&#34;, lit(&#34;embryo&#34;)
+    )
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        &#34;status&#34;, lit(&#34;Successful&#34;)
+    )
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        &#34;statistical_method&#34;, lit(&#34;Supplied as data&#34;)
+    )
+
+    embryo_viability_stats_results = embryo_viability_stats_results.join(
+        mp_chooser,
+        [
+            &#34;pipeline_stable_id&#34;,
+            &#34;procedure_stable_id&#34;,
+            &#34;parameter_stable_id&#34;,
+            &#34;category&#34;,
+        ],
+        &#34;left_outer&#34;,
+    )
+
+    embryo_viability_stats_results = embryo_viability_stats_results.groupBy(
+        required_stats_columns + [&#34;data_type&#34;, &#34;status&#34;, &#34;statistical_method&#34;]
+    ).agg(
+        collect_set(&#34;category&#34;).alias(&#34;categories&#34;),
+        collect_set(
+            struct(
+                lit(&#34;ABNORMAL&#34;).cast(StringType()).alias(&#34;event&#34;),
+                lit(None).cast(StringType()).alias(&#34;otherPossibilities&#34;),
+                lit(&#34;not_considered&#34;).cast(StringType()).alias(&#34;sex&#34;),
+                col(&#34;termAcc&#34;).alias(&#34;term_id&#34;),
+            )
+        ).alias(&#34;mp_term&#34;),
+    )
+
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        &#34;mp_term&#34;, expr(&#34;filter(mp_term, mp -&gt; mp.term_id IS NOT NULL)&#34;)
+    )
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        &#34;mp_term&#34;,
+        when(size(col(&#34;mp_term.term_id&#34;)) == 0, lit(None)).otherwise(col(&#34;mp_term&#34;)),
+    )
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        &#34;p_value&#34;, when(col(&#34;mp_term&#34;).isNull(), lit(1.0)).otherwise(lit(0.0))
+    )
+    embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
+        &#34;effect_size&#34;, when(col(&#34;mp_term&#34;).isNull(), lit(0.0)).otherwise(lit(1.0))
+    )
+
+    return embryo_viability_stats_results
+
+
+def _viability_stats_results(observations_df: DataFrame, pipeline_df: DataFrame):
+    mp_chooser = (
+        pipeline_df.select(
+            &#34;pipelineKey&#34;,
+            &#34;procedure.procedureKey&#34;,
+            &#34;parameter.parameterKey&#34;,
+            &#34;parammpterm.optionText&#34;,
+            &#34;termAcc&#34;,
+        )
+        .distinct()
+        .withColumnRenamed(&#34;pipelineKey&#34;, &#34;pipeline_stable_id&#34;)
+        .withColumnRenamed(&#34;procedureKey&#34;, &#34;procedure_stable_id&#34;)
+        .withColumnRenamed(&#34;parameterKey&#34;, &#34;parameter_stable_id&#34;)
+        .withColumnRenamed(&#34;optionText&#34;, &#34;category&#34;)
+    ).withColumn(&#34;category&#34;, lower(col(&#34;category&#34;)))
+
+    required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+        &#34;sex&#34;,
+        &#34;procedure_stable_id&#34;,
+        &#34;pipeline_name&#34;,
+        &#34;category&#34;,
+        &#34;allele_accession_id&#34;,
+        &#34;parameter_name&#34;,
+        &#34;allele_symbol&#34;,
+        &#34;marker_accession_id&#34;,
+        &#34;marker_symbol&#34;,
+        &#34;strain_accession_id&#34;,
+        &#34;text_value&#34;,
+    ]
+
+    viability_stats_results = (
+        observations_df.where(
+            (
+                (col(&#34;parameter_stable_id&#34;) == &#34;IMPC_VIA_001_001&#34;)
+                &amp; (col(&#34;procedure_stable_id&#34;) == &#34;IMPC_VIA_001&#34;)
+            )
+            | (
+                (
+                    col(&#34;parameter_stable_id&#34;).isin(
+                        [
+                            &#34;IMPC_VIA_063_001&#34;,
+                            &#34;IMPC_VIA_064_001&#34;,
+                            &#34;IMPC_VIA_065_001&#34;,
+                            &#34;IMPC_VIA_066_001&#34;,
+                            &#34;IMPC_VIA_067_001&#34;,
+                        ]
+                    )
+                )
+                &amp; (col(&#34;procedure_stable_id&#34;) == &#34;IMPC_VIA_002&#34;)
+            )
+        )
+        .withColumnRenamed(&#34;gene_accession_id&#34;, &#34;marker_accession_id&#34;)
+        .withColumnRenamed(&#34;gene_symbol&#34;, &#34;marker_symbol&#34;)
+        .select(required_stats_columns)
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;category&#34;, lower(col(&#34;category&#34;))
+    )
+
+    json_outcome_schema = StructType(
+        [
+            StructField(&#34;outcome&#34;, StringType()),
+            StructField(&#34;n&#34;, IntegerType()),
+            StructField(&#34;P&#34;, DoubleType()),
+        ]
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;viability_outcome&#34;,
+        when(
+            col(&#34;procedure_stable_id&#34;) == &#34;IMPC_VIA_002&#34;,
+            from_json(col(&#34;text_value&#34;), json_outcome_schema),
+        ).otherwise(lit(None)),
+    )
+
+    viability_p_values = observations_df.where(
+        col(&#34;parameter_stable_id&#34;) == &#34;IMPC_VIA_032_001&#34;
+    ).select(&#34;procedure_stable_id&#34;, &#34;colony_id&#34;, col(&#34;data_point&#34;).alias(&#34;p_value&#34;))
+
+    viability_male_mutants = observations_df.where(
+        col(&#34;parameter_stable_id&#34;) == &#34;IMPC_VIA_010_001&#34;
+    ).select(
+        &#34;procedure_stable_id&#34;, &#34;colony_id&#34;, col(&#34;data_point&#34;).alias(&#34;male_mutants&#34;)
+    )
+
+    viability_female_mutants = observations_df.where(
+        col(&#34;parameter_stable_id&#34;) == &#34;IMPC_VIA_014_001&#34;
+    ).select(
+        &#34;procedure_stable_id&#34;, &#34;colony_id&#34;, col(&#34;data_point&#34;).alias(&#34;female_mutants&#34;)
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;data_type&#34;, lit(&#34;line&#34;)
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;effect_size&#34;, lit(1.0)
+    )
+    viability_stats_results = viability_stats_results.join(
+        viability_p_values, [&#34;colony_id&#34;, &#34;procedure_stable_id&#34;], &#34;left_outer&#34;
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;p_value&#34;,
+        when(
+            col(&#34;procedure_stable_id&#34;) == &#34;IMPC_VIA_002&#34;, col(&#34;viability_outcome.P&#34;)
+        ).otherwise(col(&#34;p_value&#34;)),
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;p_value&#34;,
+        when(
+            col(&#34;p_value&#34;).isNull() &amp; ~col(&#34;category&#34;).contains(&#34;Viable&#34;), lit(0.0)
+        ).otherwise(col(&#34;p_value&#34;)),
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;male_controls&#34;, lit(None)
+    )
+    viability_stats_results = viability_stats_results.join(
+        viability_male_mutants, [&#34;colony_id&#34;, &#34;procedure_stable_id&#34;], &#34;left_outer&#34;
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;male_mutants&#34;,
+        when(
+            (col(&#34;procedure_stable_id&#34;) == &#34;IMPC_VIA_002&#34;)
+            &amp; (col(&#34;parameter_name&#34;).contains(&#34; males &#34;)),
+            col(&#34;viability_outcome.n&#34;),
+        ).otherwise(col(&#34;male_mutants&#34;)),
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;female_controls&#34;, lit(None)
+    )
+    viability_stats_results = viability_stats_results.join(
+        viability_female_mutants, [&#34;colony_id&#34;, &#34;procedure_stable_id&#34;], &#34;left_outer&#34;
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;female_mutants&#34;,
+        when(
+            (col(&#34;procedure_stable_id&#34;) == &#34;IMPC_VIA_002&#34;)
+            &amp; (col(&#34;parameter_name&#34;).contains(&#34; females &#34;)),
+            col(&#34;viability_outcome.n&#34;),
+        ).otherwise(col(&#34;female_mutants&#34;)),
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;statistical_method&#34;,
+        when(
+            col(&#34;procedure_stable_id&#34;) == &#34;IMPC_VIA_002&#34;,
+            lit(&#34;Binomial distribution probability&#34;),
+        ).otherwise(lit(&#34;Supplied as data&#34;)),
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;status&#34;, lit(&#34;Successful&#34;)
+    )
+
+    viability_stats_results = viability_stats_results.join(
+        mp_chooser,
+        [
+            &#34;pipeline_stable_id&#34;,
+            &#34;procedure_stable_id&#34;,
+            &#34;parameter_stable_id&#34;,
+            &#34;category&#34;,
+        ],
+        &#34;left_outer&#34;,
+    )
+
+    viability_stats_results = viability_stats_results.groupBy(
+        required_stats_columns
+        + [
+            &#34;data_type&#34;,
+            &#34;status&#34;,
+            &#34;effect_size&#34;,
+            &#34;statistical_method&#34;,
+            &#34;p_value&#34;,
+            &#34;male_mutants&#34;,
+            &#34;female_mutants&#34;,
+            &#34;viability_outcome&#34;,
+        ]
+    ).agg(
+        collect_set(&#34;category&#34;).alias(&#34;categories&#34;),
+        collect_set(
+            struct(
+                lit(&#34;ABNORMAL&#34;).cast(StringType()).alias(&#34;event&#34;),
+                lit(None).cast(StringType()).alias(&#34;otherPossibilities&#34;),
+                lit(&#34;not_considered&#34;).cast(StringType()).alias(&#34;sex&#34;),
+                col(&#34;termAcc&#34;).alias(&#34;term_id&#34;),
+            )
+        ).alias(&#34;mp_term&#34;),
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;mp_term&#34;,
+        when(
+            (col(&#34;procedure_stable_id&#34;) == &#34;IMPC_VIA_002&#34;),
+            array(
+                struct(
+                    lit(&#34;ABNORMAL&#34;).cast(StringType()).alias(&#34;event&#34;),
+                    lit(None).cast(StringType()).alias(&#34;otherPossibilities&#34;),
+                    when(col(&#34;parameter_name&#34;).contains(&#34; males &#34;), lit(&#34;male&#34;))
+                    .when(col(&#34;parameter_name&#34;).contains(&#34; females &#34;), lit(&#34;female&#34;))
+                    .otherwise(lit(&#34;not_considered&#34;))
+                    .cast(StringType())
+                    .alias(&#34;sex&#34;),
+                    when(
+                        col(&#34;viability_outcome.outcome&#34;).contains(&#34;subviable&#34;),
+                        lit(&#34;MP:0011110&#34;),
+                    )
+                    .when(
+                        col(&#34;viability_outcome.outcome&#34;).contains(&#34;lethal&#34;),
+                        lit(&#34;MP:0011100&#34;),
+                    )
+                    .otherwise(lit(None).cast(StringType()))
+                    .cast(StringType())
+                    .alias(&#34;term_id&#34;),
+                )
+            ),
+        ).otherwise(col(&#34;mp_term&#34;)),
+    )
+
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;mp_term&#34;, expr(&#34;filter(mp_term, mp -&gt; mp.term_id IS NOT NULL)&#34;)
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;mp_term&#34;,
+        when(size(col(&#34;mp_term.term_id&#34;)) == 0, lit(None)).otherwise(col(&#34;mp_term&#34;)),
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;p_value&#34;, when(col(&#34;mp_term&#34;).isNull(), lit(1.0)).otherwise(col(&#34;p_value&#34;))
+    )
+    viability_stats_results = viability_stats_results.withColumn(
+        &#34;effect_size&#34;,
+        when(col(&#34;mp_term&#34;).isNull(), lit(0.0)).otherwise(col(&#34;effect_size&#34;)),
+    )
+    return viability_stats_results
+
+
+def _histopathology_stats_results(observations_df: DataFrame):
+    histopathology_stats_results = observations_df.where(
+        expr(&#34;exists(sub_term_id, term -&gt; term LIKE &#39;MPATH:%&#39;)&#34;)
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;term_set&#34;, array_sort(array_distinct(&#34;sub_term_name&#34;))
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;is_normal&#34;,
+        (size(&#34;term_set&#34;) == 1) &amp; expr(&#34;exists(term_set, term -&gt; term = &#39;normal&#39;)&#34;),
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;tissue_name&#34;, regexp_extract(&#34;parameter_name&#34;, &#34;(.*)( - .*)&#34;, 1)
+    )
+
+    histopathology_significance_scores = observations_df.where(
+        col(&#34;parameter_name&#34;).endswith(&#34;Significance score&#34;)
+    ).where(col(&#34;biological_sample_group&#34;) == &#34;experimental&#34;)
+
+    histopathology_significance_scores = histopathology_significance_scores.withColumn(
+        &#34;tissue_name&#34;, regexp_extract(&#34;parameter_name&#34;, &#34;(.*)( - .*)&#34;, 1)
+    )
+
+    histopathology_significance_scores = histopathology_significance_scores.withColumn(
+        &#34;significance&#34;, when(col(&#34;category&#34;) == &#34;1&#34;, lit(True)).otherwise(lit(False))
+    )
+
+    significance_stats_join = [
+        &#34;pipeline_stable_id&#34;,
+        &#34;procedure_stable_id&#34;,
+        &#34;specimen_id&#34;,
+        &#34;experiment_id&#34;,
+        &#34;tissue_name&#34;,
+    ]
+
+    histopathology_significance_scores = histopathology_significance_scores.select(
+        significance_stats_join + [&#34;significance&#34;]
+    )
+    histopathology_stats_results = histopathology_stats_results.join(
+        histopathology_significance_scores, significance_stats_join, &#34;left_outer&#34;
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;significance&#34;,
+        when(col(&#34;significance&#34;) &amp; ~col(&#34;is_normal&#34;), lit(True)).otherwise(lit(False)),
+    )
+
+    required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+        &#34;sex&#34;,
+        &#34;procedure_stable_id&#34;,
+        &#34;pipeline_name&#34;,
+        &#34;allele_accession_id&#34;,
+        &#34;parameter_name&#34;,
+        &#34;allele_symbol&#34;,
+        &#34;marker_accession_id&#34;,
+        &#34;marker_symbol&#34;,
+        &#34;strain_accession_id&#34;,
+        &#34;sub_term_id&#34;,
+        &#34;sub_term_name&#34;,
+        &#34;specimen_id&#34;,
+        &#34;significance&#34;,
+    ]
+
+    histopathology_stats_results = (
+        histopathology_stats_results.withColumnRenamed(
+            &#34;gene_accession_id&#34;, &#34;marker_accession_id&#34;
+        )
+        .withColumnRenamed(&#34;gene_symbol&#34;, &#34;marker_symbol&#34;)
+        .select(required_stats_columns)
+    )
+
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;sub_term_id&#34;, expr(&#34;filter(sub_term_id, mp -&gt; mp LIKE &#39;MPATH:%&#39;)&#34;)
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;term_id&#34;, explode_outer(&#34;sub_term_id&#34;)
+    )
+
+    histopathology_stats_results = histopathology_stats_results.groupBy(
+        *[
+            col_name
+            for col_name in required_stats_columns
+            if col_name not in [&#34;sex&#34;, &#34;term_id&#34;]
+        ]
+    ).agg(
+        collect_set(
+            struct(
+                lit(&#34;ABNORMAL&#34;).cast(StringType()).alias(&#34;event&#34;),
+                lit(None).cast(StringType()).alias(&#34;otherPossibilities&#34;),
+                col(&#34;sex&#34;),
+                col(&#34;term_id&#34;),
+            )
+        ).alias(&#34;mp_term&#34;)
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;mp_term&#34;, expr(&#34;filter(mp_term, mp -&gt; mp.term_id IS NOT NULL)&#34;)
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;mp_term&#34;,
+        when(col(&#34;significance&#34;).isNull() | ~col(&#34;significance&#34;), lit(None)).otherwise(
+            col(&#34;mp_term&#34;)
+        ),
+    )
+
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;statistical_method&#34;, lit(&#34;Supplied as data&#34;)
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;status&#34;, lit(&#34;Successful&#34;)
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;p_value&#34;,
+        when(col(&#34;significance&#34;).isNull() | ~col(&#34;significance&#34;), lit(1.0)).otherwise(
+            lit(0.0)
+        ),
+    )
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;effect_size&#34;,
+        when(col(&#34;significance&#34;).isNull() | ~col(&#34;significance&#34;), lit(0.0)).otherwise(
+            lit(1.0)
+        ),
+    )
+
+    histopathology_stats_results = histopathology_stats_results.withColumn(
+        &#34;data_type&#34;, lit(&#34;histopathology&#34;)
+    )
+    histopathology_stats_results = histopathology_stats_results.drop(&#34;significance&#34;)
+    histopathology_stats_results = histopathology_stats_results.dropDuplicates()
+
+    return histopathology_stats_results
+
+
+def _gross_pathology_stats_results(observations_df: DataFrame):
+    gross_pathology_stats_results = observations_df.where(
+        (col(&#34;biological_sample_group&#34;) != &#34;control&#34;)
+        &amp; col(&#34;parameter_stable_id&#34;).like(&#34;%PAT%&#34;)
+        &amp; (expr(&#34;exists(sub_term_id, term -&gt; term LIKE &#39;MP:%&#39;)&#34;))
+    )
+    required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+        &#34;sex&#34;,
+        &#34;procedure_stable_id&#34;,
+        &#34;pipeline_name&#34;,
+        &#34;category&#34;,
+        &#34;allele_accession_id&#34;,
+        &#34;parameter_name&#34;,
+        &#34;allele_symbol&#34;,
+        &#34;marker_accession_id&#34;,
+        &#34;marker_symbol&#34;,
+        &#34;strain_accession_id&#34;,
+        &#34;sub_term_id&#34;,
+        &#34;sub_term_name&#34;,
+        &#34;specimen_id&#34;,
+    ]
+    gross_pathology_stats_results = (
+        gross_pathology_stats_results.withColumnRenamed(
+            &#34;gene_accession_id&#34;, &#34;marker_accession_id&#34;
+        )
+        .withColumnRenamed(&#34;gene_symbol&#34;, &#34;marker_symbol&#34;)
+        .select(required_stats_columns)
+    )
+
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        &#34;sub_term_id&#34;, expr(&#34;filter(sub_term_id, mp -&gt; mp LIKE &#39;MP:%&#39;)&#34;)
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        &#34;term_id&#34;, explode_outer(&#34;sub_term_id&#34;)
+    )
+
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        &#34;term_id&#34;,
+        when(
+            expr(
+                &#34;exists(sub_term_name, term -&gt; term = &#39;no abnormal phenotype detected&#39;)&#34;
+            )
+            | expr(&#34;exists(sub_term_name, term -&gt; term = &#39;normal&#39;)&#34;),
+            lit(None),
+        ).otherwise(col(&#34;term_id&#34;)),
+    )
+
+    gross_pathology_stats_results = gross_pathology_stats_results.groupBy(
+        *[
+            col_name
+            for col_name in required_stats_columns
+            if col_name not in [&#34;sex&#34;, &#34;sub_term_id&#34;, &#34;sub_term_name&#34;]
+        ]
+    ).agg(
+        collect_set(
+            struct(
+                lit(&#34;ABNORMAL&#34;).cast(StringType()).alias(&#34;event&#34;),
+                lit(None).cast(StringType()).alias(&#34;otherPossibilities&#34;),
+                col(&#34;sex&#34;),
+                col(&#34;term_id&#34;),
+            )
+        ).alias(&#34;mp_term&#34;)
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        &#34;mp_term&#34;, expr(&#34;filter(mp_term, mp -&gt; mp.term_id IS NOT NULL)&#34;)
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        &#34;mp_term&#34;,
+        when(size(col(&#34;mp_term.term_id&#34;)) == 0, lit(None)).otherwise(col(&#34;mp_term&#34;)),
+    )
+
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        &#34;statistical_method&#34;, lit(&#34;Supplied as data&#34;)
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        &#34;status&#34;, lit(&#34;Successful&#34;)
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        &#34;p_value&#34;, when(col(&#34;mp_term&#34;).isNull(), lit(1.0)).otherwise(lit(0.0))
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        &#34;effect_size&#34;, when(col(&#34;mp_term&#34;).isNull(), lit(0.0)).otherwise(lit(1.0))
+    )
+    gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+        &#34;data_type&#34;, lit(&#34;adult-gross-path&#34;)
+    )
+    return gross_pathology_stats_results
+
+
+def _select_collapsed_mp_term(
+    mp_term_array: List[Row],
+    pipeline,
+    procedure_group,
+    parameter,
+    mp_chooser,
+    data_type,
+    first_term_ancestors,
+    second_term_ancestors,
+):
+    if (
+        mp_term_array is None
+        or data_type not in [&#34;categorical&#34;, &#34;unidimensional&#34;]
+        or len(mp_term_array) == 0
+    ):
+        return mp_term_array
+    mp_term = mp_term_array[0].asDict()
+    mp_term[&#34;sex&#34;] = &#34;not_considered&#34;
+    mp_terms = [mp[&#34;term_id&#34;] for mp in mp_term_array]
+    try:
+        if len(set(mp_terms)) &gt; 1:
+            print(mp_term_array)
+            print(f&#34;{pipeline} {procedure_group} {parameter}&#34;)
+            mp_term[&#34;term_id&#34;] = mp_chooser[pipeline][procedure_group][parameter][
+                &#34;UNSPECIFIED&#34;
+            ][&#34;ABNORMAL&#34;][&#34;OVERALL&#34;][&#34;MPTERM&#34;]
+        else:
+            mp_term[&#34;term_id&#34;] = mp_term_array[0][&#34;term_id&#34;]
+    except KeyError:
+        ancestor_types = [&#34;parent&#34;, &#34;intermediate&#34;, &#34;top_level&#34;]
+        closest_common_ancestor = None
+        for ancestor_type in ancestor_types:
+            ancestor_intersect = set(
+                first_term_ancestors[f&#34;{ancestor_type}_ids&#34;]
+            ) &amp; set(second_term_ancestors[f&#34;{ancestor_type}_ids&#34;])
+            if len(ancestor_intersect) &gt; 0:
+                closest_common_ancestor = list(ancestor_intersect)[0]
+                break
+        if closest_common_ancestor is None:
+            print(mp_term_array)
+            print(f&#34;{pipeline} {procedure_group} {parameter}&#34;)
+            print(&#34;Unexpected error:&#34;, sys.exc_info()[0])
+            raise Exception(
+                str(mp_term_array)
+                + f&#34; | {pipeline} {procedure_group} {parameter} | &#34;
+                + f&#34;[{str(first_term_ancestors)}] [{str(second_term_ancestors)}]&#34;
+                + str(sys.exc_info()[0])
+            )
+        else:
+            mp_term[&#34;term_id&#34;] = closest_common_ancestor
+    return [convert_to_row(mp_term)]
+
+
+def _add_via_002_mp_term_options(pipeline_core_df):
+    pipeline_core_df = pipeline_core_df.withColumn(
+        &#34;top_level_mp_id&#34;,
+        when(
+            array_contains(col(&#34;procedure_stable_id&#34;), &#34;IMPC_VIA_002&#34;),
+            array(lit(&#34;MP:0010768&#34;)),
+        ).otherwise(col(&#34;top_level_mp_id&#34;)),
+    )
+    pipeline_core_df = pipeline_core_df.withColumn(
+        &#34;top_level_mp_term&#34;,
+        when(
+            array_contains(col(&#34;procedure_stable_id&#34;), &#34;IMPC_VIA_002&#34;),
+            array(lit(&#34;mortality/aging&#34;)),
+        ).otherwise(col(&#34;top_level_mp_term&#34;)),
+    )
+    pipeline_core_df = pipeline_core_df.withColumn(
+        &#34;mp_id&#34;,
+        when(
+            array_contains(col(&#34;procedure_stable_id&#34;), &#34;IMPC_VIA_002&#34;),
+            array(lit(&#34;MP:0011100&#34;), lit(&#34;MP:0011110&#34;)),
+        ).otherwise(col(&#34;mp_id&#34;)),
+    )
+    pipeline_core_df = pipeline_core_df.withColumn(
+        &#34;mp_term&#34;,
+        when(
+            array_contains(col(&#34;procedure_stable_id&#34;), &#34;IMPC_VIA_002&#34;),
+            array(
+                lit(&#34;preweaning lethality, complete penetrance&#34;),
+                lit(&#34;preweaning lethality, incomplete penetrance&#34;),
+            ),
+        ).otherwise(col(&#34;mp_term&#34;)),
+    )
+    return pipeline_core_df
+
+
+def stop_and_count(df):
+    print(df.count())
+    raise ValueError
+
+
+if __name__ == &#34;__main__&#34;:
+    sys.exit(main(sys.argv))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="impc_etl.jobs.load.solr.stats_results_mapper.get_stats_results_core"><code class="name flex">
+<span>def <span class="ident">get_stats_results_core</span></span>(<span>open_stats_complete_df, ontology_df, allele_df, pipeline_df, pipeline_core_df, observations_df, threei_df, mpath_metadata_df, mp_chooser, extract_windowed_data=False, raw_data_in_output='include')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_stats_results_core(
+    open_stats_complete_df,
+    ontology_df,
+    allele_df,
+    pipeline_df,
+    pipeline_core_df,
+    observations_df,
+    threei_df,
+    mpath_metadata_df,
+    mp_chooser,
+    extract_windowed_data=False,
+    raw_data_in_output=&#34;include&#34;,
+):
+    threei_df = standardize_threei_schema(threei_df)
+
+    embryo_stat_packets = open_stats_complete_df.where(
+        (
+            (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPL&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEL&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPM&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEM&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPO&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEO&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPP&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEP&#34;))
+        )
+    )
+
+    open_stats_df = open_stats_complete_df.where(
+        ~(
+            col(&#34;procedure_stable_id&#34;).contains(&#34;IMPC_FER_001&#34;)
+            | (col(&#34;procedure_stable_id&#34;).contains(&#34;IMPC_VIA_001&#34;))
+            | (col(&#34;procedure_stable_id&#34;).contains(&#34;IMPC_VIA_002&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;_PAT&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;_EVL&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;_EVM&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;_EVO&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;_EVP&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;_ELZ&#34;))
+            | (col(&#34;procedure_name&#34;).startswith(&#34;Histopathology&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPL&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEL&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPM&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEM&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPO&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEO&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GPP&#34;))
+            | (col(&#34;procedure_group&#34;).contains(&#34;IMPC_GEP&#34;))
+        )
+    )
+
+    fertility_stats = _fertility_stats_results(observations_df, pipeline_df)
+
+    for col_name in open_stats_df.columns:
+        if col_name not in fertility_stats.columns:
+            fertility_stats = fertility_stats.withColumn(col_name, lit(None))
+    fertility_stats = fertility_stats.select(open_stats_df.columns)
+
+    open_stats_df = open_stats_df.union(fertility_stats)
+
+    viability_stats = _viability_stats_results(observations_df, pipeline_df)
+    for col_name in open_stats_df.columns:
+        if col_name not in viability_stats.columns:
+            viability_stats = viability_stats.withColumn(col_name, lit(None))
+    viability_stats = viability_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(viability_stats)
+
+    gross_pathology_stats = _gross_pathology_stats_results(observations_df)
+    for col_name in open_stats_df.columns:
+        if col_name not in gross_pathology_stats.columns:
+            gross_pathology_stats = gross_pathology_stats.withColumn(
+                col_name, lit(None)
+            )
+    gross_pathology_stats = gross_pathology_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(gross_pathology_stats)
+
+    histopathology_stats = _histopathology_stats_results(observations_df)
+    for col_name in open_stats_df.columns:
+        if col_name not in histopathology_stats.columns:
+            histopathology_stats = histopathology_stats.withColumn(col_name, lit(None))
+    histopathology_stats = histopathology_stats.select(open_stats_df.columns).distinct()
+    open_stats_df = open_stats_df.union(histopathology_stats)
+
+    embryo_viability_stats = _embryo_viability_stats_results(
+        observations_df, pipeline_df
+    )
+    for col_name in open_stats_df.columns:
+        if col_name not in embryo_viability_stats.columns:
+            embryo_viability_stats = embryo_viability_stats.withColumn(
+                col_name, lit(None)
+            )
+    embryo_viability_stats = embryo_viability_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(embryo_viability_stats)
+
+    embryo_stats = _embryo_stats_results(
+        observations_df, pipeline_df, embryo_stat_packets
+    )
+    for col_name in open_stats_df.columns:
+        if col_name not in embryo_stats.columns:
+            embryo_stats = embryo_stats.withColumn(col_name, lit(None))
+    embryo_stats = embryo_stats.select(open_stats_df.columns)
+    open_stats_df = open_stats_df.union(embryo_stats)
+
+    observations_metadata_df = observations_df.select(
+        STATS_OBSERVATIONS_JOIN + list(set(OBSERVATIONS_STATS_MAP.values()))
+    ).dropDuplicates()
+    observations_metadata_df = observations_metadata_df.groupBy(
+        *[
+            col_name
+            for col_name in observations_metadata_df.columns
+            if col_name != &#34;sex&#34;
+        ]
+    ).agg(collect_set(&#34;sex&#34;).alias(&#34;sex&#34;))
+
+    aggregation_expresion = []
+
+    for col_name in list(set(OBSERVATIONS_STATS_MAP.values())):
+        if col_name not in [&#34;datasource_name&#34;, &#34;production_center&#34;]:
+            if col_name == &#34;sex&#34;:
+                aggregation_expresion.append(
+                    array_distinct(flatten(collect_set(col_name))).alias(col_name)
+                )
+            elif col_name in [&#34;strain_name&#34;, &#34;genetic_background&#34;]:
+                aggregation_expresion.append(first(col(col_name)).alias(col_name))
+            else:
+                aggregation_expresion.append(collect_set(col_name).alias(col_name))
+
+    observations_metadata_df = observations_metadata_df.groupBy(
+        STATS_OBSERVATIONS_JOIN + [&#34;datasource_name&#34;, &#34;production_center&#34;]
+    ).agg(*aggregation_expresion)
+    open_stats_df = map_to_stats(
+        open_stats_df,
+        observations_metadata_df,
+        STATS_OBSERVATIONS_JOIN,
+        OBSERVATIONS_STATS_MAP,
+        &#34;observation&#34;,
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;pipeline_stable_id&#34;,
+        when(col(&#34;procedure_stable_id&#34;) == &#34;ESLIM_022_001&#34;, lit(&#34;ESLIM_001&#34;)).otherwise(
+            col(&#34;pipeline_stable_id&#34;)
+        ),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;procedure_stable_id&#34;,
+        when(
+            col(&#34;procedure_stable_id&#34;).contains(&#34;~&#34;),
+            split(col(&#34;procedure_stable_id&#34;), &#34;~&#34;),
+        ).otherwise(array(col(&#34;procedure_stable_id&#34;))),
+    )
+    open_stats_df = open_stats_df.alias(&#34;stats&#34;)
+
+    mp_ancestors_df = ontology_df.select(
+        &#34;id&#34;,
+        struct(&#34;parent_ids&#34;, &#34;intermediate_ids&#34;, &#34;top_level_ids&#34;).alias(&#34;ancestors&#34;),
+    )
+    mp_ancestors_df_1 = mp_ancestors_df.alias(&#34;mp_term_1&#34;)
+    mp_ancestors_df_2 = mp_ancestors_df.alias(&#34;mp_term_2&#34;)
+    open_stats_df = open_stats_df.join(
+        mp_ancestors_df_1,
+        (expr(&#34;mp_term[0].term_id&#34;) == col(&#34;mp_term_1.id&#34;)),
+        &#34;left_outer&#34;,
+    )
+
+    open_stats_df = open_stats_df.join(
+        mp_ancestors_df_2,
+        (expr(&#34;mp_term[1].term_id&#34;) == col(&#34;mp_term_2.id&#34;)),
+        &#34;left_outer&#34;,
+    )
+
+    mp_term_schema = ArrayType(
+        StructType(
+            [
+                StructField(&#34;event&#34;, StringType(), True),
+                StructField(&#34;otherPossibilities&#34;, StringType(), True),
+                StructField(&#34;sex&#34;, StringType(), True),
+                StructField(&#34;term_id&#34;, StringType(), True),
+            ]
+        )
+    )
+    select_collapsed_mp_term_udf = udf(
+        lambda mp_term_array, pipeline, procedure_group, parameter, data_type, first_term_ancestors, second_term_ancestors: _select_collapsed_mp_term(
+            mp_term_array,
+            pipeline,
+            procedure_group,
+            parameter,
+            mp_chooser,
+            data_type,
+            first_term_ancestors,
+            second_term_ancestors,
+        ),
+        mp_term_schema,
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;collapsed_mp_term&#34;,
+        when(
+            expr(
+                &#34;exists(mp_term.sex, sex -&gt; sex = &#39;male&#39;) AND exists(mp_term.sex, sex -&gt; sex = &#39;female&#39;)&#34;
+            )
+            &amp; (col(&#34;data_type&#34;).isin([&#34;categorical&#34;, &#34;unidimensional&#34;])),
+            select_collapsed_mp_term_udf(
+                &#34;mp_term&#34;,
+                &#34;pipeline_stable_id&#34;,
+                &#34;procedure_group&#34;,
+                &#34;parameter_stable_id&#34;,
+                &#34;data_type&#34;,
+                &#34;mp_term_1.ancestors&#34;,
+                &#34;mp_term_2.ancestors&#34;,
+            ),
+        ).otherwise(col(&#34;mp_term&#34;)),
+    )
+    open_stats_df = open_stats_df.drop(&#34;mp_term_1.*&#34;, &#34;mp_term_2.*&#34;)
+    open_stats_df = open_stats_df.withColumn(
+        &#34;collapsed_mp_term&#34;, expr(&#34;collapsed_mp_term[0]&#34;)
+    )
+    open_stats_df = open_stats_df.withColumn(&#34;significant&#34;, lit(False))
+
+    open_stats_df = open_stats_df.join(
+        threei_df,
+        [
+            &#34;resource_name&#34;,
+            &#34;colony_id&#34;,
+            &#34;marker_symbol&#34;,
+            &#34;procedure_stable_id&#34;,
+            &#34;parameter_stable_id&#34;,
+            &#34;zygosity&#34;,
+        ],
+        &#34;left_outer&#34;,
+    )
+    open_stats_df = map_three_i(open_stats_df)
+    open_stats_df = open_stats_df.withColumn(
+        &#34;collapsed_mp_term&#34;,
+        when(
+            col(&#34;threei_collapsed_mp_term&#34;).isNotNull(), col(&#34;threei_collapsed_mp_term&#34;)
+        ).otherwise(col(&#34;collapsed_mp_term&#34;)),
+    )
+
+    open_stats_df = open_stats_df.drop(&#34;threei_collapsed_mp_term&#34;)
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;mp_term_id&#34;, regexp_replace(&#34;collapsed_mp_term.term_id&#34;, &#34; &#34;, &#34;&#34;)
+    )
+    for bad_mp in BAD_MP_MAP.keys():
+        open_stats_df = open_stats_df.withColumn(
+            &#34;mp_term_id&#34;,
+            when(col(&#34;mp_term_id&#34;) == bad_mp, lit(BAD_MP_MAP[bad_mp])).otherwise(
+                col(&#34;mp_term_id&#34;)
+            ),
+        )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;mp_term_event&#34;, col(&#34;collapsed_mp_term.event&#34;)
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;mp_term_sex&#34;, col(&#34;collapsed_mp_term.sex&#34;)
+    )
+    open_stats_df = open_stats_df.withColumnRenamed(&#34;mp_term&#34;, &#34;full_mp_term&#34;)
+    open_stats_df = open_stats_df.withColumn(
+        &#34;full_mp_term&#34;,
+        when(
+            col(&#34;full_mp_term&#34;).isNull() &amp; col(&#34;collapsed_mp_term&#34;).isNotNull(),
+            array(col(&#34;collapsed_mp_term&#34;)),
+        )
+        .when(
+            col(&#34;full_mp_term&#34;).isNull() &amp; col(&#34;collapsed_mp_term&#34;).isNull(), lit(None)
+        )
+        .otherwise(col(&#34;full_mp_term&#34;)),
+    )
+
+    if extract_windowed_data:
+        stats_results_column_list = (
+            STATS_RESULTS_COLUMNS + WINDOW_COLUMNS + RAW_DATA_COLUMNS
+        )
+    elif raw_data_in_output == &#34;exclude&#34;:
+        stats_results_column_list = STATS_RESULTS_COLUMNS
+    else:
+        stats_results_column_list = STATS_RESULTS_COLUMNS + RAW_DATA_COLUMNS
+
+    for col_name in stats_results_column_list:
+        if col_name not in open_stats_df.columns:
+            open_stats_df = open_stats_df.withColumn(col_name, lit(None))
+
+    ontology_df = ontology_df.withColumnRenamed(&#34;id&#34;, &#34;mp_term_id&#34;)
+    open_stats_df = map_to_stats(
+        open_stats_df, ontology_df, [&#34;mp_term_id&#34;], ONTOLOGY_STATS_MAP, &#34;ontology&#34;
+    )
+
+    pipeline_core_join = [
+        &#34;parameter_stable_id&#34;,
+        &#34;pipeline_stable_id&#34;,
+        &#34;procedure_stable_id&#34;,
+    ]
+    pipeline_core_df = (
+        pipeline_core_df.select(
+            [
+                col_name
+                for col_name in pipeline_core_df.columns
+                if col_name in pipeline_core_join
+                or col_name in PIPELINE_STATS_MAP.values()
+            ]
+        )
+        .groupBy(
+            [
+                &#34;parameter_stable_id&#34;,
+                &#34;pipeline_stable_id&#34;,
+                &#34;procedure_stable_id&#34;,
+                &#34;pipeline_stable_key&#34;,
+            ]
+        )
+        .agg(
+            *[
+                array_distinct(flatten(collect_set(col_name))).alias(col_name)
+                if col_name
+                in [
+                    &#34;mp_id&#34;,
+                    &#34;mp_term&#34;,
+                    &#34;top_level_mp_id&#34;,
+                    &#34;top_level_mp_term&#34;,
+                    &#34;intermediate_mp_id&#34;,
+                    &#34;intermediate_mp_term&#34;,
+                ]
+                else collect_set(col_name).alias(col_name)
+                for col_name in list(set(PIPELINE_STATS_MAP.values()))
+                if col_name != &#34;pipeline_stable_key&#34;
+            ]
+        )
+        .dropDuplicates()
+    )
+    pipeline_core_df = pipeline_core_df.withColumnRenamed(
+        &#34;procedure_stable_id&#34;, &#34;proc_id&#34;
+    )
+    pipeline_core_df = pipeline_core_df.withColumn(
+        &#34;procedure_stable_id&#34;, array(col(&#34;proc_id&#34;))
+    )
+    # Fix for VIA_002 missing mp terms
+    pipeline_core_df = _add_via_002_mp_term_options(pipeline_core_df)
+
+    open_stats_df = map_to_stats(
+        open_stats_df,
+        pipeline_core_df,
+        pipeline_core_join,
+        PIPELINE_STATS_MAP,
+        &#34;impress&#34;,
+    )
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;top_level_mp_term_id&#34;,
+        when(
+            col(&#34;top_level_mp_term_id&#34;).isNull(), col(&#34;top_level_mp_id_options&#34;)
+        ).otherwise(col(&#34;top_level_mp_term_id&#34;)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;top_level_mp_term_name&#34;,
+        when(
+            col(&#34;top_level_mp_term_name&#34;).isNull(), col(&#34;top_level_mp_term_options&#34;)
+        ).otherwise(col(&#34;top_level_mp_term_name&#34;)),
+    )
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;intermediate_mp_term_id&#34;,
+        when(
+            col(&#34;intermediate_mp_term_id&#34;).isNull(), col(&#34;intermediate_mp_id_options&#34;)
+        ).otherwise(col(&#34;intermediate_mp_term_id&#34;)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;intermediate_mp_term_name&#34;,
+        when(
+            col(&#34;intermediate_mp_term_name&#34;).isNull(),
+            col(&#34;intermediate_mp_term_options&#34;),
+        ).otherwise(col(&#34;intermediate_mp_term_name&#34;)),
+    )
+
+    allele_df = allele_df.select(
+        [&#34;allele_symbol&#34;] + list(ALLELE_STATS_MAP.values())
+    ).dropDuplicates()
+
+    open_stats_df = map_to_stats(
+        open_stats_df, allele_df, [&#34;allele_symbol&#34;], ALLELE_STATS_MAP, &#34;allele&#34;
+    )
+
+    open_stats_df = open_stats_df.withColumn(&#34;sex&#34;, col(&#34;mp_term_sex&#34;))
+    open_stats_df = open_stats_df.withColumn(
+        &#34;phenotype_sex&#34;,
+        when(col(&#34;phenotype_sex&#34;).isNull(), lit(None))
+        .when(
+            col(&#34;phenotype_sex&#34;).contains(&#34;Both sexes included&#34;),
+            array(lit(&#34;male&#34;), lit(&#34;female&#34;)),
+        )
+        .otherwise(
+            array(
+                lower(
+                    regexp_extract(
+                        col(&#34;phenotype_sex&#34;),
+                        r&#34;Only one sex included in the analysis; (.*)\[.*\]&#34;,
+                        1,
+                    )
+                )
+            )
+        ),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;phenotype_sex&#34;,
+        when(
+            col(&#34;phenotype_sex&#34;).isNull() &amp; col(&#34;mp_term_sex&#34;).isNotNull(),
+            when(
+                col(&#34;mp_term_sex&#34;) == &#34;not_considered&#34;,
+                array(lit(&#34;male&#34;), lit(&#34;female&#34;)),
+            ).otherwise(array(col(&#34;mp_term_sex&#34;))),
+        ).otherwise(col(&#34;phenotype_sex&#34;)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;zygosity&#34;,
+        when(col(&#34;zygosity&#34;) == &#34;homozygous&#34;, lit(&#34;homozygote&#34;)).otherwise(
+            col(&#34;zygosity&#34;)
+        ),
+    )
+
+    open_stats_df = map_ontology_prefix(open_stats_df, &#34;MA:&#34;, &#34;anatomy_&#34;)
+    open_stats_df = map_ontology_prefix(open_stats_df, &#34;EMAP:&#34;, &#34;anatomy_&#34;)
+    open_stats_df = map_ontology_prefix(open_stats_df, &#34;EMAPA:&#34;, &#34;anatomy_&#34;)
+    open_stats_df = open_stats_df.withColumn(
+        &#34;significant&#34;,
+        when(col(&#34;mp_term_id&#34;).isNotNull(), lit(True)).otherwise(lit(False)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;p_value&#34;,
+        when(
+            col(&#34;statistical_method&#34;).startswith(&#34;Reference Range&#34;),
+            least(
+                col(&#34;female_pvalue_low_normal_vs_high&#34;),
+                col(&#34;female_pvalue_low_vs_normal_high&#34;),
+                col(&#34;male_pvalue_low_normal_vs_high&#34;),
+                col(&#34;male_pvalue_low_vs_normal_high&#34;),
+                col(&#34;genotype_pvalue_low_normal_vs_high&#34;),
+                col(&#34;genotype_pvalue_low_vs_normal_high&#34;),
+            ),
+        ).otherwise(col(&#34;p_value&#34;)),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;effect_size&#34;,
+        when(
+            col(&#34;statistical_method&#34;).startswith(&#34;Reference Range&#34;),
+            greatest(
+                col(&#34;female_effect_size_low_normal_vs_high&#34;),
+                col(&#34;female_effect_size_low_vs_normal_high&#34;),
+                col(&#34;male_effect_size_low_normal_vs_high&#34;),
+                col(&#34;male_effect_size_low_vs_normal_high&#34;),
+                col(&#34;genotype_effect_size_low_normal_vs_high&#34;),
+                col(&#34;genotype_effect_size_low_vs_normal_high&#34;),
+            ),
+        ).otherwise(col(&#34;effect_size&#34;)),
+    )
+    open_stats_df = map_ontology_prefix(open_stats_df, &#34;MPATH:&#34;, &#34;mpath_&#34;)
+    mpath_metadata_df = mpath_metadata_df.select(
+        col(&#34;acc&#34;).alias(&#34;mpath_term_id&#34;), col(&#34;name&#34;).alias(&#34;mpath_metadata_term_name&#34;)
+    ).distinct()
+    open_stats_df = open_stats_df.join(mpath_metadata_df, &#34;mpath_term_id&#34;, &#34;left_outer&#34;)
+    open_stats_df = open_stats_df.withColumn(
+        &#34;mpath_term_name&#34;, col(&#34;mpath_metadata_term_name&#34;)
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;metadata&#34;,
+        expr(&#34;transform(metadata, metadata_values -&gt; concat_ws(&#39;|&#39;, metadata_values))&#34;),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;significant&#34;,
+        when(col(&#34;data_type&#34;) == &#34;time_series&#34;, lit(False)).otherwise(
+            col(&#34;significant&#34;)
+        ),
+    )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;status&#34;,
+        when(col(&#34;data_type&#34;) == &#34;time_series&#34;, lit(&#34;NotProcessed&#34;)).otherwise(
+            col(&#34;status&#34;)
+        ),
+    )
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;procedure_stable_id_str&#34;, concat_ws(&#34;,&#34;, &#34;procedure_stable_id&#34;)
+    )
+    identifying_cols = [
+        &#34;colony_id&#34;,
+        &#34;pipeline_stable_id&#34;,
+        &#34;procedure_stable_id_str&#34;,
+        &#34;parameter_stable_id&#34;,
+        &#34;phenotyping_center&#34;,
+        &#34;production_center&#34;,
+        &#34;metadata_group&#34;,
+        &#34;zygosity&#34;,
+        &#34;strain_accession_id&#34;,
+        &#34;sex&#34;,
+    ]
+    identifying_cols = [
+        when(col(col_name).isNotNull(), col(col_name)).otherwise(lit(&#34;&#34;))
+        for col_name in identifying_cols
+    ]
+    open_stats_df = open_stats_df.withColumn(&#34;doc_id&#34;, md5(concat(*identifying_cols)))
+    if raw_data_in_output == &#34;include&#34; or raw_data_in_output == &#34;bundled&#34;:
+        specimen_dobs = (
+            observations_df.select(&#34;external_sample_id&#34;, &#34;date_of_birth&#34;)
+            .dropDuplicates()
+            .collect()
+        )
+        specimen_dob_dict = [row.asDict() for row in specimen_dobs]
+        specimen_dob_dict = {
+            row[&#34;external_sample_id&#34;]: row[&#34;date_of_birth&#34;] for row in specimen_dob_dict
+        }
+        open_stats_df = _parse_raw_data(
+            open_stats_df,
+            extract_windowed_data,
+            specimen_dob_dict,
+            raw_data_in_output != &#34;bundled&#34;,
+        )
+    open_stats_df = open_stats_df.withColumn(
+        &#34;data_type&#34;,
+        when(
+            col(&#34;procedure_group&#34;).rlike(
+                &#34;|&#34;.join(
+                    [
+                        &#34;IMPC_GPL&#34;,
+                        &#34;IMPC_GEL&#34;,
+                        &#34;IMPC_GPM&#34;,
+                        &#34;IMPC_GEM&#34;,
+                        &#34;IMPC_GPO&#34;,
+                        &#34;IMPC_GEO&#34;,
+                        &#34;IMPC_GPP&#34;,
+                        &#34;IMPC_GEP&#34;,
+                    ]
+                )
+            )
+            &amp; (col(&#34;data_type&#34;) == &#34;categorical&#34;),
+            lit(&#34;embryo&#34;),
+        ).otherwise(col(&#34;data_type&#34;)),
+    )
+    return open_stats_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.solr.stats_results_mapper.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>argv)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Solr Core loader
+:param list argv: the list elements should be:
+[1]: Open stats parquet file
+[2]: Observations parquet
+[3]: Ontology parquet
+[4]: Threei stats results file
+[5]: Pipeline core parquet
+[6]: Allele parquet
+[7]: Output Path</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(argv):
+    &#34;&#34;&#34;
+    Solr Core loader
+    :param list argv: the list elements should be:
+                    [1]: Open stats parquet file
+                    [2]: Observations parquet
+                    [3]: Ontology parquet
+                    [4]: Threei stats results file
+                    [5]: Pipeline core parquet
+                    [6]: Allele parquet
+                    [7]: Output Path
+    &#34;&#34;&#34;
+    open_stats_parquet_path = argv[1]
+    observations_parquet_path = argv[2]
+    ontology_parquet_path = argv[3]
+    pipeline_parquet_path = argv[4]
+    pipeline_core_parquet_path = argv[5]
+    allele_parquet_path = argv[6]
+    mp_chooser_path = argv[7]
+    threei_parquet_path = argv[8]
+    mpath_metadata_path = argv[9]
+    raw_data_in_output = argv[10]
+    extract_windowed_data = argv[11] == &#34;true&#34;
+    output_path = argv[12]
+
+    spark = SparkSession.builder.getOrCreate()
+    open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
+    ontology_df = spark.read.parquet(ontology_parquet_path)
+    allele_df = spark.read.parquet(allele_parquet_path)
+    pipeline_df = spark.read.parquet(pipeline_parquet_path)
+    pipeline_core_df = spark.read.parquet(pipeline_core_parquet_path)
+    observations_df = spark.read.parquet(observations_parquet_path)
+    threei_df = spark.read.csv(threei_parquet_path, header=True)
+    mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
+
+    mp_chooser_txt = spark.sparkContext.wholeTextFiles(mp_chooser_path).collect()[0][1]
+    mp_chooser = json.loads(mp_chooser_txt)
+
+    open_stats_df = get_stats_results_core(
+        open_stats_complete_df,
+        ontology_df,
+        allele_df,
+        pipeline_df,
+        pipeline_core_df,
+        observations_df,
+        threei_df,
+        mpath_metadata_df,
+        mp_chooser,
+        extract_windowed_data,
+        raw_data_in_output,
+    )
+
+    if extract_windowed_data:
+        stats_results_column_list = STATS_RESULTS_COLUMNS + [
+            col_name
+            for col_name in WINDOW_COLUMNS
+            if col_name != &#34;observations_window_weight&#34;
+        ]
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
+    elif raw_data_in_output == &#34;bundled&#34;:
+        stats_results_column_list = STATS_RESULTS_COLUMNS + [&#34;raw_data&#34;]
+        stats_results_df = open_stats_df.select(*stats_results_column_list)
+        stats_results_df = stats_results_df.repartition(20000)
+    else:
+        stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
+    for col_name in stats_results_df.columns:
+        if dict(stats_results_df.dtypes)[col_name] == &#34;null&#34;:
+            stats_results_df = stats_results_df.withColumn(
+                col_name, lit(None).astype(StringType())
+            )
+    stats_results_df.write.parquet(output_path)
+    if raw_data_in_output == &#34;include&#34;:
+        raw_data_df = open_stats_df.select(&#34;doc_id&#34;, &#34;raw_data&#34;)
+        raw_data_df.distinct().write.parquet(output_path + &#34;_raw_data&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.solr.stats_results_mapper.map_ontology_prefix"><code class="name flex">
+<span>def <span class="ident">map_ontology_prefix</span></span>(<span>open_stats_df, term_prefix, field_prefix)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def map_ontology_prefix(open_stats_df, term_prefix, field_prefix):
+    mapped_columns = [
+        col_name for col_name in STATS_RESULTS_COLUMNS if field_prefix in col_name
+    ]
+    for col_name in mapped_columns:
+        mp_col_name = col_name.replace(field_prefix, &#34;mp_&#34;)
+        open_stats_df = open_stats_df.withColumn(
+            col_name,
+            when(
+                col(col_name).isNull(),
+                when(
+                    col(&#34;mp_term_id&#34;).startswith(term_prefix), col(mp_col_name)
+                ).otherwise(lit(None)),
+            ).otherwise(col(col_name)),
+        )
+    mapped_id = field_prefix + &#34;term_id&#34;
+    for col_name in mapped_columns:
+        mp_col_name = col_name.replace(field_prefix, &#34;mp_&#34;)
+        open_stats_df = open_stats_df.withColumn(
+            mp_col_name,
+            when(col(mapped_id).isNotNull(), lit(None)).otherwise(col(mp_col_name)),
+        )
+    return open_stats_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.solr.stats_results_mapper.map_three_i"><code class="name flex">
+<span>def <span class="ident">map_three_i</span></span>(<span>open_stats_df)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def map_three_i(open_stats_df):
+    open_stats_df = open_stats_df.withColumn(
+        &#34;genotype_effect_parameter_estimate&#34;,
+        when(
+            col(&#34;threei_genotype_effect_parameter_estimate&#34;).isNotNull(),
+            col(&#34;threei_genotype_effect_parameter_estimate&#34;),
+        ).otherwise(col(&#34;genotype_effect_parameter_estimate&#34;)),
+    )
+    open_stats_df = open_stats_df.drop(&#34;threei_genotype_effect_parameter_estimate&#34;)
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;significant&#34;,
+        when(
+            col(&#34;threei_significant&#34;).isNotNull(), col(&#34;threei_significant&#34;)
+        ).otherwise(col(&#34;significant&#34;)),
+    )
+    open_stats_df = open_stats_df.drop(&#34;threei_significant&#34;)
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;status&#34;,
+        when(col(&#34;threei_status&#34;).isNotNull(), col(&#34;threei_status&#34;)).otherwise(
+            col(&#34;status&#34;)
+        ),
+    )
+    open_stats_df = open_stats_df.drop(&#34;threei_status&#34;)
+    open_stats_df = open_stats_df.withColumn(
+        &#34;statistical_method&#34;,
+        when(
+            col(&#34;threei_statistical_method&#34;).isNotNull(),
+            col(&#34;threei_statistical_method&#34;),
+        ).otherwise(col(&#34;statistical_method&#34;)),
+    )
+    open_stats_df = open_stats_df.drop(&#34;threei_statistical_method&#34;)
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;p_value&#34;,
+        when(col(&#34;threei_p_value&#34;).isNotNull(), col(&#34;threei_p_value&#34;)).otherwise(
+            col(&#34;p_value&#34;)
+        ),
+    )
+    open_stats_df = open_stats_df.drop(&#34;threei_p_value&#34;)
+
+    open_stats_df = open_stats_df.withColumn(
+        &#34;genotype_effect_p_value&#34;,
+        when(
+            col(&#34;threei_genotype_effect_p_value&#34;).isNotNull(),
+            col(&#34;threei_genotype_effect_p_value&#34;),
+        ).otherwise(col(&#34;genotype_effect_p_value&#34;)),
+    )
+    open_stats_df = open_stats_df.drop(&#34;threei_genotype_effect_p_value&#34;)
+    return open_stats_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.solr.stats_results_mapper.map_to_stats"><code class="name flex">
+<span>def <span class="ident">map_to_stats</span></span>(<span>open_stats_df, metadata_df, join_columns, source_stats_map, source_name)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def map_to_stats(
+    open_stats_df, metadata_df, join_columns, source_stats_map, source_name
+):
+    for col_name in metadata_df.columns:
+        if col_name not in join_columns:
+            metadata_df = metadata_df.withColumnRenamed(
+                col_name, f&#34;{source_name}_{col_name}&#34;
+            )
+    if source_name == &#34;observations&#34;:
+        open_stats_df = open_stats_df.join(metadata_df, join_columns)
+    else:
+        open_stats_df = open_stats_df.join(metadata_df, join_columns, &#34;left_outer&#34;)
+    for column_name, source_column in source_stats_map.items():
+        open_stats_df = open_stats_df.withColumn(
+            column_name, col(f&#34;{source_name}_{source_column}&#34;)
+        )
+    for source_column in source_stats_map.values():
+        open_stats_df = open_stats_df.drop(f&#34;{source_name}_{source_column}&#34;)
+    return open_stats_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.solr.stats_results_mapper.standardize_threei_schema"><code class="name flex">
+<span>def <span class="ident">standardize_threei_schema</span></span>(<span>threei_df: pyspark.sql.dataframe.DataFrame)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def standardize_threei_schema(threei_df: DataFrame):
+    threei_df = threei_df.dropDuplicates()
+    for col_name, threei_column in THREEI_STATS_MAP.items():
+        threei_df = threei_df.withColumnRenamed(threei_column, col_name)
+    threei_df = threei_df.withColumn(&#34;resource_name&#34;, lit(&#34;3i&#34;))
+    threei_df = threei_df.withColumn(
+        &#34;procedure_stable_id&#34;, array(col(&#34;procedure_stable_id&#34;))
+    )
+    threei_df = threei_df.withColumn(
+        &#34;sex&#34;,
+        when(col(&#34;sex&#34;) == &#34;both&#34;, lit(&#34;not_considered&#34;)).otherwise(lower(col(&#34;sex&#34;))),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;zygosity&#34;,
+        when(col(&#34;zygosity&#34;) == &#34;Hom&#34;, lit(&#34;homozygote&#34;))
+        .when(col(&#34;zygosity&#34;) == &#34;Hemi&#34;, lit(&#34;hemizygote&#34;))
+        .otherwise(lit(&#34;heterozygote&#34;)),
+    )
+    threei_df = threei_df.withColumn(&#34;term_id&#34;, regexp_replace(&#34;mp_id&#34;, r&#34;\[&#34;, &#34;&#34;))
+
+    threei_df = threei_df.withColumn(
+        &#34;threei_collapsed_mp_term&#34;,
+        when(
+            (col(&#34;mp_id&#34;) != &#34;NA&#34;) &amp; (col(&#34;mp_id&#34;).isNotNull()),
+            struct(
+                lit(None).cast(StringType()).alias(&#34;event&#34;),
+                lit(None).cast(StringType()).alias(&#34;otherPossibilities&#34;),
+                &#34;sex&#34;,
+                col(&#34;term_id&#34;).alias(&#34;term_id&#34;),
+            ),
+        ).otherwise(lit(None)),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;threei_p_value&#34;,
+        when(col(&#34;classification_tag&#34;) == &#34;Significant&#34;, lit(0.0)).otherwise(lit(1.0)),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;threei_genotype_effect_p_value&#34;,
+        when(col(&#34;classification_tag&#34;) == &#34;Significant&#34;, lit(0.0)).otherwise(lit(1.0)),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;threei_genotype_effect_parameter_estimate&#34;,
+        when(col(&#34;classification_tag&#34;) == &#34;Significant&#34;, lit(1.0)).otherwise(lit(0.0)),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;threei_significant&#34;,
+        when(col(&#34;classification_tag&#34;) == &#34;Significant&#34;, lit(True)).otherwise(
+            lit(False)
+        ),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;threei_status&#34;,
+        when(
+            col(&#34;classification_tag&#34;).isin([&#34;Significant&#34;, &#34;Not Significant&#34;]),
+            lit(&#34;Successful&#34;),
+        ).otherwise(lit(&#34;NotProcessed&#34;)),
+    )
+    threei_df = threei_df.withColumn(
+        &#34;threei_statistical_method&#34;, lit(&#34;Supplied as data&#34;)
+    )
+    threei_df = threei_df.drop(
+        &#34;sex&#34;,
+        &#34;term_id&#34;,
+        &#34;mp_id&#34;,
+        &#34;parameter_name&#34;,
+        &#34;procedure_name&#34;,
+        &#34;combine_sex_call&#34;,
+        &#34;samples&#34;,
+        &#34;allele_name&#34;,
+        &#34;classification_tag&#34;,
+    )
+    return threei_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.solr.stats_results_mapper.stop_and_count"><code class="name flex">
+<span>def <span class="ident">stop_and_count</span></span>(<span>df)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stop_and_count(df):
+    print(df.count())
+    raise ValueError</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<header>
+<div style="max-width: 300px, text-align: center">
+<img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
+</div>
+</header>
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="impc_etl.jobs.load.solr" href="index.html">impc_etl.jobs.load.solr</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="impc_etl.jobs.load.solr.stats_results_mapper.get_stats_results_core" href="#impc_etl.jobs.load.solr.stats_results_mapper.get_stats_results_core">get_stats_results_core</a></code></li>
+<li><code><a title="impc_etl.jobs.load.solr.stats_results_mapper.main" href="#impc_etl.jobs.load.solr.stats_results_mapper.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.load.solr.stats_results_mapper.map_ontology_prefix" href="#impc_etl.jobs.load.solr.stats_results_mapper.map_ontology_prefix">map_ontology_prefix</a></code></li>
+<li><code><a title="impc_etl.jobs.load.solr.stats_results_mapper.map_three_i" href="#impc_etl.jobs.load.solr.stats_results_mapper.map_three_i">map_three_i</a></code></li>
+<li><code><a title="impc_etl.jobs.load.solr.stats_results_mapper.map_to_stats" href="#impc_etl.jobs.load.solr.stats_results_mapper.map_to_stats">map_to_stats</a></code></li>
+<li><code><a title="impc_etl.jobs.load.solr.stats_results_mapper.standardize_threei_schema" href="#impc_etl.jobs.load.solr.stats_results_mapper.standardize_threei_schema">standardize_threei_schema</a></code></li>
+<li><code><a title="impc_etl.jobs.load.solr.stats_results_mapper.stop_and_count" href="#impc_etl.jobs.load.solr.stats_results_mapper.stop_and_count">stop_and_count</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p><span></span></p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

@@ -1,4 +1,3 @@
-from impc_etl.jobs.extract.colony_tracking_extractor import ColonyTrackingExtractor
 from impc_etl.workflow.extraction import *
 from impc_etl.workflow.config import ImpcConfig
 
@@ -12,9 +11,7 @@ class ExperimentCleaner(SparkSubmitTask):
     resources = {"overwrite_resource": 1}
 
     def requires(self):
-        return ExperimentExtractor(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        )
+        return SpecimenExperimentExtractor()
 
     def output(self):
         output_path = self.input().path.replace("_raw", "")
@@ -33,16 +30,10 @@ class LineExperimentCleaner(SparkSubmitTask):
     resources = {"overwrite_resource": 1}
 
     def requires(self):
-        return LineExperimentExtractor(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        )
+        return LineExperimentExtractor()
 
     def output(self):
-        output_path = (
-            self.input()
-            .path.replace("_raw", "")
-            .replace("experiment", "line_experiment")
-        )
+        output_path = self.input().path.replace("_raw", "")
         return ImpcConfig().get_target(output_path)
 
     def app_options(self):
@@ -57,9 +48,7 @@ class MouseCleaner(SparkSubmitTask):
     resources = {"overwrite_resource": 1}
 
     def requires(self):
-        return MouseExtractor(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        )
+        return MouseSpecimenExtractor()
 
     def output(self):
         output_path = self.input().path.replace("_raw", "")
@@ -77,9 +66,7 @@ class EmbryoCleaner(SparkSubmitTask):
     resources = {"overwrite_resource": 1}
 
     def requires(self):
-        return EmbryoExtractor(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        )
+        return EmbryoSpecimenExtractor()
 
     def output(self):
         output_path = self.input().path.replace("_raw", "")

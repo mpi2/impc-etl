@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>impc_etl.jobs.extract.dcc_extractor API documentation</title>
+<meta name="description" content="DCC Extractor module
+This module takes care of extracting data from XML DCC files to
+Spark DataFrames.
+There are two kinds of DCC files: …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>impc_etl.jobs.extract.dcc_extractor</code></h1>
+</header>
+<section id="section-intro">
+<p>DCC Extractor module
+This module takes care of extracting data from XML DCC files to
+Spark DataFrames.
+There are two kinds of DCC files: experiment and specimen files representing 4 different data
+entities, experiment and line in the experiment files; mouse and embryo in the specimen files.</p>
+<pre><code>The files are expected to be organized by data source in the following directory structure:
+&lt;dcc_xml_path&gt;
+    * 3i
+    * impc
+    * europhenome
+Each directory containing the raw XML from the DCC.
+</code></pre>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+DCC Extractor module
+    This module takes care of extracting data from XML DCC files to  Spark DataFrames.
+    There are two kinds of DCC files: experiment and specimen files representing 4 different data
+    entities, experiment and line in the experiment files; mouse and embryo in the specimen files.
+
+    The files are expected to be organized by data source in the following directory structure:
+    &lt;dcc_xml_path&gt;
+        * 3i
+        * impc
+        * europhenome
+    Each directory containing the raw XML from the DCC.
+&#34;&#34;&#34;
+import sys
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.types import StringType
+from pyspark.sql.functions import input_file_name, udf, explode_outer, lit, when, col
+from impc_etl.shared.exceptions import UnsupportedEntityError, UnsupportedFileTypeError
+from typing import List
+from impc_etl import logger
+import py4j
+
+
+def main(argv):
+    &#34;&#34;&#34;
+    DCC Extractor job runner
+    :param list argv: the list elements should be:
+                    [1]: Input Path
+                    [2]: Output Path
+                    [3]: File type (experiment or specimen)
+                    [4]: Entity type (experiment, line, mouse or embryo)
+    &#34;&#34;&#34;
+    input_path = argv[1]
+    output_path = argv[2]
+    file_type = argv[3]
+    entity_type = argv[4]
+    spark = SparkSession.builder.getOrCreate()
+    dcc_df = extract_dcc_xml_files(spark, input_path, file_type)
+    spark.sql(&#34;set spark.sql.legacy.timeParserPolicy=LEGACY&#34;)
+    spark.sql(&#34;set spark.sql.legacy.parquet.datetimeRebaseModeInWrite=LEGACY&#34;)
+
+    entities_df = None
+
+    if file_type == &#34;experiment&#34;:
+        entities_df = get_experiments_by_type(dcc_df, entity_type)
+    if file_type == &#34;specimen&#34;:
+        entities_df = get_specimens_by_type(dcc_df, entity_type)
+
+    entities_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
+
+
+def extract_dcc_xml_files(
+    spark_session: SparkSession, dcc_xml_path: str, file_type: str
+) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Extracts the DCC XML files into a Spark DataFrame
+
+    :param SparkSession spark_session: the Apache Spark session object
+    :param str dcc_xml_path: The directory containing the DCC XML files
+                         in the right directory structure
+                         (see :py:mod:dcc_extractor).
+    :param str file_type: &#39;specimen&#39; or &#39;experiment&#39;
+    :return: a Spark DataFrame with the XML files in it
+    :rtype: DataFrame
+    &#34;&#34;&#34;
+    if file_type not in [&#34;experiment&#34;, &#34;specimen&#34;]:
+        raise UnsupportedFileTypeError
+
+    dcc_xml_path = (
+        dcc_xml_path + &#34;/&#34; if not dcc_xml_path.endswith(&#34;/&#34;) else dcc_xml_path
+    )
+    other_project_path = f&#34;{dcc_xml_path}*/*{file_type}*.xml&#34;
+    impc_path = f&#34;{dcc_xml_path}*/*/*/*{file_type}*.xml&#34;
+
+    logger.info(
+        f&#34;loading DCC data source from paths &#39;{other_project_path}&#39; &#39;{impc_path}&#39;&#34;
+    )
+    try:
+        dcc_df = (
+            spark_session.read.format(&#34;com.databricks.spark.xml&#34;)
+            .options(rowTag=&#34;centre&#34;, samplingRatio=&#34;1&#34;, nullValue=&#34;&#34;, mode=&#34;FAILFAST&#34;)
+            .load(&#34;,&#34;.join([other_project_path, impc_path]))
+        )
+
+        logger.info(f&#34;adding _dataSource column&#34;)
+        dcc_df = dcc_df.withColumn(&#34;_sourceFile&#34;, lit(input_file_name()))
+        data_source_extract = udf(
+            lambda x: x.split(&#34;/&#34;)[-4]
+            if x.split(&#34;/&#34;)[-4] == &#34;impc&#34;
+            else x.split(&#34;/&#34;)[-2],
+            StringType(),
+        )
+        phenotyping_data_status_extract = udf(lambda x: x.split(&#34;/&#34;)[-3], StringType())
+        dcc_df = dcc_df.withColumn(&#34;_dataSource&#34;, data_source_extract(&#34;_sourceFile&#34;))
+        dcc_df = dcc_df.withColumn(
+            &#34;_sourcePhenotypingStatus&#34;,
+            when(
+                col(&#34;_dataSource&#34;) == &#34;impc&#34;,
+                phenotyping_data_status_extract(&#34;_sourceFile&#34;),
+            ).otherwise(lit(None)),
+        )
+
+        logger.info(
+            f&#34;finished load of DCC data source from path &#39;{other_project_path}&#39; &#39;{impc_path}&#39;&#34;
+        )
+    except py4j.protocol.Py4JJavaError as e:
+        if &#34;InvalidInputException&#34; in str(e):
+            raise FileNotFoundError
+        else:
+            raise e
+    return dcc_df
+
+
+def get_experiments_by_type(dcc_df: DataFrame, entity_type: str) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes a DataFrame generated by extract_dcc_xml_files
+    and gets the experiment data entities. It also expands the procedure struct column
+    and adds all its fields to the top level.
+
+    :param DataFrame dcc_df: a DataFrame generated by extract_dcc_xml_files
+    :param str entity_type: &#39;experiment&#39; or &#39;line&#39;
+    :return: a experiment DataFrame
+    :rtype: DataFrame
+    :raise: UnsupportedEntityError when the given entity_type is not supported
+    &#34;&#34;&#34;
+    if entity_type not in [&#34;experiment&#34;, &#34;line&#34;]:
+        raise UnsupportedEntityError
+
+    experiment_df = _get_entity_by_type(
+        dcc_df,
+        entity_type,
+        [
+            &#34;_centreID&#34;,
+            &#34;_pipeline&#34;,
+            &#34;_project&#34;,
+            &#34;_sourceFile&#34;,
+            &#34;_dataSource&#34;,
+            &#34;_sourcePhenotypingStatus&#34;,
+        ],
+    )
+    return experiment_df.select(
+        [&#34;procedure.*&#34;]
+        + [column for column in experiment_df.columns if column is not &#34;procedure&#34;]
+    ).drop(&#34;procedure&#34;)
+
+
+def get_specimens_by_type(dcc_df: DataFrame, entity_type: str) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes a DataFrame generated by extract_dcc_xml_files
+    and gets the experiment data entities. It also expands the procedure struct column
+    and adds all its fields to the top level.
+
+    :param DataFrame dcc_df: a DataFrame generated by extract_dcc_xml_files
+    :param str entity_type: &#39;mouse&#39; or &#39;embryo&#39;
+    :return: a specimen DataFrame
+    :rtype: DataFrame
+    :raise: UnsupportedEntityError when the given entity_type is not supported
+    &#34;&#34;&#34;
+    if entity_type not in [&#34;mouse&#34;, &#34;embryo&#34;]:
+        raise UnsupportedEntityError
+    return _get_entity_by_type(
+        dcc_df,
+        entity_type,
+        [&#34;_centreID&#34;, &#34;_sourceFile&#34;, &#34;_dataSource&#34;, &#34;_sourcePhenotypingStatus&#34;],
+    )
+
+
+def _get_entity_by_type(
+    dcc_df: DataFrame, entity_type: str, centre_columns: List[str]
+) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes a DCC DataFrame and obtains a given the entity type
+    adding a &#39;_type&#39; column to the DataFrame
+    :param DataFrame dcc_df: a DataFrame generated by extract_dcc_xml_files
+    :param str entity_type: &#39;line&#39;, &#39;experiment&#39;, &#39;mouse&#39;, &#39;embryo&#39;
+    :param List[str] centre_columns: the Centre columns that the output DataFrame should maintain
+    :return: A DataFrame containing only the specified entity type
+    :rtype: DataFrame
+    &#34;&#34;&#34;
+    centre_columns.append(dcc_df[entity_type])
+    entity_df = dcc_df.where(dcc_df[entity_type].isNotNull()).select(
+        centre_columns + [entity_type]
+    )
+    entity_df = (
+        entity_df.withColumn(&#34;tmp&#34;, explode_outer(entity_df[entity_type]))
+        .select([&#34;tmp.*&#34;] + centre_columns)
+        .withColumn(&#34;_type&#34;, lit(entity_type))
+        .drop(entity_type)
+    )
+    return entity_df
+
+
+if __name__ == &#34;__main__&#34;:
+    sys.exit(main(sys.argv))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="impc_etl.jobs.extract.dcc_extractor.extract_dcc_xml_files"><code class="name flex">
+<span>def <span class="ident">extract_dcc_xml_files</span></span>(<span>spark_session: pyspark.sql.session.SparkSession, dcc_xml_path: str, file_type: str) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Extracts the DCC XML files into a Spark DataFrame</p>
+<p>:param SparkSession spark_session: the Apache Spark session object
+:param str dcc_xml_path: The directory containing the DCC XML files
+in the right directory structure
+(see :py:mod:dcc_extractor).
+:param str file_type: 'specimen' or 'experiment'
+:return: a Spark DataFrame with the XML files in it
+:rtype: DataFrame</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def extract_dcc_xml_files(
+    spark_session: SparkSession, dcc_xml_path: str, file_type: str
+) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Extracts the DCC XML files into a Spark DataFrame
+
+    :param SparkSession spark_session: the Apache Spark session object
+    :param str dcc_xml_path: The directory containing the DCC XML files
+                         in the right directory structure
+                         (see :py:mod:dcc_extractor).
+    :param str file_type: &#39;specimen&#39; or &#39;experiment&#39;
+    :return: a Spark DataFrame with the XML files in it
+    :rtype: DataFrame
+    &#34;&#34;&#34;
+    if file_type not in [&#34;experiment&#34;, &#34;specimen&#34;]:
+        raise UnsupportedFileTypeError
+
+    dcc_xml_path = (
+        dcc_xml_path + &#34;/&#34; if not dcc_xml_path.endswith(&#34;/&#34;) else dcc_xml_path
+    )
+    other_project_path = f&#34;{dcc_xml_path}*/*{file_type}*.xml&#34;
+    impc_path = f&#34;{dcc_xml_path}*/*/*/*{file_type}*.xml&#34;
+
+    logger.info(
+        f&#34;loading DCC data source from paths &#39;{other_project_path}&#39; &#39;{impc_path}&#39;&#34;
+    )
+    try:
+        dcc_df = (
+            spark_session.read.format(&#34;com.databricks.spark.xml&#34;)
+            .options(rowTag=&#34;centre&#34;, samplingRatio=&#34;1&#34;, nullValue=&#34;&#34;, mode=&#34;FAILFAST&#34;)
+            .load(&#34;,&#34;.join([other_project_path, impc_path]))
+        )
+
+        logger.info(f&#34;adding _dataSource column&#34;)
+        dcc_df = dcc_df.withColumn(&#34;_sourceFile&#34;, lit(input_file_name()))
+        data_source_extract = udf(
+            lambda x: x.split(&#34;/&#34;)[-4]
+            if x.split(&#34;/&#34;)[-4] == &#34;impc&#34;
+            else x.split(&#34;/&#34;)[-2],
+            StringType(),
+        )
+        phenotyping_data_status_extract = udf(lambda x: x.split(&#34;/&#34;)[-3], StringType())
+        dcc_df = dcc_df.withColumn(&#34;_dataSource&#34;, data_source_extract(&#34;_sourceFile&#34;))
+        dcc_df = dcc_df.withColumn(
+            &#34;_sourcePhenotypingStatus&#34;,
+            when(
+                col(&#34;_dataSource&#34;) == &#34;impc&#34;,
+                phenotyping_data_status_extract(&#34;_sourceFile&#34;),
+            ).otherwise(lit(None)),
+        )
+
+        logger.info(
+            f&#34;finished load of DCC data source from path &#39;{other_project_path}&#39; &#39;{impc_path}&#39;&#34;
+        )
+    except py4j.protocol.Py4JJavaError as e:
+        if &#34;InvalidInputException&#34; in str(e):
+            raise FileNotFoundError
+        else:
+            raise e
+    return dcc_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.extract.dcc_extractor.get_experiments_by_type"><code class="name flex">
+<span>def <span class="ident">get_experiments_by_type</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame, entity_type: str) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Takes a DataFrame generated by extract_dcc_xml_files
+and gets the experiment data entities. It also expands the procedure struct column
+and adds all its fields to the top level.</p>
+<p>:param DataFrame dcc_df: a DataFrame generated by extract_dcc_xml_files
+:param str entity_type: 'experiment' or 'line'
+:return: a experiment DataFrame
+:rtype: DataFrame
+:raise: UnsupportedEntityError when the given entity_type is not supported</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_experiments_by_type(dcc_df: DataFrame, entity_type: str) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes a DataFrame generated by extract_dcc_xml_files
+    and gets the experiment data entities. It also expands the procedure struct column
+    and adds all its fields to the top level.
+
+    :param DataFrame dcc_df: a DataFrame generated by extract_dcc_xml_files
+    :param str entity_type: &#39;experiment&#39; or &#39;line&#39;
+    :return: a experiment DataFrame
+    :rtype: DataFrame
+    :raise: UnsupportedEntityError when the given entity_type is not supported
+    &#34;&#34;&#34;
+    if entity_type not in [&#34;experiment&#34;, &#34;line&#34;]:
+        raise UnsupportedEntityError
+
+    experiment_df = _get_entity_by_type(
+        dcc_df,
+        entity_type,
+        [
+            &#34;_centreID&#34;,
+            &#34;_pipeline&#34;,
+            &#34;_project&#34;,
+            &#34;_sourceFile&#34;,
+            &#34;_dataSource&#34;,
+            &#34;_sourcePhenotypingStatus&#34;,
+        ],
+    )
+    return experiment_df.select(
+        [&#34;procedure.*&#34;]
+        + [column for column in experiment_df.columns if column is not &#34;procedure&#34;]
+    ).drop(&#34;procedure&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.extract.dcc_extractor.get_specimens_by_type"><code class="name flex">
+<span>def <span class="ident">get_specimens_by_type</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame, entity_type: str) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Takes a DataFrame generated by extract_dcc_xml_files
+and gets the experiment data entities. It also expands the procedure struct column
+and adds all its fields to the top level.</p>
+<p>:param DataFrame dcc_df: a DataFrame generated by extract_dcc_xml_files
+:param str entity_type: 'mouse' or 'embryo'
+:return: a specimen DataFrame
+:rtype: DataFrame
+:raise: UnsupportedEntityError when the given entity_type is not supported</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_specimens_by_type(dcc_df: DataFrame, entity_type: str) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes a DataFrame generated by extract_dcc_xml_files
+    and gets the experiment data entities. It also expands the procedure struct column
+    and adds all its fields to the top level.
+
+    :param DataFrame dcc_df: a DataFrame generated by extract_dcc_xml_files
+    :param str entity_type: &#39;mouse&#39; or &#39;embryo&#39;
+    :return: a specimen DataFrame
+    :rtype: DataFrame
+    :raise: UnsupportedEntityError when the given entity_type is not supported
+    &#34;&#34;&#34;
+    if entity_type not in [&#34;mouse&#34;, &#34;embryo&#34;]:
+        raise UnsupportedEntityError
+    return _get_entity_by_type(
+        dcc_df,
+        entity_type,
+        [&#34;_centreID&#34;, &#34;_sourceFile&#34;, &#34;_dataSource&#34;, &#34;_sourcePhenotypingStatus&#34;],
+    )</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.extract.dcc_extractor.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>argv)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>DCC Extractor job runner
+:param list argv: the list elements should be:
+[1]: Input Path
+[2]: Output Path
+[3]: File type (experiment or specimen)
+[4]: Entity type (experiment, line, mouse or embryo)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(argv):
+    &#34;&#34;&#34;
+    DCC Extractor job runner
+    :param list argv: the list elements should be:
+                    [1]: Input Path
+                    [2]: Output Path
+                    [3]: File type (experiment or specimen)
+                    [4]: Entity type (experiment, line, mouse or embryo)
+    &#34;&#34;&#34;
+    input_path = argv[1]
+    output_path = argv[2]
+    file_type = argv[3]
+    entity_type = argv[4]
+    spark = SparkSession.builder.getOrCreate()
+    dcc_df = extract_dcc_xml_files(spark, input_path, file_type)
+    spark.sql(&#34;set spark.sql.legacy.timeParserPolicy=LEGACY&#34;)
+    spark.sql(&#34;set spark.sql.legacy.parquet.datetimeRebaseModeInWrite=LEGACY&#34;)
+
+    entities_df = None
+
+    if file_type == &#34;experiment&#34;:
+        entities_df = get_experiments_by_type(dcc_df, entity_type)
+    if file_type == &#34;specimen&#34;:
+        entities_df = get_specimens_by_type(dcc_df, entity_type)
+
+    entities_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<header>
+<div style="max-width: 300px, text-align: center">
+<img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
+</div>
+</header>
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="impc_etl.jobs.extract" href="index.html">impc_etl.jobs.extract</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="impc_etl.jobs.extract.dcc_extractor.extract_dcc_xml_files" href="#impc_etl.jobs.extract.dcc_extractor.extract_dcc_xml_files">extract_dcc_xml_files</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_extractor.get_experiments_by_type" href="#impc_etl.jobs.extract.dcc_extractor.get_experiments_by_type">get_experiments_by_type</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_extractor.get_specimens_by_type" href="#impc_etl.jobs.extract.dcc_extractor.get_specimens_by_type">get_specimens_by_type</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_extractor.main" href="#impc_etl.jobs.extract.dcc_extractor.main">main</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p><span></span></p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

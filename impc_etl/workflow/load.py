@@ -578,7 +578,7 @@ class Parquet2Solr(SparkSubmitTask):
         "genotype_phenotype_parquet": "genotype-phenotype",
         "mp_parquet": "mp",
         "pipeline_core_parquet": "pipeline",
-        "imits_product_raw_parquet": "product",
+        "product_report_raw_parquet": "product",
         "mgi_phenotype_parquet": "mgi-phenotype",
         "impc_images_core_parquet": "impc_images",
     }

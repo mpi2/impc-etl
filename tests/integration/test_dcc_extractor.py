@@ -1,7 +1,7 @@
 """
 DCC extractor test suite
 """
-from impc_etl.jobs.extract.dcc_extractor import *
+from impc_etl.jobs.extract.dcc_extractor_helper import *
 import pytest
 from impc_etl.shared.exceptions import *
 from pathlib import Path

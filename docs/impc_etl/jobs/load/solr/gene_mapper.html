@@ -1,0 +1,980 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>impc_etl.jobs.load.solr.gene_mapper API documentation</title>
+<meta name="description" content="SOLR module
+Generates the required Solr cores" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>impc_etl.jobs.load.solr.gene_mapper</code></h1>
+</header>
+<section id="section-intro">
+<p>SOLR module
+Generates the required Solr cores</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+SOLR module
+   Generates the required Solr cores
+&#34;&#34;&#34;
+import base64
+import gzip
+import json
+import sys
+
+import requests
+from pyspark.sql import SparkSession, functions
+from pyspark.sql.functions import (
+    count,
+    col,
+    collect_set,
+    lit,
+    when,
+    array_except,
+    array,
+)
+from pyspark.sql.types import StringType, DoubleType
+
+from impc_etl.config.constants import Constants
+
+GENE_CORE_COLUMNS = [
+    &#34;mgi_accession_id&#34;,
+    &#34;marker_symbol&#34;,
+    &#34;human_gene_symbol&#34;,
+    &#34;marker_name&#34;,
+    &#34;marker_synonym&#34;,
+    &#34;marker_type&#34;,
+    &#34;es_cell_production_status&#34;,
+    &#34;null_allele_production_status&#34;,
+    &#34;conditional_allele_production_status&#34;,
+    &#34;crispr_allele_production_status&#34;,
+    &#34;mouse_production_status&#34;,
+    &#34;assignment_status&#34;,
+    &#34;phenotyping_data_available&#34;,
+    &#34;allele_mgi_accession_id&#34;,
+    &#34;allele_name&#34;,
+    &#34;is_umass_gene&#34;,
+    &#34;is_idg_gene&#34;,
+    &#34;embryo_data_available&#34;,
+    &#34;embryo_analysis_view_url&#34;,
+    &#34;embryo_analysis_view_name&#34;,
+    &#34;embryo_modalities&#34;,
+    &#34;chr_name&#34;,
+    &#34;seq_region_id&#34;,
+    &#34;seq_region_start&#34;,
+    &#34;seq_region_end&#34;,
+    &#34;chr_strand&#34;,
+    &#34;ensembl_gene_id&#34;,
+    &#34;ccds_id&#34;,
+    &#34;ncbi_id&#34;,
+    &#34;latest_production_centre&#34;,
+    &#34;latest_phenotyping_centre&#34;,
+]
+
+IMITS_GENE_COLUMNS = [
+    &#34;marker_symbol&#34;,
+    &#34;marker_type&#34;,
+    &#34;marker_name&#34;,
+    &#34;allele_design_project&#34;,
+    &#34;marker_mgi_accession_id&#34;,
+    &#34;latest_es_cell_status&#34;,
+    &#34;latest_mouse_status&#34;,
+    &#34;latest_phenotype_status&#34;,
+    &#34;latest_project_status&#34;,
+    &#34;latest_production_centre&#34;,
+    &#34;latest_phenotyping_centre&#34;,
+    &#34;latest_phenotype_started&#34;,
+    &#34;latest_phenotype_complete&#34;,
+    &#34;latest_project_status_legacy&#34;,
+]
+
+
+def main(argv):
+    &#34;&#34;&#34;
+    Solr Core loader
+    :param list argv: the list elements should be:
+                    [1]: source IMPC parquet file
+                    [2]: Output Path
+    &#34;&#34;&#34;
+    imits_gene_parquet_path = argv[1]
+    imits_allele_parquet_path = argv[2]
+    mgi_homologene_report_parquet_path = argv[3]
+    mgi_mrk_list_report_parquet_path = argv[4]
+    embryo_data_json_path = argv[5]
+    observations_parquet_path = argv[6]
+    stats_results_parquet_path = argv[7]
+    ontology_metadata_parquet_path = argv[8]
+    gene_production_status_path = argv[9]
+    output_path = argv[10]
+
+    spark = SparkSession.builder.getOrCreate()
+    imits_gene_df = spark.read.parquet(imits_gene_parquet_path).select(
+        IMITS_GENE_COLUMNS
+    )
+    imits_allele_df = spark.read.parquet(imits_allele_parquet_path)
+    mgi_homologene_df = spark.read.parquet(mgi_homologene_report_parquet_path)
+    mgi_mrk_list_df = spark.read.parquet(mgi_mrk_list_report_parquet_path)
+    mgi_mrk_list_df = mgi_mrk_list_df.select(
+        [
+            &#34;mgi_accession_id&#34;,
+            &#34;chr&#34;,
+            &#34;genome_coordinate_start&#34;,
+            &#34;genome_coordinate_end&#34;,
+            &#34;strand&#34;,
+        ]
+    )
+    embryo_data_df = spark.read.json(embryo_data_json_path, mode=&#34;FAILFAST&#34;)
+    observations_df = spark.read.parquet(observations_parquet_path)
+    stats_results_df = spark.read.parquet(stats_results_parquet_path)
+    ontology_metadata_df = spark.read.parquet(ontology_metadata_parquet_path)
+    gene_production_status_df = spark.read.parquet(gene_production_status_path)
+    gene_df = get_gene_core_df(
+        imits_gene_df,
+        imits_allele_df,
+        mgi_homologene_df,
+        mgi_mrk_list_df,
+        embryo_data_df,
+        observations_df,
+        stats_results_df,
+        ontology_metadata_df,
+        gene_production_status_df,
+    )
+    gene_df.distinct().write.parquet(output_path)
+
+
+def get_gene_core_df(
+    imits_gene_df,
+    imits_allele_df,
+    mgi_homologene_df,
+    mgi_mrk_list_df,
+    embryo_data_df,
+    observations_df,
+    stats_results_df,
+    ontology_metadata_df,
+    gene_production_status_df,
+    compress_data_sets=True,
+):
+    phenotyping_data_availability_df = observations_df.groupBy(&#34;gene_accession_id&#34;).agg(
+        count(&#34;*&#34;).alias(&#34;data_points&#34;)
+    )
+    phenotyping_data_availability_df = phenotyping_data_availability_df.withColumn(
+        &#34;phenotype_status&#34;,
+        when(col(&#34;data_points&#34;) &gt; 0, lit(&#34;Phenotyping data available&#34;)).otherwise(
+            lit(&#34;Phenotyping data not available&#34;)
+        ),
+    )
+    phenotyping_data_availability_df = phenotyping_data_availability_df.drop(
+        &#34;data_points&#34;
+    )
+    phenotyping_data_availability_df = (
+        phenotyping_data_availability_df.withColumnRenamed(
+            &#34;gene_accession_id&#34;, &#34;mgi_accession_id&#34;
+        )
+    )
+
+    ontology_metadata_df = ontology_metadata_df.select(
+        functions.col(&#34;curie&#34;).alias(&#34;phenotype_term_id&#34;),
+        functions.col(&#34;name&#34;).alias(&#34;phenotype_term_name&#34;),
+    ).distinct()
+
+    stats_results_df = stats_results_df.withColumnRenamed(
+        &#34;marker_accession_id&#34;, &#34;gene_accession_id&#34;
+    )
+    stats_results_df = stats_results_df.withColumnRenamed(
+        &#34;marker_symbol&#34;, &#34;gene_symbol&#34;
+    )
+    stats_results_df = stats_results_df.withColumn(
+        &#34;procedure_stable_id&#34;, functions.explode(&#34;procedure_stable_id&#34;)
+    )
+    stats_results_df = stats_results_df.withColumn(
+        &#34;procedure_name&#34;, functions.explode(&#34;procedure_name&#34;)
+    )
+    stats_results_df = stats_results_df.withColumn(
+        &#34;life_stage_name&#34;, functions.explode(&#34;life_stage_name&#34;)
+    )
+    stats_results_df = stats_results_df.withColumn(
+        &#34;top_level_mp_term_name&#34;,
+        functions.when(
+            (functions.size(&#34;top_level_mp_term_name&#34;) == 0)
+            | functions.col(&#34;top_level_mp_term_name&#34;).isNull(),
+            functions.array(&#34;mp_term_name&#34;),
+        ).otherwise(functions.col(&#34;top_level_mp_term_name&#34;)),
+    )
+
+    significant_mp_term = _get_significance_fields_by_gene(stats_results_df)
+    mgi_datasets_df = _get_datasets_by_gene(
+        stats_results_df, observations_df, ontology_metadata_df, compress_data_sets
+    )
+
+    gene_allele_info_df = imits_allele_df.select(
+        [
+            col_name
+            for col_name in imits_allele_df.columns
+            if col_name not in IMITS_GENE_COLUMNS
+            or col_name == &#34;marker_mgi_accession_id&#34;
+        ]
+    )
+
+    gene_allele_info_df = gene_allele_info_df.groupBy(&#34;marker_mgi_accession_id&#34;).agg(
+        *[
+            collect_set(col_name).alias(col_name)
+            for col_name in gene_allele_info_df.columns
+            if col_name != &#34;marker_mgi_accession_id&#34;
+        ]
+    )
+    gene_allele_info_df = gene_allele_info_df.drop(&#34;mgi_accession_id&#34;)
+    gene_df = imits_gene_df.where(
+        functions.col(&#34;latest_project_status&#34;).isNotNull()
+        &amp; functions.col(&#34;feature_type&#34;).isNotNull()
+        &amp; (functions.col(&#34;allele_design_project&#34;) == &#34;IMPC&#34;)
+    )
+    gene_df = gene_df.join(
+        gene_allele_info_df,
+        &#34;marker_mgi_accession_id&#34;,
+        &#34;left_outer&#34;,
+    )
+    gene_df = gene_df.withColumnRenamed(&#34;marker_mgi_accession_id&#34;, &#34;mgi_accession_id&#34;)
+    gene_df = gene_df.withColumnRenamed(
+        &#34;allele_mgi_accession_id&#34;, &#34;allele_accession_id&#34;
+    )
+    gene_df = gene_df.select(
+        *[col_name for col_name in gene_df.columns if col_name in GENE_CORE_COLUMNS]
+    )
+    gene_df = gene_df.withColumn(
+        &#34;is_umass_gene&#34;, functions.col(&#34;marker_symbol&#34;).isin(Constants.UMASS_GENES)
+    )
+    gene_df = gene_df.withColumn(
+        &#34;is_idg_gene&#34;, functions.col(&#34;mgi_accession_id&#34;).isin(Constants.IDG_GENES)
+    )
+
+    embryo_data_df = embryo_data_df.withColumn(
+        &#34;colonies&#34;, functions.explode(&#34;colonies&#34;)
+    )
+    embryo_data_df = embryo_data_df.select(&#34;colonies.*&#34;)
+    embryo_data_df = embryo_data_df.withColumn(
+        &#34;embryo_analysis_view_name&#34;,
+        functions.when(
+            functions.col(&#34;analysis_view_url&#34;).isNotNull(),
+            functions.lit(&#34;volumetric analysis&#34;),
+        ).otherwise(functions.lit(None).cast(StringType())),
+    )
+    embryo_data_df = embryo_data_df.withColumnRenamed(
+        &#34;analysis_view_url&#34;, &#34;embryo_analysis_view_url&#34;
+    )
+    embryo_data_df = embryo_data_df.withColumn(
+        &#34;embryo_modalities&#34;, functions.col(&#34;procedures_parameters.modality&#34;)
+    )
+    embryo_data_df = embryo_data_df.alias(&#34;embryo&#34;)
+    gene_df = gene_df.join(
+        embryo_data_df,
+        functions.col(&#34;mgi_accession_id&#34;) == functions.col(&#34;mgi&#34;),
+        &#34;left_outer&#34;,
+    )
+    gene_df = gene_df.withColumn(
+        &#34;embryo_data_available&#34;, functions.col(&#34;embryo.mgi&#34;).isNotNull()
+    )
+
+    gene_df = gene_df.join(mgi_mrk_list_df, &#34;mgi_accession_id&#34;, &#34;left_outer&#34;)
+    gene_df = gene_df.withColumn(&#34;seq_region_id&#34;, functions.col(&#34;chr&#34;))
+    gene_df = gene_df.withColumnRenamed(&#34;chr&#34;, &#34;chr_name&#34;)
+    gene_df = gene_df.withColumnRenamed(&#34;genome_coordinate_start&#34;, &#34;seq_region_start&#34;)
+    gene_df = gene_df.withColumnRenamed(&#34;genome_coordinate_end&#34;, &#34;seq_region_end&#34;)
+    gene_df = gene_df.withColumnRenamed(&#34;strand&#34;, &#34;chr_strand&#34;)
+
+    mgi_homologene_df = mgi_homologene_df.select(
+        [&#34;mgi_accession_id&#34;, &#34;entrezgene_id&#34;, &#34;ensembl_gene_id&#34;, &#34;ccds_ids&#34;]
+    )
+    gene_df = gene_df.join(mgi_homologene_df, &#34;mgi_accession_id&#34;, &#34;left_outer&#34;)
+    gene_df = gene_df.withColumn(
+        &#34;ensembl_gene_id&#34;, functions.split(functions.col(&#34;ensembl_gene_id&#34;), r&#34;\|&#34;)
+    )
+    gene_df = gene_df.withColumn(
+        &#34;ccds_id&#34;, functions.split(functions.col(&#34;ccds_ids&#34;), &#34;,&#34;)
+    )
+    gene_df = gene_df.withColumn(&#34;ncbi_id&#34;, functions.col(&#34;entrezgene_id&#34;))
+    gene_df = gene_df.withColumn(
+        &#34;marker_synonym&#34;,
+        functions.split(functions.col(&#34;marker_synonym&#34;).getItem(0), r&#34;\|&#34;),
+    )
+    gene_df = gene_df.withColumn(
+        &#34;latest_production_centre&#34;,
+        functions.split(functions.col(&#34;latest_production_centre&#34;), r&#34;\|&#34;),
+    )
+    gene_df = gene_df.withColumn(
+        &#34;latest_phenotyping_centre&#34;,
+        functions.split(functions.col(&#34;latest_phenotyping_centre&#34;), r&#34;\|&#34;),
+    )
+    gene_df = gene_df.join(gene_production_status_df, &#34;mgi_accession_id&#34;, &#34;left_outer&#34;)
+    gene_df = gene_df.join(
+        phenotyping_data_availability_df, &#34;mgi_accession_id&#34;, &#34;left_outer&#34;
+    )
+    gene_df = gene_df.withColumn(
+        &#34;phenotype_status&#34;,
+        when(
+            col(&#34;phenotyping_status&#34;) == &#34;Phenotyping finished&#34;,
+            col(&#34;phenotyping_status&#34;),
+        )
+        .when(
+            col(&#34;phenotype_status&#34;) == &#34;Phenotyping data available&#34;,
+            col(&#34;phenotype_status&#34;),
+        )
+        .otherwise(col(&#34;phenotyping_status&#34;)),
+    )
+    gene_df = gene_df.withColumn(
+        &#34;phenotyping_data_available&#34;,
+        when(
+            col(&#34;phenotyping_status&#34;).isin(
+                [&#34;Phenotyping finished&#34;, &#34;Phenotyping data available&#34;]
+            )
+            | col(&#34;phenotype_status&#34;).isin(
+                [&#34;Phenotyping finished&#34;, &#34;Phenotyping data available&#34;]
+            ),
+            lit(True),
+        ).otherwise(lit(False)),
+    )
+    gene_df = gene_df.join(mgi_datasets_df, &#34;mgi_accession_id&#34;, &#34;left_outer&#34;)
+    gene_df = gene_df.join(significant_mp_term, &#34;mgi_accession_id&#34;, &#34;left_outer&#34;)
+    return gene_df
+
+
+def get_embryo_data(spark: SparkSession):
+    r = requests.get(&#34;&#34;)
+    df = spark.createDataFrame([json.loads(line) for line in r.iter_lines()])
+    return df
+
+
+def _compress_and_encode(json_text):
+    if json_text is None:
+        return None
+    else:
+        return str(base64.b64encode(gzip.compress(bytes(json_text, &#34;utf-8&#34;))), &#34;utf-8&#34;)
+
+
+def _get_datasets_by_gene(
+    stats_results_df, observations_df, ontology_metadata_df, compress=True
+):
+    significance_cols = [
+        &#34;female_ko_effect_p_value&#34;,
+        &#34;male_ko_effect_p_value&#34;,
+        &#34;genotype_effect_p_value&#34;,
+        &#34;male_pvalue_low_vs_normal_high&#34;,
+        &#34;male_pvalue_low_normal_vs_high&#34;,
+        &#34;female_pvalue_low_vs_normal_high&#34;,
+        &#34;female_pvalue_low_normal_vs_high&#34;,
+        &#34;genotype_pvalue_low_normal_vs_high&#34;,
+        &#34;genotype_pvalue_low_vs_normal_high&#34;,
+        &#34;male_ko_effect_p_value&#34;,
+        &#34;female_ko_effect_p_value&#34;,
+        &#34;p_value&#34;,
+        &#34;effect_size&#34;,
+        &#34;male_effect_size&#34;,
+        &#34;female_effect_size&#34;,
+        &#34;male_effect_size_low_vs_normal_high&#34;,
+        &#34;male_effect_size_low_normal_vs_high&#34;,
+        &#34;genotype_effect_size_low_vs_normal_high&#34;,
+        &#34;genotype_effect_size_low_normal_vs_high&#34;,
+        &#34;female_effect_size_low_vs_normal_high&#34;,
+        &#34;female_effect_size_low_normal_vs_high&#34;,
+        &#34;significant&#34;,
+        &#34;full_mp_term&#34;,
+        &#34;metadata_group&#34;,
+        &#34;male_mutant_count&#34;,
+        &#34;female_mutant_count&#34;,
+        &#34;statistical_method&#34;,
+        &#34;mp_term_id&#34;,
+        &#34;top_level_mp_term_id&#34;,
+        &#34;top_level_mp_term_name&#34;,
+        &#34;sex&#34;,
+    ]
+
+    data_set_cols = [
+        &#34;allele_accession_id&#34;,
+        &#34;allele_symbol&#34;,
+        &#34;gene_symbol&#34;,
+        &#34;gene_accession_id&#34;,
+        &#34;parameter_stable_id&#34;,
+        &#34;parameter_name&#34;,
+        &#34;procedure_stable_id&#34;,
+        &#34;procedure_name&#34;,
+        &#34;pipeline_name&#34;,
+        &#34;pipeline_stable_id&#34;,
+        &#34;zygosity&#34;,
+        &#34;phenotyping_center&#34;,
+        &#34;life_stage_name&#34;,
+    ]
+
+    stats_results_df = stats_results_df.select(*(data_set_cols + significance_cols))
+    stats_results_df = stats_results_df.withColumn(
+        &#34;selected_p_value&#34;,
+        functions.when(
+            functions.col(&#34;statistical_method&#34;).isin([&#34;Manual&#34;, &#34;Supplied as data&#34;]),
+            functions.col(&#34;p_value&#34;),
+        )
+        .when(
+            functions.col(&#34;statistical_method&#34;).contains(&#34;Reference Range Plus&#34;),
+            functions.when(
+                functions.col(&#34;sex&#34;) == &#34;male&#34;,
+                functions.least(
+                    functions.col(&#34;male_pvalue_low_vs_normal_high&#34;),
+                    functions.col(&#34;male_pvalue_low_normal_vs_high&#34;),
+                ),
+            )
+            .when(
+                functions.col(&#34;sex&#34;) == &#34;female&#34;,
+                functions.least(
+                    functions.col(&#34;female_pvalue_low_vs_normal_high&#34;),
+                    functions.col(&#34;female_pvalue_low_normal_vs_high&#34;),
+                ),
+            )
+            .otherwise(
+                functions.least(
+                    functions.col(&#34;genotype_pvalue_low_normal_vs_high&#34;),
+                    functions.col(&#34;genotype_pvalue_low_vs_normal_high&#34;),
+                )
+            ),
+        )
+        .otherwise(
+            functions.when(
+                functions.col(&#34;sex&#34;) == &#34;male&#34;, functions.col(&#34;male_ko_effect_p_value&#34;)
+            )
+            .when(
+                functions.col(&#34;sex&#34;) == &#34;female&#34;,
+                functions.col(&#34;female_ko_effect_p_value&#34;),
+            )
+            .otherwise(
+                functions.when(
+                    functions.col(&#34;statistical_method&#34;).contains(
+                        &#34;Fisher Exact Test framework&#34;
+                    ),
+                    functions.col(&#34;p_value&#34;),
+                ).otherwise(functions.col(&#34;genotype_effect_p_value&#34;))
+            )
+        ),
+    )
+    stats_results_df = stats_results_df.withColumn(
+        &#34;selected_p_value&#34;, functions.col(&#34;selected_p_value&#34;).cast(DoubleType())
+    )
+    stats_results_df = stats_results_df.withColumn(
+        &#34;selected_effect_size&#34;,
+        functions.when(
+            functions.col(&#34;statistical_method&#34;).isin([&#34;Manual&#34;, &#34;Supplied as data&#34;]),
+            functions.lit(1.0),
+        )
+        .when(
+            ~functions.col(&#34;statistical_method&#34;).contains(&#34;Reference Range Plus&#34;),
+            functions.when(
+                functions.col(&#34;sex&#34;) == &#34;male&#34;, functions.col(&#34;male_effect_size&#34;)
+            )
+            .when(functions.col(&#34;sex&#34;) == &#34;female&#34;, functions.col(&#34;female_effect_size&#34;))
+            .otherwise(functions.col(&#34;effect_size&#34;)),
+        )
+        .otherwise(
+            functions.when(
+                functions.col(&#34;sex&#34;) == &#34;male&#34;,
+                functions.when(
+                    functions.col(&#34;male_effect_size_low_vs_normal_high&#34;)
+                    &lt;= functions.col(&#34;male_effect_size_low_normal_vs_high&#34;),
+                    functions.col(&#34;genotype_effect_size_low_vs_normal_high&#34;),
+                ).otherwise(functions.col(&#34;genotype_effect_size_low_normal_vs_high&#34;)),
+            )
+            .when(
+                functions.col(&#34;sex&#34;) == &#34;female&#34;,
+                functions.when(
+                    functions.col(&#34;female_effect_size_low_vs_normal_high&#34;)
+                    &lt;= functions.col(&#34;female_effect_size_low_normal_vs_high&#34;),
+                    functions.col(&#34;genotype_effect_size_low_vs_normal_high&#34;),
+                ).otherwise(functions.col(&#34;genotype_effect_size_low_normal_vs_high&#34;)),
+            )
+            .otherwise(functions.col(&#34;effect_size&#34;))
+        ),
+    )
+    stats_results_df = stats_results_df.withColumn(
+        &#34;selected_phenotype_term&#34;, functions.col(&#34;mp_term_id&#34;)
+    )
+    observations_df = observations_df.select(*data_set_cols).distinct()
+    datasets_df = observations_df.join(stats_results_df, data_set_cols, &#34;left_outer&#34;)
+    datasets_df = datasets_df.groupBy(data_set_cols).agg(
+        functions.collect_set(
+            functions.struct(
+                *[
+                    &#34;selected_p_value&#34;,
+                    &#34;selected_effect_size&#34;,
+                    &#34;selected_phenotype_term&#34;,
+                    &#34;metadata_group&#34;,
+                    &#34;male_mutant_count&#34;,
+                    &#34;female_mutant_count&#34;,
+                    &#34;significant&#34;,
+                    &#34;top_level_mp_term_id&#34;,
+                    &#34;top_level_mp_term_name&#34;,
+                ]
+            )
+        ).alias(&#34;stats_data&#34;)
+    )
+    datasets_df = datasets_df.withColumn(
+        &#34;successful_stats_data&#34;,
+        functions.expr(&#34;filter(stats_data, stat -&gt; stat.selected_p_value IS NOT NULL)&#34;),
+    )
+    datasets_df = datasets_df.withColumn(
+        &#34;stats_data&#34;,
+        functions.when(
+            functions.size(&#34;successful_stats_data&#34;) &gt; 0,
+            functions.sort_array(&#34;successful_stats_data&#34;).getItem(0),
+        ).otherwise(functions.sort_array(&#34;stats_data&#34;).getItem(0)),
+    )
+    datasets_df = datasets_df.select(*data_set_cols, &#34;stats_data.*&#34;)
+    datasets_df = datasets_df.withColumnRenamed(&#34;selected_p_value&#34;, &#34;p_value&#34;)
+    datasets_df = datasets_df.withColumnRenamed(&#34;selected_effect_size&#34;, &#34;effect_size&#34;)
+    datasets_df = datasets_df.withColumnRenamed(
+        &#34;selected_phenotype_term&#34;, &#34;phenotype_term_id&#34;
+    )
+    datasets_df = datasets_df.withColumnRenamed(
+        &#34;top_level_mp_term_id&#34;, &#34;top_level_phenotype_term_id&#34;
+    )
+
+    datasets_df = datasets_df.withColumn(
+        &#34;top_level_mp_term_name&#34;,
+        array_except(col(&#34;top_level_mp_term_name&#34;), array(lit(None).cast(&#34;string&#34;))),
+    )
+
+    datasets_df = datasets_df.withColumnRenamed(
+        &#34;top_level_mp_term_name&#34;, &#34;top_level_phenotype_term_name&#34;
+    )
+    datasets_df = datasets_df.join(
+        ontology_metadata_df, &#34;phenotype_term_id&#34;, &#34;left_outer&#34;
+    )
+    datasets_df = datasets_df.withColumn(
+        &#34;significance&#34;,
+        functions.when(
+            functions.col(&#34;significant&#34;) == True, functions.lit(&#34;Significant&#34;)
+        )
+        .when(functions.col(&#34;p_value&#34;).isNotNull(), functions.lit(&#34;Not significant&#34;))
+        .otherwise(functions.lit(&#34;N/A&#34;)),
+    )
+    mgi_datasets_df = datasets_df.groupBy(&#34;gene_accession_id&#34;).agg(
+        functions.collect_set(
+            functions.struct(
+                *(
+                    data_set_cols
+                    + [
+                        &#34;significance&#34;,
+                        &#34;p_value&#34;,
+                        &#34;effect_size&#34;,
+                        &#34;metadata_group&#34;,
+                        &#34;male_mutant_count&#34;,
+                        &#34;female_mutant_count&#34;,
+                        &#34;phenotype_term_id&#34;,
+                        &#34;phenotype_term_name&#34;,
+                        &#34;top_level_phenotype_term_id&#34;,
+                        &#34;top_level_phenotype_term_name&#34;,
+                    ]
+                )
+            )
+        ).alias(&#34;datasets_raw_data&#34;)
+    )
+
+    mgi_datasets_df = mgi_datasets_df.withColumnRenamed(
+        &#34;gene_accession_id&#34;, &#34;mgi_accession_id&#34;
+    )
+
+    if compress:
+        to_json_udf = functions.udf(
+            lambda row: None
+            if row is None
+            else json.dumps(
+                [{key: value for key, value in item.asDict().items()} for item in row]
+            ),
+            StringType(),
+        )
+        mgi_datasets_df = mgi_datasets_df.withColumn(
+            &#34;datasets_raw_data&#34;, to_json_udf(&#34;datasets_raw_data&#34;)
+        )
+        compress_and_encode = functions.udf(_compress_and_encode, StringType())
+        mgi_datasets_df = mgi_datasets_df.withColumn(
+            &#34;datasets_raw_data&#34;, compress_and_encode(&#34;datasets_raw_data&#34;)
+        )
+    return mgi_datasets_df
+
+
+def _get_significance_fields_by_gene(stats_results_df):
+    significant_mp_term = stats_results_df.select(
+        &#34;gene_accession_id&#34;, &#34;top_level_mp_term_name&#34;, &#34;significant&#34;
+    )
+
+    significant_mp_term = significant_mp_term.withColumn(
+        &#34;top_level_mp_term_name&#34;, functions.explode(&#34;top_level_mp_term_name&#34;)
+    )
+
+    significant_mp_term = significant_mp_term.groupBy(&#34;gene_accession_id&#34;).agg(
+        functions.collect_set(
+            functions.when(
+                functions.col(&#34;significant&#34;) == True,
+                functions.col(&#34;top_level_mp_term_name&#34;),
+            ).otherwise(functions.lit(None))
+        ).alias(&#34;significant_top_level_mp_terms&#34;),
+        functions.collect_set(
+            functions.when(
+                functions.col(&#34;significant&#34;) == False,
+                functions.col(&#34;top_level_mp_term_name&#34;),
+            ).otherwise(functions.lit(None))
+        ).alias(&#34;not_significant_top_level_mp_terms&#34;),
+    )
+    significant_mp_term = significant_mp_term.withColumn(
+        &#34;not_significant_top_level_mp_terms&#34;,
+        functions.array_except(
+            &#34;not_significant_top_level_mp_terms&#34;, &#34;significant_top_level_mp_terms&#34;
+        ),
+    )
+    significant_mp_term = significant_mp_term.withColumnRenamed(
+        &#34;gene_accession_id&#34;, &#34;mgi_accession_id&#34;
+    )
+    return significant_mp_term
+
+
+if __name__ == &#34;__main__&#34;:
+    sys.exit(main(sys.argv))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="impc_etl.jobs.load.solr.gene_mapper.get_embryo_data"><code class="name flex">
+<span>def <span class="ident">get_embryo_data</span></span>(<span>spark: pyspark.sql.session.SparkSession)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_embryo_data(spark: SparkSession):
+    r = requests.get(&#34;&#34;)
+    df = spark.createDataFrame([json.loads(line) for line in r.iter_lines()])
+    return df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.solr.gene_mapper.get_gene_core_df"><code class="name flex">
+<span>def <span class="ident">get_gene_core_df</span></span>(<span>imits_gene_df, imits_allele_df, mgi_homologene_df, mgi_mrk_list_df, embryo_data_df, observations_df, stats_results_df, ontology_metadata_df, gene_production_status_df, compress_data_sets=True)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_gene_core_df(
+    imits_gene_df,
+    imits_allele_df,
+    mgi_homologene_df,
+    mgi_mrk_list_df,
+    embryo_data_df,
+    observations_df,
+    stats_results_df,
+    ontology_metadata_df,
+    gene_production_status_df,
+    compress_data_sets=True,
+):
+    phenotyping_data_availability_df = observations_df.groupBy(&#34;gene_accession_id&#34;).agg(
+        count(&#34;*&#34;).alias(&#34;data_points&#34;)
+    )
+    phenotyping_data_availability_df = phenotyping_data_availability_df.withColumn(
+        &#34;phenotype_status&#34;,
+        when(col(&#34;data_points&#34;) &gt; 0, lit(&#34;Phenotyping data available&#34;)).otherwise(
+            lit(&#34;Phenotyping data not available&#34;)
+        ),
+    )
+    phenotyping_data_availability_df = phenotyping_data_availability_df.drop(
+        &#34;data_points&#34;
+    )
+    phenotyping_data_availability_df = (
+        phenotyping_data_availability_df.withColumnRenamed(
+            &#34;gene_accession_id&#34;, &#34;mgi_accession_id&#34;
+        )
+    )
+
+    ontology_metadata_df = ontology_metadata_df.select(
+        functions.col(&#34;curie&#34;).alias(&#34;phenotype_term_id&#34;),
+        functions.col(&#34;name&#34;).alias(&#34;phenotype_term_name&#34;),
+    ).distinct()
+
+    stats_results_df = stats_results_df.withColumnRenamed(
+        &#34;marker_accession_id&#34;, &#34;gene_accession_id&#34;
+    )
+    stats_results_df = stats_results_df.withColumnRenamed(
+        &#34;marker_symbol&#34;, &#34;gene_symbol&#34;
+    )
+    stats_results_df = stats_results_df.withColumn(
+        &#34;procedure_stable_id&#34;, functions.explode(&#34;procedure_stable_id&#34;)
+    )
+    stats_results_df = stats_results_df.withColumn(
+        &#34;procedure_name&#34;, functions.explode(&#34;procedure_name&#34;)
+    )
+    stats_results_df = stats_results_df.withColumn(
+        &#34;life_stage_name&#34;, functions.explode(&#34;life_stage_name&#34;)
+    )
+    stats_results_df = stats_results_df.withColumn(
+        &#34;top_level_mp_term_name&#34;,
+        functions.when(
+            (functions.size(&#34;top_level_mp_term_name&#34;) == 0)
+            | functions.col(&#34;top_level_mp_term_name&#34;).isNull(),
+            functions.array(&#34;mp_term_name&#34;),
+        ).otherwise(functions.col(&#34;top_level_mp_term_name&#34;)),
+    )
+
+    significant_mp_term = _get_significance_fields_by_gene(stats_results_df)
+    mgi_datasets_df = _get_datasets_by_gene(
+        stats_results_df, observations_df, ontology_metadata_df, compress_data_sets
+    )
+
+    gene_allele_info_df = imits_allele_df.select(
+        [
+            col_name
+            for col_name in imits_allele_df.columns
+            if col_name not in IMITS_GENE_COLUMNS
+            or col_name == &#34;marker_mgi_accession_id&#34;
+        ]
+    )
+
+    gene_allele_info_df = gene_allele_info_df.groupBy(&#34;marker_mgi_accession_id&#34;).agg(
+        *[
+            collect_set(col_name).alias(col_name)
+            for col_name in gene_allele_info_df.columns
+            if col_name != &#34;marker_mgi_accession_id&#34;
+        ]
+    )
+    gene_allele_info_df = gene_allele_info_df.drop(&#34;mgi_accession_id&#34;)
+    gene_df = imits_gene_df.where(
+        functions.col(&#34;latest_project_status&#34;).isNotNull()
+        &amp; functions.col(&#34;feature_type&#34;).isNotNull()
+        &amp; (functions.col(&#34;allele_design_project&#34;) == &#34;IMPC&#34;)
+    )
+    gene_df = gene_df.join(
+        gene_allele_info_df,
+        &#34;marker_mgi_accession_id&#34;,
+        &#34;left_outer&#34;,
+    )
+    gene_df = gene_df.withColumnRenamed(&#34;marker_mgi_accession_id&#34;, &#34;mgi_accession_id&#34;)
+    gene_df = gene_df.withColumnRenamed(
+        &#34;allele_mgi_accession_id&#34;, &#34;allele_accession_id&#34;
+    )
+    gene_df = gene_df.select(
+        *[col_name for col_name in gene_df.columns if col_name in GENE_CORE_COLUMNS]
+    )
+    gene_df = gene_df.withColumn(
+        &#34;is_umass_gene&#34;, functions.col(&#34;marker_symbol&#34;).isin(Constants.UMASS_GENES)
+    )
+    gene_df = gene_df.withColumn(
+        &#34;is_idg_gene&#34;, functions.col(&#34;mgi_accession_id&#34;).isin(Constants.IDG_GENES)
+    )
+
+    embryo_data_df = embryo_data_df.withColumn(
+        &#34;colonies&#34;, functions.explode(&#34;colonies&#34;)
+    )
+    embryo_data_df = embryo_data_df.select(&#34;colonies.*&#34;)
+    embryo_data_df = embryo_data_df.withColumn(
+        &#34;embryo_analysis_view_name&#34;,
+        functions.when(
+            functions.col(&#34;analysis_view_url&#34;).isNotNull(),
+            functions.lit(&#34;volumetric analysis&#34;),
+        ).otherwise(functions.lit(None).cast(StringType())),
+    )
+    embryo_data_df = embryo_data_df.withColumnRenamed(
+        &#34;analysis_view_url&#34;, &#34;embryo_analysis_view_url&#34;
+    )
+    embryo_data_df = embryo_data_df.withColumn(
+        &#34;embryo_modalities&#34;, functions.col(&#34;procedures_parameters.modality&#34;)
+    )
+    embryo_data_df = embryo_data_df.alias(&#34;embryo&#34;)
+    gene_df = gene_df.join(
+        embryo_data_df,
+        functions.col(&#34;mgi_accession_id&#34;) == functions.col(&#34;mgi&#34;),
+        &#34;left_outer&#34;,
+    )
+    gene_df = gene_df.withColumn(
+        &#34;embryo_data_available&#34;, functions.col(&#34;embryo.mgi&#34;).isNotNull()
+    )
+
+    gene_df = gene_df.join(mgi_mrk_list_df, &#34;mgi_accession_id&#34;, &#34;left_outer&#34;)
+    gene_df = gene_df.withColumn(&#34;seq_region_id&#34;, functions.col(&#34;chr&#34;))
+    gene_df = gene_df.withColumnRenamed(&#34;chr&#34;, &#34;chr_name&#34;)
+    gene_df = gene_df.withColumnRenamed(&#34;genome_coordinate_start&#34;, &#34;seq_region_start&#34;)
+    gene_df = gene_df.withColumnRenamed(&#34;genome_coordinate_end&#34;, &#34;seq_region_end&#34;)
+    gene_df = gene_df.withColumnRenamed(&#34;strand&#34;, &#34;chr_strand&#34;)
+
+    mgi_homologene_df = mgi_homologene_df.select(
+        [&#34;mgi_accession_id&#34;, &#34;entrezgene_id&#34;, &#34;ensembl_gene_id&#34;, &#34;ccds_ids&#34;]
+    )
+    gene_df = gene_df.join(mgi_homologene_df, &#34;mgi_accession_id&#34;, &#34;left_outer&#34;)
+    gene_df = gene_df.withColumn(
+        &#34;ensembl_gene_id&#34;, functions.split(functions.col(&#34;ensembl_gene_id&#34;), r&#34;\|&#34;)
+    )
+    gene_df = gene_df.withColumn(
+        &#34;ccds_id&#34;, functions.split(functions.col(&#34;ccds_ids&#34;), &#34;,&#34;)
+    )
+    gene_df = gene_df.withColumn(&#34;ncbi_id&#34;, functions.col(&#34;entrezgene_id&#34;))
+    gene_df = gene_df.withColumn(
+        &#34;marker_synonym&#34;,
+        functions.split(functions.col(&#34;marker_synonym&#34;).getItem(0), r&#34;\|&#34;),
+    )
+    gene_df = gene_df.withColumn(
+        &#34;latest_production_centre&#34;,
+        functions.split(functions.col(&#34;latest_production_centre&#34;), r&#34;\|&#34;),
+    )
+    gene_df = gene_df.withColumn(
+        &#34;latest_phenotyping_centre&#34;,
+        functions.split(functions.col(&#34;latest_phenotyping_centre&#34;), r&#34;\|&#34;),
+    )
+    gene_df = gene_df.join(gene_production_status_df, &#34;mgi_accession_id&#34;, &#34;left_outer&#34;)
+    gene_df = gene_df.join(
+        phenotyping_data_availability_df, &#34;mgi_accession_id&#34;, &#34;left_outer&#34;
+    )
+    gene_df = gene_df.withColumn(
+        &#34;phenotype_status&#34;,
+        when(
+            col(&#34;phenotyping_status&#34;) == &#34;Phenotyping finished&#34;,
+            col(&#34;phenotyping_status&#34;),
+        )
+        .when(
+            col(&#34;phenotype_status&#34;) == &#34;Phenotyping data available&#34;,
+            col(&#34;phenotype_status&#34;),
+        )
+        .otherwise(col(&#34;phenotyping_status&#34;)),
+    )
+    gene_df = gene_df.withColumn(
+        &#34;phenotyping_data_available&#34;,
+        when(
+            col(&#34;phenotyping_status&#34;).isin(
+                [&#34;Phenotyping finished&#34;, &#34;Phenotyping data available&#34;]
+            )
+            | col(&#34;phenotype_status&#34;).isin(
+                [&#34;Phenotyping finished&#34;, &#34;Phenotyping data available&#34;]
+            ),
+            lit(True),
+        ).otherwise(lit(False)),
+    )
+    gene_df = gene_df.join(mgi_datasets_df, &#34;mgi_accession_id&#34;, &#34;left_outer&#34;)
+    gene_df = gene_df.join(significant_mp_term, &#34;mgi_accession_id&#34;, &#34;left_outer&#34;)
+    return gene_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.solr.gene_mapper.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>argv)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Solr Core loader
+:param list argv: the list elements should be:
+[1]: source IMPC parquet file
+[2]: Output Path</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(argv):
+    &#34;&#34;&#34;
+    Solr Core loader
+    :param list argv: the list elements should be:
+                    [1]: source IMPC parquet file
+                    [2]: Output Path
+    &#34;&#34;&#34;
+    imits_gene_parquet_path = argv[1]
+    imits_allele_parquet_path = argv[2]
+    mgi_homologene_report_parquet_path = argv[3]
+    mgi_mrk_list_report_parquet_path = argv[4]
+    embryo_data_json_path = argv[5]
+    observations_parquet_path = argv[6]
+    stats_results_parquet_path = argv[7]
+    ontology_metadata_parquet_path = argv[8]
+    gene_production_status_path = argv[9]
+    output_path = argv[10]
+
+    spark = SparkSession.builder.getOrCreate()
+    imits_gene_df = spark.read.parquet(imits_gene_parquet_path).select(
+        IMITS_GENE_COLUMNS
+    )
+    imits_allele_df = spark.read.parquet(imits_allele_parquet_path)
+    mgi_homologene_df = spark.read.parquet(mgi_homologene_report_parquet_path)
+    mgi_mrk_list_df = spark.read.parquet(mgi_mrk_list_report_parquet_path)
+    mgi_mrk_list_df = mgi_mrk_list_df.select(
+        [
+            &#34;mgi_accession_id&#34;,
+            &#34;chr&#34;,
+            &#34;genome_coordinate_start&#34;,
+            &#34;genome_coordinate_end&#34;,
+            &#34;strand&#34;,
+        ]
+    )
+    embryo_data_df = spark.read.json(embryo_data_json_path, mode=&#34;FAILFAST&#34;)
+    observations_df = spark.read.parquet(observations_parquet_path)
+    stats_results_df = spark.read.parquet(stats_results_parquet_path)
+    ontology_metadata_df = spark.read.parquet(ontology_metadata_parquet_path)
+    gene_production_status_df = spark.read.parquet(gene_production_status_path)
+    gene_df = get_gene_core_df(
+        imits_gene_df,
+        imits_allele_df,
+        mgi_homologene_df,
+        mgi_mrk_list_df,
+        embryo_data_df,
+        observations_df,
+        stats_results_df,
+        ontology_metadata_df,
+        gene_production_status_df,
+    )
+    gene_df.distinct().write.parquet(output_path)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<header>
+<div style="max-width: 300px, text-align: center">
+<img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
+</div>
+</header>
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="impc_etl.jobs.load.solr" href="index.html">impc_etl.jobs.load.solr</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="impc_etl.jobs.load.solr.gene_mapper.get_embryo_data" href="#impc_etl.jobs.load.solr.gene_mapper.get_embryo_data">get_embryo_data</a></code></li>
+<li><code><a title="impc_etl.jobs.load.solr.gene_mapper.get_gene_core_df" href="#impc_etl.jobs.load.solr.gene_mapper.get_gene_core_df">get_gene_core_df</a></code></li>
+<li><code><a title="impc_etl.jobs.load.solr.gene_mapper.main" href="#impc_etl.jobs.load.solr.gene_mapper.main">main</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p><span></span></p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
