@@ -43,10 +43,28 @@ from lxml import etree
 
 from impc_etl.workflow.config import ImpcConfig
 
-CENTRE_ID_MAP = {&#34;JAX&#34;: &#34;J&#34;}
-CENTRE_PROJECT_MAP = {&#34;JAX&#34;: &#34;JAX&#34;}
-CENTRE_PIPELINE_MAP = {&#34;JAX&#34;: &#34;JAX_001&#34;}
-CENTRE_PROCEDURE_MAP = {&#34;JAX&#34;: {&#34;VFR&#34;: &#34;JAX_VFR_001&#34;}}
+CENTRE_ID_MAP = {&#34;JAX&#34;: &#34;J&#34;, &#34;HAR&#34;: &#34;H&#34;, &#34;BCM&#34;: &#34;Bcm&#34;, &#34;UCD&#34;: &#34;Ucd&#34;, &#34;TCP&#34;: &#34;Tcp&#34;}
+CENTRE_PROJECT_MAP = {
+    &#34;JAX&#34;: &#34;PWG&#34;,
+    &#34;HAR&#34;: &#34;PWG&#34;,
+    &#34;BCM&#34;: &#34;PWG&#34;,
+    &#34;UCD&#34;: &#34;PWG&#34;,
+    &#34;TCP&#34;: &#34;PWG&#34;,
+}
+CENTRE_PIPELINE_MAP = {
+    &#34;JAX&#34;: &#34;JAX_001&#34;,
+    &#34;HAR&#34;: &#34;HRWL_001&#34;,
+    &#34;BCM&#34;: &#34;BCM_001&#34;,
+    &#34;UCD&#34;: &#34;UCD_001&#34;,
+    &#34;TCP&#34;: &#34;TCP_001&#34;,
+}
+CENTRE_PROCEDURE_MAP = {
+    &#34;JAX&#34;: {&#34;VFR&#34;: &#34;JAX_VFR_001&#34;, &#34;HRG&#34;: &#34;JAX_HRG_001&#34;, &#34;FOR&#34;: &#34;JAX_FOR_001&#34;},
+    &#34;HAR&#34;: {&#34;VFR&#34;: &#34;HRWL_VFR_001&#34;, &#34;FOR&#34;: &#34;HRWL_FOR_001&#34;},
+    &#34;BCM&#34;: {&#34;FOR&#34;: &#34;BCM_FOR_001&#34;},
+    &#34;UCD&#34;: {&#34;HRG&#34;: &#34;UCD_HRG_001&#34;, &#34;VFR&#34;: &#34;UCD_VFR_001&#34;},
+    &#34;TCP&#34;: {&#34;HRG&#34;: &#34;TCP_HRG_001&#34;, &#34;VFR&#34;: &#34;TCP_VFR_001&#34;},
+}
 SIMPLE_PARAMETERS = [
     &#34;JAX_VFR_001_001&#34;,
     &#34;JAX_VFR_002_001&#34;,
@@ -60,6 +78,91 @@ SIMPLE_PARAMETERS = [
     &#34;JAX_VFR_010_001&#34;,
     &#34;JAX_VFR_011_001&#34;,
     &#34;JAX_VFR_012_001&#34;,
+    &#34;JAX_HRG_002_001&#34;,
+    &#34;JAX_HRG_004_001&#34;,
+    &#34;JAX_HRG_006_001&#34;,
+    &#34;JAX_FOR_002_001&#34;,
+    &#34;HRWL_VFR_005_001&#34;,
+    &#34;HRWL_VFR_006_001&#34;,
+    &#34;HRWL_VFR_011_001&#34;,
+    &#34;HRWL_VFR_012_001&#34;,
+    &#34;HRWL_VFR_017_001&#34;,
+    &#34;HRWL_VFR_018_001&#34;,
+    &#34;HRWL_FOR_002_001&#34;,
+    &#34;HRWL_FOR_024_001&#34;,
+    &#34;HRWL_FOR_026_001&#34;,
+    &#34;HRWL_FOR_027_001&#34;,
+    &#34;BCM_FOR_002_001&#34;,
+    &#34;BCM_FOR_024_001&#34;,
+    &#34;BCM_FOR_026_001&#34;,
+    &#34;BCM_FOR_027_001&#34;,
+    &#34;BCM_FOR_029_001&#34;,
+    &#34;BCM_FOR_030_001&#34;,
+    &#34;UCD_HRG_002_001&#34;,
+    &#34;UCD_HRG_004_001&#34;,
+    &#34;UCD_HRG_006_001&#34;,
+    &#34;UCD_VFR_003_001&#34;,
+    &#34;UCD_VFR_005_001&#34;,
+    &#34;UCD_VFR_008_001&#34;,
+    &#34;UCD_VFR_010_001&#34;,
+    &#34;UCD_VFR_013_001&#34;,
+    &#34;UCD_VFR_015_001&#34;,
+    &#34;TCP_HRG_002_001&#34;,
+    &#34;TCP_HRG_004_001&#34;,
+    &#34;TCP_HRG_006_001&#34;,
+    &#34;TCP_VFR_003_001&#34;,
+    &#34;TCP_VFR_005_001&#34;,
+    &#34;TCP_VFR_008_001&#34;,
+    &#34;TCP_VFR_010_001&#34;,
+    &#34;TCP_VFR_013_001&#34;,
+    &#34;TCP_VFR_015_001&#34;,
+]
+SERIES_PARAMETERS = [
+    &#34;JAX_HRG_001_001&#34;,
+    &#34;JAX_HRG_003_001&#34;,
+    &#34;JAX_HRG_005_001&#34;,
+    &#34;JAX_FOR_001_001&#34;,
+    &#34;HRWL_VFR_001_001&#34;,
+    &#34;HRWL_VFR_002_001&#34;,
+    &#34;HRWL_VFR_003_001&#34;,
+    &#34;HRWL_VFR_004_001&#34;,
+    &#34;HRWL_VFR_007_001&#34;,
+    &#34;HRWL_VFR_008_001&#34;,
+    &#34;HRWL_VFR_009_001&#34;,
+    &#34;HRWL_VFR_010_001&#34;,
+    &#34;HRWL_VFR_013_001&#34;,
+    &#34;HRWL_VFR_014_001&#34;,
+    &#34;HRWL_VFR_015_001&#34;,
+    &#34;HRWL_VFR_016_001&#34;,
+    &#34;HRWL_FOR_001_001&#34;,
+    &#34;HRWL_FOR_025_001&#34;,
+    &#34;BCM_FOR_001_001&#34;,
+    &#34;BCM_FOR_025_001&#34;,
+    &#34;BCM_FOR_028_001&#34;,
+    &#34;UCD_HRG_001_001&#34;,
+    &#34;UCD_HRG_003_001&#34;,
+    &#34;UCD_HRG_005_001&#34;,
+    &#34;UCD_VFR_001_001&#34;,
+    &#34;UCD_VFR_002_001&#34;,
+    &#34;UCD_VFR_004_001&#34;,
+    &#34;UCD_VFR_006_001&#34;,
+    &#34;UCD_VFR_007_001&#34;,
+    &#34;UCD_VFR_009_001&#34;,
+    &#34;UCD_VFR_011_001&#34;,
+    &#34;UCD_VFR_012_001&#34;,
+    &#34;UCD_VFR_014_001&#34;,
+    &#34;TCP_HRG_001_001&#34;,
+    &#34;TCP_HRG_003_001&#34;,
+    &#34;TCP_HRG_005_001&#34;,
+    &#34;TCP_VFR_001_001&#34;,
+    &#34;TCP_VFR_002_001&#34;,
+    &#34;TCP_VFR_004_001&#34;,
+    &#34;TCP_VFR_006_001&#34;,
+    &#34;TCP_VFR_007_001&#34;,
+    &#34;TCP_VFR_009_001&#34;,
+    &#34;TCP_VFR_011_001&#34;,
+    &#34;TCP_VFR_012_001&#34;,
+    &#34;TCP_VFR_014_001&#34;,
 ]
 METADATA_PARAMETERS = [
     &#34;JAX_VFR_013_001&#34;,
@@ -90,6 +193,218 @@ METADATA_PARAMETERS = [
     &#34;JAX_VFR_038_001&#34;,
     &#34;JAX_VFR_039_001&#34;,
     &#34;JAX_VFR_040_001&#34;,
+    &#34;JAX_HRG_007_001&#34;,
+    &#34;JAX_HRG_008_001&#34;,
+    &#34;JAX_HRG_009_001&#34;,
+    &#34;JAX_HRG_010_001&#34;,
+    &#34;JAX_HRG_011_001&#34;,
+    &#34;JAX_HRG_012_001&#34;,
+    &#34;JAX_HRG_013_001&#34;,
+    &#34;JAX_HRG_014_001&#34;,
+    &#34;JAX_HRG_015_001&#34;,
+    &#34;JAX_HRG_016_001&#34;,
+    &#34;JAX_HRG_017_001&#34;,
+    &#34;JAX_HRG_018_001&#34;,
+    &#34;JAX_HRG_019_001&#34;,
+    &#34;JAX_HRG_020_001&#34;,
+    &#34;JAX_HRG_021_001&#34;,
+    &#34;JAX_HRG_022_001&#34;,
+    &#34;JAX_HRG_023_001&#34;,
+    &#34;JAX_HRG_024_001&#34;,
+    &#34;JAX_HRG_025_001&#34;,
+    &#34;JAX_HRG_026_001&#34;,
+    &#34;JAX_HRG_027_001&#34;,
+    &#34;JAX_HRG_028_001&#34;,
+    &#34;JAX_HRG_029_001&#34;,
+    &#34;JAX_HRG_030_001&#34;,
+    &#34;JAX_HRG_031_001&#34;,
+    &#34;JAX_HRG_032_001&#34;,
+    &#34;JAX_HRG_033_001&#34;,
+    &#34;JAX_HRG_034_001&#34;,
+    &#34;JAX_HRG_035_001&#34;,
+    &#34;JAX_FOR_008_001&#34;,
+    &#34;JAX_FOR_009_001&#34;,
+    &#34;JAX_FOR_011_001&#34;,
+    &#34;JAX_FOR_007_001&#34;,
+    &#34;JAX_FOR_017_001&#34;,
+    &#34;JAX_FOR_020_001&#34;,
+    &#34;JAX_FOR_021_001&#34;,
+    &#34;JAX_FOR_013_001&#34;,
+    &#34;JAX_FOR_022_001&#34;,
+    &#34;JAX_FOR_019_001&#34;,
+    &#34;JAX_FOR_023_001&#34;,
+    &#34;HRWL_VFR_019_001&#34;,
+    &#34;HRWL_VFR_020_001&#34;,
+    &#34;HRWL_VFR_021_001&#34;,
+    &#34;HRWL_VFR_022_001&#34;,
+    &#34;HRWL_VFR_023_001&#34;,
+    &#34;HRWL_VFR_024_001&#34;,
+    &#34;HRWL_VFR_025_001&#34;,
+    &#34;HRWL_VFR_026_001&#34;,
+    &#34;HRWL_VFR_027_001&#34;,
+    &#34;HRWL_VFR_028_001&#34;,
+    &#34;HRWL_VFR_029_001&#34;,
+    &#34;HRWL_VFR_030_001&#34;,
+    &#34;HRWL_VFR_031_001&#34;,
+    &#34;HRWL_VFR_032_001&#34;,
+    &#34;HRWL_VFR_033_001&#34;,
+    &#34;HRWL_VFR_034_001&#34;,
+    &#34;HRWL_VFR_035_001&#34;,
+    &#34;HRWL_VFR_036_001&#34;,
+    &#34;HRWL_VFR_037_001&#34;,
+    &#34;HRWL_VFR_038_001&#34;,
+    &#34;HRWL_VFR_039_001&#34;,
+    &#34;HRWL_VFR_040_001&#34;,
+    &#34;HRWL_VFR_041_001&#34;,
+    &#34;HRWL_VFR_042_001&#34;,
+    &#34;HRWL_FOR_008_001&#34;,
+    &#34;HRWL_FOR_009_001&#34;,
+    &#34;HRWL_FOR_011_001&#34;,
+    &#34;HRWL_FOR_007_001&#34;,
+    &#34;HRWL_FOR_017_001&#34;,
+    &#34;HRWL_FOR_020_001&#34;,
+    &#34;HRWL_FOR_021_001&#34;,
+    &#34;HRWL_FOR_013_001&#34;,
+    &#34;HRWL_FOR_022_001&#34;,
+    &#34;HRWL_FOR_019_001&#34;,
+    &#34;HRWL_FOR_023_001&#34;,
+    &#34;HRWL_FOR_024_001&#34;,
+    &#34;HRWL_FOR_025_001&#34;,
+    &#34;HRWL_FOR_026_001&#34;,
+    &#34;HRWL_FOR_027_001&#34;,
+    &#34;BCM_FOR_008_001&#34;,
+    &#34;BCM_FOR_009_001&#34;,
+    &#34;BCM_FOR_011_001&#34;,
+    &#34;BCM_FOR_007_001&#34;,
+    &#34;BCM_FOR_017_001&#34;,
+    &#34;BCM_FOR_020_001&#34;,
+    &#34;BCM_FOR_021_001&#34;,
+    &#34;BCM_FOR_013_001&#34;,
+    &#34;BCM_FOR_022_001&#34;,
+    &#34;BCM_FOR_019_001&#34;,
+    &#34;BCM_FOR_023_001&#34;,
+    &#34;UCD_HRG_007_001&#34;,
+    &#34;UCD_HRG_008_001&#34;,
+    &#34;UCD_HRG_009_001&#34;,
+    &#34;UCD_HRG_010_001&#34;,
+    &#34;UCD_HRG_011_001&#34;,
+    &#34;UCD_HRG_012_001&#34;,
+    &#34;UCD_HRG_013_001&#34;,
+    &#34;UCD_HRG_014_001&#34;,
+    &#34;UCD_HRG_015_001&#34;,
+    &#34;UCD_HRG_016_001&#34;,
+    &#34;UCD_HRG_017_001&#34;,
+    &#34;UCD_HRG_018_001&#34;,
+    &#34;UCD_HRG_019_001&#34;,
+    &#34;UCD_HRG_020_001&#34;,
+    &#34;UCD_HRG_021_001&#34;,
+    &#34;UCD_HRG_022_001&#34;,
+    &#34;UCD_HRG_023_001&#34;,
+    &#34;UCD_HRG_024_001&#34;,
+    &#34;UCD_HRG_025_001&#34;,
+    &#34;UCD_HRG_026_001&#34;,
+    &#34;UCD_HRG_027_001&#34;,
+    &#34;UCD_HRG_028_001&#34;,
+    &#34;UCD_HRG_029_001&#34;,
+    &#34;UCD_HRG_030_001&#34;,
+    &#34;UCD_HRG_031_001&#34;,
+    &#34;UCD_HRG_032_001&#34;,
+    &#34;UCD_HRG_033_001&#34;,
+    &#34;UCD_HRG_034_001&#34;,
+    &#34;UCD_HRG_035_001&#34;,
+    &#34;UCD_VFR_016_001&#34;,
+    &#34;UCD_VFR_017_001&#34;,
+    &#34;UCD_VFR_018_001&#34;,
+    &#34;UCD_VFR_019_001&#34;,
+    &#34;UCD_VFR_020_001&#34;,
+    &#34;UCD_VFR_021_001&#34;,
+    &#34;UCD_VFR_022_001&#34;,
+    &#34;UCD_VFR_023_001&#34;,
+    &#34;UCD_VFR_024_001&#34;,
+    &#34;UCD_VFR_025_001&#34;,
+    &#34;UCD_VFR_026_001&#34;,
+    &#34;UCD_VFR_027_001&#34;,
+    &#34;UCD_VFR_028_001&#34;,
+    &#34;UCD_VFR_029_001&#34;,
+    &#34;UCD_VFR_030_001&#34;,
+    &#34;UCD_VFR_031_001&#34;,
+    &#34;UCD_VFR_032_001&#34;,
+    &#34;UCD_VFR_033_001&#34;,
+    &#34;UCD_VFR_034_001&#34;,
+    &#34;UCD_VFR_035_001&#34;,
+    &#34;UCD_VFR_036_001&#34;,
+    &#34;UCD_VFR_037_001&#34;,
+    &#34;UCD_VFR_038_001&#34;,
+    &#34;UCD_VFR_039_001&#34;,
+    &#34;UCD_VFR_040_001&#34;,
+    &#34;UCD_VFR_041_001&#34;,
+    &#34;UCD_VFR_042_001&#34;,
+    &#34;UCD_VFR_043_001&#34;,
+    &#34;UCD_VFR_044_001&#34;,
+    &#34;UCD_VFR_045_001&#34;,
+    &#34;UCD_VFR_046_001&#34;,
+    &#34;UCD_VFR_047_001&#34;,
+    &#34;TCP_HRG_007_001&#34;,
+    &#34;TCP_HRG_008_001&#34;,
+    &#34;TCP_HRG_009_001&#34;,
+    &#34;TCP_HRG_010_001&#34;,
+    &#34;TCP_HRG_011_001&#34;,
+    &#34;TCP_HRG_012_001&#34;,
+    &#34;TCP_HRG_013_001&#34;,
+    &#34;TCP_HRG_014_001&#34;,
+    &#34;TCP_HRG_015_001&#34;,
+    &#34;TCP_HRG_016_001&#34;,
+    &#34;TCP_HRG_017_001&#34;,
+    &#34;TCP_HRG_018_001&#34;,
+    &#34;TCP_HRG_019_001&#34;,
+    &#34;TCP_HRG_020_001&#34;,
+    &#34;TCP_HRG_021_001&#34;,
+    &#34;TCP_HRG_022_001&#34;,
+    &#34;TCP_HRG_023_001&#34;,
+    &#34;TCP_HRG_024_001&#34;,
+    &#34;TCP_HRG_025_001&#34;,
+    &#34;TCP_HRG_026_001&#34;,
+    &#34;TCP_HRG_027_001&#34;,
+    &#34;TCP_HRG_028_001&#34;,
+    &#34;TCP_HRG_029_001&#34;,
+    &#34;TCP_HRG_030_001&#34;,
+    &#34;TCP_HRG_031_001&#34;,
+    &#34;TCP_HRG_032_001&#34;,
+    &#34;TCP_HRG_033_001&#34;,
+    &#34;TCP_HRG_034_001&#34;,
+    &#34;TCP_HRG_035_001&#34;,
+    &#34;TCP_VFR_016_001&#34;,
+    &#34;TCP_VFR_017_001&#34;,
+    &#34;TCP_VFR_018_001&#34;,
+    &#34;TCP_VFR_019_001&#34;,
+    &#34;TCP_VFR_020_001&#34;,
+    &#34;TCP_VFR_021_001&#34;,
+    &#34;TCP_VFR_022_001&#34;,
+    &#34;TCP_VFR_023_001&#34;,
+    &#34;TCP_VFR_024_001&#34;,
+    &#34;TCP_VFR_025_001&#34;,
+    &#34;TCP_VFR_026_001&#34;,
+    &#34;TCP_VFR_027_001&#34;,
+    &#34;TCP_VFR_028_001&#34;,
+    &#34;TCP_VFR_029_001&#34;,
+    &#34;TCP_VFR_030_001&#34;,
+    &#34;TCP_VFR_031_001&#34;,
+    &#34;TCP_VFR_032_001&#34;,
+    &#34;TCP_VFR_033_001&#34;,
+    &#34;TCP_VFR_034_001&#34;,
+    &#34;TCP_VFR_035_001&#34;,
+    &#34;TCP_VFR_036_001&#34;,
+    &#34;TCP_VFR_037_001&#34;,
+    &#34;TCP_VFR_038_001&#34;,
+    &#34;TCP_VFR_039_001&#34;,
+    &#34;TCP_VFR_040_001&#34;,
+    &#34;TCP_VFR_041_001&#34;,
+    &#34;TCP_VFR_042_001&#34;,
+    &#34;TCP_VFR_043_001&#34;,
+    &#34;TCP_VFR_044_001&#34;,
+    &#34;TCP_VFR_045_001&#34;,
+    &#34;TCP_VFR_046_001&#34;,
+    &#34;TCP_VFR_047_001&#34;,
 ]
 
 PARAMETERS_UNITS = {
@@ -108,6 +423,124 @@ PARAMETERS_UNITS = {
     &#34;JAX_VFR_032_001&#34;: &#34;mm&#34;,
     &#34;JAX_VFR_036_001&#34;: &#34;g&#34;,
     &#34;JAX_VFR_037_001&#34;: &#34;g&#34;,
+    &#34;JAX_HRG_001_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_002_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_003_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_004_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_005_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_006_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_007_001&#34;: &#34;min&#34;,
+    &#34;JAX_HRG_009_001&#34;: &#34;s&#34;,
+    &#34;JAX_HRG_011_001&#34;: &#34;min&#34;,
+    &#34;JAX_HRG_015_001&#34;: &#34;Hours&#34;,
+    &#34;JAX_HRG_016_001&#34;: &#34;Hours&#34;,
+    &#34;JAX_HRG_017_001&#34;: &#34;Hours&#34;,
+    &#34;JAX_HRG_018_001&#34;: &#34;C&#34;,
+    &#34;JAX_HRG_020_001&#34;: &#34;%&#34;,
+    &#34;JAX_HRG_021_001&#34;: &#34;%&#34;,
+    &#34;JAX_HRG_029_001&#34;: &#34;cm&#34;,
+    &#34;JAX_FOR_001_001&#34;: &#34;s&#34;,
+    &#34;JAX_FOR_002_001&#34;: &#34;s&#34;,
+    &#34;JAX_FOR_009_001&#34;: &#34;ul&#34;,
+    &#34;JAX_FOR_013_001&#34;: &#34;mm&#34;,
+    &#34;JAX_FOR_017_001&#34;: &#34;min&#34;,
+    &#34;HRWL_VFR_002_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_003_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_005_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_008_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_009_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_011_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_014_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_015_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_017_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_021_001&#34;: &#34;min&#34;,
+    &#34;HRWL_VFR_023_001&#34;: &#34;Hours&#34;,
+    &#34;HRWL_VFR_025_001&#34;: &#34;Hours&#34;,
+    &#34;HRWL_VFR_026_001&#34;: &#34;Hours&#34;,
+    &#34;HRWL_VFR_028_001&#34;: &#34;cm&#34;,
+    &#34;HRWL_VFR_034_001&#34;: &#34;mm&#34;,
+    &#34;HRWL_VFR_038_001&#34;: &#34;g&#34;,
+    &#34;HRWL_VFR_039_001&#34;: &#34;g&#34;,
+    &#34;HRWL_FOR_001_001&#34;: &#34;s&#34;,
+    &#34;HRWL_FOR_002_001&#34;: &#34;s&#34;,
+    &#34;HRWL_FOR_009_001&#34;: &#34;ul&#34;,
+    &#34;HRWL_FOR_013_001&#34;: &#34;mm&#34;,
+    &#34;HRWL_FOR_017_001&#34;: &#34;min&#34;,
+    &#34;HRWL_FOR_025_001&#34;: &#34;s&#34;,
+    &#34;HRWL_FOR_026_001&#34;: &#34;s&#34;,
+    &#34;HRWL_FOR_027_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_001_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_002_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_009_001&#34;: &#34;ul&#34;,
+    &#34;BCM_FOR_013_001&#34;: &#34;mm&#34;,
+    &#34;BCM_FOR_017_001&#34;: &#34;min&#34;,
+    &#34;BCM_FOR_025_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_026_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_027_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_028_001&#34;: &#34;s&#34;,
+    &#34;BCM_FOR_029_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_001_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_002_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_003_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_004_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_005_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_006_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_007_001&#34;: &#34;min&#34;,
+    &#34;UCD_HRG_009_001&#34;: &#34;s&#34;,
+    &#34;UCD_HRG_011_001&#34;: &#34;min&#34;,
+    &#34;UCD_HRG_015_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_HRG_016_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_HRG_017_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_HRG_018_001&#34;: &#34;C&#34;,
+    &#34;UCD_HRG_020_001&#34;: &#34;%&#34;,
+    &#34;UCD_HRG_021_001&#34;: &#34;%&#34;,
+    &#34;UCD_HRG_029_001&#34;: &#34;cm&#34;,
+    &#34;UCD_VFR_004_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_009_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_014_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_005_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_010_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_015_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_021_001&#34;: &#34;min&#34;,
+    &#34;UCD_VFR_023_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_VFR_025_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_VFR_026_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_VFR_027_001&#34;: &#34;Hours&#34;,
+    &#34;UCD_VFR_029_001&#34;: &#34;cm&#34;,
+    &#34;UCD_VFR_035_001&#34;: &#34;mm&#34;,
+    &#34;UCD_VFR_039_001&#34;: &#34;g&#34;,
+    &#34;UCD_VFR_040_001&#34;: &#34;g&#34;,
+    &#34;TCP_HRG_001_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_002_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_003_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_004_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_005_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_006_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_007_001&#34;: &#34;min&#34;,
+    &#34;TCP_HRG_009_001&#34;: &#34;s&#34;,
+    &#34;TCP_HRG_011_001&#34;: &#34;min&#34;,
+    &#34;TCP_HRG_015_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_HRG_016_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_HRG_017_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_HRG_018_001&#34;: &#34;C&#34;,
+    &#34;TCP_HRG_020_001&#34;: &#34;%&#34;,
+    &#34;TCP_HRG_021_001&#34;: &#34;%&#34;,
+    &#34;TCP_HRG_029_001&#34;: &#34;cm&#34;,
+    &#34;TCP_VFR_004_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_009_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_014_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_005_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_010_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_015_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_021_001&#34;: &#34;min&#34;,
+    &#34;TCP_VFR_023_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_VFR_025_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_VFR_026_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_VFR_027_001&#34;: &#34;Hours&#34;,
+    &#34;TCP_VFR_029_001&#34;: &#34;cm&#34;,
+    &#34;TCP_VFR_035_001&#34;: &#34;mm&#34;,
+    &#34;TCP_VFR_039_001&#34;: &#34;g&#34;,
+    &#34;TCP_VFR_040_001&#34;: &#34;g&#34;,
 }
 
 
@@ -141,6 +574,8 @@ class PainDataCsvToXml(luigi.Task):
             row_index = 1
             for row in csv_dict_reader:
                 specimen_id = row[&#34;Animal name&#34;]
+                if specimen_id is None or specimen_id == &#34;&#34;:
+                    continue
                 experiment_id = f&#34;{exp_id_prefix}_{specimen_id}_{row_index}&#34;
                 # TODO parse different date formats
                 date_of_experiment = row[&#34;Date of experiment&#34;].replace(&#34;/&#34;, &#34;-&#34;)
@@ -161,33 +596,55 @@ class PainDataCsvToXml(luigi.Task):
                 )
                 experiment_tag.append(procedure_tag)
                 parameter_columns = list(row.keys())[12:]
-                for parameter_stable_id in parameter_columns:
-                    parameter_value = row[parameter_stable_id]
+                parameter_tags = {}
+                for parameter_col_name in parameter_columns:
+                    if &#34;-&#34; in parameter_col_name:
+                        col_name_parts = parameter_col_name.split(&#34;-INCREMENT:&#34;)
+                        parameter_stable_id = col_name_parts[0]
+                        increment_value = col_name_parts[1]
+                    else:
+                        parameter_stable_id = parameter_col_name
+                        increment_value = 0
+                    parameter_value = row[parameter_col_name]
+                    if parameter_value is None or parameter_value == &#34;&#34;:
+                        continue
                     parameter_unit = (
                         PARAMETERS_UNITS[parameter_stable_id]
                         if parameter_stable_id in PARAMETERS_UNITS
                         else None
                     )
-                    parameter_tag: Element = etree.Element(&#34;dummmy&#34;)
-                    if parameter_stable_id in SIMPLE_PARAMETERS:
-                        parameter_tag = etree.Element(
-                            &#34;simpleParameter&#34;, parameterID=parameter_stable_id
-                        )
-                    elif parameter_stable_id in METADATA_PARAMETERS:
-                        parameter_tag = etree.Element(
-                            &#34;procedureMetadata&#34;, parameterID=parameter_stable_id
-                        )
+                    if parameter_stable_id not in parameter_tags:
+                        parameter_tag: Element = etree.Element(&#34;dummmy&#34;)
+                        if parameter_stable_id in SIMPLE_PARAMETERS:
+                            parameter_tag = etree.Element(
+                                &#34;simpleParameter&#34;, parameterID=parameter_stable_id
+                            )
+                        elif parameter_stable_id in SERIES_PARAMETERS:
+                            parameter_tag = etree.Element(
+                                &#34;seriesParameter&#34;, parameterID=parameter_stable_id
+                            )
+                        elif parameter_stable_id in METADATA_PARAMETERS:
+                            parameter_tag = etree.Element(
+                                &#34;procedureMetadata&#34;, parameterID=parameter_stable_id
+                            )
+                        else:
+                            print(parameter_stable_id)
+                            raise Exception
+                        parameter_tags[parameter_stable_id] = parameter_tag
+                        procedure_tag.append(parameter_tag)
                     else:
-                        raise Exception
-                    procedure_tag.append(parameter_tag)
+                        parameter_tag = parameter_tags[parameter_stable_id]
                     if parameter_unit:
                         parameter_tag.attrib[&#34;unit&#34;] = parameter_unit
                     value_tag: Element = etree.Element(&#34;value&#34;)
+                    if parameter_stable_id in SERIES_PARAMETERS:
+                        value_tag.attrib[&#34;incrementValue&#34;] = str(increment_value)
                     value_tag.text = parameter_value
-
                     parameter_tag.append(value_tag)
         full_tree: ElementTree = etree.ElementTree(centre_procedure_set_tag)
-        print(etree.tostring(centre_procedure_set_tag))</code></pre>
+        f = open(&#34;test.xml&#34;, &#34;ab&#34;)
+        f.write(etree.tostring(centre_procedure_set_tag, pretty_print=True))
+        f.close()</code></pre>
 </details>
 </section>
 <section>
@@ -256,6 +713,8 @@ metaclass:</p></div>
             row_index = 1
             for row in csv_dict_reader:
                 specimen_id = row[&#34;Animal name&#34;]
+                if specimen_id is None or specimen_id == &#34;&#34;:
+                    continue
                 experiment_id = f&#34;{exp_id_prefix}_{specimen_id}_{row_index}&#34;
                 # TODO parse different date formats
                 date_of_experiment = row[&#34;Date of experiment&#34;].replace(&#34;/&#34;, &#34;-&#34;)
@@ -276,33 +735,55 @@ metaclass:</p></div>
                 )
                 experiment_tag.append(procedure_tag)
                 parameter_columns = list(row.keys())[12:]
-                for parameter_stable_id in parameter_columns:
-                    parameter_value = row[parameter_stable_id]
+                parameter_tags = {}
+                for parameter_col_name in parameter_columns:
+                    if &#34;-&#34; in parameter_col_name:
+                        col_name_parts = parameter_col_name.split(&#34;-INCREMENT:&#34;)
+                        parameter_stable_id = col_name_parts[0]
+                        increment_value = col_name_parts[1]
+                    else:
+                        parameter_stable_id = parameter_col_name
+                        increment_value = 0
+                    parameter_value = row[parameter_col_name]
+                    if parameter_value is None or parameter_value == &#34;&#34;:
+                        continue
                     parameter_unit = (
                         PARAMETERS_UNITS[parameter_stable_id]
                         if parameter_stable_id in PARAMETERS_UNITS
                         else None
                     )
-                    parameter_tag: Element = etree.Element(&#34;dummmy&#34;)
-                    if parameter_stable_id in SIMPLE_PARAMETERS:
-                        parameter_tag = etree.Element(
-                            &#34;simpleParameter&#34;, parameterID=parameter_stable_id
-                        )
-                    elif parameter_stable_id in METADATA_PARAMETERS:
-                        parameter_tag = etree.Element(
-                            &#34;procedureMetadata&#34;, parameterID=parameter_stable_id
-                        )
+                    if parameter_stable_id not in parameter_tags:
+                        parameter_tag: Element = etree.Element(&#34;dummmy&#34;)
+                        if parameter_stable_id in SIMPLE_PARAMETERS:
+                            parameter_tag = etree.Element(
+                                &#34;simpleParameter&#34;, parameterID=parameter_stable_id
+                            )
+                        elif parameter_stable_id in SERIES_PARAMETERS:
+                            parameter_tag = etree.Element(
+                                &#34;seriesParameter&#34;, parameterID=parameter_stable_id
+                            )
+                        elif parameter_stable_id in METADATA_PARAMETERS:
+                            parameter_tag = etree.Element(
+                                &#34;procedureMetadata&#34;, parameterID=parameter_stable_id
+                            )
+                        else:
+                            print(parameter_stable_id)
+                            raise Exception
+                        parameter_tags[parameter_stable_id] = parameter_tag
+                        procedure_tag.append(parameter_tag)
                     else:
-                        raise Exception
-                    procedure_tag.append(parameter_tag)
+                        parameter_tag = parameter_tags[parameter_stable_id]
                     if parameter_unit:
                         parameter_tag.attrib[&#34;unit&#34;] = parameter_unit
                     value_tag: Element = etree.Element(&#34;value&#34;)
+                    if parameter_stable_id in SERIES_PARAMETERS:
+                        value_tag.attrib[&#34;incrementValue&#34;] = str(increment_value)
                     value_tag.text = parameter_value
-
                     parameter_tag.append(value_tag)
         full_tree: ElementTree = etree.ElementTree(centre_procedure_set_tag)
-        print(etree.tostring(centre_procedure_set_tag))</code></pre>
+        f = open(&#34;test.xml&#34;, &#34;ab&#34;)
+        f.write(etree.tostring(centre_procedure_set_tag, pretty_print=True))
+        f.close()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -379,6 +860,8 @@ the same output since they don't see the work done by other workers.</p>
         row_index = 1
         for row in csv_dict_reader:
             specimen_id = row[&#34;Animal name&#34;]
+            if specimen_id is None or specimen_id == &#34;&#34;:
+                continue
             experiment_id = f&#34;{exp_id_prefix}_{specimen_id}_{row_index}&#34;
             # TODO parse different date formats
             date_of_experiment = row[&#34;Date of experiment&#34;].replace(&#34;/&#34;, &#34;-&#34;)
@@ -399,33 +882,55 @@ the same output since they don't see the work done by other workers.</p>
             )
             experiment_tag.append(procedure_tag)
             parameter_columns = list(row.keys())[12:]
-            for parameter_stable_id in parameter_columns:
-                parameter_value = row[parameter_stable_id]
+            parameter_tags = {}
+            for parameter_col_name in parameter_columns:
+                if &#34;-&#34; in parameter_col_name:
+                    col_name_parts = parameter_col_name.split(&#34;-INCREMENT:&#34;)
+                    parameter_stable_id = col_name_parts[0]
+                    increment_value = col_name_parts[1]
+                else:
+                    parameter_stable_id = parameter_col_name
+                    increment_value = 0
+                parameter_value = row[parameter_col_name]
+                if parameter_value is None or parameter_value == &#34;&#34;:
+                    continue
                 parameter_unit = (
                     PARAMETERS_UNITS[parameter_stable_id]
                     if parameter_stable_id in PARAMETERS_UNITS
                     else None
                 )
-                parameter_tag: Element = etree.Element(&#34;dummmy&#34;)
-                if parameter_stable_id in SIMPLE_PARAMETERS:
-                    parameter_tag = etree.Element(
-                        &#34;simpleParameter&#34;, parameterID=parameter_stable_id
-                    )
-                elif parameter_stable_id in METADATA_PARAMETERS:
-                    parameter_tag = etree.Element(
-                        &#34;procedureMetadata&#34;, parameterID=parameter_stable_id
-                    )
+                if parameter_stable_id not in parameter_tags:
+                    parameter_tag: Element = etree.Element(&#34;dummmy&#34;)
+                    if parameter_stable_id in SIMPLE_PARAMETERS:
+                        parameter_tag = etree.Element(
+                            &#34;simpleParameter&#34;, parameterID=parameter_stable_id
+                        )
+                    elif parameter_stable_id in SERIES_PARAMETERS:
+                        parameter_tag = etree.Element(
+                            &#34;seriesParameter&#34;, parameterID=parameter_stable_id
+                        )
+                    elif parameter_stable_id in METADATA_PARAMETERS:
+                        parameter_tag = etree.Element(
+                            &#34;procedureMetadata&#34;, parameterID=parameter_stable_id
+                        )
+                    else:
+                        print(parameter_stable_id)
+                        raise Exception
+                    parameter_tags[parameter_stable_id] = parameter_tag
+                    procedure_tag.append(parameter_tag)
                 else:
-                    raise Exception
-                procedure_tag.append(parameter_tag)
+                    parameter_tag = parameter_tags[parameter_stable_id]
                 if parameter_unit:
                     parameter_tag.attrib[&#34;unit&#34;] = parameter_unit
                 value_tag: Element = etree.Element(&#34;value&#34;)
+                if parameter_stable_id in SERIES_PARAMETERS:
+                    value_tag.attrib[&#34;incrementValue&#34;] = str(increment_value)
                 value_tag.text = parameter_value
-
                 parameter_tag.append(value_tag)
     full_tree: ElementTree = etree.ElementTree(centre_procedure_set_tag)
-    print(etree.tostring(centre_procedure_set_tag))</code></pre>
+    f = open(&#34;test.xml&#34;, &#34;ab&#34;)
+    f.write(etree.tostring(centre_procedure_set_tag, pretty_print=True))
+    f.close()</code></pre>
 </details>
 </dd>
 </dl>

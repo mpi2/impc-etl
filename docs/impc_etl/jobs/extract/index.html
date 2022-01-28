@@ -32,7 +32,15 @@ in and generate a Parquet file with a slightly different schema.</p>
 <pre><code class="python">&#34;&#34;&#34;
 Module to group extraction jobs for input data. Most of these jobs ara simple read write operation that take some format
 in and generate a Parquet file with a slightly different schema.
-&#34;&#34;&#34;</code></pre>
+&#34;&#34;&#34;
+
+from impc_etl.jobs.extract.product_report_extractor import ProductReportExtractor
+from impc_etl.jobs.extract.dcc_specimen_extractor import DCCSpecimenExtractor
+from impc_etl.jobs.extract.dcc_experiment_extractor import DCCExperimentExtractor
+from impc_etl.jobs.extract.colony_tracking_extractor import ColonyTrackingExtractor
+from impc_etl.jobs.extract.gene_production_status_extractor import (
+    GeneProductionStatusExtractor,
+)</code></pre>
 </details>
 </section>
 <section>
@@ -40,18 +48,32 @@ in and generate a Parquet file with a slightly different schema.
 <dl>
 <dt><code class="name"><a title="impc_etl.jobs.extract.colony_tracking_extractor" href="colony_tracking_extractor.html">impc_etl.jobs.extract.colony_tracking_extractor</a></code></dt>
 <dd>
-<div class="desc"><p>Colony tracking extraction task. Extracts information from colony tracking systems reports (e.g. IMITS and GenTar).</p></div>
+<div class="desc"><p>Colony tracking extraction task. Extracts information from GenTar.</p></div>
 </dd>
-<dt><code class="name"><a title="impc_etl.jobs.extract.dcc_extractor" href="dcc_extractor.html">impc_etl.jobs.extract.dcc_extractor</a></code></dt>
+<dt><code class="name"><a title="impc_etl.jobs.extract.dcc_experiment_extractor" href="dcc_experiment_extractor.html">impc_etl.jobs.extract.dcc_experiment_extractor</a></code></dt>
+<dd>
+<div class="desc"><p>DCC Experiment Extractor module
+This module takes care of extracting experiment data from XML DCC files to
+Spark DataFrames.
+In the XML files …</p></div>
+</dd>
+<dt><code class="name"><a title="impc_etl.jobs.extract.dcc_extractor_helper" href="dcc_extractor_helper.html">impc_etl.jobs.extract.dcc_extractor_helper</a></code></dt>
 <dd>
 <div class="desc"><p>DCC Extractor module
 This module takes care of extracting data from XML DCC files to
 Spark DataFrames.
 There are two kinds of DCC files: …</p></div>
 </dd>
+<dt><code class="name"><a title="impc_etl.jobs.extract.dcc_specimen_extractor" href="dcc_specimen_extractor.html">impc_etl.jobs.extract.dcc_specimen_extractor</a></code></dt>
+<dd>
+<div class="desc"><p>DCC Specimen Extractor module
+This module takes care of extracting specimen data from XML DCC files to
+Spark DataFrames.
+In the XML files we …</p></div>
+</dd>
 <dt><code class="name"><a title="impc_etl.jobs.extract.gene_production_status_extractor" href="gene_production_status_extractor.html">impc_etl.jobs.extract.gene_production_status_extractor</a></code></dt>
 <dd>
-<div class="desc"><p>Gene production status report extractor</p></div>
+<div class="desc"><p>Gene production status report extractor.</p></div>
 </dd>
 <dt><code class="name"><a title="impc_etl.jobs.extract.imits_extractor" href="imits_extractor.html">impc_etl.jobs.extract.imits_extractor</a></code></dt>
 <dd>
@@ -85,6 +107,11 @@ extract_impress: Extract Impress data and load it to a dataframe</p></div>
 <dt><code class="name"><a title="impc_etl.jobs.extract.open_stats_extractor" href="open_stats_extractor.html">impc_etl.jobs.extract.open_stats_extractor</a></code></dt>
 <dd>
 <div class="desc"></div>
+</dd>
+<dt><code class="name"><a title="impc_etl.jobs.extract.product_report_extractor" href="product_report_extractor.html">impc_etl.jobs.extract.product_report_extractor</a></code></dt>
+<dd>
+<div class="desc"><p>GenTar Product report extractor module
+This module takes care of extracting the data from the GenTar products report.</p></div>
 </dd>
 <dt><code class="name"><a title="impc_etl.jobs.extract.quml_extractor" href="quml_extractor.html">impc_etl.jobs.extract.quml_extractor</a></code></dt>
 <dd>
@@ -127,7 +154,9 @@ extract_ontology_terms:</p></div>
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
 <li><code><a title="impc_etl.jobs.extract.colony_tracking_extractor" href="colony_tracking_extractor.html">impc_etl.jobs.extract.colony_tracking_extractor</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.dcc_extractor" href="dcc_extractor.html">impc_etl.jobs.extract.dcc_extractor</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor" href="dcc_experiment_extractor.html">impc_etl.jobs.extract.dcc_experiment_extractor</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_extractor_helper" href="dcc_extractor_helper.html">impc_etl.jobs.extract.dcc_extractor_helper</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_specimen_extractor" href="dcc_specimen_extractor.html">impc_etl.jobs.extract.dcc_specimen_extractor</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.gene_production_status_extractor" href="gene_production_status_extractor.html">impc_etl.jobs.extract.gene_production_status_extractor</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.imits_extractor" href="imits_extractor.html">impc_etl.jobs.extract.imits_extractor</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.impress_extractor" href="impress_extractor.html">impc_etl.jobs.extract.impress_extractor</a></code></li>
@@ -136,6 +165,7 @@ extract_ontology_terms:</p></div>
 <li><code><a title="impc_etl.jobs.extract.ontology_extractor" href="ontology_extractor.html">impc_etl.jobs.extract.ontology_extractor</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor" href="ontology_metadata_extractor.html">impc_etl.jobs.extract.ontology_metadata_extractor</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.open_stats_extractor" href="open_stats_extractor.html">impc_etl.jobs.extract.open_stats_extractor</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.product_report_extractor" href="product_report_extractor.html">impc_etl.jobs.extract.product_report_extractor</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.quml_extractor" href="quml_extractor.html">impc_etl.jobs.extract.quml_extractor</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.static_data_extractor" href="static_data_extractor.html">impc_etl.jobs.extract.static_data_extractor</a></code></li>
 </ul>

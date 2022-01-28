@@ -151,9 +151,7 @@ class ImpcSolrCores(luigi.Task):
             Allele2Extractor(
                 imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
             ),
-            ProductExtractor(
-                imits_tsv_path=self.imits_product_tsv_path, output_path=self.output_path
-            ),
+            ProductReportExtractor(),
             ImpcImagesCoreLoader(
                 omero_ids_csv_path=self.omero_ids_csv_path,
                 dcc_xml_path=self.dcc_xml_path,
@@ -264,10 +262,7 @@ class ImpcIndexDaily(luigi.Task):
 
     def requires(self):
         return [
-            ProductExtractor(
-                imits_tsv_path=self.imits_product_tsv_path,
-                output_path=self.parquet_path,
-            ),
+            ProductReportExtractor(),
             GeneCoreLoader(),
         ]
 
@@ -352,7 +347,7 @@ class ImpcIndexDataRelease(luigi.Task):
             GenotypePhenotypeCoreLoader(),
             MPCoreLoader(),
             PipelineCoreLoader(),
-            ProductExtractor(),
+            ProductReportExtractor(),
             MGIPhenotypeCoreLoader(),
             ImpcImagesCoreLoader(),
         ]

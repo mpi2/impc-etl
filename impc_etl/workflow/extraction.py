@@ -1,10 +1,7 @@
 import luigi
-from luigi.contrib.spark import SparkSubmitTask, PySparkTask
-from pyspark.sql import SparkSession
+from luigi.contrib.spark import SparkSubmitTask
 
-from impc_etl.jobs.extract.dcc_experiment_extractor import DCCExperimentExtractor
-from impc_etl.jobs.extract.dcc_specimen_extractor import DCCSpecimenExtractor
-from impc_etl.jobs.extract.colony_tracking_extractor import ColonyTrackingExtractor
+from impc_etl.jobs.extract import *
 from impc_etl.workflow.config import ImpcConfig
 
 
@@ -59,10 +56,6 @@ class Allele2Extractor(ImitsExtractor):
 
 class ColonyExtractor(ImitsExtractor):
     entity_type = "Colony"
-
-
-class ProductExtractor(ImitsExtractor):
-    entity_type = "Product"
 
 
 class ImpressExtractor(SparkSubmitTask):

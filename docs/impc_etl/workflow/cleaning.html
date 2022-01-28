@@ -26,8 +26,7 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from impc_etl.jobs.extract.colony_tracking_extractor import ColonyTrackingExtractor
-from impc_etl.workflow.extraction import *
+<pre><code class="python">from impc_etl.workflow.extraction import *
 from impc_etl.workflow.config import ImpcConfig
 
 
@@ -40,9 +39,7 @@ class ExperimentCleaner(SparkSubmitTask):
     resources = {&#34;overwrite_resource&#34;: 1}
 
     def requires(self):
-        return ExperimentExtractor(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        )
+        return SpecimenExperimentExtractor()
 
     def output(self):
         output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
@@ -61,16 +58,10 @@ class LineExperimentCleaner(SparkSubmitTask):
     resources = {&#34;overwrite_resource&#34;: 1}
 
     def requires(self):
-        return LineExperimentExtractor(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        )
+        return LineExperimentExtractor()
 
     def output(self):
-        output_path = (
-            self.input()
-            .path.replace(&#34;_raw&#34;, &#34;&#34;)
-            .replace(&#34;experiment&#34;, &#34;line_experiment&#34;)
-        )
+        output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
         return ImpcConfig().get_target(output_path)
 
     def app_options(self):
@@ -85,9 +76,7 @@ class MouseCleaner(SparkSubmitTask):
     resources = {&#34;overwrite_resource&#34;: 1}
 
     def requires(self):
-        return MouseExtractor(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        )
+        return MouseSpecimenExtractor()
 
     def output(self):
         output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
@@ -105,9 +94,7 @@ class EmbryoCleaner(SparkSubmitTask):
     resources = {&#34;overwrite_resource&#34;: 1}
 
     def requires(self):
-        return EmbryoExtractor(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        )
+        return EmbryoSpecimenExtractor()
 
     def output(self):
         output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
@@ -280,9 +267,7 @@ for more information</p></div>
     resources = {&#34;overwrite_resource&#34;: 1}
 
     def requires(self):
-        return EmbryoExtractor(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        )
+        return EmbryoSpecimenExtractor()
 
     def output(self):
         output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
@@ -374,9 +359,7 @@ values are Task instances.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def requires(self):
-    return EmbryoExtractor(
-        dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-    )</code></pre>
+    return EmbryoSpecimenExtractor()</code></pre>
 </details>
 </dd>
 </dl>
@@ -403,9 +386,7 @@ for more information</p></div>
     resources = {&#34;overwrite_resource&#34;: 1}
 
     def requires(self):
-        return ExperimentExtractor(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        )
+        return SpecimenExperimentExtractor()
 
     def output(self):
         output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
@@ -501,9 +482,7 @@ values are Task instances.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def requires(self):
-    return ExperimentExtractor(
-        dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-    )</code></pre>
+    return SpecimenExperimentExtractor()</code></pre>
 </details>
 </dd>
 </dl>
@@ -530,16 +509,10 @@ for more information</p></div>
     resources = {&#34;overwrite_resource&#34;: 1}
 
     def requires(self):
-        return LineExperimentExtractor(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        )
+        return LineExperimentExtractor()
 
     def output(self):
-        output_path = (
-            self.input()
-            .path.replace(&#34;_raw&#34;, &#34;&#34;)
-            .replace(&#34;experiment&#34;, &#34;line_experiment&#34;)
-        )
+        output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
         return ImpcConfig().get_target(output_path)
 
     def app_options(self):
@@ -612,11 +585,7 @@ the same output since they don't see the work done by other workers.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def output(self):
-    output_path = (
-        self.input()
-        .path.replace(&#34;_raw&#34;, &#34;&#34;)
-        .replace(&#34;experiment&#34;, &#34;line_experiment&#34;)
-    )
+    output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
     return ImpcConfig().get_target(output_path)</code></pre>
 </details>
 </dd>
@@ -636,9 +605,7 @@ values are Task instances.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def requires(self):
-    return LineExperimentExtractor(
-        dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-    )</code></pre>
+    return LineExperimentExtractor()</code></pre>
 </details>
 </dd>
 </dl>
@@ -664,9 +631,7 @@ for more information</p></div>
     resources = {&#34;overwrite_resource&#34;: 1}
 
     def requires(self):
-        return MouseExtractor(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        )
+        return MouseSpecimenExtractor()
 
     def output(self):
         output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
@@ -758,9 +723,7 @@ values are Task instances.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def requires(self):
-    return MouseExtractor(
-        dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-    )</code></pre>
+    return MouseSpecimenExtractor()</code></pre>
 </details>
 </dd>
 </dl>

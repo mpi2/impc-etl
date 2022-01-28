@@ -31,7 +31,11 @@
 
 
 class UnsupportedFileTypeError(Exception):
-    &#34;&#34;&#34;Raise when the requested data file type to extract is no supported by an extractor&#34;&#34;&#34;</code></pre>
+    &#34;&#34;&#34;Raise when the requested data file type to extract is no supported by an extractor&#34;&#34;&#34;
+
+
+class NoDataFoundError(Exception):
+    &#34;&#34;&#34;Raise when the requested data entity is not present on the files provided&#34;&#34;&#34;</code></pre>
 </details>
 </section>
 <section>
@@ -43,6 +47,25 @@ class UnsupportedFileTypeError(Exception):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
+<dt id="impc_etl.shared.exceptions.NoDataFoundError"><code class="flex name class">
+<span>class <span class="ident">NoDataFoundError</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Raise when the requested data entity is not present on the files provided</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class NoDataFoundError(Exception):
+    &#34;&#34;&#34;Raise when the requested data entity is not present on the files provided&#34;&#34;&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
 <dt id="impc_etl.shared.exceptions.UnsupportedEntityError"><code class="flex name class">
 <span>class <span class="ident">UnsupportedEntityError</span></span>
 <span>(</span><span>*args, **kwargs)</span>
@@ -102,6 +125,9 @@ class UnsupportedFileTypeError(Exception):
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
+<li>
+<h4><code><a title="impc_etl.shared.exceptions.NoDataFoundError" href="#impc_etl.shared.exceptions.NoDataFoundError">NoDataFoundError</a></code></h4>
+</li>
 <li>
 <h4><code><a title="impc_etl.shared.exceptions.UnsupportedEntityError" href="#impc_etl.shared.exceptions.UnsupportedEntityError">UnsupportedEntityError</a></code></h4>
 </li>

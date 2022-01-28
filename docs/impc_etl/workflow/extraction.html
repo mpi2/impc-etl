@@ -27,53 +27,26 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">import luigi
-from luigi.contrib.spark import SparkSubmitTask, PySparkTask
-from pyspark.sql import SparkSession
+from luigi.contrib.spark import SparkSubmitTask
 
+from impc_etl.jobs.extract import *
 from impc_etl.workflow.config import ImpcConfig
 
 
-class DCCExtractor(SparkSubmitTask):
-    name = &#34;IMPC_DCC_Extractor&#34;
-    app = &#34;impc_etl/jobs/extract/dcc_extractor.py&#34;
-    resources = {&#34;overwrite_resource&#34;: 1}
-    file_type = luigi.Parameter()
-    dcc_xml_path = luigi.Parameter()
-    entity_type = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(
-            f&#34;{self.output_path}{self.entity_type}_raw_parquet&#34;
-        )
-
-    def app_options(self):
-        return [self.dcc_xml_path, self.output().path, self.file_type, self.entity_type]
+class MouseSpecimenExtractor(DCCSpecimenExtractor):
+    specimen_type = &#34;mouse&#34;
 
 
-class MouseExtractor(DCCExtractor):
-    file_type = &#34;specimen&#34;
-    entity_type = &#34;mouse&#34;
+class EmbryoSpecimenExtractor(DCCSpecimenExtractor):
+    specimen_type = &#34;embryo&#34;
 
 
-class EmbryoExtractor(DCCExtractor):
-    file_type = &#34;specimen&#34;
-    entity_type = &#34;embryo&#34;
+class SpecimenExperimentExtractor(DCCExperimentExtractor):
+    experiment_type = &#34;specimen_level&#34;
 
 
-class ExperimentExtractor(DCCExtractor):
-    file_type = &#34;experiment&#34;
-    entity_type = &#34;experiment&#34;
-
-
-class LineExperimentExtractor(DCCExtractor):
-    file_type = &#34;experiment&#34;
-    entity_type = &#34;line&#34;
+class LineExperimentExtractor(DCCExperimentExtractor):
+    experiment_type = &#34;line_level&#34;
 
 
 class ImitsExtractor(SparkSubmitTask):
@@ -111,10 +84,6 @@ class Allele2Extractor(ImitsExtractor):
 
 class ColonyExtractor(ImitsExtractor):
     entity_type = &#34;Colony&#34;
-
-
-class ProductExtractor(ImitsExtractor):
-    entity_type = &#34;Product&#34;
 
 
 class ImpressExtractor(SparkSubmitTask):
@@ -395,217 +364,52 @@ for more information</p></div>
 </li>
 </ul>
 </dd>
-<dt id="impc_etl.workflow.extraction.DCCExtractor"><code class="flex name class">
-<span>class <span class="ident">DCCExtractor</span></span>
+<dt id="impc_etl.workflow.extraction.EmbryoSpecimenExtractor"><code class="flex name class">
+<span>class <span class="ident">EmbryoSpecimenExtractor</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
+<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p>
+<p>Attributes</p>
+<hr>
+<pre><code>name: str
+    Name of the Spark task
+dcc_specimen_xml_path: luigi.Parameter
+    Path in the filesystem (local or HDFS) to the specimen XML files
+specimen_type: str
+    Type of specimen can be "embryo" or "mouse"
+output_path: luigi.Parameter
+    Path of the output directory where the new parquet file will be generated.
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class DCCExtractor(SparkSubmitTask):
-    name = &#34;IMPC_DCC_Extractor&#34;
-    app = &#34;impc_etl/jobs/extract/dcc_extractor.py&#34;
-    resources = {&#34;overwrite_resource&#34;: 1}
-    file_type = luigi.Parameter()
-    dcc_xml_path = luigi.Parameter()
-    entity_type = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(
-            f&#34;{self.output_path}{self.entity_type}_raw_parquet&#34;
-        )
-
-    def app_options(self):
-        return [self.dcc_xml_path, self.output().path, self.file_type, self.entity_type]</code></pre>
+<pre><code class="python">class EmbryoSpecimenExtractor(DCCSpecimenExtractor):
+    specimen_type = &#34;embryo&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Subclasses</h3>
-<ul class="hlist">
-<li><a title="impc_etl.workflow.extraction.EmbryoExtractor" href="#impc_etl.workflow.extraction.EmbryoExtractor">EmbryoExtractor</a></li>
-<li><a title="impc_etl.workflow.extraction.ExperimentExtractor" href="#impc_etl.workflow.extraction.ExperimentExtractor">ExperimentExtractor</a></li>
-<li><a title="impc_etl.workflow.extraction.LineExperimentExtractor" href="#impc_etl.workflow.extraction.LineExperimentExtractor">LineExperimentExtractor</a></li>
-<li><a title="impc_etl.workflow.extraction.MouseExtractor" href="#impc_etl.workflow.extraction.MouseExtractor">MouseExtractor</a></li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.DCCExtractor.app"><code class="name">var <span class="ident">app</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.DCCExtractor.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.DCCExtractor.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.DCCExtractor.file_type"><code class="name">var <span class="ident">file_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.DCCExtractor.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.DCCExtractor.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.DCCExtractor.resources"><code class="name">var <span class="ident">resources</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.DCCExtractor.app_options"><code class="name flex">
-<span>def <span class="ident">app_options</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def app_options(self):
-    return [self.dcc_xml_path, self.output().path, self.file_type, self.entity_type]</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.extraction.DCCExtractor.output"><code class="name flex">
-<span>def <span class="ident">output</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The output that this Task produces.</p>
-<p>The output of the Task determines if the Task needs to be run&ndash;the task
-is considered finished iff the outputs all exist. Subclasses should
-override this method to return a single :py:class:<code>Target</code> or a list of
-:py:class:<code>Target</code> instances.</p>
-<p>Implementation note
-If running multiple workers, the output must be a resource that is accessible
-by all workers, such as a DFS or database. Otherwise, workers might compute
-the same output since they don't see the work done by other workers.</p>
-<p>See :ref:<code>Task.output</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def output(self):
-    self.output_path = (
-        self.output_path + &#34;/&#34;
-        if not self.output_path.endswith(&#34;/&#34;)
-        else self.output_path
-    )
-    return ImpcConfig().get_target(
-        f&#34;{self.output_path}{self.entity_type}_raw_parquet&#34;
-    )</code></pre>
-</details>
-</dd>
-</dl>
-</dd>
-<dt id="impc_etl.workflow.extraction.EmbryoExtractor"><code class="flex name class">
-<span>class <span class="ident">EmbryoExtractor</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class EmbryoExtractor(DCCExtractor):
-    file_type = &#34;specimen&#34;
-    entity_type = &#34;embryo&#34;</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="impc_etl.workflow.extraction.DCCExtractor" href="#impc_etl.workflow.extraction.DCCExtractor">DCCExtractor</a></li>
+<li><a title="impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor" href="../jobs/extract/dcc_specimen_extractor.html#impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor">DCCSpecimenExtractor</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
 <li>luigi.contrib.spark.SparkSubmitTask</li>
 <li>luigi.contrib.external_program.ExternalProgramTask</li>
 <li>luigi.task.Task</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.workflow.extraction.EmbryoExtractor.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.EmbryoExtractor.file_type"><code class="name">var <span class="ident">file_type</span></code></dt>
+<dt id="impc_etl.workflow.extraction.EmbryoSpecimenExtractor.specimen_type"><code class="name">var <span class="ident">specimen_type</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="impc_etl.workflow.extraction.DCCExtractor" href="#impc_etl.workflow.extraction.DCCExtractor">DCCExtractor</a></b></code>:
+<li><code><b><a title="impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor" href="../jobs/extract/dcc_specimen_extractor.html#impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor">DCCSpecimenExtractor</a></b></code>:
 <ul class="hlist">
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.app_options" href="#impc_etl.workflow.extraction.DCCExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.output" href="#impc_etl.workflow.extraction.DCCExtractor.output">output</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="impc_etl.workflow.extraction.ExperimentExtractor"><code class="flex name class">
-<span>class <span class="ident">ExperimentExtractor</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ExperimentExtractor(DCCExtractor):
-    file_type = &#34;experiment&#34;
-    entity_type = &#34;experiment&#34;</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="impc_etl.workflow.extraction.DCCExtractor" href="#impc_etl.workflow.extraction.DCCExtractor">DCCExtractor</a></li>
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.ExperimentExtractor.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.ExperimentExtractor.file_type"><code class="name">var <span class="ident">file_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="impc_etl.workflow.extraction.DCCExtractor" href="#impc_etl.workflow.extraction.DCCExtractor">DCCExtractor</a></b></code>:
-<ul class="hlist">
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.app_options" href="#impc_etl.workflow.extraction.DCCExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.output" href="#impc_etl.workflow.extraction.DCCExtractor.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor.app_options" href="../jobs/extract/dcc_specimen_extractor.html#impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor.main" href="../jobs/extract/dcc_specimen_extractor.html#impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor.output" href="../jobs/extract/dcc_specimen_extractor.html#impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor.output">output</a></code></li>
 </ul>
 </li>
 </ul>
@@ -695,7 +499,6 @@ for more information</p></div>
 <li><a title="impc_etl.workflow.extraction.AlleleExtractor" href="#impc_etl.workflow.extraction.AlleleExtractor">AlleleExtractor</a></li>
 <li><a title="impc_etl.workflow.extraction.ColonyExtractor" href="#impc_etl.workflow.extraction.ColonyExtractor">ColonyExtractor</a></li>
 <li><a title="impc_etl.workflow.extraction.GeneExtractor" href="#impc_etl.workflow.extraction.GeneExtractor">GeneExtractor</a></li>
-<li><a title="impc_etl.workflow.extraction.ProductExtractor" href="#impc_etl.workflow.extraction.ProductExtractor">ProductExtractor</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -894,42 +697,47 @@ the same output since they don't see the work done by other workers.</p>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
+<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p>
+<p>Attributes</p>
+<hr>
+<pre><code>name: str
+    Name of the Spark task
+dcc_experiment_xml_path: luigi.Parameter
+    Path in the filesystem (local or HDFS) to the experiment XML files
+experiment_type: str
+    Type of experiment can be "specimen_level" or "line_level"
+output_path: luigi.Parameter
+    Path of the output directory where the new parquet file will be generated.
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class LineExperimentExtractor(DCCExtractor):
-    file_type = &#34;experiment&#34;
-    entity_type = &#34;line&#34;</code></pre>
+<pre><code class="python">class LineExperimentExtractor(DCCExperimentExtractor):
+    experiment_type = &#34;line_level&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="impc_etl.workflow.extraction.DCCExtractor" href="#impc_etl.workflow.extraction.DCCExtractor">DCCExtractor</a></li>
+<li><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor">DCCExperimentExtractor</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
 <li>luigi.contrib.spark.SparkSubmitTask</li>
 <li>luigi.contrib.external_program.ExternalProgramTask</li>
 <li>luigi.task.Task</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.workflow.extraction.LineExperimentExtractor.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.LineExperimentExtractor.file_type"><code class="name">var <span class="ident">file_type</span></code></dt>
+<dt id="impc_etl.workflow.extraction.LineExperimentExtractor.experiment_type"><code class="name">var <span class="ident">experiment_type</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="impc_etl.workflow.extraction.DCCExtractor" href="#impc_etl.workflow.extraction.DCCExtractor">DCCExtractor</a></b></code>:
+<li><code><b><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor">DCCExperimentExtractor</a></b></code>:
 <ul class="hlist">
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.app_options" href="#impc_etl.workflow.extraction.DCCExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.output" href="#impc_etl.workflow.extraction.DCCExtractor.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.app_options" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.main" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.output" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.output">output</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1250,47 +1058,52 @@ for more information</p></div>
 </li>
 </ul>
 </dd>
-<dt id="impc_etl.workflow.extraction.MouseExtractor"><code class="flex name class">
-<span>class <span class="ident">MouseExtractor</span></span>
+<dt id="impc_etl.workflow.extraction.MouseSpecimenExtractor"><code class="flex name class">
+<span>class <span class="ident">MouseSpecimenExtractor</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
+<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p>
+<p>Attributes</p>
+<hr>
+<pre><code>name: str
+    Name of the Spark task
+dcc_specimen_xml_path: luigi.Parameter
+    Path in the filesystem (local or HDFS) to the specimen XML files
+specimen_type: str
+    Type of specimen can be "embryo" or "mouse"
+output_path: luigi.Parameter
+    Path of the output directory where the new parquet file will be generated.
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class MouseExtractor(DCCExtractor):
-    file_type = &#34;specimen&#34;
-    entity_type = &#34;mouse&#34;</code></pre>
+<pre><code class="python">class MouseSpecimenExtractor(DCCSpecimenExtractor):
+    specimen_type = &#34;mouse&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="impc_etl.workflow.extraction.DCCExtractor" href="#impc_etl.workflow.extraction.DCCExtractor">DCCExtractor</a></li>
+<li><a title="impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor" href="../jobs/extract/dcc_specimen_extractor.html#impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor">DCCSpecimenExtractor</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
 <li>luigi.contrib.spark.SparkSubmitTask</li>
 <li>luigi.contrib.external_program.ExternalProgramTask</li>
 <li>luigi.task.Task</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.workflow.extraction.MouseExtractor.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.MouseExtractor.file_type"><code class="name">var <span class="ident">file_type</span></code></dt>
+<dt id="impc_etl.workflow.extraction.MouseSpecimenExtractor.specimen_type"><code class="name">var <span class="ident">specimen_type</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="impc_etl.workflow.extraction.DCCExtractor" href="#impc_etl.workflow.extraction.DCCExtractor">DCCExtractor</a></b></code>:
+<li><code><b><a title="impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor" href="../jobs/extract/dcc_specimen_extractor.html#impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor">DCCSpecimenExtractor</a></b></code>:
 <ul class="hlist">
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.app_options" href="#impc_etl.workflow.extraction.DCCExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.output" href="#impc_etl.workflow.extraction.DCCExtractor.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor.app_options" href="../jobs/extract/dcc_specimen_extractor.html#impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor.main" href="../jobs/extract/dcc_specimen_extractor.html#impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor.output" href="../jobs/extract/dcc_specimen_extractor.html#impc_etl.jobs.extract.dcc_specimen_extractor.DCCSpecimenExtractor.output">output</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1661,42 +1474,52 @@ the same output since they don't see the work done by other workers.</p>
 </dd>
 </dl>
 </dd>
-<dt id="impc_etl.workflow.extraction.ProductExtractor"><code class="flex name class">
-<span>class <span class="ident">ProductExtractor</span></span>
+<dt id="impc_etl.workflow.extraction.SpecimenExperimentExtractor"><code class="flex name class">
+<span>class <span class="ident">SpecimenExperimentExtractor</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
+<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p>
+<p>Attributes</p>
+<hr>
+<pre><code>name: str
+    Name of the Spark task
+dcc_experiment_xml_path: luigi.Parameter
+    Path in the filesystem (local or HDFS) to the experiment XML files
+experiment_type: str
+    Type of experiment can be "specimen_level" or "line_level"
+output_path: luigi.Parameter
+    Path of the output directory where the new parquet file will be generated.
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ProductExtractor(ImitsExtractor):
-    entity_type = &#34;Product&#34;</code></pre>
+<pre><code class="python">class SpecimenExperimentExtractor(DCCExperimentExtractor):
+    experiment_type = &#34;specimen_level&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="impc_etl.workflow.extraction.ImitsExtractor" href="#impc_etl.workflow.extraction.ImitsExtractor">ImitsExtractor</a></li>
+<li><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor">DCCExperimentExtractor</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
 <li>luigi.contrib.spark.SparkSubmitTask</li>
 <li>luigi.contrib.external_program.ExternalProgramTask</li>
 <li>luigi.task.Task</li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.workflow.extraction.ProductExtractor.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
+<dt id="impc_etl.workflow.extraction.SpecimenExperimentExtractor.experiment_type"><code class="name">var <span class="ident">experiment_type</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="impc_etl.workflow.extraction.ImitsExtractor" href="#impc_etl.workflow.extraction.ImitsExtractor">ImitsExtractor</a></b></code>:
+<li><code><b><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor">DCCExperimentExtractor</a></b></code>:
 <ul class="hlist">
-<li><code><a title="impc_etl.workflow.extraction.ImitsExtractor.app_options" href="#impc_etl.workflow.extraction.ImitsExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.ImitsExtractor.output" href="#impc_etl.workflow.extraction.ImitsExtractor.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.app_options" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.main" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.output" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.output">output</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1741,31 +1564,9 @@ for more information</p></div>
 </ul>
 </li>
 <li>
-<h4><code><a title="impc_etl.workflow.extraction.DCCExtractor" href="#impc_etl.workflow.extraction.DCCExtractor">DCCExtractor</a></code></h4>
-<ul class="two-column">
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.app" href="#impc_etl.workflow.extraction.DCCExtractor.app">app</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.app_options" href="#impc_etl.workflow.extraction.DCCExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.dcc_xml_path" href="#impc_etl.workflow.extraction.DCCExtractor.dcc_xml_path">dcc_xml_path</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.entity_type" href="#impc_etl.workflow.extraction.DCCExtractor.entity_type">entity_type</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.file_type" href="#impc_etl.workflow.extraction.DCCExtractor.file_type">file_type</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.name" href="#impc_etl.workflow.extraction.DCCExtractor.name">name</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.output" href="#impc_etl.workflow.extraction.DCCExtractor.output">output</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.output_path" href="#impc_etl.workflow.extraction.DCCExtractor.output_path">output_path</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.DCCExtractor.resources" href="#impc_etl.workflow.extraction.DCCExtractor.resources">resources</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.extraction.EmbryoExtractor" href="#impc_etl.workflow.extraction.EmbryoExtractor">EmbryoExtractor</a></code></h4>
+<h4><code><a title="impc_etl.workflow.extraction.EmbryoSpecimenExtractor" href="#impc_etl.workflow.extraction.EmbryoSpecimenExtractor">EmbryoSpecimenExtractor</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.workflow.extraction.EmbryoExtractor.entity_type" href="#impc_etl.workflow.extraction.EmbryoExtractor.entity_type">entity_type</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.EmbryoExtractor.file_type" href="#impc_etl.workflow.extraction.EmbryoExtractor.file_type">file_type</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.extraction.ExperimentExtractor" href="#impc_etl.workflow.extraction.ExperimentExtractor">ExperimentExtractor</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.extraction.ExperimentExtractor.entity_type" href="#impc_etl.workflow.extraction.ExperimentExtractor.entity_type">entity_type</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.ExperimentExtractor.file_type" href="#impc_etl.workflow.extraction.ExperimentExtractor.file_type">file_type</a></code></li>
+<li><code><a title="impc_etl.workflow.extraction.EmbryoSpecimenExtractor.specimen_type" href="#impc_etl.workflow.extraction.EmbryoSpecimenExtractor.specimen_type">specimen_type</a></code></li>
 </ul>
 </li>
 <li>
@@ -1802,8 +1603,7 @@ for more information</p></div>
 <li>
 <h4><code><a title="impc_etl.workflow.extraction.LineExperimentExtractor" href="#impc_etl.workflow.extraction.LineExperimentExtractor">LineExperimentExtractor</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.workflow.extraction.LineExperimentExtractor.entity_type" href="#impc_etl.workflow.extraction.LineExperimentExtractor.entity_type">entity_type</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.LineExperimentExtractor.file_type" href="#impc_etl.workflow.extraction.LineExperimentExtractor.file_type">file_type</a></code></li>
+<li><code><a title="impc_etl.workflow.extraction.LineExperimentExtractor.experiment_type" href="#impc_etl.workflow.extraction.LineExperimentExtractor.experiment_type">experiment_type</a></code></li>
 </ul>
 </li>
 <li>
@@ -1849,10 +1649,9 @@ for more information</p></div>
 </ul>
 </li>
 <li>
-<h4><code><a title="impc_etl.workflow.extraction.MouseExtractor" href="#impc_etl.workflow.extraction.MouseExtractor">MouseExtractor</a></code></h4>
+<h4><code><a title="impc_etl.workflow.extraction.MouseSpecimenExtractor" href="#impc_etl.workflow.extraction.MouseSpecimenExtractor">MouseSpecimenExtractor</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.workflow.extraction.MouseExtractor.entity_type" href="#impc_etl.workflow.extraction.MouseExtractor.entity_type">entity_type</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.MouseExtractor.file_type" href="#impc_etl.workflow.extraction.MouseExtractor.file_type">file_type</a></code></li>
+<li><code><a title="impc_etl.workflow.extraction.MouseSpecimenExtractor.specimen_type" href="#impc_etl.workflow.extraction.MouseSpecimenExtractor.specimen_type">specimen_type</a></code></li>
 </ul>
 </li>
 <li>
@@ -1895,9 +1694,9 @@ for more information</p></div>
 </ul>
 </li>
 <li>
-<h4><code><a title="impc_etl.workflow.extraction.ProductExtractor" href="#impc_etl.workflow.extraction.ProductExtractor">ProductExtractor</a></code></h4>
+<h4><code><a title="impc_etl.workflow.extraction.SpecimenExperimentExtractor" href="#impc_etl.workflow.extraction.SpecimenExperimentExtractor">SpecimenExperimentExtractor</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.workflow.extraction.ProductExtractor.entity_type" href="#impc_etl.workflow.extraction.ProductExtractor.entity_type">entity_type</a></code></li>
+<li><code><a title="impc_etl.workflow.extraction.SpecimenExperimentExtractor.experiment_type" href="#impc_etl.workflow.extraction.SpecimenExperimentExtractor.experiment_type">experiment_type</a></code></li>
 </ul>
 </li>
 </ul>

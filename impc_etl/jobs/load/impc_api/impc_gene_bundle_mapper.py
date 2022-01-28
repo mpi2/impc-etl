@@ -15,7 +15,7 @@ from impc_etl.workflow.extraction import (
     MGIHomoloGeneExtractor,
     MGIMrkListExtractor,
     OntologyMetadataExtractor,
-    ProductExtractor,
+    ProductReportExtractor,
 )
 from impc_etl.workflow.load import (
     ObservationsMapper,
@@ -65,7 +65,7 @@ class ImpcGeneBundleMapper(PySparkTask):
             GeneProductionStatusExtractor(),
             GenotypePhenotypeCoreLoader(),
             ImpcImagesCoreLoader(),
-            ProductExtractor(),
+            ProductReportExtractor(),
         ]
 
     def output(self):

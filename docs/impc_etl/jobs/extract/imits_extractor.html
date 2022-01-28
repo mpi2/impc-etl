@@ -110,27 +110,29 @@ def main(argv):
     elif entity_type == &#34;allele2&#34;:
         imits_df = extract_imits_tsv_allele_2(spark, input_path)
     elif entity_type in [&#34;Product&#34;, &#34;Colony&#34;]:
-        imits_df = extract_imits_tsv(spark, input_path, entity_type)
+        imits_df = extract_gentar_tsv(spark, input_path, entity_type)
     else:
         raise UnsupportedEntityError
 
     imits_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
 
 
-def extract_imits_tsv(spark_session: SparkSession, file_path, entity_type) -&gt; DataFrame:
+def extract_gentar_tsv(
+    spark_session: SparkSession, file_path, entity_type
+) -&gt; DataFrame:
     &#34;&#34;&#34;
     Uses a Spark session to generate a DataFrame from a TSV file. Can extract a Colonies file or a Products file.
     :param spark_session: spark SQL session to be used in the extraction
     :param file_path: path to the TSV file
     :return: Spark DataFrame with the extracted data
     &#34;&#34;&#34;
-    imits_df = utils.extract_tsv(spark_session, file_path)
-    imits_df = imits_df.toDF(
-        *[column_name.replace(&#34; &#34;, &#34;_&#34;).lower() for column_name in imits_df.columns]
+    gentar_df = utils.extract_tsv(spark_session, file_path)
+    gentar_df = gentar_df.toDF(
+        *[column_name.replace(&#34; &#34;, &#34;_&#34;).lower() for column_name in gentar_df.columns]
     )
     if entity_type == &#34;Product&#34;:
         for col_name in PRODUCT_MULTIVALUED:
-            imits_df = imits_df.withColumn(
+            gentar_df = gentar_df.withColumn(
                 col_name,
                 when(
                     col(col_name).contains(&#34;|&#34;),
@@ -139,7 +141,7 @@ def extract_imits_tsv(spark_session: SparkSession, file_path, entity_type) -&gt;
                 .when(col(col_name).isNull(), lit(None))
                 .otherwise(array(col_name)),
             )
-    return imits_df
+    return gentar_df
 
 
 def extract_imits_tsv_by_entity_type(
@@ -222,8 +224,8 @@ if __name__ == &#34;__main__&#34;:
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="impc_etl.jobs.extract.imits_extractor.extract_imits_tsv"><code class="name flex">
-<span>def <span class="ident">extract_imits_tsv</span></span>(<span>spark_session: pyspark.sql.session.SparkSession, file_path, entity_type) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.extract.imits_extractor.extract_gentar_tsv"><code class="name flex">
+<span>def <span class="ident">extract_gentar_tsv</span></span>(<span>spark_session: pyspark.sql.session.SparkSession, file_path, entity_type) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Uses a Spark session to generate a DataFrame from a TSV file. Can extract a Colonies file or a Products file.
@@ -234,20 +236,22 @@ if __name__ == &#34;__main__&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def extract_imits_tsv(spark_session: SparkSession, file_path, entity_type) -&gt; DataFrame:
+<pre><code class="python">def extract_gentar_tsv(
+    spark_session: SparkSession, file_path, entity_type
+) -&gt; DataFrame:
     &#34;&#34;&#34;
     Uses a Spark session to generate a DataFrame from a TSV file. Can extract a Colonies file or a Products file.
     :param spark_session: spark SQL session to be used in the extraction
     :param file_path: path to the TSV file
     :return: Spark DataFrame with the extracted data
     &#34;&#34;&#34;
-    imits_df = utils.extract_tsv(spark_session, file_path)
-    imits_df = imits_df.toDF(
-        *[column_name.replace(&#34; &#34;, &#34;_&#34;).lower() for column_name in imits_df.columns]
+    gentar_df = utils.extract_tsv(spark_session, file_path)
+    gentar_df = gentar_df.toDF(
+        *[column_name.replace(&#34; &#34;, &#34;_&#34;).lower() for column_name in gentar_df.columns]
     )
     if entity_type == &#34;Product&#34;:
         for col_name in PRODUCT_MULTIVALUED:
-            imits_df = imits_df.withColumn(
+            gentar_df = gentar_df.withColumn(
                 col_name,
                 when(
                     col(col_name).contains(&#34;|&#34;),
@@ -256,7 +260,7 @@ if __name__ == &#34;__main__&#34;:
                 .when(col(col_name).isNull(), lit(None))
                 .otherwise(array(col_name)),
             )
-    return imits_df</code></pre>
+    return gentar_df</code></pre>
 </details>
 </dd>
 <dt id="impc_etl.jobs.extract.imits_extractor.extract_imits_tsv_allele_2"><code class="name flex">
@@ -385,7 +389,7 @@ Can extract Genes or Alleles from a Alleles report file produced by IMITS.
     elif entity_type == &#34;allele2&#34;:
         imits_df = extract_imits_tsv_allele_2(spark, input_path)
     elif entity_type in [&#34;Product&#34;, &#34;Colony&#34;]:
-        imits_df = extract_imits_tsv(spark, input_path, entity_type)
+        imits_df = extract_gentar_tsv(spark, input_path, entity_type)
     else:
         raise UnsupportedEntityError
 
@@ -415,7 +419,7 @@ Can extract Genes or Alleles from a Alleles report file produced by IMITS.
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="impc_etl.jobs.extract.imits_extractor.extract_imits_tsv" href="#impc_etl.jobs.extract.imits_extractor.extract_imits_tsv">extract_imits_tsv</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.imits_extractor.extract_gentar_tsv" href="#impc_etl.jobs.extract.imits_extractor.extract_gentar_tsv">extract_gentar_tsv</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.imits_extractor.extract_imits_tsv_allele_2" href="#impc_etl.jobs.extract.imits_extractor.extract_imits_tsv_allele_2">extract_imits_tsv_allele_2</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.imits_extractor.extract_imits_tsv_by_entity_type" href="#impc_etl.jobs.extract.imits_extractor.extract_imits_tsv_by_entity_type">extract_imits_tsv_by_entity_type</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.imits_extractor.main" href="#impc_etl.jobs.extract.imits_extractor.main">main</a></code></li>

@@ -73,27 +73,29 @@ def main(argv):
     elif entity_type == "allele2":
         imits_df = extract_imits_tsv_allele_2(spark, input_path)
     elif entity_type in ["Product", "Colony"]:
-        imits_df = extract_imits_tsv(spark, input_path, entity_type)
+        imits_df = extract_gentar_tsv(spark, input_path, entity_type)
     else:
         raise UnsupportedEntityError
 
     imits_df.write.mode("overwrite").parquet(output_path)
 
 
-def extract_imits_tsv(spark_session: SparkSession, file_path, entity_type) -> DataFrame:
+def extract_gentar_tsv(
+    spark_session: SparkSession, file_path, entity_type
+) -> DataFrame:
     """
     Uses a Spark session to generate a DataFrame from a TSV file. Can extract a Colonies file or a Products file.
     :param spark_session: spark SQL session to be used in the extraction
     :param file_path: path to the TSV file
     :return: Spark DataFrame with the extracted data
     """
-    imits_df = utils.extract_tsv(spark_session, file_path)
-    imits_df = imits_df.toDF(
-        *[column_name.replace(" ", "_").lower() for column_name in imits_df.columns]
+    gentar_df = utils.extract_tsv(spark_session, file_path)
+    gentar_df = gentar_df.toDF(
+        *[column_name.replace(" ", "_").lower() for column_name in gentar_df.columns]
     )
     if entity_type == "Product":
         for col_name in PRODUCT_MULTIVALUED:
-            imits_df = imits_df.withColumn(
+            gentar_df = gentar_df.withColumn(
                 col_name,
                 when(
                     col(col_name).contains("|"),
@@ -102,7 +104,7 @@ def extract_imits_tsv(spark_session: SparkSession, file_path, entity_type) -> Da
                 .when(col(col_name).isNull(), lit(None))
                 .otherwise(array(col_name)),
             )
-    return imits_df
+    return gentar_df
 
 
 def extract_imits_tsv_by_entity_type(
