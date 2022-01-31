@@ -1,32 +1,28 @@
 """
     Colony tracking extraction task. Extracts information from GenTar.
 """
-from pyspark import SparkContext
-from impc_etl.shared import utils
-from impc_etl.workflow.config import ImpcConfig
-from pyspark.sql.session import SparkSession
 import luigi
 from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
+from pyspark.sql.session import SparkSession
+
+from impc_etl.shared import utils
+from impc_etl.workflow.config import ImpcConfig
 
 
 class ColonyTrackingExtractor(PySparkTask):
     """
     PySpark Task class to extract colony tracking information from reports.
-
-    Attributes
-    __________
-
-        name: str
-            Name of the Spark task
-        gentar_colonies_tsv_path: luigi.Parameter
-            Path in the filesystem (local or HDFS) to the GenTar colonies report
-        output_path: luigi.Parameter
-            Path of the output directory where ethe new parquet file will be generated.
     """
 
-    name = "IMPC_Colony_Tracking_Extractor"
-    gentar_colonies_tsv_path = luigi.Parameter()
-    output_path = luigi.Parameter()
+    #: Name of the Spark task
+    name: str = "IMPC_Colony_Tracking_Extractor"
+
+    #: Path in the filesystem (local or HDFS) to the GenTar colonies report
+    gentar_colonies_tsv_path: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where ethe new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
 
     def output(self):
         """

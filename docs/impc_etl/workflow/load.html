@@ -31,12 +31,8 @@
 from luigi.contrib.webhdfs import WebHdfsClient
 from luigi.task import flatten
 
-from impc_etl.jobs.extract.gene_production_status_extractor import (
-    GeneProductionStatusExtractor,
-)
 from impc_etl.jobs.transform.experiment_bw_age import ExperimentBWAgeProcessor
 from impc_etl.jobs.transform.experiment_parameter_derivator import (
-    ExperimentParameterDerivator,
     LineParameterDerivator,
 )
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
@@ -67,17 +63,13 @@ class ObservationsMapper(SparkSubmitTask):
                 dcc_xml_path=self.dcc_xml_path,
                 output_path=self.output_path,
             ),
-            MGIAlleleExtractor(
-                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
-            ),
+            MGIPhenotypicAlleleExtractor(),
             ColonyCleaner(
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 output_path=self.output_path,
             ),
             ImpressExtractor(output_path=self.output_path),
-            MGIStrainExtractor(
-                mgi_input_path=self.mgi_strain_input_path, output_path=self.output_path
-            ),
+            MGIStrainReportExtractor(),
             OntologyMetadataExtractor(
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
@@ -301,13 +293,8 @@ class MGIPhenotypeCoreLoader(SparkSubmitTask):
 
     def requires(self):
         return [
-            MGIGenePhenoExtractor(
-                mgi_input_path=self.mgi_gene_pheno_input_path,
-                output_path=self.output_path,
-            ),
-            MGIAlleleExtractor(
-                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
-            ),
+            MGIGenePhenoReportExtractor(),
+            MGIPhenotypicAlleleExtractor(),
             OntologyExtractor(
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
@@ -482,14 +469,8 @@ class GeneCoreLoader(SparkSubmitTask):
             AlleleExtractor(
                 imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
             ),
-            MGIHomoloGeneExtractor(
-                mgi_input_path=self.mgi_homologene_input_path,
-                output_path=self.output_path,
-            ),
-            MGIMrkListExtractor(
-                mgi_input_path=self.mgi_mrk_list_input_path,
-                output_path=self.output_path,
-            ),
+            MGIHomologyReportExtractor(),
+            MGIMarkerListReportExtractor(),
             ObservationsMapper(
                 dcc_xml_path=self.dcc_xml_path,
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
@@ -765,14 +746,8 @@ for more information</p></div>
             AlleleExtractor(
                 imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
             ),
-            MGIHomoloGeneExtractor(
-                mgi_input_path=self.mgi_homologene_input_path,
-                output_path=self.output_path,
-            ),
-            MGIMrkListExtractor(
-                mgi_input_path=self.mgi_mrk_list_input_path,
-                output_path=self.output_path,
-            ),
+            MGIHomologyReportExtractor(),
+            MGIMarkerListReportExtractor(),
             ObservationsMapper(
                 dcc_xml_path=self.dcc_xml_path,
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
@@ -1014,14 +989,8 @@ values are Task instances.</p>
         AlleleExtractor(
             imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
         ),
-        MGIHomoloGeneExtractor(
-            mgi_input_path=self.mgi_homologene_input_path,
-            output_path=self.output_path,
-        ),
-        MGIMrkListExtractor(
-            mgi_input_path=self.mgi_mrk_list_input_path,
-            output_path=self.output_path,
-        ),
+        MGIHomologyReportExtractor(),
+        MGIMarkerListReportExtractor(),
         ObservationsMapper(
             dcc_xml_path=self.dcc_xml_path,
             imits_colonies_tsv_path=self.imits_colonies_tsv_path,
@@ -1863,13 +1832,8 @@ for more information</p></div>
 
     def requires(self):
         return [
-            MGIGenePhenoExtractor(
-                mgi_input_path=self.mgi_gene_pheno_input_path,
-                output_path=self.output_path,
-            ),
-            MGIAlleleExtractor(
-                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
-            ),
+            MGIGenePhenoReportExtractor(),
+            MGIPhenotypicAlleleExtractor(),
             OntologyExtractor(
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
@@ -1989,13 +1953,8 @@ values are Task instances.</p>
 </summary>
 <pre><code class="python">def requires(self):
     return [
-        MGIGenePhenoExtractor(
-            mgi_input_path=self.mgi_gene_pheno_input_path,
-            output_path=self.output_path,
-        ),
-        MGIAlleleExtractor(
-            mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
-        ),
+        MGIGenePhenoReportExtractor(),
+        MGIPhenotypicAlleleExtractor(),
         OntologyExtractor(
             ontology_input_path=self.ontology_input_path,
             output_path=self.output_path,
@@ -2477,17 +2436,13 @@ for more information</p></div>
                 dcc_xml_path=self.dcc_xml_path,
                 output_path=self.output_path,
             ),
-            MGIAlleleExtractor(
-                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
-            ),
+            MGIPhenotypicAlleleExtractor(),
             ColonyCleaner(
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 output_path=self.output_path,
             ),
             ImpressExtractor(output_path=self.output_path),
-            MGIStrainExtractor(
-                mgi_input_path=self.mgi_strain_input_path, output_path=self.output_path
-            ),
+            MGIStrainReportExtractor(),
             OntologyMetadataExtractor(
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
@@ -2639,17 +2594,13 @@ values are Task instances.</p>
             dcc_xml_path=self.dcc_xml_path,
             output_path=self.output_path,
         ),
-        MGIAlleleExtractor(
-            mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
-        ),
+        MGIPhenotypicAlleleExtractor(),
         ColonyCleaner(
             imits_colonies_tsv_path=self.imits_colonies_tsv_path,
             output_path=self.output_path,
         ),
         ImpressExtractor(output_path=self.output_path),
-        MGIStrainExtractor(
-            mgi_input_path=self.mgi_strain_input_path, output_path=self.output_path
-        ),
+        MGIStrainReportExtractor(),
         OntologyMetadataExtractor(
             ontology_input_path=self.ontology_input_path,
             output_path=self.output_path,
@@ -3325,9 +3276,11 @@ values are Task instances.</p>
 </article>
 <nav id="sidebar">
 <header>
-<div style="max-width: 300px, text-align: center">
+<div style="max-width: 300px; text-align: center">
 <img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
 </div>
+<h1 style="text-align: center; max-width: 300px;">IMPC ETL</h1>
+<h2 style="text-align: center; max-width: 300px;">Reference Documentation</h2>
 </header>
 <h1>Index</h1>
 <div class="toc">

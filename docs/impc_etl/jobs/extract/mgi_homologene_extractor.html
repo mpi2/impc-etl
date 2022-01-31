@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>impc_etl.jobs.extract.colony_tracking_extractor API documentation</title>
-<meta name="description" content="Colony tracking extraction task. Extracts information from GenTar." />
+<title>impc_etl.jobs.extract.mgi_homologene_extractor API documentation</title>
+<meta name="description" content="[MGI Alliance Homology, HGNC and CCDS IDs report](http://www.informatics.jax.org/downloads/reports/HGNC_AllianceHomology.rpt) extraction Task.
+This …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -19,52 +20,66 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>impc_etl.jobs.extract.colony_tracking_extractor</code></h1>
+<h1 class="title">Module <code>impc_etl.jobs.extract.mgi_homologene_extractor</code></h1>
 </header>
 <section id="section-intro">
-<p>Colony tracking extraction task. Extracts information from GenTar.</p>
+<p><a href="http://www.informatics.jax.org/downloads/reports/HGNC_AllianceHomology.rpt">MGI Alliance Homology, HGNC and CCDS IDs report</a> extraction Task.
+This report contains the list of Gene Phenotype Associations reported in MGI.</p>
+<h3 id="from-mgi-reports-vertebrate-homology-section">From <a href="http://www.informatics.jax.org/downloads/reports/index.html#homology">MGI Reports / Vertebrate Homology section</a>:</h3>
+<h4 id="3-mouse-genes-with-alliance-homology-and-hgnc-and-ccds-ids">3. Mouse Genes with Alliance Homology and HGNC and CCDS IDs.</h4>
+<p>(File contains header, so no example is provided. See full report <a href="http://www.informatics.jax.org/downloads/reports/HGNC_AllianceHomology.rpt">here</a>)</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">&#34;&#34;&#34;
-    Colony tracking extraction task. Extracts information from GenTar.
+
+[MGI Alliance Homology, HGNC and CCDS IDs report](http://www.informatics.jax.org/downloads/reports/HGNC_AllianceHomology.rpt) extraction Task.
+This report contains the list of Gene Phenotype Associations reported in MGI.
+
+### From [MGI Reports / Vertebrate Homology section](http://www.informatics.jax.org/downloads/reports/index.html#homology):
+
+#### 3. Mouse Genes with Alliance Homology and HGNC and CCDS IDs.
+
+(File contains header, so no example is provided. See full report [here](http://www.informatics.jax.org/downloads/reports/HGNC_AllianceHomology.rpt))
 &#34;&#34;&#34;
 import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
-from pyspark.sql.session import SparkSession
+from pyspark.sql import SparkSession
 
-from impc_etl.shared import utils
+from impc_etl.shared.utils import extract_tsv
 from impc_etl.workflow.config import ImpcConfig
 
 
-class ColonyTrackingExtractor(PySparkTask):
+class MGIHomologyReportExtractor(PySparkTask):
     &#34;&#34;&#34;
-    PySpark Task class to extract colony tracking information from reports.
+    PySpark Task class to extract the information from the
+    [Alliance Homology, HGNC and CCDS IDs report](http://www.informatics.jax.org/downloads/reports/HGNC_AllianceHomology.rpt).
     &#34;&#34;&#34;
 
     #: Name of the Spark task
-    name: str = &#34;IMPC_Colony_Tracking_Extractor&#34;
+    name: str = &#34;IMPC_MGI_Homology_Report_Extractor&#34;
 
-    #: Path in the filesystem (local or HDFS) to the GenTar colonies report
-    gentar_colonies_tsv_path: luigi.Parameter = luigi.Parameter()
+    #: Path of the MGI Gene Pheno report *.rpt file.
+    mgi_homology_report_path: luigi.Parameter = luigi.Parameter()
 
     #: Path of the output directory where ethe new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
     def output(self):
         &#34;&#34;&#34;
-        Returns the full parquet path as an output for the Luigi Task (e.g. impc/dr15.2/parquet/colonies_tracking_parquet)
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/mgi_gene_pheno_parquet)
         &#34;&#34;&#34;
-        return ImpcConfig().get_target(f&#34;{self.output_path}colonies_tracking_parquet&#34;)
+        return ImpcConfig().get_target(f&#34;{self.output_path}mgi_gene_pheno_parquet&#34;)
 
     def app_options(self):
         &#34;&#34;&#34;
         Generates the options pass to the PySpark job
         &#34;&#34;&#34;
         return [
-            self.gentar_colonies_tsv_path,
+            self.mgi_homology_report_path,
             self.output().path,
         ]
 
@@ -72,35 +87,17 @@ class ColonyTrackingExtractor(PySparkTask):
         &#34;&#34;&#34;
         Takes in a SparkContext and the list of arguments generated by `app_options` and executes the PySpark job.
         &#34;&#34;&#34;
-        spark = SparkSession(sc)
-        # Parsing app options
-        gentar_tsv_path = args[0]
+        mgi_homology_report_path = args[0]
         output_path = args[1]
 
-        # Load the data form TSV to a Spark DataFrame
-        gentar_df = utils.extract_tsv(spark, gentar_tsv_path)
+        spark = SparkSession(sc)
 
-        # Map GenTar Column names to match the ones on the Observations Schema Report
-        gentar_col_mapping = {
-            &#34;Phenotyping External Reference&#34;: &#34;colony_name&#34;,
-            &#34;Background Strain&#34;: &#34;colony_background_strain&#34;,
-            &#34;Mutation Symbol&#34;: &#34;allele_symbol&#34;,
-            &#34;Gene Symbol&#34;: &#34;marker_symbol&#34;,
-            &#34;MGI Gene Accession ID&#34;: &#34;mgi_accession_id&#34;,
-            &#34;MGI Strain Accession ID&#34;: &#34;mgi_strain_accession_id&#34;,
-            &#34;Phenotyping Work Unit&#34;: &#34;phenotyping_centre&#34;,
-            &#34;Phenotyping Work Group&#34;: &#34;phenotyping_consortium&#34;,
-            &#34;Production Work Unit&#34;: &#34;production_centre&#34;,
-            &#34;Production Work Group&#34;: &#34;production_consortium&#34;,
-        }
-        new_col_names = []
-        for col_name in gentar_df.columns:
-            if col_name in gentar_col_mapping:
-                new_col_names.append(gentar_col_mapping[col_name])
-            else:
-                new_col_names.append(col_name.replace(&#34; &#34;, &#34;_&#34;).lower())
-        gentar_df = gentar_df.toDF(*new_col_names)
-        gentar_df.write.parquet(output_path)</code></pre>
+        mgi_homology_df = extract_tsv(spark, mgi_homology_report_path, header=True)
+        for col_name in mgi_homology_df.columns:
+            mgi_homology_df = mgi_homology_df.withColumnRenamed(
+                col_name, col_name.lower().replace(&#34; &#34;, &#34;_&#34;)
+            )
+        mgi_homology_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </section>
 <section>
@@ -112,42 +109,45 @@ class ColonyTrackingExtractor(PySparkTask):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor"><code class="flex name class">
-<span>class <span class="ident">ColonyTrackingExtractor</span></span>
+<dt id="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor"><code class="flex name class">
+<span>class <span class="ident">MGIHomologyReportExtractor</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>PySpark Task class to extract colony tracking information from reports.</p></div>
+<div class="desc"><p>PySpark Task class to extract the information from the
+<a href="http://www.informatics.jax.org/downloads/reports/HGNC_AllianceHomology.rpt">Alliance Homology, HGNC and CCDS IDs report</a>.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ColonyTrackingExtractor(PySparkTask):
+<pre><code class="python">class MGIHomologyReportExtractor(PySparkTask):
     &#34;&#34;&#34;
-    PySpark Task class to extract colony tracking information from reports.
+    PySpark Task class to extract the information from the
+    [Alliance Homology, HGNC and CCDS IDs report](http://www.informatics.jax.org/downloads/reports/HGNC_AllianceHomology.rpt).
     &#34;&#34;&#34;
 
     #: Name of the Spark task
-    name: str = &#34;IMPC_Colony_Tracking_Extractor&#34;
+    name: str = &#34;IMPC_MGI_Homology_Report_Extractor&#34;
 
-    #: Path in the filesystem (local or HDFS) to the GenTar colonies report
-    gentar_colonies_tsv_path: luigi.Parameter = luigi.Parameter()
+    #: Path of the MGI Gene Pheno report *.rpt file.
+    mgi_homology_report_path: luigi.Parameter = luigi.Parameter()
 
     #: Path of the output directory where ethe new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
     def output(self):
         &#34;&#34;&#34;
-        Returns the full parquet path as an output for the Luigi Task (e.g. impc/dr15.2/parquet/colonies_tracking_parquet)
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/mgi_gene_pheno_parquet)
         &#34;&#34;&#34;
-        return ImpcConfig().get_target(f&#34;{self.output_path}colonies_tracking_parquet&#34;)
+        return ImpcConfig().get_target(f&#34;{self.output_path}mgi_gene_pheno_parquet&#34;)
 
     def app_options(self):
         &#34;&#34;&#34;
         Generates the options pass to the PySpark job
         &#34;&#34;&#34;
         return [
-            self.gentar_colonies_tsv_path,
+            self.mgi_homology_report_path,
             self.output().path,
         ]
 
@@ -155,35 +155,17 @@ class ColonyTrackingExtractor(PySparkTask):
         &#34;&#34;&#34;
         Takes in a SparkContext and the list of arguments generated by `app_options` and executes the PySpark job.
         &#34;&#34;&#34;
-        spark = SparkSession(sc)
-        # Parsing app options
-        gentar_tsv_path = args[0]
+        mgi_homology_report_path = args[0]
         output_path = args[1]
 
-        # Load the data form TSV to a Spark DataFrame
-        gentar_df = utils.extract_tsv(spark, gentar_tsv_path)
+        spark = SparkSession(sc)
 
-        # Map GenTar Column names to match the ones on the Observations Schema Report
-        gentar_col_mapping = {
-            &#34;Phenotyping External Reference&#34;: &#34;colony_name&#34;,
-            &#34;Background Strain&#34;: &#34;colony_background_strain&#34;,
-            &#34;Mutation Symbol&#34;: &#34;allele_symbol&#34;,
-            &#34;Gene Symbol&#34;: &#34;marker_symbol&#34;,
-            &#34;MGI Gene Accession ID&#34;: &#34;mgi_accession_id&#34;,
-            &#34;MGI Strain Accession ID&#34;: &#34;mgi_strain_accession_id&#34;,
-            &#34;Phenotyping Work Unit&#34;: &#34;phenotyping_centre&#34;,
-            &#34;Phenotyping Work Group&#34;: &#34;phenotyping_consortium&#34;,
-            &#34;Production Work Unit&#34;: &#34;production_centre&#34;,
-            &#34;Production Work Group&#34;: &#34;production_consortium&#34;,
-        }
-        new_col_names = []
-        for col_name in gentar_df.columns:
-            if col_name in gentar_col_mapping:
-                new_col_names.append(gentar_col_mapping[col_name])
-            else:
-                new_col_names.append(col_name.replace(&#34; &#34;, &#34;_&#34;).lower())
-        gentar_df = gentar_df.toDF(*new_col_names)
-        gentar_df.write.parquet(output_path)</code></pre>
+        mgi_homology_df = extract_tsv(spark, mgi_homology_report_path, header=True)
+        for col_name in mgi_homology_df.columns:
+            mgi_homology_df = mgi_homology_df.withColumnRenamed(
+                col_name, col_name.lower().replace(&#34; &#34;, &#34;_&#34;)
+            )
+        mgi_homology_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -194,22 +176,22 @@ class ColonyTrackingExtractor(PySparkTask):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.gentar_colonies_tsv_path"><code class="name">var <span class="ident">gentar_colonies_tsv_path</span> : luigi.parameter.Parameter</code></dt>
+<dt id="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.mgi_homology_report_path"><code class="name">var <span class="ident">mgi_homology_report_path</span> : luigi.parameter.Parameter</code></dt>
 <dd>
-<div class="desc"><p>Path in the filesystem (local or HDFS) to the GenTar colonies report</p></div>
+<div class="desc"><p>Path of the MGI Gene Pheno report *.rpt file.</p></div>
 </dd>
-<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dt id="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
 <div class="desc"><p>Name of the Spark task</p></div>
 </dd>
-<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
+<dt id="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
 <dd>
 <div class="desc"><p>Path of the output directory where ethe new parquet file will be generated.</p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.app_options"><code class="name flex">
+<dt id="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.app_options"><code class="name flex">
 <span>def <span class="ident">app_options</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -223,12 +205,12 @@ class ColonyTrackingExtractor(PySparkTask):
     Generates the options pass to the PySpark job
     &#34;&#34;&#34;
     return [
-        self.gentar_colonies_tsv_path,
+        self.mgi_homology_report_path,
         self.output().path,
     ]</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.main"><code class="name flex">
+<dt id="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.main"><code class="name flex">
 <span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args)</span>
 </code></dt>
 <dd>
@@ -241,51 +223,35 @@ class ColonyTrackingExtractor(PySparkTask):
     &#34;&#34;&#34;
     Takes in a SparkContext and the list of arguments generated by `app_options` and executes the PySpark job.
     &#34;&#34;&#34;
-    spark = SparkSession(sc)
-    # Parsing app options
-    gentar_tsv_path = args[0]
+    mgi_homology_report_path = args[0]
     output_path = args[1]
 
-    # Load the data form TSV to a Spark DataFrame
-    gentar_df = utils.extract_tsv(spark, gentar_tsv_path)
+    spark = SparkSession(sc)
 
-    # Map GenTar Column names to match the ones on the Observations Schema Report
-    gentar_col_mapping = {
-        &#34;Phenotyping External Reference&#34;: &#34;colony_name&#34;,
-        &#34;Background Strain&#34;: &#34;colony_background_strain&#34;,
-        &#34;Mutation Symbol&#34;: &#34;allele_symbol&#34;,
-        &#34;Gene Symbol&#34;: &#34;marker_symbol&#34;,
-        &#34;MGI Gene Accession ID&#34;: &#34;mgi_accession_id&#34;,
-        &#34;MGI Strain Accession ID&#34;: &#34;mgi_strain_accession_id&#34;,
-        &#34;Phenotyping Work Unit&#34;: &#34;phenotyping_centre&#34;,
-        &#34;Phenotyping Work Group&#34;: &#34;phenotyping_consortium&#34;,
-        &#34;Production Work Unit&#34;: &#34;production_centre&#34;,
-        &#34;Production Work Group&#34;: &#34;production_consortium&#34;,
-    }
-    new_col_names = []
-    for col_name in gentar_df.columns:
-        if col_name in gentar_col_mapping:
-            new_col_names.append(gentar_col_mapping[col_name])
-        else:
-            new_col_names.append(col_name.replace(&#34; &#34;, &#34;_&#34;).lower())
-    gentar_df = gentar_df.toDF(*new_col_names)
-    gentar_df.write.parquet(output_path)</code></pre>
+    mgi_homology_df = extract_tsv(spark, mgi_homology_report_path, header=True)
+    for col_name in mgi_homology_df.columns:
+        mgi_homology_df = mgi_homology_df.withColumnRenamed(
+            col_name, col_name.lower().replace(&#34; &#34;, &#34;_&#34;)
+        )
+    mgi_homology_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.output"><code class="name flex">
+<dt id="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.output"><code class="name flex">
 <span>def <span class="ident">output</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Returns the full parquet path as an output for the Luigi Task (e.g. impc/dr15.2/parquet/colonies_tracking_parquet)</p></div>
+<div class="desc"><p>Returns the full parquet path as an output for the Luigi Task
+(e.g. impc/dr15.2/parquet/mgi_gene_pheno_parquet)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def output(self):
     &#34;&#34;&#34;
-    Returns the full parquet path as an output for the Luigi Task (e.g. impc/dr15.2/parquet/colonies_tracking_parquet)
+    Returns the full parquet path as an output for the Luigi Task
+    (e.g. impc/dr15.2/parquet/mgi_gene_pheno_parquet)
     &#34;&#34;&#34;
-    return ImpcConfig().get_target(f&#34;{self.output_path}colonies_tracking_parquet&#34;)</code></pre>
+    return ImpcConfig().get_target(f&#34;{self.output_path}mgi_gene_pheno_parquet&#34;)</code></pre>
 </details>
 </dd>
 </dl>
@@ -303,7 +269,12 @@ class ColonyTrackingExtractor(PySparkTask):
 </header>
 <h1>Index</h1>
 <div class="toc">
-<ul></ul>
+<ul>
+<li><a href="#from-mgi-reports-vertebrate-homology-section">From MGI Reports / Vertebrate Homology section:</a><ul>
+<li><a href="#3-mouse-genes-with-alliance-homology-and-hgnc-and-ccds-ids">3. Mouse Genes with Alliance Homology and HGNC and CCDS IDs.</a></li>
+</ul>
+</li>
+</ul>
 </div>
 <ul id="index">
 <li><h3>Super-module</h3>
@@ -314,14 +285,14 @@ class ColonyTrackingExtractor(PySparkTask):
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor" href="#impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor">ColonyTrackingExtractor</a></code></h4>
+<h4><code><a title="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor" href="#impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor">MGIHomologyReportExtractor</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.app_options" href="#impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.gentar_colonies_tsv_path" href="#impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.gentar_colonies_tsv_path">gentar_colonies_tsv_path</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.main" href="#impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.main">main</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.name" href="#impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.name">name</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.output" href="#impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.output">output</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.output_path" href="#impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.app_options" href="#impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.main" href="#impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.mgi_homology_report_path" href="#impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.mgi_homology_report_path">mgi_homology_report_path</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.name" href="#impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.output" href="#impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.output_path" href="#impc_etl.jobs.extract.mgi_homologene_extractor.MGIHomologyReportExtractor.output_path">output_path</a></code></li>
 </ul>
 </li>
 </ul>

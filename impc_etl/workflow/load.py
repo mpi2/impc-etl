@@ -3,12 +3,8 @@ import os
 from luigi.contrib.webhdfs import WebHdfsClient
 from luigi.task import flatten
 
-from impc_etl.jobs.extract.gene_production_status_extractor import (
-    GeneProductionStatusExtractor,
-)
 from impc_etl.jobs.transform.experiment_bw_age import ExperimentBWAgeProcessor
 from impc_etl.jobs.transform.experiment_parameter_derivator import (
-    ExperimentParameterDerivator,
     LineParameterDerivator,
 )
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
@@ -39,17 +35,13 @@ class ObservationsMapper(SparkSubmitTask):
                 dcc_xml_path=self.dcc_xml_path,
                 output_path=self.output_path,
             ),
-            MGIAlleleExtractor(
-                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
-            ),
+            MGIPhenotypicAlleleExtractor(),
             ColonyCleaner(
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 output_path=self.output_path,
             ),
             ImpressExtractor(output_path=self.output_path),
-            MGIStrainExtractor(
-                mgi_input_path=self.mgi_strain_input_path, output_path=self.output_path
-            ),
+            MGIStrainReportExtractor(),
             OntologyMetadataExtractor(
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
@@ -273,13 +265,8 @@ class MGIPhenotypeCoreLoader(SparkSubmitTask):
 
     def requires(self):
         return [
-            MGIGenePhenoExtractor(
-                mgi_input_path=self.mgi_gene_pheno_input_path,
-                output_path=self.output_path,
-            ),
-            MGIAlleleExtractor(
-                mgi_input_path=self.mgi_allele_input_path, output_path=self.output_path
-            ),
+            MGIGenePhenoReportExtractor(),
+            MGIPhenotypicAlleleExtractor(),
             OntologyExtractor(
                 ontology_input_path=self.ontology_input_path,
                 output_path=self.output_path,
@@ -454,14 +441,8 @@ class GeneCoreLoader(SparkSubmitTask):
             AlleleExtractor(
                 imits_tsv_path=self.imits_alleles_tsv_path, output_path=self.output_path
             ),
-            MGIHomoloGeneExtractor(
-                mgi_input_path=self.mgi_homologene_input_path,
-                output_path=self.output_path,
-            ),
-            MGIMrkListExtractor(
-                mgi_input_path=self.mgi_mrk_list_input_path,
-                output_path=self.output_path,
-            ),
+            MGIHomologyReportExtractor(),
+            MGIMarkerListReportExtractor(),
             ObservationsMapper(
                 dcc_xml_path=self.dcc_xml_path,
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
