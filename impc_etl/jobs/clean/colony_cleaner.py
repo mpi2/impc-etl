@@ -67,14 +67,14 @@ class IMPCColonyCleaner(PySparkTask):
 
     def clean_colonies(self, colonies_df: DataFrame) -> DataFrame:
         """
-        DCC colonies cleaner. Takes in a DataFrame containing the full list of colonies on the Colony Trakcking Report
+        DCC colonies cleaner. Takes in a DataFrame containing the full list of colonies on the Colony Tracking Report
         coming form GenTar and returns the  same list
         of colonies applying some sanitizing to legacy  colony identifiers.
         """
         # Maps Centre IDs and Consortium IDs  to the ones used on the website
         colonies_df = colonies_df.transform(self.map_colonies_df_ids)
 
-        # Generate genetic background String by using the backgroudn strain
+        # Generate genetic background String by using the background strain
         colonies_df = colonies_df.transform(self.generate_genetic_background)
         return colonies_df
 
@@ -102,6 +102,9 @@ class IMPCColonyCleaner(PySparkTask):
         return colonies_df
 
     def generate_genetic_background(self, colonies_df: DataFrame) -> DataFrame:
+        """
+        Creates a description of the  genetic background by  appending 'involves:'  and the colony  given strain name.
+        """
         colonies_df = colonies_df.withColumn(
             "genetic_background",
             concat(lit("involves: "), col("colony_background_strain")),
