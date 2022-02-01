@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>impc_etl.jobs.clean.colony_cleaner API documentation</title>
-<meta name="description" content="Luigi Spark task executable that takes the colonies tracking system
+<meta name="description" content="Luigi PySpark task that takes the colonies tracking system
 report and returns it ready to be used on the rest of the ETL …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -23,120 +23,157 @@ report and returns it ready to be used on the rest of the ETL …" />
 <h1 class="title">Module <code>impc_etl.jobs.clean.colony_cleaner</code></h1>
 </header>
 <section id="section-intro">
-<p>Luigi Spark task executable that takes the colonies tracking system
+<p>Luigi PySpark task that takes the colonies tracking system
 report and returns it ready to be used on the rest of the ETL.</p>
 <p>The cleaning process includes the mapping of legacy colony IDs to newer nomenclature and the generation
-of the string representatcion of the genetic background.</p>
+of the string representation of the genetic background.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">&#34;&#34;&#34;
 
-Luigi Spark task executable that takes the colonies tracking system
+Luigi PySpark task that takes the colonies tracking system
 report and returns it ready to be used on the rest of the ETL.
 
 The cleaning process includes the mapping of legacy colony IDs to newer nomenclature and the generation
-of the string representatcion of the genetic background.
+of the string representation of the genetic background.
 
 &#34;&#34;&#34;
-import sys
-from pyspark.sql import SparkSession, DataFrame
+from typing import Any
+
+import luigi
+from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
+from pyspark.sql import DataFrame
+from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col, lit, concat
 from pyspark.sql.types import StringType
-from impc_etl.shared import utils
+
 from impc_etl.config.constants import Constants
+from impc_etl.jobs.extract import ColonyTrackingExtractor
+from impc_etl.shared import utils
+from impc_etl.workflow.config import ImpcConfig
 
 
-def main(argv):
-    imits_colonies_parquet_path = argv[1]
-    output_path = argv[2]
-    spark = SparkSession.builder.getOrCreate()
-    colonies_df = spark.read.parquet(imits_colonies_parquet_path)
-    specimen_clean_df = clean_colonies(colonies_df)
-    specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
-
-
-def clean_colonies(colonies_df: DataFrame) -&gt; DataFrame:
+class IMPCColonyCleaner(PySparkTask):
     &#34;&#34;&#34;
-    DCC colonies cleaner
-
-    Parameters
-    __________
-    colonies_df: colonies DataFrame with the raw colonies data
-
-    Returns
-    _______
-    A clean colonies parquet file
+    PySpark Task to clean some legacy colony  identifiers so they match the provided on the legacy  Specimen XML files.
     &#34;&#34;&#34;
-    colonies_df = colonies_df.transform(map_colonies_df_ids)
-    # colonies_df = map_strain_names(colonies_df)
-    colonies_df = colonies_df.transform(generate_genetic_background)
-    return colonies_df
 
+    #: Name of the Spark task
+    name = &#34;IMPC_Colony_Cleaner&#34;
 
-def map_colonies_df_ids(colonies_df: DataFrame) -&gt; DataFrame:
-    colonies_df = colonies_df.withColumn(
-        &#34;phenotyping_centre&#34;,
-        udf(utils.map_centre_id, StringType())(&#34;phenotyping_centre&#34;),
-    )
-    colonies_df = colonies_df.withColumn(
-        &#34;production_centre&#34;, udf(utils.map_centre_id, StringType())(&#34;production_centre&#34;)
-    )
-    colonies_df = colonies_df.withColumn(
-        &#34;phenotyping_consortium&#34;,
-        udf(utils.map_project_id, StringType())(&#34;phenotyping_consortium&#34;),
-    )
-    colonies_df = colonies_df.withColumn(
-        &#34;production_consortium&#34;,
-        udf(utils.map_project_id, StringType())(&#34;production_consortium&#34;),
-    )
-    return colonies_df
+    #: Path of the output directory where ethe new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
 
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        return ColonyTrackingExtractor
 
-def map_strain_names(colonies_df: DataFrame) -&gt; DataFrame:
-    map_strain_name_udf = udf(map_strain_name, StringType())
-    colonies_df = colonies_df.withColumn(
-        &#34;colony_background_strain&#34;, map_strain_name_udf(&#34;colony_background_strain&#34;)
-    )
-    return colonies_df
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/colonies_tracking_clean_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}colonies_tracking_clean_parquet&#34;
+        )
 
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.input().path(),
+            self.output().path,
+        ]
 
-def generate_genetic_background(colonies_df: DataFrame) -&gt; DataFrame:
-    colonies_df = colonies_df.withColumn(
-        &#34;genetic_background&#34;, concat(lit(&#34;involves: &#34;), col(&#34;colony_background_strain&#34;))
-    )
-    return colonies_df
+    def main(self, sc: SparkContext, *args: Any):
+        colonies_tracking_parquet_path = args[0]
+        output_path = args[1]
+        spark = SparkSession.builder.getOrCreate()
+        colonies_df = spark.read.parquet(colonies_tracking_parquet_path)
+        specimen_clean_df = self.clean_colonies(colonies_df)
+        specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
 
+    def clean_colonies(self, colonies_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        DCC colonies cleaner. Takes in a DataFrame containing the full list of colonies on the Colony Trakcking Report
+        coming form GenTar and returns the  same list
+        of colonies applying some sanitizing to legacy  colony identifiers.
+        &#34;&#34;&#34;
+        # Maps Centre IDs and Consortium IDs  to the ones used on the website
+        colonies_df = colonies_df.transform(self.map_colonies_df_ids)
+        # colonies_df = map_strain_names(colonies_df)
 
-def map_strain_name(strain_name: str) -&gt; str:
-    if strain_name is None:
-        return None
+        # Generate genetic background String by using the backgroudn strain
+        colonies_df = colonies_df.transform(self.generate_genetic_background)
+        return colonies_df
 
-    if &#34;_&#34; in strain_name:
-        intermediate_backgrounds = strain_name.split(&#34;_&#34;)
-    elif &#34;;&#34; in strain_name:
-        intermediate_backgrounds = strain_name.split(&#34;;&#34;)
-    elif strain_name == &#34;Balb/c.129S2&#34;:
-        intermediate_backgrounds = &#34;BALB/c;129S2/SvPas&#34;.split(&#34;;&#34;)
-    elif strain_name in [&#34;B6N.129S2.B6J&#34;, &#34;B6J.129S2.B6N&#34;, &#34;B6N.B6J.129S2&#34;]:
-        intermediate_backgrounds = &#34;C57BL/6N;129S2/SvPas;C57BL/6J&#34;.split(&#34;;&#34;)
-    elif strain_name == &#34;B6J.B6N&#34;:
-        intermediate_backgrounds = &#34;C57BL/6J;C57BL/6N&#34;.split(&#34;;&#34;)
-    else:
-        intermediate_backgrounds = [strain_name]
-    intermediate_backgrounds = [
-        Constants.BACKGROUND_STRAIN_MAPPER[strain]
-        if strain in Constants.BACKGROUND_STRAIN_MAPPER.keys()
-        else strain
-        for strain in intermediate_backgrounds
-    ]
+    def map_colonies_df_ids(self, colonies_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Takes in a DataFrame contanining the columns phenotyping_centre, production_centre, phenotyping_consortium and
+        production_consortium and maps them using a dictionary provided in the constants for the ETL.
+        &#34;&#34;&#34;
+        colonies_df = colonies_df.withColumn(
+            &#34;phenotyping_centre&#34;,
+            udf(utils.map_centre_id, StringType())(&#34;phenotyping_centre&#34;),
+        )
+        colonies_df = colonies_df.withColumn(
+            &#34;production_centre&#34;,
+            udf(utils.map_centre_id, StringType())(&#34;production_centre&#34;),
+        )
+        colonies_df = colonies_df.withColumn(
+            &#34;phenotyping_consortium&#34;,
+            udf(utils.map_project_id, StringType())(&#34;phenotyping_consortium&#34;),
+        )
+        colonies_df = colonies_df.withColumn(
+            &#34;production_consortium&#34;,
+            udf(utils.map_project_id, StringType())(&#34;production_consortium&#34;),
+        )
+        return colonies_df
 
-    return &#34;;&#34;.join(intermediate_backgrounds)
+    def map_strain_names(self, colonies_df: DataFrame) -&gt; DataFrame:
+        map_strain_name_udf = udf(self.map_strain_name, StringType())
+        colonies_df = colonies_df.withColumn(
+            &#34;colony_background_strain&#34;, map_strain_name_udf(&#34;colony_background_strain&#34;)
+        )
+        return colonies_df
 
+    def generate_genetic_background(self, colonies_df: DataFrame) -&gt; DataFrame:
+        colonies_df = colonies_df.withColumn(
+            &#34;genetic_background&#34;,
+            concat(lit(&#34;involves: &#34;), col(&#34;colony_background_strain&#34;)),
+        )
+        return colonies_df
 
-if __name__ == &#34;__main__&#34;:
-    sys.exit(main(sys.argv))</code></pre>
+    def map_strain_name(self, strain_name: str) -&gt; str:
+        if strain_name is None:
+            return None
+
+        if &#34;_&#34; in strain_name:
+            intermediate_backgrounds = strain_name.split(&#34;_&#34;)
+        elif &#34;;&#34; in strain_name:
+            intermediate_backgrounds = strain_name.split(&#34;;&#34;)
+        elif strain_name == &#34;Balb/c.129S2&#34;:
+            intermediate_backgrounds = &#34;BALB/c;129S2/SvPas&#34;.split(&#34;;&#34;)
+        elif strain_name in [&#34;B6N.129S2.B6J&#34;, &#34;B6J.129S2.B6N&#34;, &#34;B6N.B6J.129S2&#34;]:
+            intermediate_backgrounds = &#34;C57BL/6N;129S2/SvPas;C57BL/6J&#34;.split(&#34;;&#34;)
+        elif strain_name == &#34;B6J.B6N&#34;:
+            intermediate_backgrounds = &#34;C57BL/6J;C57BL/6N&#34;.split(&#34;;&#34;)
+        else:
+            intermediate_backgrounds = [strain_name]
+        intermediate_backgrounds = [
+            Constants.BACKGROUND_STRAIN_MAPPER[strain]
+            if strain in Constants.BACKGROUND_STRAIN_MAPPER.keys()
+            else strain
+            for strain in intermediate_backgrounds
+        ]
+
+        return &#34;;&#34;.join(intermediate_backgrounds)</code></pre>
 </details>
 </section>
 <section>
@@ -144,43 +181,210 @@ if __name__ == &#34;__main__&#34;:
 <section>
 </section>
 <section>
-<h2 class="section-title" id="header-functions">Functions</h2>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.clean.colony_cleaner.clean_colonies"><code class="name flex">
-<span>def <span class="ident">clean_colonies</span></span>(<span>colonies_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner"><code class="flex name class">
+<span>class <span class="ident">IMPCColonyCleaner</span></span>
+<span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>DCC colonies cleaner</p>
-<p>Parameters</p>
-<hr>
-<p>colonies_df: colonies DataFrame with the raw colonies data</p>
-<p>Returns</p>
-<hr>
-<p>A clean colonies parquet file</p></div>
+<div class="desc"><p>PySpark Task to clean some legacy colony
+identifiers so they match the provided on the legacy
+Specimen XML files.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def clean_colonies(colonies_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">class IMPCColonyCleaner(PySparkTask):
     &#34;&#34;&#34;
-    DCC colonies cleaner
-
-    Parameters
-    __________
-    colonies_df: colonies DataFrame with the raw colonies data
-
-    Returns
-    _______
-    A clean colonies parquet file
+    PySpark Task to clean some legacy colony  identifiers so they match the provided on the legacy  Specimen XML files.
     &#34;&#34;&#34;
-    colonies_df = colonies_df.transform(map_colonies_df_ids)
+
+    #: Name of the Spark task
+    name = &#34;IMPC_Colony_Cleaner&#34;
+
+    #: Path of the output directory where ethe new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
+
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        return ColonyTrackingExtractor
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/colonies_tracking_clean_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}colonies_tracking_clean_parquet&#34;
+        )
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.input().path(),
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args: Any):
+        colonies_tracking_parquet_path = args[0]
+        output_path = args[1]
+        spark = SparkSession.builder.getOrCreate()
+        colonies_df = spark.read.parquet(colonies_tracking_parquet_path)
+        specimen_clean_df = self.clean_colonies(colonies_df)
+        specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
+
+    def clean_colonies(self, colonies_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        DCC colonies cleaner. Takes in a DataFrame containing the full list of colonies on the Colony Trakcking Report
+        coming form GenTar and returns the  same list
+        of colonies applying some sanitizing to legacy  colony identifiers.
+        &#34;&#34;&#34;
+        # Maps Centre IDs and Consortium IDs  to the ones used on the website
+        colonies_df = colonies_df.transform(self.map_colonies_df_ids)
+        # colonies_df = map_strain_names(colonies_df)
+
+        # Generate genetic background String by using the backgroudn strain
+        colonies_df = colonies_df.transform(self.generate_genetic_background)
+        return colonies_df
+
+    def map_colonies_df_ids(self, colonies_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Takes in a DataFrame contanining the columns phenotyping_centre, production_centre, phenotyping_consortium and
+        production_consortium and maps them using a dictionary provided in the constants for the ETL.
+        &#34;&#34;&#34;
+        colonies_df = colonies_df.withColumn(
+            &#34;phenotyping_centre&#34;,
+            udf(utils.map_centre_id, StringType())(&#34;phenotyping_centre&#34;),
+        )
+        colonies_df = colonies_df.withColumn(
+            &#34;production_centre&#34;,
+            udf(utils.map_centre_id, StringType())(&#34;production_centre&#34;),
+        )
+        colonies_df = colonies_df.withColumn(
+            &#34;phenotyping_consortium&#34;,
+            udf(utils.map_project_id, StringType())(&#34;phenotyping_consortium&#34;),
+        )
+        colonies_df = colonies_df.withColumn(
+            &#34;production_consortium&#34;,
+            udf(utils.map_project_id, StringType())(&#34;production_consortium&#34;),
+        )
+        return colonies_df
+
+    def map_strain_names(self, colonies_df: DataFrame) -&gt; DataFrame:
+        map_strain_name_udf = udf(self.map_strain_name, StringType())
+        colonies_df = colonies_df.withColumn(
+            &#34;colony_background_strain&#34;, map_strain_name_udf(&#34;colony_background_strain&#34;)
+        )
+        return colonies_df
+
+    def generate_genetic_background(self, colonies_df: DataFrame) -&gt; DataFrame:
+        colonies_df = colonies_df.withColumn(
+            &#34;genetic_background&#34;,
+            concat(lit(&#34;involves: &#34;), col(&#34;colony_background_strain&#34;)),
+        )
+        return colonies_df
+
+    def map_strain_name(self, strain_name: str) -&gt; str:
+        if strain_name is None:
+            return None
+
+        if &#34;_&#34; in strain_name:
+            intermediate_backgrounds = strain_name.split(&#34;_&#34;)
+        elif &#34;;&#34; in strain_name:
+            intermediate_backgrounds = strain_name.split(&#34;;&#34;)
+        elif strain_name == &#34;Balb/c.129S2&#34;:
+            intermediate_backgrounds = &#34;BALB/c;129S2/SvPas&#34;.split(&#34;;&#34;)
+        elif strain_name in [&#34;B6N.129S2.B6J&#34;, &#34;B6J.129S2.B6N&#34;, &#34;B6N.B6J.129S2&#34;]:
+            intermediate_backgrounds = &#34;C57BL/6N;129S2/SvPas;C57BL/6J&#34;.split(&#34;;&#34;)
+        elif strain_name == &#34;B6J.B6N&#34;:
+            intermediate_backgrounds = &#34;C57BL/6J;C57BL/6N&#34;.split(&#34;;&#34;)
+        else:
+            intermediate_backgrounds = [strain_name]
+        intermediate_backgrounds = [
+            Constants.BACKGROUND_STRAIN_MAPPER[strain]
+            if strain in Constants.BACKGROUND_STRAIN_MAPPER.keys()
+            else strain
+            for strain in intermediate_backgrounds
+        ]
+
+        return &#34;;&#34;.join(intermediate_backgrounds)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"><p>Name of the Spark task</p></div>
+</dd>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>Path of the output directory where ethe new parquet file will be generated.</p></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates the options pass to the PySpark job</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    &#34;&#34;&#34;
+    Generates the options pass to the PySpark job
+    &#34;&#34;&#34;
+    return [
+        self.input().path(),
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.clean_colonies"><code class="name flex">
+<span>def <span class="ident">clean_colonies</span></span>(<span>self, colonies_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>DCC colonies cleaner. Takes in a DataFrame containing the full list of colonies on the Colony Trakcking Report
+coming form GenTar and returns the
+same list
+of colonies applying some sanitizing to legacy
+colony identifiers.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def clean_colonies(self, colonies_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    DCC colonies cleaner. Takes in a DataFrame containing the full list of colonies on the Colony Trakcking Report
+    coming form GenTar and returns the  same list
+    of colonies applying some sanitizing to legacy  colony identifiers.
+    &#34;&#34;&#34;
+    # Maps Centre IDs and Consortium IDs  to the ones used on the website
+    colonies_df = colonies_df.transform(self.map_colonies_df_ids)
     # colonies_df = map_strain_names(colonies_df)
-    colonies_df = colonies_df.transform(generate_genetic_background)
+
+    # Generate genetic background String by using the backgroudn strain
+    colonies_df = colonies_df.transform(self.generate_genetic_background)
     return colonies_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.colony_cleaner.generate_genetic_background"><code class="name flex">
-<span>def <span class="ident">generate_genetic_background</span></span>(<span>colonies_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.generate_genetic_background"><code class="name flex">
+<span>def <span class="ident">generate_genetic_background</span></span>(<span>self, colonies_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -188,47 +392,56 @@ if __name__ == &#34;__main__&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def generate_genetic_background(colonies_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def generate_genetic_background(self, colonies_df: DataFrame) -&gt; DataFrame:
     colonies_df = colonies_df.withColumn(
-        &#34;genetic_background&#34;, concat(lit(&#34;involves: &#34;), col(&#34;colony_background_strain&#34;))
+        &#34;genetic_background&#34;,
+        concat(lit(&#34;involves: &#34;), col(&#34;colony_background_strain&#34;)),
     )
     return colonies_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.colony_cleaner.main"><code class="name flex">
-<span>def <span class="ident">main</span></span>(<span>argv)</span>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Called by the pyspark_runner with a SparkContext and any arguments returned by <code>app_options()</code></p>
+<p>:param sc: SparkContext
+:param args: arguments list</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def main(argv):
-    imits_colonies_parquet_path = argv[1]
-    output_path = argv[2]
+<pre><code class="python">def main(self, sc: SparkContext, *args: Any):
+    colonies_tracking_parquet_path = args[0]
+    output_path = args[1]
     spark = SparkSession.builder.getOrCreate()
-    colonies_df = spark.read.parquet(imits_colonies_parquet_path)
-    specimen_clean_df = clean_colonies(colonies_df)
+    colonies_df = spark.read.parquet(colonies_tracking_parquet_path)
+    specimen_clean_df = self.clean_colonies(colonies_df)
     specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.colony_cleaner.map_colonies_df_ids"><code class="name flex">
-<span>def <span class="ident">map_colonies_df_ids</span></span>(<span>colonies_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.map_colonies_df_ids"><code class="name flex">
+<span>def <span class="ident">map_colonies_df_ids</span></span>(<span>self, colonies_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Takes in a DataFrame contanining the columns phenotyping_centre, production_centre, phenotyping_consortium and
+production_consortium and maps them using a dictionary provided in the constants for the ETL.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def map_colonies_df_ids(colonies_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def map_colonies_df_ids(self, colonies_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes in a DataFrame contanining the columns phenotyping_centre, production_centre, phenotyping_consortium and
+    production_consortium and maps them using a dictionary provided in the constants for the ETL.
+    &#34;&#34;&#34;
     colonies_df = colonies_df.withColumn(
         &#34;phenotyping_centre&#34;,
         udf(utils.map_centre_id, StringType())(&#34;phenotyping_centre&#34;),
     )
     colonies_df = colonies_df.withColumn(
-        &#34;production_centre&#34;, udf(utils.map_centre_id, StringType())(&#34;production_centre&#34;)
+        &#34;production_centre&#34;,
+        udf(utils.map_centre_id, StringType())(&#34;production_centre&#34;),
     )
     colonies_df = colonies_df.withColumn(
         &#34;phenotyping_consortium&#34;,
@@ -241,8 +454,8 @@ if __name__ == &#34;__main__&#34;:
     return colonies_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.colony_cleaner.map_strain_name"><code class="name flex">
-<span>def <span class="ident">map_strain_name</span></span>(<span>strain_name: str) ‑> str</span>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.map_strain_name"><code class="name flex">
+<span>def <span class="ident">map_strain_name</span></span>(<span>self, strain_name: str) ‑> str</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -250,7 +463,7 @@ if __name__ == &#34;__main__&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def map_strain_name(strain_name: str) -&gt; str:
+<pre><code class="python">def map_strain_name(self, strain_name: str) -&gt; str:
     if strain_name is None:
         return None
 
@@ -276,8 +489,8 @@ if __name__ == &#34;__main__&#34;:
     return &#34;;&#34;.join(intermediate_backgrounds)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.colony_cleaner.map_strain_names"><code class="name flex">
-<span>def <span class="ident">map_strain_names</span></span>(<span>colonies_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.map_strain_names"><code class="name flex">
+<span>def <span class="ident">map_strain_names</span></span>(<span>self, colonies_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -285,17 +498,54 @@ if __name__ == &#34;__main__&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def map_strain_names(colonies_df: DataFrame) -&gt; DataFrame:
-    map_strain_name_udf = udf(map_strain_name, StringType())
+<pre><code class="python">def map_strain_names(self, colonies_df: DataFrame) -&gt; DataFrame:
+    map_strain_name_udf = udf(self.map_strain_name, StringType())
     colonies_df = colonies_df.withColumn(
         &#34;colony_background_strain&#34;, map_strain_name_udf(&#34;colony_background_strain&#34;)
     )
     return colonies_df</code></pre>
 </details>
 </dd>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the full parquet path as an output for the Luigi Task
+(e.g. impc/dr15.2/parquet/colonies_tracking_clean_parquet)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    &#34;&#34;&#34;
+    Returns the full parquet path as an output for the Luigi Task
+    (e.g. impc/dr15.2/parquet/colonies_tracking_clean_parquet)
+    &#34;&#34;&#34;
+    return ImpcConfig().get_target(
+        f&#34;{self.output_path}colonies_tracking_clean_parquet&#34;
+    )</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the luigi
+task dependencies</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    &#34;&#34;&#34;
+    Defines the luigi  task dependencies
+    &#34;&#34;&#34;
+    return ColonyTrackingExtractor</code></pre>
+</details>
+</dd>
 </dl>
-</section>
-<section>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -316,14 +566,24 @@ if __name__ == &#34;__main__&#34;:
 <li><code><a title="impc_etl.jobs.clean" href="index.html">impc_etl.jobs.clean</a></code></li>
 </ul>
 </li>
-<li><h3><a href="#header-functions">Functions</a></h3>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner">IMPCColonyCleaner</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.clean_colonies" href="#impc_etl.jobs.clean.colony_cleaner.clean_colonies">clean_colonies</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.generate_genetic_background" href="#impc_etl.jobs.clean.colony_cleaner.generate_genetic_background">generate_genetic_background</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.main" href="#impc_etl.jobs.clean.colony_cleaner.main">main</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.map_colonies_df_ids" href="#impc_etl.jobs.clean.colony_cleaner.map_colonies_df_ids">map_colonies_df_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.map_strain_name" href="#impc_etl.jobs.clean.colony_cleaner.map_strain_name">map_strain_name</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.map_strain_names" href="#impc_etl.jobs.clean.colony_cleaner.map_strain_names">map_strain_names</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.app_options" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.clean_colonies" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.clean_colonies">clean_colonies</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.generate_genetic_background" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.generate_genetic_background">generate_genetic_background</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.main" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.map_colonies_df_ids" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.map_colonies_df_ids">map_colonies_df_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.map_strain_name" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.map_strain_name">map_strain_name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.map_strain_names" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.map_strain_names">map_strain_names</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.name" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.output" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.output_path" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.requires" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.requires">requires</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

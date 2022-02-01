@@ -49,7 +49,12 @@ from impc_etl.workflow.config import ImpcConfig
 
 
 class IMPCOntologyMetadataExtractor(PySparkTask):
-    &#34;&#34;&#34;&#34;&#34;&#34;
+    &#34;&#34;&#34;
+    PySpark task to generate the ontology metadata parquet.
+    Takes in a  directory   containing a set of ontology  metadata CSV files and returns a parquet version of all of them.
+
+    It expects to contains metadata files for  eco, efo, emap, emapa, ma, mp, mpath, pato and uberon.
+    &#34;&#34;&#34;
 
     #: Name of the Spark task
     name = &#34;IMPC_Ontology_Metadata_Extractor&#34;
@@ -63,7 +68,7 @@ class IMPCOntologyMetadataExtractor(PySparkTask):
     def output(self):
         &#34;&#34;&#34;
         Returns the full parquet path as an output for the Luigi Task
-        (e.g. impc/dr15.2/parquet/impc_ontology_term_hierarchy_parquet)
+        (e.g. impc/dr15.2/parquet/impc_ontology_metadata_parquet)
         &#34;&#34;&#34;
         return ImpcConfig().get_target(
             f&#34;{self.output_path}impc_ontology_metadata_parquet&#34;
@@ -107,13 +112,24 @@ class IMPCOntologyMetadataExtractor(PySparkTask):
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>PySpark task to generate the ontology metadata parquet.
+Takes in a
+directory
+containing a set of ontology
+metadata CSV files and returns a parquet version of all of them.</p>
+<p>It expects to contains metadata files for
+eco, efo, emap, emapa, ma, mp, mpath, pato and uberon.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class IMPCOntologyMetadataExtractor(PySparkTask):
-    &#34;&#34;&#34;&#34;&#34;&#34;
+    &#34;&#34;&#34;
+    PySpark task to generate the ontology metadata parquet.
+    Takes in a  directory   containing a set of ontology  metadata CSV files and returns a parquet version of all of them.
+
+    It expects to contains metadata files for  eco, efo, emap, emapa, ma, mp, mpath, pato and uberon.
+    &#34;&#34;&#34;
 
     #: Name of the Spark task
     name = &#34;IMPC_Ontology_Metadata_Extractor&#34;
@@ -127,7 +143,7 @@ class IMPCOntologyMetadataExtractor(PySparkTask):
     def output(self):
         &#34;&#34;&#34;
         Returns the full parquet path as an output for the Luigi Task
-        (e.g. impc/dr15.2/parquet/impc_ontology_term_hierarchy_parquet)
+        (e.g. impc/dr15.2/parquet/impc_ontology_metadata_parquet)
         &#34;&#34;&#34;
         return ImpcConfig().get_target(
             f&#34;{self.output_path}impc_ontology_metadata_parquet&#34;
@@ -228,7 +244,7 @@ class IMPCOntologyMetadataExtractor(PySparkTask):
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the full parquet path as an output for the Luigi Task
-(e.g. impc/dr15.2/parquet/impc_ontology_term_hierarchy_parquet)</p></div>
+(e.g. impc/dr15.2/parquet/impc_ontology_metadata_parquet)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -236,7 +252,7 @@ class IMPCOntologyMetadataExtractor(PySparkTask):
 <pre><code class="python">def output(self):
     &#34;&#34;&#34;
     Returns the full parquet path as an output for the Luigi Task
-    (e.g. impc/dr15.2/parquet/impc_ontology_term_hierarchy_parquet)
+    (e.g. impc/dr15.2/parquet/impc_ontology_metadata_parquet)
     &#34;&#34;&#34;
     return ImpcConfig().get_target(
         f&#34;{self.output_path}impc_ontology_metadata_parquet&#34;
