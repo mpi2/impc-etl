@@ -27,7 +27,6 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">from impc_etl.workflow.extraction import *
-from impc_etl.workflow.config import ImpcConfig
 
 
 class ExperimentCleaner(SparkSubmitTask):
@@ -101,23 +100,6 @@ class EmbryoCleaner(SparkSubmitTask):
         return ImpcConfig().get_target(output_path)
 
     def app_options(self):
-        return [self.input().path, self.output().path]
-
-
-class ColonyCleaner(SparkSubmitTask):
-    name = &#34;Colony_Cleaner&#34;
-    app = &#34;impc_etl/jobs/clean/colony_cleaner.py&#34;
-    imits_colonies_tsv_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-    resources = {&#34;overwrite_resource&#34;: 1}
-
-    def requires(self):
-        return ColonyTrackingExtractor()
-
-    def output(self):
-        return ImpcConfig().get_target(f&#34;{self.output_path}colony_parquet&#34;)
-
-    def app_options(self):
         return [self.input().path, self.output().path]</code></pre>
 </details>
 </section>
@@ -130,122 +112,6 @@ class ColonyCleaner(SparkSubmitTask):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.workflow.cleaning.ColonyCleaner"><code class="flex name class">
-<span>class <span class="ident">ColonyCleaner</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ColonyCleaner(SparkSubmitTask):
-    name = &#34;Colony_Cleaner&#34;
-    app = &#34;impc_etl/jobs/clean/colony_cleaner.py&#34;
-    imits_colonies_tsv_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-    resources = {&#34;overwrite_resource&#34;: 1}
-
-    def requires(self):
-        return ColonyTrackingExtractor()
-
-    def output(self):
-        return ImpcConfig().get_target(f&#34;{self.output_path}colony_parquet&#34;)
-
-    def app_options(self):
-        return [self.input().path, self.output().path]</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.cleaning.ColonyCleaner.app"><code class="name">var <span class="ident">app</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.cleaning.ColonyCleaner.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.cleaning.ColonyCleaner.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.cleaning.ColonyCleaner.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.cleaning.ColonyCleaner.resources"><code class="name">var <span class="ident">resources</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.cleaning.ColonyCleaner.app_options"><code class="name flex">
-<span>def <span class="ident">app_options</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def app_options(self):
-    return [self.input().path, self.output().path]</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.cleaning.ColonyCleaner.output"><code class="name flex">
-<span>def <span class="ident">output</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The output that this Task produces.</p>
-<p>The output of the Task determines if the Task needs to be run&ndash;the task
-is considered finished iff the outputs all exist. Subclasses should
-override this method to return a single :py:class:<code>Target</code> or a list of
-:py:class:<code>Target</code> instances.</p>
-<p>Implementation note
-If running multiple workers, the output must be a resource that is accessible
-by all workers, such as a DFS or database. Otherwise, workers might compute
-the same output since they don't see the work done by other workers.</p>
-<p>See :ref:<code>Task.output</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def output(self):
-    return ImpcConfig().get_target(f&#34;{self.output_path}colony_parquet&#34;)</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.cleaning.ColonyCleaner.requires"><code class="name flex">
-<span>def <span class="ident">requires</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The Tasks that this Task depends on.</p>
-<p>A Task will only run if all of the Tasks that it requires are completed.
-If your Task does not require any other Tasks, then you don't need to
-override this method. Otherwise, a subclass can override this method
-to return a single Task, a list of Task instances, or a dict whose
-values are Task instances.</p>
-<p>See :ref:<code>Task.requires</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def requires(self):
-    return ColonyTrackingExtractor()</code></pre>
-</details>
-</dd>
-</dl>
-</dd>
 <dt id="impc_etl.workflow.cleaning.EmbryoCleaner"><code class="flex name class">
 <span>class <span class="ident">EmbryoCleaner</span></span>
 <span>(</span><span>*args, **kwargs)</span>
@@ -751,19 +617,6 @@ values are Task instances.</p>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
-<li>
-<h4><code><a title="impc_etl.workflow.cleaning.ColonyCleaner" href="#impc_etl.workflow.cleaning.ColonyCleaner">ColonyCleaner</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.cleaning.ColonyCleaner.app" href="#impc_etl.workflow.cleaning.ColonyCleaner.app">app</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.ColonyCleaner.app_options" href="#impc_etl.workflow.cleaning.ColonyCleaner.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.ColonyCleaner.imits_colonies_tsv_path" href="#impc_etl.workflow.cleaning.ColonyCleaner.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.ColonyCleaner.name" href="#impc_etl.workflow.cleaning.ColonyCleaner.name">name</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.ColonyCleaner.output" href="#impc_etl.workflow.cleaning.ColonyCleaner.output">output</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.ColonyCleaner.output_path" href="#impc_etl.workflow.cleaning.ColonyCleaner.output_path">output_path</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.ColonyCleaner.requires" href="#impc_etl.workflow.cleaning.ColonyCleaner.requires">requires</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.ColonyCleaner.resources" href="#impc_etl.workflow.cleaning.ColonyCleaner.resources">resources</a></code></li>
-</ul>
-</li>
 <li>
 <h4><code><a title="impc_etl.workflow.cleaning.EmbryoCleaner" href="#impc_etl.workflow.cleaning.EmbryoCleaner">EmbryoCleaner</a></code></h4>
 <ul class="two-column">

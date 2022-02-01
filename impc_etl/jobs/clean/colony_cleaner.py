@@ -37,7 +37,7 @@ class IMPCColonyCleaner(PySparkTask):
         """
         Defines the luigi  task dependencies
         """
-        return ColonyTrackingExtractor
+        return ColonyTrackingExtractor()
 
     def output(self):
         """
@@ -53,7 +53,7 @@ class IMPCColonyCleaner(PySparkTask):
         Generates the options pass to the PySpark job
         """
         return [
-            self.input().path(),
+            self.input().path,
             self.output().path,
         ]
 
