@@ -115,8 +115,8 @@ class IMPCColonyCleaner(PySparkTask):
 
     def map_colonies_df_ids(self, colonies_df: DataFrame) -&gt; DataFrame:
         &#34;&#34;&#34;
-        Takes in a DataFrame contanining the columns phenotyping_centre, production_centre, phenotyping_consortium and
-        production_consortium and maps them using a dictionary provided in the constants for the ETL.
+        Takes in a DataFrame containing the columns phenotyping_centre, production_centre, phenotyping_consortium and
+        production_consortium and maps them using a dictionary provided in the constants provided in `impc_etl.config.constants.Constants.CENTRE_ID_MAP` and `impc_etl.config.constants.Constants.PROJECT_ID_MAP`
         &#34;&#34;&#34;
         colonies_df = colonies_df.withColumn(
             &#34;phenotyping_centre&#34;,
@@ -256,8 +256,8 @@ Specimen XML files.</p></div>
 
     def map_colonies_df_ids(self, colonies_df: DataFrame) -&gt; DataFrame:
         &#34;&#34;&#34;
-        Takes in a DataFrame contanining the columns phenotyping_centre, production_centre, phenotyping_consortium and
-        production_consortium and maps them using a dictionary provided in the constants for the ETL.
+        Takes in a DataFrame containing the columns phenotyping_centre, production_centre, phenotyping_consortium and
+        production_consortium and maps them using a dictionary provided in the constants provided in `impc_etl.config.constants.Constants.CENTRE_ID_MAP` and `impc_etl.config.constants.Constants.PROJECT_ID_MAP`
         &#34;&#34;&#34;
         colonies_df = colonies_df.withColumn(
             &#34;phenotyping_centre&#34;,
@@ -424,16 +424,16 @@ colony identifiers.</p></div>
 <span>def <span class="ident">map_colonies_df_ids</span></span>(<span>self, colonies_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Takes in a DataFrame contanining the columns phenotyping_centre, production_centre, phenotyping_consortium and
-production_consortium and maps them using a dictionary provided in the constants for the ETL.</p></div>
+<div class="desc"><p>Takes in a DataFrame containing the columns phenotyping_centre, production_centre, phenotyping_consortium and
+production_consortium and maps them using a dictionary provided in the constants provided in <code><a title="impc_etl.config.constants.Constants.CENTRE_ID_MAP" href="../../config/constants.html#impc_etl.config.constants.Constants.CENTRE_ID_MAP">Constants.CENTRE_ID_MAP</a></code> and <code><a title="impc_etl.config.constants.Constants.PROJECT_ID_MAP" href="../../config/constants.html#impc_etl.config.constants.Constants.PROJECT_ID_MAP">Constants.PROJECT_ID_MAP</a></code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def map_colonies_df_ids(self, colonies_df: DataFrame) -&gt; DataFrame:
     &#34;&#34;&#34;
-    Takes in a DataFrame contanining the columns phenotyping_centre, production_centre, phenotyping_consortium and
-    production_consortium and maps them using a dictionary provided in the constants for the ETL.
+    Takes in a DataFrame containing the columns phenotyping_centre, production_centre, phenotyping_consortium and
+    production_consortium and maps them using a dictionary provided in the constants provided in `impc_etl.config.constants.Constants.CENTRE_ID_MAP` and `impc_etl.config.constants.Constants.PROJECT_ID_MAP`
     &#34;&#34;&#34;
     colonies_df = colonies_df.withColumn(
         &#34;phenotyping_centre&#34;,

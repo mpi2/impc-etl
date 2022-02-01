@@ -82,8 +82,8 @@ class IMPCColonyCleaner(PySparkTask):
 
     def map_colonies_df_ids(self, colonies_df: DataFrame) -> DataFrame:
         """
-        Takes in a DataFrame contanining the columns phenotyping_centre, production_centre, phenotyping_consortium and
-        production_consortium and maps them using a dictionary provided in the constants for the ETL.
+        Takes in a DataFrame containing the columns phenotyping_centre, production_centre, phenotyping_consortium and
+        production_consortium and maps them using a dictionary provided in the constants provided in `impc_etl.config.constants.Constants.CENTRE_ID_MAP` and `impc_etl.config.constants.Constants.PROJECT_ID_MAP`
         """
         colonies_df = colonies_df.withColumn(
             "phenotyping_centre",
@@ -104,6 +104,9 @@ class IMPCColonyCleaner(PySparkTask):
         return colonies_df
 
     def map_strain_names(self, colonies_df: DataFrame) -> DataFrame:
+        """
+        Takes in  a
+        """
         map_strain_name_udf = udf(self.map_strain_name, StringType())
         colonies_df = colonies_df.withColumn(
             "colony_background_strain", map_strain_name_udf("colony_background_strain")
