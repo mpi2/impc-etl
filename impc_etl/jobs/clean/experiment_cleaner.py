@@ -56,9 +56,9 @@ class IMPCExperimentCleaner(PySparkTask):
         Defines the luigi  task dependencies
         """
         return (
-            SpecimenExperimentExtractor
+            SpecimenExperimentExtractor()
             if self.experiment_type == "specimen_level"
-            else LineExperimentExtractor
+            else LineExperimentExtractor()
         )
 
     def output(self):
@@ -76,6 +76,7 @@ class IMPCExperimentCleaner(PySparkTask):
         """
         return [
             self.input().path,
+            self.experiment_type,
             self.output().path,
         ]
 
@@ -84,12 +85,12 @@ class IMPCExperimentCleaner(PySparkTask):
         Load the given  input Experiment  parquet and applies some sanitizing functions to it.
         """
         input_path = args[0]
-        entity_type = args[1]
+        experiment_type = args[1]
         output_path = args[2]
         spark = SparkSession(sc)
         dcc_df = spark.read.parquet(input_path)
 
-        if entity_type == "specimen_level":
+        if experiment_type == "specimen_level":
             dcc_clean_df = self.clean_experiments(dcc_df)
         else:
             dcc_clean_df = self.clean_lines(dcc_df)

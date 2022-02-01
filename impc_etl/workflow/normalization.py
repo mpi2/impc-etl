@@ -37,10 +37,7 @@ class MouseNormalizer(SpecimenNormalizer):
     def requires(self):
         return [
             MouseCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-            IMPCColonyCleaner(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                output_path=self.output_path,
-            ),
+            IMPCColonyCleaner(),
         ]
 
 
@@ -64,9 +61,7 @@ class ExperimentNormalizer(SparkSubmitTask):
 
     def requires(self):
         return [
-            ExperimentCleaner(
-                dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-            ),
+            SpecimenExperimentCleaner(),
             MouseNormalizer(
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 dcc_xml_path=self.dcc_xml_path,
@@ -77,7 +72,7 @@ class ExperimentNormalizer(SparkSubmitTask):
                 dcc_xml_path=self.dcc_xml_path,
                 output_path=self.output_path,
             ),
-            ImpressExtractor(output_path=self.output_path),
+            ImpressExtractor(),
         ]
 
     def output(self):
@@ -111,11 +106,9 @@ class LineExperimentNormalizer(SparkSubmitTask):
 
     def requires(self):
         return [
-            LineExperimentCleaner(
-                dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-            ),
+            LineExperimentCleaner(),
             IMPCColonyCleaner(),
-            ImpressExtractor(output_path=self.output_path),
+            ImpressExtractor(),
         ]
 
     def output(self):

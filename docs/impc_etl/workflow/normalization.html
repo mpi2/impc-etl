@@ -65,10 +65,7 @@ class MouseNormalizer(SpecimenNormalizer):
     def requires(self):
         return [
             MouseCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-            IMPCColonyCleaner(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                output_path=self.output_path,
-            ),
+            IMPCColonyCleaner(),
         ]
 
 
@@ -92,9 +89,7 @@ class ExperimentNormalizer(SparkSubmitTask):
 
     def requires(self):
         return [
-            ExperimentCleaner(
-                dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-            ),
+            SpecimenExperimentCleaner(),
             MouseNormalizer(
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 dcc_xml_path=self.dcc_xml_path,
@@ -105,7 +100,7 @@ class ExperimentNormalizer(SparkSubmitTask):
                 dcc_xml_path=self.dcc_xml_path,
                 output_path=self.output_path,
             ),
-            ImpressExtractor(output_path=self.output_path),
+            ImpressExtractor(),
         ]
 
     def output(self):
@@ -139,11 +134,9 @@ class LineExperimentNormalizer(SparkSubmitTask):
 
     def requires(self):
         return [
-            LineExperimentCleaner(
-                dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-            ),
+            LineExperimentCleaner(),
             IMPCColonyCleaner(),
-            ImpressExtractor(output_path=self.output_path),
+            ImpressExtractor(),
         ]
 
     def output(self):
@@ -268,9 +261,7 @@ for more information</p></div>
 
     def requires(self):
         return [
-            ExperimentCleaner(
-                dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-            ),
+            SpecimenExperimentCleaner(),
             MouseNormalizer(
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 dcc_xml_path=self.dcc_xml_path,
@@ -281,7 +272,7 @@ for more information</p></div>
                 dcc_xml_path=self.dcc_xml_path,
                 output_path=self.output_path,
             ),
-            ImpressExtractor(output_path=self.output_path),
+            ImpressExtractor(),
         ]
 
     def output(self):
@@ -403,9 +394,7 @@ values are Task instances.</p>
 </summary>
 <pre><code class="python">def requires(self):
     return [
-        ExperimentCleaner(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        ),
+        SpecimenExperimentCleaner(),
         MouseNormalizer(
             imits_colonies_tsv_path=self.imits_colonies_tsv_path,
             dcc_xml_path=self.dcc_xml_path,
@@ -416,7 +405,7 @@ values are Task instances.</p>
             dcc_xml_path=self.dcc_xml_path,
             output_path=self.output_path,
         ),
-        ImpressExtractor(output_path=self.output_path),
+        ImpressExtractor(),
     ]</code></pre>
 </details>
 </dd>
@@ -446,11 +435,9 @@ for more information</p></div>
 
     def requires(self):
         return [
-            LineExperimentCleaner(
-                dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-            ),
+            LineExperimentCleaner(),
             IMPCColonyCleaner(),
-            ImpressExtractor(output_path=self.output_path),
+            ImpressExtractor(),
         ]
 
     def output(self):
@@ -574,11 +561,9 @@ values are Task instances.</p>
 </summary>
 <pre><code class="python">def requires(self):
     return [
-        LineExperimentCleaner(
-            dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
-        ),
+        LineExperimentCleaner(),
         IMPCColonyCleaner(),
-        ImpressExtractor(output_path=self.output_path),
+        ImpressExtractor(),
     ]</code></pre>
 </details>
 </dd>
@@ -603,10 +588,7 @@ for more information</p></div>
     def requires(self):
         return [
             MouseCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-            IMPCColonyCleaner(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                output_path=self.output_path,
-            ),
+            IMPCColonyCleaner(),
         ]</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -643,10 +625,7 @@ values are Task instances.</p>
 <pre><code class="python">def requires(self):
     return [
         MouseCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-        IMPCColonyCleaner(
-            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-            output_path=self.output_path,
-        ),
+        IMPCColonyCleaner(),
     ]</code></pre>
 </details>
 </dd>
