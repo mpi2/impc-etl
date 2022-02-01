@@ -26,17 +26,18 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from impc_etl.workflow.extraction import OntologyMetadataExtractor
+<pre><code class="python">import luigi
+from luigi.contrib.spark import PySparkTask
 from pyspark.sql.functions import col, collect_set, explode
 from pyspark.sql.session import SparkSession
+
+from impc_etl.jobs.extract import IMPCOntologyMetadataExtractor
+from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.load import (
     GeneCoreLoader,
     ObservationsMapper,
     StatsResultsCoreLoader,
 )
-from impc_etl.workflow.config import ImpcConfig
-import luigi
-from luigi.contrib.spark import PySparkTask
 
 
 class BatchQueryLoader(PySparkTask):
@@ -53,7 +54,7 @@ class BatchQueryLoader(PySparkTask):
             ObservationsMapper(),
             GeneCoreLoader(),
             StatsResultsCoreLoader(),
-            OntologyMetadataExtractor(),
+            IMPCOntologyMetadataExtractor(),
         ]
 
     def app_options(self):
@@ -201,7 +202,7 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
             ObservationsMapper(),
             GeneCoreLoader(),
             StatsResultsCoreLoader(),
-            OntologyMetadataExtractor(),
+            IMPCOntologyMetadataExtractor(),
         ]
 
     def app_options(self):
@@ -512,7 +513,7 @@ values are Task instances.</p>
         ObservationsMapper(),
         GeneCoreLoader(),
         StatsResultsCoreLoader(),
-        OntologyMetadataExtractor(),
+        IMPCOntologyMetadataExtractor(),
     ]</code></pre>
 </details>
 </dd>

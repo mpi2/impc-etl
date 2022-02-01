@@ -36,14 +36,6 @@ from impc_etl.jobs.extract.gene_production_status_extractor import (
 )
 from impc_etl.jobs.load.solr.gene_mapper import get_gene_core_df, IMITS_GENE_COLUMNS
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.extraction import (
-    GeneExtractor,
-    AlleleExtractor,
-    MGIHomologyReportExtractor,
-    MGIMarkerListReportExtractor,
-    OntologyMetadataExtractor,
-    ProductReportExtractor,
-)
 from impc_etl.workflow.load import (
     ObservationsMapper,
     StatsResultsCoreLoader,

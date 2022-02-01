@@ -34,26 +34,25 @@ Module to group extraction jobs for input data. Most of these jobs ara simple re
 in and generate a Parquet file with a slightly different schema.
 &#34;&#34;&#34;
 
+from impc_etl.jobs.extract.colony_tracking_extractor import ColonyTrackingExtractor
 from impc_etl.jobs.extract.dcc_experiment_extractor import DCCExperimentExtractor
 from impc_etl.jobs.extract.dcc_specimen_extractor import DCCSpecimenExtractor
-
-from impc_etl.jobs.extract.colony_tracking_extractor import ColonyTrackingExtractor
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
 )
-from impc_etl.jobs.extract.product_report_extractor import ProductReportExtractor
-
 from impc_etl.jobs.extract.impress_extractor import ImpressExtractor
-
 from impc_etl.jobs.extract.mgi_gene_pheno_extractor import MGIGenePhenoReportExtractor
 from impc_etl.jobs.extract.mgi_homology_extractor import MGIHomologyReportExtractor
 from impc_etl.jobs.extract.mgi_mrk_list_extractor import MGIMarkerListReportExtractor
 from impc_etl.jobs.extract.mgi_phenotypic_allele import MGIPhenotypicAlleleExtractor
 from impc_etl.jobs.extract.mgi_strain_extractor import MGIStrainReportExtractor
-
 from impc_etl.jobs.extract.ontology_hierarchy_extractor import (
     IMPCOntologyTermHierarchyExtractor,
-)</code></pre>
+)
+from impc_etl.jobs.extract.ontology_metadata_extractor import (
+    IMPCOntologyMetadataExtractor,
+)
+from impc_etl.jobs.extract.product_report_extractor import ProductReportExtractor</code></pre>
 </details>
 </section>
 <section>
@@ -137,7 +136,9 @@ represents the hierarchical relations …</p></div>
 </dd>
 <dt><code class="name"><a title="impc_etl.jobs.extract.ontology_metadata_extractor" href="ontology_metadata_extractor.html">impc_etl.jobs.extract.ontology_metadata_extractor</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Ontology metadata extractor Task.
+It takes the output of the <a href="https://github.com/mpi2/impc-ontology-pipeline">IMPC Ontology Pipeline</a>
+and transforms …</p></div>
 </dd>
 <dt><code class="name"><a title="impc_etl.jobs.extract.open_stats_extractor" href="open_stats_extractor.html">impc_etl.jobs.extract.open_stats_extractor</a></code></dt>
 <dd>

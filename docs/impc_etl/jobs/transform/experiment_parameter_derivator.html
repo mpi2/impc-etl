@@ -53,12 +53,12 @@ from pyspark.sql.types import (
 )
 
 from impc_etl.config.constants import Constants
+from impc_etl.jobs.extract import ImpressExtractor
 from impc_etl.shared.utils import (
     extract_parameters_from_derivation,
     has_column,
 )
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.extraction import ImpressExtractor
 from impc_etl.workflow.normalization import (
     ExperimentNormalizer,
     LineExperimentNormalizer,

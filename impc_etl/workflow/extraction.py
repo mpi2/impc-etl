@@ -58,44 +58,6 @@ class ColonyExtractor(ImitsExtractor):
     entity_type = "Colony"
 
 
-class OntologyExtractor(SparkSubmitTask):
-    name = "IMPC_Ontology_Extractor"
-    app = "impc_etl/jobs/extract/ontology_hierarchy_extractor.py"
-
-    ontology_input_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + "/"
-            if not self.output_path.endswith("/")
-            else self.output_path
-        )
-        return ImpcConfig().get_target(f"{self.output_path}ontology_parquet")
-
-    def app_options(self):
-        return [self.ontology_input_path, self.output().path]
-
-
-class OntologyMetadataExtractor(SparkSubmitTask):
-    name = "IMPC_Ontology_Metadata_Extractor"
-    app = "impc_etl/jobs/extract/ontology_metadata_extractor.py"
-
-    ontology_input_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + "/"
-            if not self.output_path.endswith("/")
-            else self.output_path
-        )
-        return ImpcConfig().get_target(f"{self.output_path}ontology_metadata_parquet")
-
-    def app_options(self):
-        return [self.ontology_input_path, self.output().path]
-
-
 class OpenStatsExtractor(SparkSubmitTask):
     name = "IMPC_OpenStats_Extractor"
     app = "impc_etl/jobs/extract/open_stats_extractor.py"
