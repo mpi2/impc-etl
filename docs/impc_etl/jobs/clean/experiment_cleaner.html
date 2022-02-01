@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>impc_etl.jobs.clean.experiment_cleaner API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Luigi PySpark task that takes the Experiment data coming from the different
+data sources
+(e.g. IMPC, 3i, EuroPhenome, PWG)
+and applies some data …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,11 +25,30 @@
 <h1 class="title">Module <code>impc_etl.jobs.clean.experiment_cleaner</code></h1>
 </header>
 <section id="section-intro">
+<p>Luigi PySpark task that takes the Experiment data coming from the different
+data sources
+(e.g. IMPC, 3i, EuroPhenome, PWG)
+and applies some data sanitizing functions.</p>
+<p>The cleaning process includes: mapping identifiers, dropping entries with required values as NULL, drop a list of
+predefined skipped experiments,
+cleaning legacy identifiers and lastly generate a unique id.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import sys
+<pre><code class="python">&#34;&#34;&#34;
+    Luigi PySpark task that takes the Experiment data coming from the different  data sources  (e.g. IMPC, 3i, EuroPhenome, PWG)
+    and applies some data sanitizing functions.
+
+    The cleaning process includes: mapping identifiers, dropping entries with required values as NULL, drop a list of
+    predefined skipped experiments,
+    cleaning legacy identifiers and lastly generate a unique id.
+&#34;&#34;&#34;
+from typing import Any
+
+import luigi
+from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import (
     udf,
@@ -38,347 +60,350 @@ from pyspark.sql.functions import (
     regexp_replace,
     regexp_extract,
 )
-from pyspark.sql.types import BooleanType, StringType
+from pyspark.sql.types import StringType
+
 from impc_etl.config.constants import Constants
 from impc_etl.shared import utils
+from impc_etl.workflow.config import ImpcConfig
+from impc_etl.workflow.extraction import (
+    SpecimenExperimentExtractor,
+    LineExperimentExtractor,
+)
 
 
-def main(argv):
+class IMPCExperimentCleaner(PySparkTask):
     &#34;&#34;&#34;
-    Takes in an parquet file from DCC experiment XML files and generates a clean version of it
-    :param argv: [1] input_path, [2] entity_type,  [3] output_path
-    &#34;&#34;&#34;
-    input_path = argv[1]
-    entity_type = argv[2]
-    output_path = argv[3]
-    spark = SparkSession.builder.getOrCreate()
-    dcc_df = spark.read.parquet(input_path)
+    PySpark task  to clean the IMPC Experimental data.
 
-    if entity_type == &#34;experiment&#34;:
-        dcc_clean_df = clean_experiments(dcc_df)
-    else:
-        dcc_clean_df = clean_lines(dcc_df)
-
-    dcc_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
-
-
-def clean_experiments(experiment_df: DataFrame) -&gt; DataFrame:
-    &#34;&#34;&#34;
-    DCC experiment level cleaner
-
-    :param experiment_df: a raw experiment DataFrame
-    :return: a clean experiment DataFrame
-    :rtype: DataFrame
-    &#34;&#34;&#34;
-    experiment_df = (
-        experiment_df.transform(map_centre_ids)
-        .transform(map_project_ids)
-        .transform(truncate_europhenome_specimen_ids)
-        .transform(drop_skipped_experiments)
-        .transform(drop_skipped_procedures)
-        .transform(map_3i_project_ids)
-        .transform(prefix_3i_experiment_ids)
-        .transform(drop_null_centre_id)
-        .transform(drop_null_data_source)
-        .transform(drop_null_date_of_experiment)
-        .transform(drop_null_pipeline)
-        .transform(drop_null_project)
-        .transform(drop_null_specimen_id)
-        .transform(generate_unique_id)
-    )
-    return experiment_df
-
-
-def clean_lines(line_df: DataFrame):
-    &#34;&#34;&#34;
-    DCC experiment level cleaner
-
-    :param line_df: a raw line DataFrame
-    :return: a clean line DataFrame
-    :rtype: DataFrame
-    &#34;&#34;&#34;
-    line_df = (
-        line_df.transform(generate_line_experiment_id)
-        .transform(map_centre_ids)
-        .transform(map_project_ids)
-        .transform(drop_skipped_procedures)
-        .transform(truncate_europhenome_colony_ids)
-        .transform(parse_europhenome_colony_xml_entities)
-        .transform(map_3i_project_ids)
-        .transform(prefix_3i_experiment_ids)
-        .transform(drop_null_centre_id)
-        .transform(drop_null_data_source)
-        .transform(drop_null_pipeline)
-        .transform(drop_null_project)
-        .transform(generate_unique_id)
-    )
-    return line_df
-
-
-def generate_line_experiment_id(line_df: DataFrame):
-    line_df = line_df.withColumn(
-        &#34;_experimentID&#34;, concat(col(&#34;_procedureID&#34;), lit(&#34;-&#34;), col(&#34;_colonyID&#34;))
-    )
-    return line_df
-
-
-def map_centre_ids(dcc_df: DataFrame) -&gt; DataFrame:
-    &#34;&#34;&#34;
-    Maps the center ids  found in the XML files to a standard list of ids e.g:
-        - gmc -&gt; HMGU
-        - h -&gt; MRC Harwell
-    The full list of mappings can be found at impc_etl.config.Constans.CENTRE_ID_MAP
-    :param dcc_df: DataFrame
-    &#34;&#34;&#34;
-    dcc_df = dcc_df.withColumn(
-        &#34;_centreID&#34;, udf(utils.map_centre_id, StringType())(&#34;_centreID&#34;)
-    )
-    return dcc_df
-
-
-def map_project_ids(dcc_df: DataFrame) -&gt; DataFrame:
-    &#34;&#34;&#34;
-    Maps the center ids  found in the XML files to a standard list of ids e.g:
-        - dtcc -&gt; DTCC
-        - riken brc -&gt; RBRC
-    The full list of mappings can be found at impc_etl.config.Constans.PROJECT_ID_MAP
-    :param dcc_df: DataFrame
-    &#34;&#34;&#34;
-    dcc_df = dcc_df.withColumn(
-        &#34;_project&#34;, udf(utils.map_project_id, StringType())(&#34;_project&#34;)
-    )
-    return dcc_df
-
-
-def truncate_europhenome_specimen_ids(dcc_df: DataFrame) -&gt; DataFrame:
-    &#34;&#34;&#34;
-    Some EuroPhenome Specimen Ids have a suffix that should be truncated
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    dcc_df = dcc_df.withColumn(
-        &#34;specimenID&#34;,
-        when(
-            (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
-            udf(utils.truncate_specimen_id, StringType())(dcc_df[&#34;specimenID&#34;]),
-        ).otherwise(dcc_df[&#34;specimenID&#34;]),
-    )
-    return dcc_df
-
-
-def truncate_europhenome_colony_ids(dcc_df: DataFrame) -&gt; DataFrame:
-    &#34;&#34;&#34;
-    Some EuroPhenome Colony Ids have a suffix that should be truncated
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    dcc_df = dcc_df.withColumn(
-        &#34;_colonyID&#34;,
-        when(
-            (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
-            udf(utils.truncate_colony_id, StringType())(dcc_df[&#34;_colonyID&#34;]),
-        ).otherwise(dcc_df[&#34;_colonyID&#34;]),
-    )
-    return dcc_df
-
-
-def parse_europhenome_colony_xml_entities(dcc_df: DataFrame) -&gt; DataFrame:
-    &#34;&#34;&#34;
-    Some EuroPhenome Colony Ids have &amp;lt; &amp;gt; values that have to be replaced
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    dcc_df = dcc_df.withColumn(
-        &#34;_colonyID&#34;,
-        when(
-            (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
-            regexp_replace(&#34;_colonyID&#34;, &#34;&amp;lt;&#34;, &#34;&lt;&#34;),
-        ).otherwise(dcc_df[&#34;_colonyID&#34;]),
-    )
-
-    dcc_df = dcc_df.withColumn(
-        &#34;_colonyID&#34;,
-        when(
-            (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
-            regexp_replace(&#34;_colonyID&#34;, &#34;&amp;gt;&#34;, &#34;&gt;&#34;),
-        ).otherwise(dcc_df[&#34;_colonyID&#34;]),
-    )
-    return dcc_df
-
-
-def drop_skipped_experiments(dcc_df: DataFrame) -&gt; DataFrame:
+        This task depends on `impc_etl.workflow.extraction.SpecimenExperimentExtractor` for cleaning Specimen Level experiments
+        or `impc_etl.workflow.extraction.LineExperimentExtractor`
+        for cleaning Line Level experiments.
     &#34;&#34;&#34;
 
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    return dcc_df.where(
-        ~(
-            (dcc_df[&#34;_centreID&#34;] == &#34;Ucd&#34;)
-            &amp; (
-                dcc_df[&#34;_experimentID&#34;].isin(
-                    [&#34;GRS_2013-10-09_4326&#34;, &#34;GRS_2014-07-16_8800&#34;]
-                )
-            )
+    #: Name of the Spark task
+    name: str = &#34;IMPC_Experiment_Cleaner&#34;
+
+    #: Experimental type can be &#39;specimen_level&#39; or &#39;line_level&#39;.
+    experiment_type: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
+
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        return (
+            SpecimenExperimentExtractor
+            if self.experiment_type == &#34;specimen_level&#34;
+            else LineExperimentExtractor
         )
-    )
 
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/specimen_level_experiment_clean_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}{self.experiment_type}_experiment_clean_parquet&#34;
+        )
 
-def drop_skipped_procedures(dcc_df: DataFrame) -&gt; DataFrame:
-    &#34;&#34;&#34;
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.input().path,
+            self.output().path,
+        ]
 
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    return dcc_df.where(
-        (
+    def main(self, sc: SparkContext, *args: Any):
+        &#34;&#34;&#34;
+        Load the given  input Experiment  parquet and applies some sanitizing functions to it.
+        &#34;&#34;&#34;
+        input_path = args[0]
+        entity_type = args[1]
+        output_path = args[2]
+        spark = SparkSession(sc)
+        dcc_df = spark.read.parquet(input_path)
+
+        if entity_type == &#34;specimen_level&#34;:
+            dcc_clean_df = self.clean_experiments(dcc_df)
+        else:
+            dcc_clean_df = self.clean_lines(dcc_df)
+
+        dcc_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
+
+    def clean_experiments(self, experiment_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        DCC for specimen  level experiments.
+        &#34;&#34;&#34;
+        experiment_df = (
+            experiment_df.transform(self.map_centre_ids)
+            .transform(self.map_project_ids)
+            .transform(self.truncate_europhenome_specimen_ids)
+            .transform(self.drop_skipped_experiments)
+            .transform(self.drop_skipped_procedures)
+            .transform(self.map_3i_project_ids)
+            .transform(self.prefix_3i_experiment_ids)
+            .transform(self.drop_null_centre_id)
+            .transform(self.drop_null_data_source)
+            .transform(self.drop_null_date_of_experiment)
+            .transform(self.drop_null_pipeline)
+            .transform(self.drop_null_project)
+            .transform(self.drop_null_specimen_id)
+            .transform(self.generate_unique_id)
+        )
+        return experiment_df
+
+    def clean_lines(self, line_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        DCC cleaner for line level experiments.
+        &#34;&#34;&#34;
+        line_df = (
+            line_df.transform(self.generate_line_experiment_id)
+            .transform(self.map_centre_ids)
+            .transform(self.map_project_ids)
+            .transform(self.drop_skipped_procedures)
+            .transform(self.truncate_europhenome_colony_ids)
+            .transform(self.parse_europhenome_colony_xml_entities)
+            .transform(self.map_3i_project_ids)
+            .transform(self.prefix_3i_experiment_ids)
+            .transform(self.drop_null_centre_id)
+            .transform(self.drop_null_data_source)
+            .transform(self.drop_null_pipeline)
+            .transform(self.drop_null_project)
+            .transform(self.generate_unique_id)
+        )
+        return line_df
+
+    def generate_line_experiment_id(self, line_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Takes in a DataFrame containing line level experiments and generates an Experiment  ID for each row.
+        Line level experiments in the XML files don&#39;t have a experiment ID and that is needed for further processing so we generate an artificial one.
+        &#34;&#34;&#34;
+        line_df = line_df.withColumn(
+            &#34;_experimentID&#34;, concat(col(&#34;_procedureID&#34;), lit(&#34;-&#34;), col(&#34;_colonyID&#34;))
+        )
+        return line_df
+
+    def map_centre_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Maps the center ids  found in the XML files to a standard list of ids e.g:
+            - gmc -&gt; HMGU
+            - h -&gt; MRC Harwell
+        The full list of mappings can be found at `impc_etl.config.Constants.CENTRE_ID_MAP`
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_centreID&#34;, udf(utils.map_centre_id, StringType())(&#34;_centreID&#34;)
+        )
+        return dcc_df
+
+    def map_project_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Maps the center ids  found in the XML files to a standard list of ids e.g:
+            - dtcc -&gt; DTCC
+            - riken brc -&gt; RBRC
+        The full list of mappings can be found at `impc_etl.config.Constants.PROJECT_ID_MAP`
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_project&#34;, udf(utils.map_project_id, StringType())(&#34;_project&#34;)
+        )
+        return dcc_df
+
+    def truncate_europhenome_specimen_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some EuroPhenome Specimen Ids have a suffix that should be truncated, the legacy identifying strategy for Specimen id included
+        a suffix tno reference the production/phenotyping Centre (e.g. 232328312_HRW), that suffix needs to be removed.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;specimenID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
+                udf(utils.truncate_specimen_id, StringType())(dcc_df[&#34;specimenID&#34;]),
+            ).otherwise(dcc_df[&#34;specimenID&#34;]),
+        )
+        return dcc_df
+
+    def truncate_europhenome_colony_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some EuroPhenome Colony Ids have a suffix that should be truncated. Same as Specimen IDs some colony IDs used to have a suffix to identify
+        the Centre and that has been  removed from the
+        tracking system, so we need to truncate them so they  match the corresponding  entry on GenTar.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_colonyID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
+                udf(utils.truncate_colony_id, StringType())(dcc_df[&#34;_colonyID&#34;]),
+            ).otherwise(dcc_df[&#34;_colonyID&#34;]),
+        )
+        return dcc_df
+
+    def parse_europhenome_colony_xml_entities(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some EuroPhenome Colony Ids have &amp;lt; &amp;gt; values that have to be replaced by the  corresponding characters &lt; and &gt;.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_colonyID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
+                regexp_replace(&#34;_colonyID&#34;, &#34;&amp;lt;&#34;, &#34;&lt;&#34;),
+            ).otherwise(dcc_df[&#34;_colonyID&#34;]),
+        )
+
+        dcc_df = dcc_df.withColumn(
+            &#34;_colonyID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
+                regexp_replace(&#34;_colonyID&#34;, &#34;&amp;gt;&#34;, &#34;&gt;&#34;),
+            ).otherwise(dcc_df[&#34;_colonyID&#34;]),
+        )
+        return dcc_df
+
+    def drop_skipped_experiments(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        We have a list of IMPC experiments that should be dropped from the loading process.
+        &#34;&#34;&#34;
+        return dcc_df.where(
             ~(
-                regexp_extract(col(&#34;_procedureID&#34;), &#34;(.+_.+)_.+&#34;, 1).isin(
-                    Constants.SKIPPED_PROCEDURES
+                (dcc_df[&#34;_centreID&#34;] == &#34;Ucd&#34;)
+                &amp; (
+                    dcc_df[&#34;_experimentID&#34;].isin(
+                        [&#34;GRS_2013-10-09_4326&#34;, &#34;GRS_2014-07-16_8800&#34;]
+                    )
                 )
             )
         )
-        | (dcc_df[&#34;_dataSource&#34;] == &#34;3i&#34;)
-    )
 
-
-def map_3i_project_ids(dcc_df: DataFrame) -&gt; DataFrame:
-    &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    return dcc_df.withColumn(
-        &#34;_project&#34;,
-        when(
-            (dcc_df[&#34;_dataSource&#34;] == &#34;3i&#34;)
-            &amp; (~dcc_df[&#34;_project&#34;].isin(Constants.VALID_PROJECT_IDS)),
-            lit(&#34;MGP&#34;),
-        ).otherwise(dcc_df[&#34;_project&#34;]),
-    )
-
-
-def prefix_3i_experiment_ids(dcc_df: DataFrame) -&gt; DataFrame:
-    return dcc_df.withColumn(
-        &#34;_experimentID&#34;,
-        when(
-            (dcc_df[&#34;_dataSource&#34;] == &#34;3i&#34;), concat(lit(&#34;3i_&#34;), dcc_df[&#34;_experimentID&#34;])
-        ).otherwise(dcc_df[&#34;_experimentID&#34;]),
-    )
-
-
-def drop_null_procedure_id(dcc_df: DataFrame):
-    &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;_procedureID&#34;)
-
-
-def drop_null_centre_id(dcc_df: DataFrame):
-    &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;_centreID&#34;)
-
-
-def drop_null_data_source(dcc_df: DataFrame):
-    &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;_dataSource&#34;)
-
-
-def drop_null_date_of_experiment(dcc_df: DataFrame):
-    &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;_dateOfExperiment&#34;)
-
-
-def drop_null_pipeline(dcc_df: DataFrame):
-    &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;_pipeline&#34;)
-
-
-def drop_null_project(dcc_df: DataFrame):
-    &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;_project&#34;)
-
-
-def drop_null_specimen_id(dcc_df: DataFrame):
-    &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;specimenID&#34;)
-
-
-def drop_if_null(dcc_df: DataFrame, column: str) -&gt; DataFrame:
-    &#34;&#34;&#34;
-
-    :param dcc_df:
-    :param column:
-    :return:
-    &#34;&#34;&#34;
-    return dcc_df.where(dcc_df[column].isNotNull())
-
-
-def generate_unique_id(dcc_experiment_df: DataFrame):
-    &#34;&#34;&#34;
-    Generates an unique_id column using as an input every column
-    except from those that have non unique values and
-    the ones that correspond to parameter values.
-    Given that _sequenceID could be null, the function transforms it the to the string NA
-    when its null to avoid the nullifying the concat.
-    It concatenates the unique set of values and then applies
-    an MD5 hash function to the resulting string.
-    :param dcc_experiment_df:
-    :return: DataFrame
-    &#34;&#34;&#34;
-    non_unique_columns = [
-        &#34;_type&#34;,
-        &#34;_sourceFile&#34;,
-        &#34;_VALUE&#34;,
-        &#34;procedureMetadata&#34;,
-        &#34;statusCode&#34;,
-        &#34;_sequenceID&#34;,
-        &#34;_project&#34;,
-    ]
-    if &#34;_sequenceID&#34; in dcc_experiment_df.columns:
-        dcc_experiment_df = dcc_experiment_df.withColumn(
-            &#34;_sequenceIDStr&#34;,
-            when(col(&#34;_sequenceID&#34;).isNull(), lit(&#34;NA&#34;)).otherwise(col(&#34;_sequenceID&#34;)),
+    def drop_skipped_procedures(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Drop the experiments corresponding with the list of dropped procedures found
+        at `impc_etl.config.constants.Constants.SKIPPED_PROCEDURES`.
+        &#34;&#34;&#34;
+        return dcc_df.where(
+            (
+                ~(
+                    regexp_extract(col(&#34;_procedureID&#34;), &#34;(.+_.+)_.+&#34;, 1).isin(
+                        Constants.SKIPPED_PROCEDURES
+                    )
+                )
+            )
+            | (dcc_df[&#34;_dataSource&#34;] == &#34;3i&#34;)
         )
-    unique_columns = [
-        col_name
-        for col_name in dcc_experiment_df.columns
-        if col_name not in non_unique_columns and not col_name.endswith(&#34;Parameter&#34;)
-    ]
-    dcc_experiment_df = dcc_experiment_df.withColumn(
-        &#34;unique_id&#34;, md5(concat(*unique_columns))
-    )
-    return dcc_experiment_df
 
+    def map_3i_project_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some data from the  3i project contains invalid Project identifiers, those entries should be marked as MGP.
+        &#34;&#34;&#34;
+        return dcc_df.withColumn(
+            &#34;_project&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;3i&#34;)
+                &amp; (~dcc_df[&#34;_project&#34;].isin(Constants.VALID_PROJECT_IDS)),
+                lit(&#34;MGP&#34;),
+            ).otherwise(dcc_df[&#34;_project&#34;]),
+        )
 
-if __name__ == &#34;__main__&#34;:
-    sys.exit(main(sys.argv))</code></pre>
+    def prefix_3i_experiment_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        In  order to avoid collusion  of experiment IDs coming from 3i witht he  ones we generate on the IMPC data,
+        we add a prefix the  3i experiment IDs.
+        &#34;&#34;&#34;
+        return dcc_df.withColumn(
+            &#34;_experimentID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;3i&#34;),
+                concat(lit(&#34;3i_&#34;), dcc_df[&#34;_experimentID&#34;]),
+            ).otherwise(dcc_df[&#34;_experimentID&#34;]),
+        )
+
+    def drop_null_procedure_id(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a Procedure ID. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;_procedureID&#34;)
+
+    def drop_null_centre_id(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a Centre ID. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;_centreID&#34;)
+
+    def drop_null_data_source(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a DataSource. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;_dataSource&#34;)
+
+    def drop_null_date_of_experiment(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a Date of Experiment. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;_dateOfExperiment&#34;)
+
+    def drop_null_pipeline(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a Pipeline ID. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;_pipeline&#34;)
+
+    def drop_null_project(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a Project ID. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;_project&#34;)
+
+    def drop_null_specimen_id(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a Specimen ID. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;specimenID&#34;)
+
+    def drop_if_null(self, dcc_df: DataFrame, column: str) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Function that takes in a DataFrame and a column_name and returns that DataFrame filtering out the rows that have
+        a null value on the specified column.
+        &#34;&#34;&#34;
+        return dcc_df.where(dcc_df[column].isNotNull())
+
+    def generate_unique_id(self, dcc_experiment_df: DataFrame):
+        &#34;&#34;&#34;
+        Generates a unique_id column using as an input every column
+        except from those that have non-unique values and
+        the ones that correspond to parameter values.
+        Given that _sequenceID could be null, the function transforms it the to the string NA
+        when is null to avoid the nullifying the concat.
+        It concatenates the unique set of values and then applies
+        an MD5 hash function to the resulting string.
+        :param dcc_experiment_df:
+        :return: DataFrame
+        &#34;&#34;&#34;
+        non_unique_columns = [
+            &#34;_type&#34;,
+            &#34;_sourceFile&#34;,
+            &#34;_VALUE&#34;,
+            &#34;procedureMetadata&#34;,
+            &#34;statusCode&#34;,
+            &#34;_sequenceID&#34;,
+            &#34;_project&#34;,
+        ]
+        if &#34;_sequenceID&#34; in dcc_experiment_df.columns:
+            dcc_experiment_df = dcc_experiment_df.withColumn(
+                &#34;_sequenceIDStr&#34;,
+                when(col(&#34;_sequenceID&#34;).isNull(), lit(&#34;NA&#34;)).otherwise(
+                    col(&#34;_sequenceID&#34;)
+                ),
+            )
+        unique_columns = [
+            col_name
+            for col_name in dcc_experiment_df.columns
+            if col_name not in non_unique_columns and not col_name.endswith(&#34;Parameter&#34;)
+        ]
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            &#34;unique_id&#34;, md5(concat(*unique_columns))
+        )
+        return dcc_experiment_df</code></pre>
 </details>
 </section>
 <section>
@@ -386,254 +411,615 @@ if __name__ == &#34;__main__&#34;:
 <section>
 </section>
 <section>
-<h2 class="section-title" id="header-functions">Functions</h2>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.clean_experiments"><code class="name flex">
-<span>def <span class="ident">clean_experiments</span></span>(<span>experiment_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner"><code class="flex name class">
+<span>class <span class="ident">IMPCExperimentCleaner</span></span>
+<span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>DCC experiment level cleaner</p>
-<p>:param experiment_df: a raw experiment DataFrame
-:return: a clean experiment DataFrame
-:rtype: DataFrame</p></div>
+<div class="desc"><p>PySpark task
+to clean the IMPC Experimental data.</p>
+<pre><code>This task depends on &lt;code&gt;&lt;a title="impc_etl.workflow.extraction.SpecimenExperimentExtractor" href="../../workflow/extraction.html#impc_etl.workflow.extraction.SpecimenExperimentExtractor"&gt;SpecimenExperimentExtractor&lt;/a&gt;&lt;/code&gt; for cleaning Specimen Level experiments
+or &lt;code&gt;&lt;a title="impc_etl.workflow.extraction.LineExperimentExtractor" href="../../workflow/extraction.html#impc_etl.workflow.extraction.LineExperimentExtractor"&gt;LineExperimentExtractor&lt;/a&gt;&lt;/code&gt;
+for cleaning Line Level experiments.
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def clean_experiments(experiment_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">class IMPCExperimentCleaner(PySparkTask):
     &#34;&#34;&#34;
-    DCC experiment level cleaner
+    PySpark task  to clean the IMPC Experimental data.
 
-    :param experiment_df: a raw experiment DataFrame
-    :return: a clean experiment DataFrame
-    :rtype: DataFrame
+        This task depends on `impc_etl.workflow.extraction.SpecimenExperimentExtractor` for cleaning Specimen Level experiments
+        or `impc_etl.workflow.extraction.LineExperimentExtractor`
+        for cleaning Line Level experiments.
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name: str = &#34;IMPC_Experiment_Cleaner&#34;
+
+    #: Experimental type can be &#39;specimen_level&#39; or &#39;line_level&#39;.
+    experiment_type: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
+
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        return (
+            SpecimenExperimentExtractor
+            if self.experiment_type == &#34;specimen_level&#34;
+            else LineExperimentExtractor
+        )
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/specimen_level_experiment_clean_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}{self.experiment_type}_experiment_clean_parquet&#34;
+        )
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.input().path,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args: Any):
+        &#34;&#34;&#34;
+        Load the given  input Experiment  parquet and applies some sanitizing functions to it.
+        &#34;&#34;&#34;
+        input_path = args[0]
+        entity_type = args[1]
+        output_path = args[2]
+        spark = SparkSession(sc)
+        dcc_df = spark.read.parquet(input_path)
+
+        if entity_type == &#34;specimen_level&#34;:
+            dcc_clean_df = self.clean_experiments(dcc_df)
+        else:
+            dcc_clean_df = self.clean_lines(dcc_df)
+
+        dcc_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
+
+    def clean_experiments(self, experiment_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        DCC for specimen  level experiments.
+        &#34;&#34;&#34;
+        experiment_df = (
+            experiment_df.transform(self.map_centre_ids)
+            .transform(self.map_project_ids)
+            .transform(self.truncate_europhenome_specimen_ids)
+            .transform(self.drop_skipped_experiments)
+            .transform(self.drop_skipped_procedures)
+            .transform(self.map_3i_project_ids)
+            .transform(self.prefix_3i_experiment_ids)
+            .transform(self.drop_null_centre_id)
+            .transform(self.drop_null_data_source)
+            .transform(self.drop_null_date_of_experiment)
+            .transform(self.drop_null_pipeline)
+            .transform(self.drop_null_project)
+            .transform(self.drop_null_specimen_id)
+            .transform(self.generate_unique_id)
+        )
+        return experiment_df
+
+    def clean_lines(self, line_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        DCC cleaner for line level experiments.
+        &#34;&#34;&#34;
+        line_df = (
+            line_df.transform(self.generate_line_experiment_id)
+            .transform(self.map_centre_ids)
+            .transform(self.map_project_ids)
+            .transform(self.drop_skipped_procedures)
+            .transform(self.truncate_europhenome_colony_ids)
+            .transform(self.parse_europhenome_colony_xml_entities)
+            .transform(self.map_3i_project_ids)
+            .transform(self.prefix_3i_experiment_ids)
+            .transform(self.drop_null_centre_id)
+            .transform(self.drop_null_data_source)
+            .transform(self.drop_null_pipeline)
+            .transform(self.drop_null_project)
+            .transform(self.generate_unique_id)
+        )
+        return line_df
+
+    def generate_line_experiment_id(self, line_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Takes in a DataFrame containing line level experiments and generates an Experiment  ID for each row.
+        Line level experiments in the XML files don&#39;t have a experiment ID and that is needed for further processing so we generate an artificial one.
+        &#34;&#34;&#34;
+        line_df = line_df.withColumn(
+            &#34;_experimentID&#34;, concat(col(&#34;_procedureID&#34;), lit(&#34;-&#34;), col(&#34;_colonyID&#34;))
+        )
+        return line_df
+
+    def map_centre_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Maps the center ids  found in the XML files to a standard list of ids e.g:
+            - gmc -&gt; HMGU
+            - h -&gt; MRC Harwell
+        The full list of mappings can be found at `impc_etl.config.Constants.CENTRE_ID_MAP`
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_centreID&#34;, udf(utils.map_centre_id, StringType())(&#34;_centreID&#34;)
+        )
+        return dcc_df
+
+    def map_project_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Maps the center ids  found in the XML files to a standard list of ids e.g:
+            - dtcc -&gt; DTCC
+            - riken brc -&gt; RBRC
+        The full list of mappings can be found at `impc_etl.config.Constants.PROJECT_ID_MAP`
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_project&#34;, udf(utils.map_project_id, StringType())(&#34;_project&#34;)
+        )
+        return dcc_df
+
+    def truncate_europhenome_specimen_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some EuroPhenome Specimen Ids have a suffix that should be truncated, the legacy identifying strategy for Specimen id included
+        a suffix tno reference the production/phenotyping Centre (e.g. 232328312_HRW), that suffix needs to be removed.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;specimenID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
+                udf(utils.truncate_specimen_id, StringType())(dcc_df[&#34;specimenID&#34;]),
+            ).otherwise(dcc_df[&#34;specimenID&#34;]),
+        )
+        return dcc_df
+
+    def truncate_europhenome_colony_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some EuroPhenome Colony Ids have a suffix that should be truncated. Same as Specimen IDs some colony IDs used to have a suffix to identify
+        the Centre and that has been  removed from the
+        tracking system, so we need to truncate them so they  match the corresponding  entry on GenTar.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_colonyID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
+                udf(utils.truncate_colony_id, StringType())(dcc_df[&#34;_colonyID&#34;]),
+            ).otherwise(dcc_df[&#34;_colonyID&#34;]),
+        )
+        return dcc_df
+
+    def parse_europhenome_colony_xml_entities(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some EuroPhenome Colony Ids have &amp;lt; &amp;gt; values that have to be replaced by the  corresponding characters &lt; and &gt;.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_colonyID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
+                regexp_replace(&#34;_colonyID&#34;, &#34;&amp;lt;&#34;, &#34;&lt;&#34;),
+            ).otherwise(dcc_df[&#34;_colonyID&#34;]),
+        )
+
+        dcc_df = dcc_df.withColumn(
+            &#34;_colonyID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
+                regexp_replace(&#34;_colonyID&#34;, &#34;&amp;gt;&#34;, &#34;&gt;&#34;),
+            ).otherwise(dcc_df[&#34;_colonyID&#34;]),
+        )
+        return dcc_df
+
+    def drop_skipped_experiments(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        We have a list of IMPC experiments that should be dropped from the loading process.
+        &#34;&#34;&#34;
+        return dcc_df.where(
+            ~(
+                (dcc_df[&#34;_centreID&#34;] == &#34;Ucd&#34;)
+                &amp; (
+                    dcc_df[&#34;_experimentID&#34;].isin(
+                        [&#34;GRS_2013-10-09_4326&#34;, &#34;GRS_2014-07-16_8800&#34;]
+                    )
+                )
+            )
+        )
+
+    def drop_skipped_procedures(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Drop the experiments corresponding with the list of dropped procedures found
+        at `impc_etl.config.constants.Constants.SKIPPED_PROCEDURES`.
+        &#34;&#34;&#34;
+        return dcc_df.where(
+            (
+                ~(
+                    regexp_extract(col(&#34;_procedureID&#34;), &#34;(.+_.+)_.+&#34;, 1).isin(
+                        Constants.SKIPPED_PROCEDURES
+                    )
+                )
+            )
+            | (dcc_df[&#34;_dataSource&#34;] == &#34;3i&#34;)
+        )
+
+    def map_3i_project_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some data from the  3i project contains invalid Project identifiers, those entries should be marked as MGP.
+        &#34;&#34;&#34;
+        return dcc_df.withColumn(
+            &#34;_project&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;3i&#34;)
+                &amp; (~dcc_df[&#34;_project&#34;].isin(Constants.VALID_PROJECT_IDS)),
+                lit(&#34;MGP&#34;),
+            ).otherwise(dcc_df[&#34;_project&#34;]),
+        )
+
+    def prefix_3i_experiment_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        In  order to avoid collusion  of experiment IDs coming from 3i witht he  ones we generate on the IMPC data,
+        we add a prefix the  3i experiment IDs.
+        &#34;&#34;&#34;
+        return dcc_df.withColumn(
+            &#34;_experimentID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;3i&#34;),
+                concat(lit(&#34;3i_&#34;), dcc_df[&#34;_experimentID&#34;]),
+            ).otherwise(dcc_df[&#34;_experimentID&#34;]),
+        )
+
+    def drop_null_procedure_id(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a Procedure ID. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;_procedureID&#34;)
+
+    def drop_null_centre_id(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a Centre ID. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;_centreID&#34;)
+
+    def drop_null_data_source(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a DataSource. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;_dataSource&#34;)
+
+    def drop_null_date_of_experiment(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a Date of Experiment. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;_dateOfExperiment&#34;)
+
+    def drop_null_pipeline(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a Pipeline ID. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;_pipeline&#34;)
+
+    def drop_null_project(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a Project ID. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;_project&#34;)
+
+    def drop_null_specimen_id(self, dcc_df: DataFrame):
+        &#34;&#34;&#34;
+        Drops all the experiments without a Specimen ID. This case only appears on legacy  data.
+        &#34;&#34;&#34;
+        return self.drop_if_null(dcc_df, &#34;specimenID&#34;)
+
+    def drop_if_null(self, dcc_df: DataFrame, column: str) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Function that takes in a DataFrame and a column_name and returns that DataFrame filtering out the rows that have
+        a null value on the specified column.
+        &#34;&#34;&#34;
+        return dcc_df.where(dcc_df[column].isNotNull())
+
+    def generate_unique_id(self, dcc_experiment_df: DataFrame):
+        &#34;&#34;&#34;
+        Generates a unique_id column using as an input every column
+        except from those that have non-unique values and
+        the ones that correspond to parameter values.
+        Given that _sequenceID could be null, the function transforms it the to the string NA
+        when is null to avoid the nullifying the concat.
+        It concatenates the unique set of values and then applies
+        an MD5 hash function to the resulting string.
+        :param dcc_experiment_df:
+        :return: DataFrame
+        &#34;&#34;&#34;
+        non_unique_columns = [
+            &#34;_type&#34;,
+            &#34;_sourceFile&#34;,
+            &#34;_VALUE&#34;,
+            &#34;procedureMetadata&#34;,
+            &#34;statusCode&#34;,
+            &#34;_sequenceID&#34;,
+            &#34;_project&#34;,
+        ]
+        if &#34;_sequenceID&#34; in dcc_experiment_df.columns:
+            dcc_experiment_df = dcc_experiment_df.withColumn(
+                &#34;_sequenceIDStr&#34;,
+                when(col(&#34;_sequenceID&#34;).isNull(), lit(&#34;NA&#34;)).otherwise(
+                    col(&#34;_sequenceID&#34;)
+                ),
+            )
+        unique_columns = [
+            col_name
+            for col_name in dcc_experiment_df.columns
+            if col_name not in non_unique_columns and not col_name.endswith(&#34;Parameter&#34;)
+        ]
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            &#34;unique_id&#34;, md5(concat(*unique_columns))
+        )
+        return dcc_experiment_df</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.experiment_type"><code class="name">var <span class="ident">experiment_type</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>Experimental type can be 'specimen_level' or 'line_level'.</p></div>
+</dd>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>Name of the Spark task</p></div>
+</dd>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>Path of the output directory where the new parquet file will be generated.</p></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates the options pass to the PySpark job</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    &#34;&#34;&#34;
+    Generates the options pass to the PySpark job
+    &#34;&#34;&#34;
+    return [
+        self.input().path,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.clean_experiments"><code class="name flex">
+<span>def <span class="ident">clean_experiments</span></span>(<span>self, experiment_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>DCC for specimen
+level experiments.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def clean_experiments(self, experiment_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    DCC for specimen  level experiments.
     &#34;&#34;&#34;
     experiment_df = (
-        experiment_df.transform(map_centre_ids)
-        .transform(map_project_ids)
-        .transform(truncate_europhenome_specimen_ids)
-        .transform(drop_skipped_experiments)
-        .transform(drop_skipped_procedures)
-        .transform(map_3i_project_ids)
-        .transform(prefix_3i_experiment_ids)
-        .transform(drop_null_centre_id)
-        .transform(drop_null_data_source)
-        .transform(drop_null_date_of_experiment)
-        .transform(drop_null_pipeline)
-        .transform(drop_null_project)
-        .transform(drop_null_specimen_id)
-        .transform(generate_unique_id)
+        experiment_df.transform(self.map_centre_ids)
+        .transform(self.map_project_ids)
+        .transform(self.truncate_europhenome_specimen_ids)
+        .transform(self.drop_skipped_experiments)
+        .transform(self.drop_skipped_procedures)
+        .transform(self.map_3i_project_ids)
+        .transform(self.prefix_3i_experiment_ids)
+        .transform(self.drop_null_centre_id)
+        .transform(self.drop_null_data_source)
+        .transform(self.drop_null_date_of_experiment)
+        .transform(self.drop_null_pipeline)
+        .transform(self.drop_null_project)
+        .transform(self.drop_null_specimen_id)
+        .transform(self.generate_unique_id)
     )
     return experiment_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.clean_lines"><code class="name flex">
-<span>def <span class="ident">clean_lines</span></span>(<span>line_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.clean_lines"><code class="name flex">
+<span>def <span class="ident">clean_lines</span></span>(<span>self, line_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"><p>DCC experiment level cleaner</p>
-<p>:param line_df: a raw line DataFrame
-:return: a clean line DataFrame
-:rtype: DataFrame</p></div>
+<div class="desc"><p>DCC cleaner for line level experiments.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def clean_lines(line_df: DataFrame):
+<pre><code class="python">def clean_lines(self, line_df: DataFrame) -&gt; DataFrame:
     &#34;&#34;&#34;
-    DCC experiment level cleaner
-
-    :param line_df: a raw line DataFrame
-    :return: a clean line DataFrame
-    :rtype: DataFrame
+    DCC cleaner for line level experiments.
     &#34;&#34;&#34;
     line_df = (
-        line_df.transform(generate_line_experiment_id)
-        .transform(map_centre_ids)
-        .transform(map_project_ids)
-        .transform(drop_skipped_procedures)
-        .transform(truncate_europhenome_colony_ids)
-        .transform(parse_europhenome_colony_xml_entities)
-        .transform(map_3i_project_ids)
-        .transform(prefix_3i_experiment_ids)
-        .transform(drop_null_centre_id)
-        .transform(drop_null_data_source)
-        .transform(drop_null_pipeline)
-        .transform(drop_null_project)
-        .transform(generate_unique_id)
+        line_df.transform(self.generate_line_experiment_id)
+        .transform(self.map_centre_ids)
+        .transform(self.map_project_ids)
+        .transform(self.drop_skipped_procedures)
+        .transform(self.truncate_europhenome_colony_ids)
+        .transform(self.parse_europhenome_colony_xml_entities)
+        .transform(self.map_3i_project_ids)
+        .transform(self.prefix_3i_experiment_ids)
+        .transform(self.drop_null_centre_id)
+        .transform(self.drop_null_data_source)
+        .transform(self.drop_null_pipeline)
+        .transform(self.drop_null_project)
+        .transform(self.generate_unique_id)
     )
     return line_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.drop_if_null"><code class="name flex">
-<span>def <span class="ident">drop_if_null</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame, column: str) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_if_null"><code class="name flex">
+<span>def <span class="ident">drop_if_null</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame, column: str) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param dcc_df:
-:param column:
-:return:</p></div>
+<div class="desc"><p>Function that takes in a DataFrame and a column_name and returns that DataFrame filtering out the rows that have
+a null value on the specified column.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_if_null(dcc_df: DataFrame, column: str) -&gt; DataFrame:
+<pre><code class="python">def drop_if_null(self, dcc_df: DataFrame, column: str) -&gt; DataFrame:
     &#34;&#34;&#34;
-
-    :param dcc_df:
-    :param column:
-    :return:
+    Function that takes in a DataFrame and a column_name and returns that DataFrame filtering out the rows that have
+    a null value on the specified column.
     &#34;&#34;&#34;
     return dcc_df.where(dcc_df[column].isNotNull())</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.drop_null_centre_id"><code class="name flex">
-<span>def <span class="ident">drop_null_centre_id</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_centre_id"><code class="name flex">
+<span>def <span class="ident">drop_null_centre_id</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Drops all the experiments without a Centre ID. This case only appears on legacy
+data.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_null_centre_id(dcc_df: DataFrame):
+<pre><code class="python">def drop_null_centre_id(self, dcc_df: DataFrame):
     &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
+    Drops all the experiments without a Centre ID. This case only appears on legacy  data.
     &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;_centreID&#34;)</code></pre>
+    return self.drop_if_null(dcc_df, &#34;_centreID&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.drop_null_data_source"><code class="name flex">
-<span>def <span class="ident">drop_null_data_source</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_data_source"><code class="name flex">
+<span>def <span class="ident">drop_null_data_source</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Drops all the experiments without a DataSource. This case only appears on legacy
+data.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_null_data_source(dcc_df: DataFrame):
+<pre><code class="python">def drop_null_data_source(self, dcc_df: DataFrame):
     &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
+    Drops all the experiments without a DataSource. This case only appears on legacy  data.
     &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;_dataSource&#34;)</code></pre>
+    return self.drop_if_null(dcc_df, &#34;_dataSource&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.drop_null_date_of_experiment"><code class="name flex">
-<span>def <span class="ident">drop_null_date_of_experiment</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_date_of_experiment"><code class="name flex">
+<span>def <span class="ident">drop_null_date_of_experiment</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Drops all the experiments without a Date of Experiment. This case only appears on legacy
+data.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_null_date_of_experiment(dcc_df: DataFrame):
+<pre><code class="python">def drop_null_date_of_experiment(self, dcc_df: DataFrame):
     &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
+    Drops all the experiments without a Date of Experiment. This case only appears on legacy  data.
     &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;_dateOfExperiment&#34;)</code></pre>
+    return self.drop_if_null(dcc_df, &#34;_dateOfExperiment&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.drop_null_pipeline"><code class="name flex">
-<span>def <span class="ident">drop_null_pipeline</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_pipeline"><code class="name flex">
+<span>def <span class="ident">drop_null_pipeline</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Drops all the experiments without a Pipeline ID. This case only appears on legacy
+data.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_null_pipeline(dcc_df: DataFrame):
+<pre><code class="python">def drop_null_pipeline(self, dcc_df: DataFrame):
     &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
+    Drops all the experiments without a Pipeline ID. This case only appears on legacy  data.
     &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;_pipeline&#34;)</code></pre>
+    return self.drop_if_null(dcc_df, &#34;_pipeline&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.drop_null_procedure_id"><code class="name flex">
-<span>def <span class="ident">drop_null_procedure_id</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_procedure_id"><code class="name flex">
+<span>def <span class="ident">drop_null_procedure_id</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Drops all the experiments without a Procedure ID. This case only appears on legacy
+data.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_null_procedure_id(dcc_df: DataFrame):
+<pre><code class="python">def drop_null_procedure_id(self, dcc_df: DataFrame):
     &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
+    Drops all the experiments without a Procedure ID. This case only appears on legacy  data.
     &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;_procedureID&#34;)</code></pre>
+    return self.drop_if_null(dcc_df, &#34;_procedureID&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.drop_null_project"><code class="name flex">
-<span>def <span class="ident">drop_null_project</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_project"><code class="name flex">
+<span>def <span class="ident">drop_null_project</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Drops all the experiments without a Project ID. This case only appears on legacy
+data.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_null_project(dcc_df: DataFrame):
+<pre><code class="python">def drop_null_project(self, dcc_df: DataFrame):
     &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
+    Drops all the experiments without a Project ID. This case only appears on legacy  data.
     &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;_project&#34;)</code></pre>
+    return self.drop_if_null(dcc_df, &#34;_project&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.drop_null_specimen_id"><code class="name flex">
-<span>def <span class="ident">drop_null_specimen_id</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_specimen_id"><code class="name flex">
+<span>def <span class="ident">drop_null_specimen_id</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Drops all the experiments without a Specimen ID. This case only appears on legacy
+data.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_null_specimen_id(dcc_df: DataFrame):
+<pre><code class="python">def drop_null_specimen_id(self, dcc_df: DataFrame):
     &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
+    Drops all the experiments without a Specimen ID. This case only appears on legacy  data.
     &#34;&#34;&#34;
-    return drop_if_null(dcc_df, &#34;specimenID&#34;)</code></pre>
+    return self.drop_if_null(dcc_df, &#34;specimenID&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.drop_skipped_experiments"><code class="name flex">
-<span>def <span class="ident">drop_skipped_experiments</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_skipped_experiments"><code class="name flex">
+<span>def <span class="ident">drop_skipped_experiments</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>We have a list of IMPC experiments that should be dropped from the loading process.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_skipped_experiments(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def drop_skipped_experiments(self, dcc_df: DataFrame) -&gt; DataFrame:
     &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
+    We have a list of IMPC experiments that should be dropped from the loading process.
     &#34;&#34;&#34;
     return dcc_df.where(
         ~(
@@ -647,21 +1033,20 @@ if __name__ == &#34;__main__&#34;:
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.drop_skipped_procedures"><code class="name flex">
-<span>def <span class="ident">drop_skipped_procedures</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_skipped_procedures"><code class="name flex">
+<span>def <span class="ident">drop_skipped_procedures</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Drop the experiments corresponding with the list of dropped procedures found
+at <code><a title="impc_etl.config.constants.Constants.SKIPPED_PROCEDURES" href="../../config/constants.html#impc_etl.config.constants.Constants.SKIPPED_PROCEDURES">Constants.SKIPPED_PROCEDURES</a></code>.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_skipped_procedures(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def drop_skipped_procedures(self, dcc_df: DataFrame) -&gt; DataFrame:
     &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
+    Drop the experiments corresponding with the list of dropped procedures found
+    at `impc_etl.config.constants.Constants.SKIPPED_PROCEDURES`.
     &#34;&#34;&#34;
     return dcc_df.where(
         (
@@ -675,31 +1060,37 @@ if __name__ == &#34;__main__&#34;:
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.generate_line_experiment_id"><code class="name flex">
-<span>def <span class="ident">generate_line_experiment_id</span></span>(<span>line_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.generate_line_experiment_id"><code class="name flex">
+<span>def <span class="ident">generate_line_experiment_id</span></span>(<span>self, line_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Takes in a DataFrame containing line level experiments and generates an Experiment
+ID for each row.
+Line level experiments in the XML files don't have a experiment ID and that is needed for further processing so we generate an artificial one.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def generate_line_experiment_id(line_df: DataFrame):
+<pre><code class="python">def generate_line_experiment_id(self, line_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes in a DataFrame containing line level experiments and generates an Experiment  ID for each row.
+    Line level experiments in the XML files don&#39;t have a experiment ID and that is needed for further processing so we generate an artificial one.
+    &#34;&#34;&#34;
     line_df = line_df.withColumn(
         &#34;_experimentID&#34;, concat(col(&#34;_procedureID&#34;), lit(&#34;-&#34;), col(&#34;_colonyID&#34;))
     )
     return line_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.generate_unique_id"><code class="name flex">
-<span>def <span class="ident">generate_unique_id</span></span>(<span>dcc_experiment_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.generate_unique_id"><code class="name flex">
+<span>def <span class="ident">generate_unique_id</span></span>(<span>self, dcc_experiment_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Generates an unique_id column using as an input every column
-except from those that have non unique values and
+<div class="desc"><p>Generates a unique_id column using as an input every column
+except from those that have non-unique values and
 the ones that correspond to parameter values.
 Given that _sequenceID could be null, the function transforms it the to the string NA
-when its null to avoid the nullifying the concat.
+when is null to avoid the nullifying the concat.
 It concatenates the unique set of values and then applies
 an MD5 hash function to the resulting string.
 :param dcc_experiment_df:
@@ -708,13 +1099,13 @@ an MD5 hash function to the resulting string.
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def generate_unique_id(dcc_experiment_df: DataFrame):
+<pre><code class="python">def generate_unique_id(self, dcc_experiment_df: DataFrame):
     &#34;&#34;&#34;
-    Generates an unique_id column using as an input every column
-    except from those that have non unique values and
+    Generates a unique_id column using as an input every column
+    except from those that have non-unique values and
     the ones that correspond to parameter values.
     Given that _sequenceID could be null, the function transforms it the to the string NA
-    when its null to avoid the nullifying the concat.
+    when is null to avoid the nullifying the concat.
     It concatenates the unique set of values and then applies
     an MD5 hash function to the resulting string.
     :param dcc_experiment_df:
@@ -732,7 +1123,9 @@ an MD5 hash function to the resulting string.
     if &#34;_sequenceID&#34; in dcc_experiment_df.columns:
         dcc_experiment_df = dcc_experiment_df.withColumn(
             &#34;_sequenceIDStr&#34;,
-            when(col(&#34;_sequenceID&#34;).isNull(), lit(&#34;NA&#34;)).otherwise(col(&#34;_sequenceID&#34;)),
+            when(col(&#34;_sequenceID&#34;).isNull(), lit(&#34;NA&#34;)).otherwise(
+                col(&#34;_sequenceID&#34;)
+            ),
         )
     unique_columns = [
         col_name
@@ -745,51 +1138,48 @@ an MD5 hash function to the resulting string.
     return dcc_experiment_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.main"><code class="name flex">
-<span>def <span class="ident">main</span></span>(<span>argv)</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Takes in an parquet file from DCC experiment XML files and generates a clean version of it
-:param argv: [1] input_path, [2] entity_type,
-[3] output_path</p></div>
+<div class="desc"><p>Load the given
+input Experiment
+parquet and applies some sanitizing functions to it.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def main(argv):
+<pre><code class="python">def main(self, sc: SparkContext, *args: Any):
     &#34;&#34;&#34;
-    Takes in an parquet file from DCC experiment XML files and generates a clean version of it
-    :param argv: [1] input_path, [2] entity_type,  [3] output_path
+    Load the given  input Experiment  parquet and applies some sanitizing functions to it.
     &#34;&#34;&#34;
-    input_path = argv[1]
-    entity_type = argv[2]
-    output_path = argv[3]
-    spark = SparkSession.builder.getOrCreate()
+    input_path = args[0]
+    entity_type = args[1]
+    output_path = args[2]
+    spark = SparkSession(sc)
     dcc_df = spark.read.parquet(input_path)
 
-    if entity_type == &#34;experiment&#34;:
-        dcc_clean_df = clean_experiments(dcc_df)
+    if entity_type == &#34;specimen_level&#34;:
+        dcc_clean_df = self.clean_experiments(dcc_df)
     else:
-        dcc_clean_df = clean_lines(dcc_df)
+        dcc_clean_df = self.clean_lines(dcc_df)
 
     dcc_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.map_3i_project_ids"><code class="name flex">
-<span>def <span class="ident">map_3i_project_ids</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_3i_project_ids"><code class="name flex">
+<span>def <span class="ident">map_3i_project_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Some data from the
+3i project contains invalid Project identifiers, those entries should be marked as MGP.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def map_3i_project_ids(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def map_3i_project_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
     &#34;&#34;&#34;
-
-    :param dcc_df:
-    :return:
+    Some data from the  3i project contains invalid Project identifiers, those entries should be marked as MGP.
     &#34;&#34;&#34;
     return dcc_df.withColumn(
         &#34;_project&#34;,
@@ -801,27 +1191,25 @@ an MD5 hash function to the resulting string.
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.map_centre_ids"><code class="name flex">
-<span>def <span class="ident">map_centre_ids</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_centre_ids"><code class="name flex">
+<span>def <span class="ident">map_centre_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Maps the center ids
 found in the XML files to a standard list of ids e.g:
 - gmc -&gt; HMGU
 - h -&gt; MRC Harwell
-The full list of mappings can be found at impc_etl.config.Constans.CENTRE_ID_MAP
-:param dcc_df: DataFrame</p></div>
+The full list of mappings can be found at <code>impc_etl.config.Constants.CENTRE_ID_MAP</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def map_centre_ids(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def map_centre_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
     &#34;&#34;&#34;
     Maps the center ids  found in the XML files to a standard list of ids e.g:
         - gmc -&gt; HMGU
         - h -&gt; MRC Harwell
-    The full list of mappings can be found at impc_etl.config.Constans.CENTRE_ID_MAP
-    :param dcc_df: DataFrame
+    The full list of mappings can be found at `impc_etl.config.Constants.CENTRE_ID_MAP`
     &#34;&#34;&#34;
     dcc_df = dcc_df.withColumn(
         &#34;_centreID&#34;, udf(utils.map_centre_id, StringType())(&#34;_centreID&#34;)
@@ -829,27 +1217,25 @@ The full list of mappings can be found at impc_etl.config.Constans.CENTRE_ID_MAP
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.map_project_ids"><code class="name flex">
-<span>def <span class="ident">map_project_ids</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_project_ids"><code class="name flex">
+<span>def <span class="ident">map_project_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Maps the center ids
 found in the XML files to a standard list of ids e.g:
 - dtcc -&gt; DTCC
 - riken brc -&gt; RBRC
-The full list of mappings can be found at impc_etl.config.Constans.PROJECT_ID_MAP
-:param dcc_df: DataFrame</p></div>
+The full list of mappings can be found at <code>impc_etl.config.Constants.PROJECT_ID_MAP</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def map_project_ids(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def map_project_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
     &#34;&#34;&#34;
     Maps the center ids  found in the XML files to a standard list of ids e.g:
         - dtcc -&gt; DTCC
         - riken brc -&gt; RBRC
-    The full list of mappings can be found at impc_etl.config.Constans.PROJECT_ID_MAP
-    :param dcc_df: DataFrame
+    The full list of mappings can be found at `impc_etl.config.Constants.PROJECT_ID_MAP`
     &#34;&#34;&#34;
     dcc_df = dcc_df.withColumn(
         &#34;_project&#34;, udf(utils.map_project_id, StringType())(&#34;_project&#34;)
@@ -857,22 +1243,39 @@ The full list of mappings can be found at impc_etl.config.Constans.PROJECT_ID_MA
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.parse_europhenome_colony_xml_entities"><code class="name flex">
-<span>def <span class="ident">parse_europhenome_colony_xml_entities</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Some EuroPhenome Colony Ids have &lt; &gt; values that have to be replaced
-:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Returns the full parquet path as an output for the Luigi Task
+(e.g. impc/dr15.2/parquet/specimen_level_experiment_clean_parquet)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def parse_europhenome_colony_xml_entities(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def output(self):
     &#34;&#34;&#34;
-    Some EuroPhenome Colony Ids have &amp;lt; &amp;gt; values that have to be replaced
-    :param dcc_df:
-    :return:
+    Returns the full parquet path as an output for the Luigi Task
+    (e.g. impc/dr15.2/parquet/specimen_level_experiment_clean_parquet)
+    &#34;&#34;&#34;
+    return ImpcConfig().get_target(
+        f&#34;{self.output_path}{self.experiment_type}_experiment_clean_parquet&#34;
+    )</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.parse_europhenome_colony_xml_entities"><code class="name flex">
+<span>def <span class="ident">parse_europhenome_colony_xml_entities</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Some EuroPhenome Colony Ids have &lt; &gt; values that have to be replaced by the
+corresponding characters &lt; and &gt;.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def parse_europhenome_colony_xml_entities(self, dcc_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Some EuroPhenome Colony Ids have &amp;lt; &amp;gt; values that have to be replaced by the  corresponding characters &lt; and &gt;.
     &#34;&#34;&#34;
     dcc_df = dcc_df.withColumn(
         &#34;_colonyID&#34;,
@@ -892,40 +1295,74 @@ The full list of mappings can be found at impc_etl.config.Constans.PROJECT_ID_MA
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.prefix_3i_experiment_ids"><code class="name flex">
-<span>def <span class="ident">prefix_3i_experiment_ids</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.prefix_3i_experiment_ids"><code class="name flex">
+<span>def <span class="ident">prefix_3i_experiment_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>In
+order to avoid collusion
+of experiment IDs coming from 3i witht he
+ones we generate on the IMPC data,
+we add a prefix the
+3i experiment IDs.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def prefix_3i_experiment_ids(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def prefix_3i_experiment_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    In  order to avoid collusion  of experiment IDs coming from 3i witht he  ones we generate on the IMPC data,
+    we add a prefix the  3i experiment IDs.
+    &#34;&#34;&#34;
     return dcc_df.withColumn(
         &#34;_experimentID&#34;,
         when(
-            (dcc_df[&#34;_dataSource&#34;] == &#34;3i&#34;), concat(lit(&#34;3i_&#34;), dcc_df[&#34;_experimentID&#34;])
+            (dcc_df[&#34;_dataSource&#34;] == &#34;3i&#34;),
+            concat(lit(&#34;3i_&#34;), dcc_df[&#34;_experimentID&#34;]),
         ).otherwise(dcc_df[&#34;_experimentID&#34;]),
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.truncate_europhenome_colony_ids"><code class="name flex">
-<span>def <span class="ident">truncate_europhenome_colony_ids</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Some EuroPhenome Colony Ids have a suffix that should be truncated
-:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Defines the luigi
+task dependencies</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def truncate_europhenome_colony_ids(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def requires(self):
     &#34;&#34;&#34;
-    Some EuroPhenome Colony Ids have a suffix that should be truncated
-    :param dcc_df:
-    :return:
+    Defines the luigi  task dependencies
+    &#34;&#34;&#34;
+    return (
+        SpecimenExperimentExtractor
+        if self.experiment_type == &#34;specimen_level&#34;
+        else LineExperimentExtractor
+    )</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.truncate_europhenome_colony_ids"><code class="name flex">
+<span>def <span class="ident">truncate_europhenome_colony_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Some EuroPhenome Colony Ids have a suffix that should be truncated. Same as Specimen IDs some colony IDs used to have a suffix to identify
+the Centre and that has been
+removed from the
+tracking system, so we need to truncate them so they
+match the corresponding
+entry on GenTar.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def truncate_europhenome_colony_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Some EuroPhenome Colony Ids have a suffix that should be truncated. Same as Specimen IDs some colony IDs used to have a suffix to identify
+    the Centre and that has been  removed from the
+    tracking system, so we need to truncate them so they  match the corresponding  entry on GenTar.
     &#34;&#34;&#34;
     dcc_df = dcc_df.withColumn(
         &#34;_colonyID&#34;,
@@ -937,22 +1374,20 @@ The full list of mappings can be found at impc_etl.config.Constans.PROJECT_ID_MA
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.truncate_europhenome_specimen_ids"><code class="name flex">
-<span>def <span class="ident">truncate_europhenome_specimen_ids</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.truncate_europhenome_specimen_ids"><code class="name flex">
+<span>def <span class="ident">truncate_europhenome_specimen_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Some EuroPhenome Specimen Ids have a suffix that should be truncated
-:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Some EuroPhenome Specimen Ids have a suffix that should be truncated, the legacy identifying strategy for Specimen id included
+a suffix tno reference the production/phenotyping Centre (e.g. 232328312_HRW), that suffix needs to be removed.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def truncate_europhenome_specimen_ids(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def truncate_europhenome_specimen_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
     &#34;&#34;&#34;
-    Some EuroPhenome Specimen Ids have a suffix that should be truncated
-    :param dcc_df:
-    :return:
+    Some EuroPhenome Specimen Ids have a suffix that should be truncated, the legacy identifying strategy for Specimen id included
+    a suffix tno reference the production/phenotyping Centre (e.g. 232328312_HRW), that suffix needs to be removed.
     &#34;&#34;&#34;
     dcc_df = dcc_df.withColumn(
         &#34;specimenID&#34;,
@@ -965,8 +1400,8 @@ The full list of mappings can be found at impc_etl.config.Constans.PROJECT_ID_MA
 </details>
 </dd>
 </dl>
-</section>
-<section>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -987,30 +1422,41 @@ The full list of mappings can be found at impc_etl.config.Constans.PROJECT_ID_MA
 <li><code><a title="impc_etl.jobs.clean" href="index.html">impc_etl.jobs.clean</a></code></li>
 </ul>
 </li>
-<li><h3><a href="#header-functions">Functions</a></h3>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner">IMPCExperimentCleaner</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.clean_experiments" href="#impc_etl.jobs.clean.experiment_cleaner.clean_experiments">clean_experiments</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.clean_lines" href="#impc_etl.jobs.clean.experiment_cleaner.clean_lines">clean_lines</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.drop_if_null" href="#impc_etl.jobs.clean.experiment_cleaner.drop_if_null">drop_if_null</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.drop_null_centre_id" href="#impc_etl.jobs.clean.experiment_cleaner.drop_null_centre_id">drop_null_centre_id</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.drop_null_data_source" href="#impc_etl.jobs.clean.experiment_cleaner.drop_null_data_source">drop_null_data_source</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.drop_null_date_of_experiment" href="#impc_etl.jobs.clean.experiment_cleaner.drop_null_date_of_experiment">drop_null_date_of_experiment</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.drop_null_pipeline" href="#impc_etl.jobs.clean.experiment_cleaner.drop_null_pipeline">drop_null_pipeline</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.drop_null_procedure_id" href="#impc_etl.jobs.clean.experiment_cleaner.drop_null_procedure_id">drop_null_procedure_id</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.drop_null_project" href="#impc_etl.jobs.clean.experiment_cleaner.drop_null_project">drop_null_project</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.drop_null_specimen_id" href="#impc_etl.jobs.clean.experiment_cleaner.drop_null_specimen_id">drop_null_specimen_id</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.drop_skipped_experiments" href="#impc_etl.jobs.clean.experiment_cleaner.drop_skipped_experiments">drop_skipped_experiments</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.drop_skipped_procedures" href="#impc_etl.jobs.clean.experiment_cleaner.drop_skipped_procedures">drop_skipped_procedures</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.generate_line_experiment_id" href="#impc_etl.jobs.clean.experiment_cleaner.generate_line_experiment_id">generate_line_experiment_id</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.generate_unique_id" href="#impc_etl.jobs.clean.experiment_cleaner.generate_unique_id">generate_unique_id</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.main" href="#impc_etl.jobs.clean.experiment_cleaner.main">main</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.map_3i_project_ids" href="#impc_etl.jobs.clean.experiment_cleaner.map_3i_project_ids">map_3i_project_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.map_centre_ids" href="#impc_etl.jobs.clean.experiment_cleaner.map_centre_ids">map_centre_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.map_project_ids" href="#impc_etl.jobs.clean.experiment_cleaner.map_project_ids">map_project_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.parse_europhenome_colony_xml_entities" href="#impc_etl.jobs.clean.experiment_cleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.prefix_3i_experiment_ids" href="#impc_etl.jobs.clean.experiment_cleaner.prefix_3i_experiment_ids">prefix_3i_experiment_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.truncate_europhenome_colony_ids" href="#impc_etl.jobs.clean.experiment_cleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.truncate_europhenome_specimen_ids" href="#impc_etl.jobs.clean.experiment_cleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.app_options" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.clean_experiments" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.clean_experiments">clean_experiments</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.clean_lines" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.clean_lines">clean_lines</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_if_null" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_if_null">drop_if_null</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_centre_id" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_centre_id">drop_null_centre_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_data_source" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_data_source">drop_null_data_source</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_date_of_experiment" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_date_of_experiment">drop_null_date_of_experiment</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_pipeline" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_pipeline">drop_null_pipeline</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_procedure_id" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_procedure_id">drop_null_procedure_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_project" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_project">drop_null_project</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_specimen_id" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_specimen_id">drop_null_specimen_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_skipped_experiments" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_skipped_experiments">drop_skipped_experiments</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_skipped_procedures" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_skipped_procedures">drop_skipped_procedures</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.experiment_type" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.experiment_type">experiment_type</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.generate_line_experiment_id" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.generate_line_experiment_id">generate_line_experiment_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.generate_unique_id" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.generate_unique_id">generate_unique_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.main" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_3i_project_ids" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_3i_project_ids">map_3i_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_centre_ids" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_centre_ids">map_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_project_ids" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_project_ids">map_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.name" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.output" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.output_path" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.parse_europhenome_colony_xml_entities" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.prefix_3i_experiment_ids" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.prefix_3i_experiment_ids">prefix_3i_experiment_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.requires" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.truncate_europhenome_colony_ids" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.truncate_europhenome_specimen_ids" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
