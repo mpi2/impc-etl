@@ -29,9 +29,16 @@ and applies some data …" />
 data sources
 (e.g. IMPC, 3i, EuroPhenome, PWG)
 and applies some data sanitizing functions.</p>
-<p>The cleaning process includes: mapping identifiers, dropping entries with required values as NULL, drop a list of
-predefined skipped experiments,
-cleaning legacy identifiers and lastly generate a unique id.</p>
+<p>The cleaning process includes:</p>
+<ul>
+<li>mapping identifiers</li>
+<li>dropping entries with required values as NULL</li>
+<li>drop a list of predefined skipped experiments</li>
+<li>creating experiment IDs for line level experiments</li>
+<li>sanitize identifiers with XML elements (e.g. gt;)</li>
+<li>cleaning legacy identifiers</li>
+<li>lastly generate a unique id</li>
+</ul>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -40,9 +47,15 @@ cleaning legacy identifiers and lastly generate a unique id.</p>
     Luigi PySpark task that takes the Experiment data coming from the different  data sources  (e.g. IMPC, 3i, EuroPhenome, PWG)
     and applies some data sanitizing functions.
 
-    The cleaning process includes: mapping identifiers, dropping entries with required values as NULL, drop a list of
-    predefined skipped experiments,
-    cleaning legacy identifiers and lastly generate a unique id.
+    The cleaning process includes:
+
+    - mapping identifiers
+    - dropping entries with required values as NULL
+    - drop a list of predefined skipped experiments
+    - creating experiment IDs for line level experiments
+    - sanitize identifiers with XML elements (e.g. gt;)
+    - cleaning legacy identifiers
+    - lastly generate a unique id
 &#34;&#34;&#34;
 from typing import Any
 
@@ -75,9 +88,9 @@ class IMPCExperimentCleaner(PySparkTask):
     &#34;&#34;&#34;
     PySpark task  to clean the IMPC Experimental data.
 
-        This task depends on `impc_etl.workflow.extraction.SpecimenExperimentExtractor` for cleaning Specimen Level experiments
-        or `impc_etl.workflow.extraction.LineExperimentExtractor`
-        for cleaning Line Level experiments.
+    This task depends on `impc_etl.workflow.extraction.SpecimenExperimentExtractor` for cleaning Specimen Level experiments
+    or `impc_etl.workflow.extraction.LineExperimentExtractor`
+    for cleaning Line Level experiments.
     &#34;&#34;&#34;
 
     #: Name of the Spark task
@@ -94,9 +107,9 @@ class IMPCExperimentCleaner(PySparkTask):
         Defines the luigi  task dependencies
         &#34;&#34;&#34;
         return (
-            SpecimenExperimentExtractor
+            SpecimenExperimentExtractor()
             if self.experiment_type == &#34;specimen_level&#34;
-            else LineExperimentExtractor
+            else LineExperimentExtractor()
         )
 
     def output(self):
@@ -114,20 +127,21 @@ class IMPCExperimentCleaner(PySparkTask):
         &#34;&#34;&#34;
         return [
             self.input().path,
+            self.experiment_type,
             self.output().path,
         ]
 
     def main(self, sc: SparkContext, *args: Any):
         &#34;&#34;&#34;
-        Load the given  input Experiment  parquet and applies some sanitizing functions to it.
+        Loads the given  input Experiment  parquet and applies some sanitizing functions to it.
         &#34;&#34;&#34;
         input_path = args[0]
-        entity_type = args[1]
+        experiment_type = args[1]
         output_path = args[2]
         spark = SparkSession(sc)
         dcc_df = spark.read.parquet(input_path)
 
-        if entity_type == &#34;specimen_level&#34;:
+        if experiment_type == &#34;specimen_level&#34;:
             dcc_clean_df = self.clean_experiments(dcc_df)
         else:
             dcc_clean_df = self.clean_lines(dcc_df)
@@ -136,7 +150,7 @@ class IMPCExperimentCleaner(PySparkTask):
 
     def clean_experiments(self, experiment_df: DataFrame) -&gt; DataFrame:
         &#34;&#34;&#34;
-        DCC for specimen  level experiments.
+        Cleaning function  for specimen  level experiments.
         &#34;&#34;&#34;
         experiment_df = (
             experiment_df.transform(self.map_centre_ids)
@@ -422,10 +436,9 @@ class IMPCExperimentCleaner(PySparkTask):
 <dd>
 <div class="desc"><p>PySpark task
 to clean the IMPC Experimental data.</p>
-<pre><code>This task depends on &lt;code&gt;&lt;a title="impc_etl.workflow.extraction.SpecimenExperimentExtractor" href="../../workflow/extraction.html#impc_etl.workflow.extraction.SpecimenExperimentExtractor"&gt;SpecimenExperimentExtractor&lt;/a&gt;&lt;/code&gt; for cleaning Specimen Level experiments
-or &lt;code&gt;&lt;a title="impc_etl.workflow.extraction.LineExperimentExtractor" href="../../workflow/extraction.html#impc_etl.workflow.extraction.LineExperimentExtractor"&gt;LineExperimentExtractor&lt;/a&gt;&lt;/code&gt;
-for cleaning Line Level experiments.
-</code></pre></div>
+<p>This task depends on <code><a title="impc_etl.workflow.extraction.SpecimenExperimentExtractor" href="../../workflow/extraction.html#impc_etl.workflow.extraction.SpecimenExperimentExtractor">SpecimenExperimentExtractor</a></code> for cleaning Specimen Level experiments
+or <code><a title="impc_etl.workflow.extraction.LineExperimentExtractor" href="../../workflow/extraction.html#impc_etl.workflow.extraction.LineExperimentExtractor">LineExperimentExtractor</a></code>
+for cleaning Line Level experiments.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -434,9 +447,9 @@ for cleaning Line Level experiments.
     &#34;&#34;&#34;
     PySpark task  to clean the IMPC Experimental data.
 
-        This task depends on `impc_etl.workflow.extraction.SpecimenExperimentExtractor` for cleaning Specimen Level experiments
-        or `impc_etl.workflow.extraction.LineExperimentExtractor`
-        for cleaning Line Level experiments.
+    This task depends on `impc_etl.workflow.extraction.SpecimenExperimentExtractor` for cleaning Specimen Level experiments
+    or `impc_etl.workflow.extraction.LineExperimentExtractor`
+    for cleaning Line Level experiments.
     &#34;&#34;&#34;
 
     #: Name of the Spark task
@@ -453,9 +466,9 @@ for cleaning Line Level experiments.
         Defines the luigi  task dependencies
         &#34;&#34;&#34;
         return (
-            SpecimenExperimentExtractor
+            SpecimenExperimentExtractor()
             if self.experiment_type == &#34;specimen_level&#34;
-            else LineExperimentExtractor
+            else LineExperimentExtractor()
         )
 
     def output(self):
@@ -473,20 +486,21 @@ for cleaning Line Level experiments.
         &#34;&#34;&#34;
         return [
             self.input().path,
+            self.experiment_type,
             self.output().path,
         ]
 
     def main(self, sc: SparkContext, *args: Any):
         &#34;&#34;&#34;
-        Load the given  input Experiment  parquet and applies some sanitizing functions to it.
+        Loads the given  input Experiment  parquet and applies some sanitizing functions to it.
         &#34;&#34;&#34;
         input_path = args[0]
-        entity_type = args[1]
+        experiment_type = args[1]
         output_path = args[2]
         spark = SparkSession(sc)
         dcc_df = spark.read.parquet(input_path)
 
-        if entity_type == &#34;specimen_level&#34;:
+        if experiment_type == &#34;specimen_level&#34;:
             dcc_clean_df = self.clean_experiments(dcc_df)
         else:
             dcc_clean_df = self.clean_lines(dcc_df)
@@ -495,7 +509,7 @@ for cleaning Line Level experiments.
 
     def clean_experiments(self, experiment_df: DataFrame) -&gt; DataFrame:
         &#34;&#34;&#34;
-        DCC for specimen  level experiments.
+        Cleaning function  for specimen  level experiments.
         &#34;&#34;&#34;
         experiment_df = (
             experiment_df.transform(self.map_centre_ids)
@@ -808,6 +822,7 @@ for cleaning Line Level experiments.
     &#34;&#34;&#34;
     return [
         self.input().path,
+        self.experiment_type,
         self.output().path,
     ]</code></pre>
 </details>
@@ -816,7 +831,8 @@ for cleaning Line Level experiments.
 <span>def <span class="ident">clean_experiments</span></span>(<span>self, experiment_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"><p>DCC for specimen
+<div class="desc"><p>Cleaning function
+for specimen
 level experiments.</p></div>
 <details class="source">
 <summary>
@@ -824,7 +840,7 @@ level experiments.</p></div>
 </summary>
 <pre><code class="python">def clean_experiments(self, experiment_df: DataFrame) -&gt; DataFrame:
     &#34;&#34;&#34;
-    DCC for specimen  level experiments.
+    Cleaning function  for specimen  level experiments.
     &#34;&#34;&#34;
     experiment_df = (
         experiment_df.transform(self.map_centre_ids)
@@ -1147,7 +1163,7 @@ an MD5 hash function to the resulting string.
 <span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Load the given
+<div class="desc"><p>Loads the given
 input Experiment
 parquet and applies some sanitizing functions to it.</p></div>
 <details class="source">
@@ -1156,15 +1172,15 @@ parquet and applies some sanitizing functions to it.</p></div>
 </summary>
 <pre><code class="python">def main(self, sc: SparkContext, *args: Any):
     &#34;&#34;&#34;
-    Load the given  input Experiment  parquet and applies some sanitizing functions to it.
+    Loads the given  input Experiment  parquet and applies some sanitizing functions to it.
     &#34;&#34;&#34;
     input_path = args[0]
-    entity_type = args[1]
+    experiment_type = args[1]
     output_path = args[2]
     spark = SparkSession(sc)
     dcc_df = spark.read.parquet(input_path)
 
-    if entity_type == &#34;specimen_level&#34;:
+    if experiment_type == &#34;specimen_level&#34;:
         dcc_clean_df = self.clean_experiments(dcc_df)
     else:
         dcc_clean_df = self.clean_lines(dcc_df)
@@ -1343,9 +1359,9 @@ task dependencies</p></div>
     Defines the luigi  task dependencies
     &#34;&#34;&#34;
     return (
-        SpecimenExperimentExtractor
+        SpecimenExperimentExtractor()
         if self.experiment_type == &#34;specimen_level&#34;
-        else LineExperimentExtractor
+        else LineExperimentExtractor()
     )</code></pre>
 </details>
 </dd>

@@ -1,3 +1,6 @@
+import luigi
+from luigi.contrib.spark import SparkSubmitTask
+
 from impc_etl.jobs.clean import *
 from impc_etl.workflow.cleaning import *
 from impc_etl.workflow.config import ImpcConfig

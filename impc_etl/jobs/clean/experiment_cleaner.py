@@ -2,9 +2,15 @@
     Luigi PySpark task that takes the Experiment data coming from the different  data sources  (e.g. IMPC, 3i, EuroPhenome, PWG)
     and applies some data sanitizing functions.
 
-    The cleaning process includes: mapping identifiers, dropping entries with required values as NULL, drop a list of
-    predefined skipped experiments,
-    cleaning legacy identifiers and lastly generate a unique id.
+    The cleaning process includes:
+
+    - mapping identifiers
+    - dropping entries with required values as NULL
+    - drop a list of predefined skipped experiments
+    - creating experiment IDs for line level experiments
+    - sanitize identifiers with XML elements (e.g. gt;)
+    - cleaning legacy identifiers
+    - lastly generate a unique id
 """
 from typing import Any
 
@@ -37,9 +43,9 @@ class IMPCExperimentCleaner(PySparkTask):
     """
     PySpark task  to clean the IMPC Experimental data.
 
-        This task depends on `impc_etl.workflow.extraction.SpecimenExperimentExtractor` for cleaning Specimen Level experiments
-        or `impc_etl.workflow.extraction.LineExperimentExtractor`
-        for cleaning Line Level experiments.
+    This task depends on `impc_etl.workflow.extraction.SpecimenExperimentExtractor` for cleaning Specimen Level experiments
+    or `impc_etl.workflow.extraction.LineExperimentExtractor`
+    for cleaning Line Level experiments.
     """
 
     #: Name of the Spark task
@@ -82,7 +88,7 @@ class IMPCExperimentCleaner(PySparkTask):
 
     def main(self, sc: SparkContext, *args: Any):
         """
-        Load the given  input Experiment  parquet and applies some sanitizing functions to it.
+        Loads the given  input Experiment  parquet and applies some sanitizing functions to it.
         """
         input_path = args[0]
         experiment_type = args[1]
@@ -99,7 +105,7 @@ class IMPCExperimentCleaner(PySparkTask):
 
     def clean_experiments(self, experiment_df: DataFrame) -> DataFrame:
         """
-        DCC for specimen  level experiments.
+        Cleaning function  for specimen  level experiments.
         """
         experiment_df = (
             experiment_df.transform(self.map_centre_ids)
