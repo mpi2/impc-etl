@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>impc_etl.jobs.extract.impress_extractor API documentation</title>
-<meta name="description" content="IMPRESS extractor
-extract_impress: Extract Impress data and load it to a dataframe" />
+<meta name="description" content="IMPRESS extractor task.
+Crawls [IMPReSS](https://www.mousephenotype.org/impress/index) API to generate a full view of the current state of …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -23,80 +23,132 @@ extract_impress: Extract Impress data and load it to a dataframe" />
 <h1 class="title">Module <code>impc_etl.jobs.extract.impress_extractor</code></h1>
 </header>
 <section id="section-intro">
-<p>IMPRESS extractor
-extract_impress: Extract Impress data and load it to a dataframe</p>
+<p>IMPRESS extractor task.
+Crawls <a href="https://www.mousephenotype.org/impress/index">IMPReSS</a> API to generate a full view of the current state of <a href="https://www.mousephenotype.org/impress/index">IMPReSS</a> at a given time.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">&#34;&#34;&#34;
-IMPRESS extractor
-    extract_impress: Extract Impress data and load it to a dataframe
+IMPRESS extractor task.
+Crawls [IMPReSS](https://www.mousephenotype.org/impress/index) API to generate a full view of the current state of [IMPReSS](https://www.mousephenotype.org/impress/index) at a given time.
 &#34;&#34;&#34;
-from typing import List, Dict
 import json
-import time
-from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.types import StructType, ArrayType
-from pyspark.sql.functions import udf, explode_outer
-import requests
-from impc_etl.shared.utils import convert_to_row
-from impc_etl import logger
-import sys
 import os
+import time
+from typing import List, Dict
+
+import luigi
+import requests
+from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import udf, explode_outer
+from pyspark.sql.types import StructType, ArrayType
+
+from impc_etl import logger
+from impc_etl.shared.utils import convert_to_row
+from impc_etl.workflow.config import ImpcConfig
 
 
-def main(argv):
+class ImpressExtractor(PySparkTask):
     &#34;&#34;&#34;
-    IMPRESS Extractor job runner
-    :param list argv: the list elements should be:
-                    [1]: Impress API URL
-                    [2]: Output Path
-                    [3]: Impress root type to start scraping from
+    PySpark Task class to extract [IMPReSS](https://www.mousephenotype.org/impress/index) information.
+    It goes from the most general endpoint listing resources and down the hierarchy defined by IMPReSS.
+    It starts by crawling Schedules, then Pipelines, Procedures, Paramemeters, Units, and Ontology Terms.
+
+    The output is a Parquet file that contains a de-normalized view of the data,
+    being each row a combination between Pipeline, Procedure, Parameter, Unit, Ontology Term information.
     &#34;&#34;&#34;
-    impress_api_url = argv[1]
-    output_path = argv[2]
-    impress_root_type = argv[3]
-    http_proxy = argv[4]
-    os.environ[&#34;HTTP_PROXY&#34;] = http_proxy
-    os.environ[&#34;HTTPS_PROXY&#34;] = http_proxy
-    spark = SparkSession.builder.getOrCreate()
-    proxies = {&#34;http&#34;: http_proxy, &#34;https&#34;: http_proxy}
-    impress_df = extract_impress(spark, impress_api_url, impress_root_type, proxies)
-    ontology_terms = get_ontology_terms(impress_api_url, spark, proxies)
-    impress_df = impress_df.join(
-        ontology_terms,
-        impress_df[&#34;parammpterm.ontologyTermId&#34;] == ontology_terms.termId,
-        &#34;left_outer&#34;,
-    )
-    impress_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
+
+    #: Name of the Spark task
+    name: str = &#34;IMPC_IMPReSS_Crawler&#34;
+
+    #: The URL used to access the IMPRESS API (e.g. https://api.mousephenotype.org/impress/)
+    impress_api_url: luigi.Parameter = luigi.Parameter()
+
+    #: The crawler can start from any given level of the IMPReSS hierarchy.
+    #: Can be &#39;pipeline&#39;, &#39;procedure&#39; or &#39;parameter&#39;.
+    impress_root_type: luigi.Parameter = luigi.Parameter(default=&#34;pipeline&#34;)
+
+    #: URL to the HTTP proxy server to be used on the crawling process.
+    http_proxy: luigi.Parameter = luigi.Parameter(default=&#34;&#34;)
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/impress_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(f&#34;{self.output_path}impress_parquet&#34;)
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.impress_api_url,
+            self.impress_root_type,
+            self.http_proxy,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args):
+        &#34;&#34;&#34;
+        Takes in a SparkContext and the list of arguments generated by `app_options` and executes the PySpark job.
+        &#34;&#34;&#34;
+        impress_api_url = args[0]
+        impress_root_type = args[1]
+        http_proxy = args[2]
+        output_path = args[3]
+
+        # Set HTTP proxy so the jobs has access to the Internet from EBI infrastructure.
+        os.environ[&#34;HTTP_PROXY&#34;] = http_proxy
+        os.environ[&#34;HTTPS_PROXY&#34;] = http_proxy
+
+        spark = SparkSession(sc)
+        proxy_map = {&#34;http&#34;: http_proxy, &#34;https&#34;: http_proxy}
+        impress_df = extract_impress(
+            spark, impress_api_url, impress_root_type, proxy_map
+        )
+        ontology_terms = get_ontology_terms(impress_api_url, spark, proxy_map)
+        impress_df = impress_df.join(
+            ontology_terms,
+            impress_df[&#34;parammpterm.ontologyTermId&#34;] == ontology_terms.termId,
+            &#34;left_outer&#34;,
+        )
+        impress_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
 
 
 def extract_impress(
-    spark_session: SparkSession, impress_api_url: str, start_type: str, proxies
+    spark_session: SparkSession, impress_api_url: str, start_type: str, proxy_map: Dict
 ) -&gt; DataFrame:
     &#34;&#34;&#34;
+    Starts the IMPReSS API crawling, by getting the list of entities corresponding to the stat_type (e.g. pipeline).
 
-    :param spark_session:
-    :param impress_api_url:
-    :param start_type:
-    :return:
+    Attributes
+    __________
+    proxy_map: Dict
+            e.g. {&#34;http&#34;: &#34;0.0.0.0&#34;, &#34;https&#34;: &#34;0.0.0.0&#34;}
     &#34;&#34;&#34;
     impress_api_url = (
         impress_api_url[:-1] if impress_api_url.endswith(&#34;/&#34;) else impress_api_url
     )
-    root_index = requests.get(
-        &#34;{}/{}/list&#34;.format(impress_api_url, start_type), proxies=proxies
-    )
+
+    # Builds the URL to get the list of entities with type = start_type
+    # e.g. https://api.mousephenotype.org/impress/pipeline/list
+    root_index = requests.get(f&#34;{impress_api_url}/{start_type}/list&#34;, proxies=proxy_map)
     try:
         entity = root_index.json()
     except json.decoder.JSONDecodeError:
-        logger.info(&#34;{}/{}/list&#34;.format(impress_api_url, start_type))
+        logger.info(f&#34;{impress_api_url}/{start_type}/list&#34;)
         logger.info(&#34;         &#34; + root_index.text)
         raise requests.exceptions.RequestException(response=root_index)
     root_ids = [key for key in entity.keys()]
     return get_entities_dataframe(
-        spark_session, impress_api_url, start_type, root_ids, proxies
+        spark_session, impress_api_url, start_type, root_ids, proxy_map
     )
 
 
@@ -105,29 +157,36 @@ def get_entities_dataframe(
     impress_api_url,
     impress_type: str,
     impress_ids: List[str],
-    proxies,
+    proxy_map: Dict,
 ) -&gt; DataFrame:
     &#34;&#34;&#34;
-
-    :param spark_session:
-    :param impress_api_url:
-    :param impress_type:
-    :param impress_ids:
-    :return:
+    Using a list of entities identifiers (e.g. pipeline IDs),
+    returns a DataFrame containing all the information about those entities.
+    It also fires up the process to start crawling the collection belonging to each entity
+    (e.g. the procedures contained on a pipeline).
     &#34;&#34;&#34;
+
+    # Gets the information for a list of entities with a specific identifier.
     entities = [
-        get_impress_entity_by_id(impress_api_url, impress_type, impress_id, proxies)
+        get_impress_entity_by_id(impress_api_url, impress_type, impress_id, proxy_map)
         for impress_id in impress_ids
     ]
     entity_df = spark_session.createDataFrame(
         convert_to_row(entity) for entity in entities
     )
+
+    # Extends the current entity with the data coming from its child collections
     current_type = &#34;&#34;
     current_schema = entity_df.schema
     entity_df = process_collection(
-        spark_session, impress_api_url, current_schema, current_type, entity_df, proxies
+        spark_session,
+        impress_api_url,
+        current_schema,
+        current_type,
+        entity_df,
+        proxy_map,
     )
-    unit_df = get_impress_units(impress_api_url, spark_session, proxies)
+    unit_df = get_impress_units(impress_api_url, spark_session, proxy_map)
     entity_df = entity_df.join(
         unit_df, entity_df[&#34;parameter.unit&#34;] == unit_df[&#34;unitID&#34;], &#34;left_outer&#34;
     )
@@ -309,11 +368,7 @@ def get_ontology_terms(impress_api_url, spark_session, proxies):
     )
     unit_index = [{&#34;termId&#34;: key, &#34;termAcc&#34;: value} for key, value in json_obj.items()]
     entity_rdd = spark_session.sparkContext.parallelize(unit_index)
-    return spark_session.read.json(entity_rdd)
-
-
-if __name__ == &#34;__main__&#34;:
-    sys.exit(main(sys.argv))</code></pre>
+    return spark_session.read.json(entity_rdd)</code></pre>
 </details>
 </section>
 <section>
@@ -324,54 +379,56 @@ if __name__ == &#34;__main__&#34;:
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="impc_etl.jobs.extract.impress_extractor.extract_impress"><code class="name flex">
-<span>def <span class="ident">extract_impress</span></span>(<span>spark_session: pyspark.sql.session.SparkSession, impress_api_url: str, start_type: str, proxies) ‑> pyspark.sql.dataframe.DataFrame</span>
+<span>def <span class="ident">extract_impress</span></span>(<span>spark_session: pyspark.sql.session.SparkSession, impress_api_url: str, start_type: str, proxy_map: Dict[~KT, ~VT]) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param spark_session:
-:param impress_api_url:
-:param start_type:
-:return:</p></div>
+<div class="desc"><p>Starts the IMPReSS API crawling, by getting the list of entities corresponding to the stat_type (e.g. pipeline).</p>
+<p>Attributes</p>
+<hr>
+<p>proxy_map: Dict
+e.g. {"http": "0.0.0.0", "https": "0.0.0.0"}</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def extract_impress(
-    spark_session: SparkSession, impress_api_url: str, start_type: str, proxies
+    spark_session: SparkSession, impress_api_url: str, start_type: str, proxy_map: Dict
 ) -&gt; DataFrame:
     &#34;&#34;&#34;
+    Starts the IMPReSS API crawling, by getting the list of entities corresponding to the stat_type (e.g. pipeline).
 
-    :param spark_session:
-    :param impress_api_url:
-    :param start_type:
-    :return:
+    Attributes
+    __________
+    proxy_map: Dict
+            e.g. {&#34;http&#34;: &#34;0.0.0.0&#34;, &#34;https&#34;: &#34;0.0.0.0&#34;}
     &#34;&#34;&#34;
     impress_api_url = (
         impress_api_url[:-1] if impress_api_url.endswith(&#34;/&#34;) else impress_api_url
     )
-    root_index = requests.get(
-        &#34;{}/{}/list&#34;.format(impress_api_url, start_type), proxies=proxies
-    )
+
+    # Builds the URL to get the list of entities with type = start_type
+    # e.g. https://api.mousephenotype.org/impress/pipeline/list
+    root_index = requests.get(f&#34;{impress_api_url}/{start_type}/list&#34;, proxies=proxy_map)
     try:
         entity = root_index.json()
     except json.decoder.JSONDecodeError:
-        logger.info(&#34;{}/{}/list&#34;.format(impress_api_url, start_type))
+        logger.info(f&#34;{impress_api_url}/{start_type}/list&#34;)
         logger.info(&#34;         &#34; + root_index.text)
         raise requests.exceptions.RequestException(response=root_index)
     root_ids = [key for key in entity.keys()]
     return get_entities_dataframe(
-        spark_session, impress_api_url, start_type, root_ids, proxies
+        spark_session, impress_api_url, start_type, root_ids, proxy_map
     )</code></pre>
 </details>
 </dd>
 <dt id="impc_etl.jobs.extract.impress_extractor.get_entities_dataframe"><code class="name flex">
-<span>def <span class="ident">get_entities_dataframe</span></span>(<span>spark_session: pyspark.sql.session.SparkSession, impress_api_url, impress_type: str, impress_ids: List[str], proxies) ‑> pyspark.sql.dataframe.DataFrame</span>
+<span>def <span class="ident">get_entities_dataframe</span></span>(<span>spark_session: pyspark.sql.session.SparkSession, impress_api_url, impress_type: str, impress_ids: List[str], proxy_map: Dict[~KT, ~VT]) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"><p>:param spark_session:
-:param impress_api_url:
-:param impress_type:
-:param impress_ids:
-:return:</p></div>
+<div class="desc"><p>Using a list of entities identifiers (e.g. pipeline IDs),
+returns a DataFrame containing all the information about those entities.
+It also fires up the process to start crawling the collection belonging to each entity
+(e.g. the procedures contained on a pipeline).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -381,29 +438,36 @@ if __name__ == &#34;__main__&#34;:
     impress_api_url,
     impress_type: str,
     impress_ids: List[str],
-    proxies,
+    proxy_map: Dict,
 ) -&gt; DataFrame:
     &#34;&#34;&#34;
-
-    :param spark_session:
-    :param impress_api_url:
-    :param impress_type:
-    :param impress_ids:
-    :return:
+    Using a list of entities identifiers (e.g. pipeline IDs),
+    returns a DataFrame containing all the information about those entities.
+    It also fires up the process to start crawling the collection belonging to each entity
+    (e.g. the procedures contained on a pipeline).
     &#34;&#34;&#34;
+
+    # Gets the information for a list of entities with a specific identifier.
     entities = [
-        get_impress_entity_by_id(impress_api_url, impress_type, impress_id, proxies)
+        get_impress_entity_by_id(impress_api_url, impress_type, impress_id, proxy_map)
         for impress_id in impress_ids
     ]
     entity_df = spark_session.createDataFrame(
         convert_to_row(entity) for entity in entities
     )
+
+    # Extends the current entity with the data coming from its child collections
     current_type = &#34;&#34;
     current_schema = entity_df.schema
     entity_df = process_collection(
-        spark_session, impress_api_url, current_schema, current_type, entity_df, proxies
+        spark_session,
+        impress_api_url,
+        current_schema,
+        current_type,
+        entity_df,
+        proxy_map,
     )
-    unit_df = get_impress_units(impress_api_url, spark_session, proxies)
+    unit_df = get_impress_units(impress_api_url, spark_session, proxy_map)
     entity_df = entity_df.join(
         unit_df, entity_df[&#34;parameter.unit&#34;] == unit_df[&#34;unitID&#34;], &#34;left_outer&#34;
     )
@@ -593,45 +657,6 @@ if __name__ == &#34;__main__&#34;:
     return spark_session.read.json(entity_rdd)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.extract.impress_extractor.main"><code class="name flex">
-<span>def <span class="ident">main</span></span>(<span>argv)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>IMPRESS Extractor job runner
-:param list argv: the list elements should be:
-[1]: Impress API URL
-[2]: Output Path
-[3]: Impress root type to start scraping from</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def main(argv):
-    &#34;&#34;&#34;
-    IMPRESS Extractor job runner
-    :param list argv: the list elements should be:
-                    [1]: Impress API URL
-                    [2]: Output Path
-                    [3]: Impress root type to start scraping from
-    &#34;&#34;&#34;
-    impress_api_url = argv[1]
-    output_path = argv[2]
-    impress_root_type = argv[3]
-    http_proxy = argv[4]
-    os.environ[&#34;HTTP_PROXY&#34;] = http_proxy
-    os.environ[&#34;HTTPS_PROXY&#34;] = http_proxy
-    spark = SparkSession.builder.getOrCreate()
-    proxies = {&#34;http&#34;: http_proxy, &#34;https&#34;: http_proxy}
-    impress_df = extract_impress(spark, impress_api_url, impress_root_type, proxies)
-    ontology_terms = get_ontology_terms(impress_api_url, spark, proxies)
-    impress_df = impress_df.join(
-        ontology_terms,
-        impress_df[&#34;parammpterm.ontologyTermId&#34;] == ontology_terms.termId,
-        &#34;left_outer&#34;,
-    )
-    impress_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
-</details>
-</dd>
 <dt id="impc_etl.jobs.extract.impress_extractor.process_collection"><code class="name flex">
 <span>def <span class="ident">process_collection</span></span>(<span>spark_session, impress_api_url, current_schema, current_type, entity_df, proxies)</span>
 </code></dt>
@@ -700,13 +725,212 @@ if __name__ == &#34;__main__&#34;:
 </dl>
 </section>
 <section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="impc_etl.jobs.extract.impress_extractor.ImpressExtractor"><code class="flex name class">
+<span>class <span class="ident">ImpressExtractor</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>PySpark Task class to extract <a href="https://www.mousephenotype.org/impress/index">IMPReSS</a> information.
+It goes from the most general endpoint listing resources and down the hierarchy defined by IMPReSS.
+It starts by crawling Schedules, then Pipelines, Procedures, Paramemeters, Units, and Ontology Terms.</p>
+<p>The output is a Parquet file that contains a de-normalized view of the data,
+being each row a combination between Pipeline, Procedure, Parameter, Unit, Ontology Term information.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ImpressExtractor(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark Task class to extract [IMPReSS](https://www.mousephenotype.org/impress/index) information.
+    It goes from the most general endpoint listing resources and down the hierarchy defined by IMPReSS.
+    It starts by crawling Schedules, then Pipelines, Procedures, Paramemeters, Units, and Ontology Terms.
+
+    The output is a Parquet file that contains a de-normalized view of the data,
+    being each row a combination between Pipeline, Procedure, Parameter, Unit, Ontology Term information.
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name: str = &#34;IMPC_IMPReSS_Crawler&#34;
+
+    #: The URL used to access the IMPRESS API (e.g. https://api.mousephenotype.org/impress/)
+    impress_api_url: luigi.Parameter = luigi.Parameter()
+
+    #: The crawler can start from any given level of the IMPReSS hierarchy.
+    #: Can be &#39;pipeline&#39;, &#39;procedure&#39; or &#39;parameter&#39;.
+    impress_root_type: luigi.Parameter = luigi.Parameter(default=&#34;pipeline&#34;)
+
+    #: URL to the HTTP proxy server to be used on the crawling process.
+    http_proxy: luigi.Parameter = luigi.Parameter(default=&#34;&#34;)
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/impress_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(f&#34;{self.output_path}impress_parquet&#34;)
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.impress_api_url,
+            self.impress_root_type,
+            self.http_proxy,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args):
+        &#34;&#34;&#34;
+        Takes in a SparkContext and the list of arguments generated by `app_options` and executes the PySpark job.
+        &#34;&#34;&#34;
+        impress_api_url = args[0]
+        impress_root_type = args[1]
+        http_proxy = args[2]
+        output_path = args[3]
+
+        # Set HTTP proxy so the jobs has access to the Internet from EBI infrastructure.
+        os.environ[&#34;HTTP_PROXY&#34;] = http_proxy
+        os.environ[&#34;HTTPS_PROXY&#34;] = http_proxy
+
+        spark = SparkSession(sc)
+        proxy_map = {&#34;http&#34;: http_proxy, &#34;https&#34;: http_proxy}
+        impress_df = extract_impress(
+            spark, impress_api_url, impress_root_type, proxy_map
+        )
+        ontology_terms = get_ontology_terms(impress_api_url, spark, proxy_map)
+        impress_df = impress_df.join(
+            ontology_terms,
+            impress_df[&#34;parammpterm.ontologyTermId&#34;] == ontology_terms.termId,
+            &#34;left_outer&#34;,
+        )
+        impress_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.http_proxy"><code class="name">var <span class="ident">http_proxy</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>URL to the HTTP proxy server to be used on the crawling process.</p></div>
+</dd>
+<dt id="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.impress_api_url"><code class="name">var <span class="ident">impress_api_url</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>The URL used to access the IMPRESS API (e.g. <a href="https://api.mousephenotype.org/impress/">https://api.mousephenotype.org/impress/</a>)</p></div>
+</dd>
+<dt id="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.impress_root_type"><code class="name">var <span class="ident">impress_root_type</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>The crawler can start from any given level of the IMPReSS hierarchy.
+Can be 'pipeline', 'procedure' or 'parameter'.</p></div>
+</dd>
+<dt id="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>Name of the Spark task</p></div>
+</dd>
+<dt id="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>Path of the output directory where the new parquet file will be generated.</p></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates the options pass to the PySpark job</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    &#34;&#34;&#34;
+    Generates the options pass to the PySpark job
+    &#34;&#34;&#34;
+    return [
+        self.impress_api_url,
+        self.impress_root_type,
+        self.http_proxy,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Takes in a SparkContext and the list of arguments generated by <code>app_options</code> and executes the PySpark job.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(self, sc: SparkContext, *args):
+    &#34;&#34;&#34;
+    Takes in a SparkContext and the list of arguments generated by `app_options` and executes the PySpark job.
+    &#34;&#34;&#34;
+    impress_api_url = args[0]
+    impress_root_type = args[1]
+    http_proxy = args[2]
+    output_path = args[3]
+
+    # Set HTTP proxy so the jobs has access to the Internet from EBI infrastructure.
+    os.environ[&#34;HTTP_PROXY&#34;] = http_proxy
+    os.environ[&#34;HTTPS_PROXY&#34;] = http_proxy
+
+    spark = SparkSession(sc)
+    proxy_map = {&#34;http&#34;: http_proxy, &#34;https&#34;: http_proxy}
+    impress_df = extract_impress(
+        spark, impress_api_url, impress_root_type, proxy_map
+    )
+    ontology_terms = get_ontology_terms(impress_api_url, spark, proxy_map)
+    impress_df = impress_df.join(
+        ontology_terms,
+        impress_df[&#34;parammpterm.ontologyTermId&#34;] == ontology_terms.termId,
+        &#34;left_outer&#34;,
+    )
+    impress_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the full parquet path as an output for the Luigi Task
+(e.g. impc/dr15.2/parquet/impress_parquet)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    &#34;&#34;&#34;
+    Returns the full parquet path as an output for the Luigi Task
+    (e.g. impc/dr15.2/parquet/impress_parquet)
+    &#34;&#34;&#34;
+    return ImpcConfig().get_target(f&#34;{self.output_path}impress_parquet&#34;)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
 <header>
-<div style="max-width: 300px, text-align: center">
+<div style="max-width: 300px; text-align: center">
 <img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
 </div>
+<h1 style="text-align: center; max-width: 300px;">IMPC ETL</h1>
+<h2 style="text-align: center; max-width: 300px;">Reference Documentation</h2>
 </header>
 <h1>Index</h1>
 <div class="toc">
@@ -727,8 +951,24 @@ if __name__ == &#34;__main__&#34;:
 <li><code><a title="impc_etl.jobs.extract.impress_extractor.get_impress_entity_schema" href="#impc_etl.jobs.extract.impress_extractor.get_impress_entity_schema">get_impress_entity_schema</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.impress_extractor.get_impress_units" href="#impc_etl.jobs.extract.impress_extractor.get_impress_units">get_impress_units</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.impress_extractor.get_ontology_terms" href="#impc_etl.jobs.extract.impress_extractor.get_ontology_terms">get_ontology_terms</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.impress_extractor.main" href="#impc_etl.jobs.extract.impress_extractor.main">main</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.impress_extractor.process_collection" href="#impc_etl.jobs.extract.impress_extractor.process_collection">process_collection</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor" href="#impc_etl.jobs.extract.impress_extractor.ImpressExtractor">ImpressExtractor</a></code></h4>
+<ul class="two-column">
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.app_options" href="#impc_etl.jobs.extract.impress_extractor.ImpressExtractor.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.http_proxy" href="#impc_etl.jobs.extract.impress_extractor.ImpressExtractor.http_proxy">http_proxy</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.impress_api_url" href="#impc_etl.jobs.extract.impress_extractor.ImpressExtractor.impress_api_url">impress_api_url</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.impress_root_type" href="#impc_etl.jobs.extract.impress_extractor.ImpressExtractor.impress_root_type">impress_root_type</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.main" href="#impc_etl.jobs.extract.impress_extractor.ImpressExtractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.name" href="#impc_etl.jobs.extract.impress_extractor.ImpressExtractor.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.output" href="#impc_etl.jobs.extract.impress_extractor.ImpressExtractor.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor.output_path" href="#impc_etl.jobs.extract.impress_extractor.ImpressExtractor.output_path">output_path</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

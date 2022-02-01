@@ -86,112 +86,6 @@ class ColonyExtractor(ImitsExtractor):
     entity_type = &#34;Colony&#34;
 
 
-class ImpressExtractor(SparkSubmitTask):
-    name = &#34;IMPC_IMPRESS_Extractor&#34;
-    app = &#34;impc_etl/jobs/extract/impress_extractor.py&#34;
-    impress_api_url = luigi.Parameter()
-    output_path = luigi.Parameter()
-    http_proxy = luigi.Parameter()
-    impress_root_type = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(
-            f&#34;{self.output_path}{self.impress_root_type}_parquet&#34;
-        )
-
-    def app_options(self):
-        return [
-            self.impress_api_url,
-            self.output().path,
-            self.impress_root_type,
-            self.http_proxy,
-        ]
-
-
-class MGIExtractor(SparkSubmitTask):
-    name = &#34;IMPC_MGI_Extractor&#34;
-    app = &#34;impc_etl/jobs/extract/mgi_extractor.py&#34;
-    mgi_input_path = luigi.Parameter()
-    entity_type = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(
-            f&#34;{self.output_path}{self.entity_type.lower()}_parquet&#34;
-        )
-
-    def app_options(self):
-        return [self.mgi_input_path, self.entity_type, self.output().path]
-
-
-class MGIAlleleExtractor(MGIExtractor):
-    entity_type = &#34;allele&#34;
-
-
-class MGIStrainExtractor(MGIExtractor):
-    entity_type = &#34;strain&#34;
-
-
-class MGIGenePhenoExtractor(MGIExtractor):
-    entity_type = &#34;gene_pheno&#34;
-
-
-class MGIHomoloGeneExtractor(MGIExtractor):
-    entity_type = &#34;cross_ref&#34;
-
-
-class MGIMrkListExtractor(MGIExtractor):
-    entity_type = &#34;mrk_list&#34;
-
-
-class OntologyExtractor(SparkSubmitTask):
-    name = &#34;IMPC_Ontology_Extractor&#34;
-    app = &#34;impc_etl/jobs/extract/ontology_extractor.py&#34;
-
-    ontology_input_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(f&#34;{self.output_path}ontology_parquet&#34;)
-
-    def app_options(self):
-        return [self.ontology_input_path, self.output().path]
-
-
-class OntologyMetadataExtractor(SparkSubmitTask):
-    name = &#34;IMPC_Ontology_Metadata_Extractor&#34;
-    app = &#34;impc_etl/jobs/extract/ontology_metadata_extractor.py&#34;
-
-    ontology_input_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(f&#34;{self.output_path}ontology_metadata_parquet&#34;)
-
-    def app_options(self):
-        return [self.ontology_input_path, self.output().path]
-
-
 class OpenStatsExtractor(SparkSubmitTask):
     name = &#34;IMPC_OpenStats_Extractor&#34;
     app = &#34;impc_etl/jobs/extract/open_stats_extractor.py&#34;
@@ -369,18 +263,7 @@ for more information</p></div>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p>
-<p>Attributes</p>
-<hr>
-<pre><code>name: str
-    Name of the Spark task
-dcc_specimen_xml_path: luigi.Parameter
-    Path in the filesystem (local or HDFS) to the specimen XML files
-specimen_type: str
-    Type of specimen can be "embryo" or "mouse"
-output_path: luigi.Parameter
-    Path of the output directory where the new parquet file will be generated.
-</code></pre></div>
+<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -569,146 +452,12 @@ the same output since they don't see the work done by other workers.</p>
 </dd>
 </dl>
 </dd>
-<dt id="impc_etl.workflow.extraction.ImpressExtractor"><code class="flex name class">
-<span>class <span class="ident">ImpressExtractor</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ImpressExtractor(SparkSubmitTask):
-    name = &#34;IMPC_IMPRESS_Extractor&#34;
-    app = &#34;impc_etl/jobs/extract/impress_extractor.py&#34;
-    impress_api_url = luigi.Parameter()
-    output_path = luigi.Parameter()
-    http_proxy = luigi.Parameter()
-    impress_root_type = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(
-            f&#34;{self.output_path}{self.impress_root_type}_parquet&#34;
-        )
-
-    def app_options(self):
-        return [
-            self.impress_api_url,
-            self.output().path,
-            self.impress_root_type,
-            self.http_proxy,
-        ]</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.ImpressExtractor.app"><code class="name">var <span class="ident">app</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.ImpressExtractor.http_proxy"><code class="name">var <span class="ident">http_proxy</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.ImpressExtractor.impress_api_url"><code class="name">var <span class="ident">impress_api_url</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.ImpressExtractor.impress_root_type"><code class="name">var <span class="ident">impress_root_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.ImpressExtractor.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.ImpressExtractor.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.ImpressExtractor.app_options"><code class="name flex">
-<span>def <span class="ident">app_options</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def app_options(self):
-    return [
-        self.impress_api_url,
-        self.output().path,
-        self.impress_root_type,
-        self.http_proxy,
-    ]</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.extraction.ImpressExtractor.output"><code class="name flex">
-<span>def <span class="ident">output</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The output that this Task produces.</p>
-<p>The output of the Task determines if the Task needs to be run&ndash;the task
-is considered finished iff the outputs all exist. Subclasses should
-override this method to return a single :py:class:<code>Target</code> or a list of
-:py:class:<code>Target</code> instances.</p>
-<p>Implementation note
-If running multiple workers, the output must be a resource that is accessible
-by all workers, such as a DFS or database. Otherwise, workers might compute
-the same output since they don't see the work done by other workers.</p>
-<p>See :ref:<code>Task.output</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def output(self):
-    self.output_path = (
-        self.output_path + &#34;/&#34;
-        if not self.output_path.endswith(&#34;/&#34;)
-        else self.output_path
-    )
-    return ImpcConfig().get_target(
-        f&#34;{self.output_path}{self.impress_root_type}_parquet&#34;
-    )</code></pre>
-</details>
-</dd>
-</dl>
-</dd>
 <dt id="impc_etl.workflow.extraction.LineExperimentExtractor"><code class="flex name class">
 <span>class <span class="ident">LineExperimentExtractor</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p>
-<p>Attributes</p>
-<hr>
-<pre><code>name: str
-    Name of the Spark task
-dcc_experiment_xml_path: luigi.Parameter
-    Path in the filesystem (local or HDFS) to the experiment XML files
-experiment_type: str
-    Type of experiment can be "specimen_level" or "line_level"
-output_path: luigi.Parameter
-    Path of the output directory where the new parquet file will be generated.
-</code></pre></div>
+<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -724,336 +473,17 @@ output_path: luigi.Parameter
 <li>luigi.contrib.external_program.ExternalProgramTask</li>
 <li>luigi.task.Task</li>
 </ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.LineExperimentExtractor.experiment_type"><code class="name">var <span class="ident">experiment_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor">DCCExperimentExtractor</a></b></code>:
 <ul class="hlist">
 <li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.app_options" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.dcc_experiment_xml_path" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.dcc_experiment_xml_path">dcc_experiment_xml_path</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.experiment_type" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.experiment_type">experiment_type</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.main" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.name" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.name">name</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.output" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.output">output</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="impc_etl.workflow.extraction.MGIAlleleExtractor"><code class="flex name class">
-<span>class <span class="ident">MGIAlleleExtractor</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class MGIAlleleExtractor(MGIExtractor):
-    entity_type = &#34;allele&#34;</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="impc_etl.workflow.extraction.MGIExtractor" href="#impc_etl.workflow.extraction.MGIExtractor">MGIExtractor</a></li>
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.MGIAlleleExtractor.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="impc_etl.workflow.extraction.MGIExtractor" href="#impc_etl.workflow.extraction.MGIExtractor">MGIExtractor</a></b></code>:
-<ul class="hlist">
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.app_options" href="#impc_etl.workflow.extraction.MGIExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.output" href="#impc_etl.workflow.extraction.MGIExtractor.output">output</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="impc_etl.workflow.extraction.MGIExtractor"><code class="flex name class">
-<span>class <span class="ident">MGIExtractor</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class MGIExtractor(SparkSubmitTask):
-    name = &#34;IMPC_MGI_Extractor&#34;
-    app = &#34;impc_etl/jobs/extract/mgi_extractor.py&#34;
-    mgi_input_path = luigi.Parameter()
-    entity_type = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(
-            f&#34;{self.output_path}{self.entity_type.lower()}_parquet&#34;
-        )
-
-    def app_options(self):
-        return [self.mgi_input_path, self.entity_type, self.output().path]</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Subclasses</h3>
-<ul class="hlist">
-<li><a title="impc_etl.workflow.extraction.MGIAlleleExtractor" href="#impc_etl.workflow.extraction.MGIAlleleExtractor">MGIAlleleExtractor</a></li>
-<li><a title="impc_etl.workflow.extraction.MGIGenePhenoExtractor" href="#impc_etl.workflow.extraction.MGIGenePhenoExtractor">MGIGenePhenoExtractor</a></li>
-<li><a title="impc_etl.workflow.extraction.MGIHomoloGeneExtractor" href="#impc_etl.workflow.extraction.MGIHomoloGeneExtractor">MGIHomoloGeneExtractor</a></li>
-<li><a title="impc_etl.workflow.extraction.MGIMrkListExtractor" href="#impc_etl.workflow.extraction.MGIMrkListExtractor">MGIMrkListExtractor</a></li>
-<li><a title="impc_etl.workflow.extraction.MGIStrainExtractor" href="#impc_etl.workflow.extraction.MGIStrainExtractor">MGIStrainExtractor</a></li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.MGIExtractor.app"><code class="name">var <span class="ident">app</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.MGIExtractor.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.MGIExtractor.mgi_input_path"><code class="name">var <span class="ident">mgi_input_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.MGIExtractor.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.MGIExtractor.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.MGIExtractor.app_options"><code class="name flex">
-<span>def <span class="ident">app_options</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def app_options(self):
-    return [self.mgi_input_path, self.entity_type, self.output().path]</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.extraction.MGIExtractor.output"><code class="name flex">
-<span>def <span class="ident">output</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The output that this Task produces.</p>
-<p>The output of the Task determines if the Task needs to be run&ndash;the task
-is considered finished iff the outputs all exist. Subclasses should
-override this method to return a single :py:class:<code>Target</code> or a list of
-:py:class:<code>Target</code> instances.</p>
-<p>Implementation note
-If running multiple workers, the output must be a resource that is accessible
-by all workers, such as a DFS or database. Otherwise, workers might compute
-the same output since they don't see the work done by other workers.</p>
-<p>See :ref:<code>Task.output</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def output(self):
-    self.output_path = (
-        self.output_path + &#34;/&#34;
-        if not self.output_path.endswith(&#34;/&#34;)
-        else self.output_path
-    )
-    return ImpcConfig().get_target(
-        f&#34;{self.output_path}{self.entity_type.lower()}_parquet&#34;
-    )</code></pre>
-</details>
-</dd>
-</dl>
-</dd>
-<dt id="impc_etl.workflow.extraction.MGIGenePhenoExtractor"><code class="flex name class">
-<span>class <span class="ident">MGIGenePhenoExtractor</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class MGIGenePhenoExtractor(MGIExtractor):
-    entity_type = &#34;gene_pheno&#34;</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="impc_etl.workflow.extraction.MGIExtractor" href="#impc_etl.workflow.extraction.MGIExtractor">MGIExtractor</a></li>
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.MGIGenePhenoExtractor.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="impc_etl.workflow.extraction.MGIExtractor" href="#impc_etl.workflow.extraction.MGIExtractor">MGIExtractor</a></b></code>:
-<ul class="hlist">
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.app_options" href="#impc_etl.workflow.extraction.MGIExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.output" href="#impc_etl.workflow.extraction.MGIExtractor.output">output</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="impc_etl.workflow.extraction.MGIHomoloGeneExtractor"><code class="flex name class">
-<span>class <span class="ident">MGIHomoloGeneExtractor</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class MGIHomoloGeneExtractor(MGIExtractor):
-    entity_type = &#34;cross_ref&#34;</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="impc_etl.workflow.extraction.MGIExtractor" href="#impc_etl.workflow.extraction.MGIExtractor">MGIExtractor</a></li>
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.MGIHomoloGeneExtractor.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="impc_etl.workflow.extraction.MGIExtractor" href="#impc_etl.workflow.extraction.MGIExtractor">MGIExtractor</a></b></code>:
-<ul class="hlist">
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.app_options" href="#impc_etl.workflow.extraction.MGIExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.output" href="#impc_etl.workflow.extraction.MGIExtractor.output">output</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="impc_etl.workflow.extraction.MGIMrkListExtractor"><code class="flex name class">
-<span>class <span class="ident">MGIMrkListExtractor</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class MGIMrkListExtractor(MGIExtractor):
-    entity_type = &#34;mrk_list&#34;</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="impc_etl.workflow.extraction.MGIExtractor" href="#impc_etl.workflow.extraction.MGIExtractor">MGIExtractor</a></li>
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.MGIMrkListExtractor.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="impc_etl.workflow.extraction.MGIExtractor" href="#impc_etl.workflow.extraction.MGIExtractor">MGIExtractor</a></b></code>:
-<ul class="hlist">
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.app_options" href="#impc_etl.workflow.extraction.MGIExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.output" href="#impc_etl.workflow.extraction.MGIExtractor.output">output</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="impc_etl.workflow.extraction.MGIStrainExtractor"><code class="flex name class">
-<span>class <span class="ident">MGIStrainExtractor</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class MGIStrainExtractor(MGIExtractor):
-    entity_type = &#34;strain&#34;</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="impc_etl.workflow.extraction.MGIExtractor" href="#impc_etl.workflow.extraction.MGIExtractor">MGIExtractor</a></li>
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.MGIStrainExtractor.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="impc_etl.workflow.extraction.MGIExtractor" href="#impc_etl.workflow.extraction.MGIExtractor">MGIExtractor</a></b></code>:
-<ul class="hlist">
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.app_options" href="#impc_etl.workflow.extraction.MGIExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.output" href="#impc_etl.workflow.extraction.MGIExtractor.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.output_path" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.output_path">output_path</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1063,18 +493,7 @@ for more information</p></div>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p>
-<p>Attributes</p>
-<hr>
-<pre><code>name: str
-    Name of the Spark task
-dcc_specimen_xml_path: luigi.Parameter
-    Path in the filesystem (local or HDFS) to the specimen XML files
-specimen_type: str
-    Type of specimen can be "embryo" or "mouse"
-output_path: luigi.Parameter
-    Path of the output directory where the new parquet file will be generated.
-</code></pre></div>
+<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1107,206 +526,6 @@ output_path: luigi.Parameter
 </ul>
 </li>
 </ul>
-</dd>
-<dt id="impc_etl.workflow.extraction.OntologyExtractor"><code class="flex name class">
-<span>class <span class="ident">OntologyExtractor</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class OntologyExtractor(SparkSubmitTask):
-    name = &#34;IMPC_Ontology_Extractor&#34;
-    app = &#34;impc_etl/jobs/extract/ontology_extractor.py&#34;
-
-    ontology_input_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(f&#34;{self.output_path}ontology_parquet&#34;)
-
-    def app_options(self):
-        return [self.ontology_input_path, self.output().path]</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.OntologyExtractor.app"><code class="name">var <span class="ident">app</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.OntologyExtractor.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.OntologyExtractor.ontology_input_path"><code class="name">var <span class="ident">ontology_input_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.OntologyExtractor.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.OntologyExtractor.app_options"><code class="name flex">
-<span>def <span class="ident">app_options</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def app_options(self):
-    return [self.ontology_input_path, self.output().path]</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.extraction.OntologyExtractor.output"><code class="name flex">
-<span>def <span class="ident">output</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The output that this Task produces.</p>
-<p>The output of the Task determines if the Task needs to be run&ndash;the task
-is considered finished iff the outputs all exist. Subclasses should
-override this method to return a single :py:class:<code>Target</code> or a list of
-:py:class:<code>Target</code> instances.</p>
-<p>Implementation note
-If running multiple workers, the output must be a resource that is accessible
-by all workers, such as a DFS or database. Otherwise, workers might compute
-the same output since they don't see the work done by other workers.</p>
-<p>See :ref:<code>Task.output</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def output(self):
-    self.output_path = (
-        self.output_path + &#34;/&#34;
-        if not self.output_path.endswith(&#34;/&#34;)
-        else self.output_path
-    )
-    return ImpcConfig().get_target(f&#34;{self.output_path}ontology_parquet&#34;)</code></pre>
-</details>
-</dd>
-</dl>
-</dd>
-<dt id="impc_etl.workflow.extraction.OntologyMetadataExtractor"><code class="flex name class">
-<span>class <span class="ident">OntologyMetadataExtractor</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class OntologyMetadataExtractor(SparkSubmitTask):
-    name = &#34;IMPC_Ontology_Metadata_Extractor&#34;
-    app = &#34;impc_etl/jobs/extract/ontology_metadata_extractor.py&#34;
-
-    ontology_input_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(f&#34;{self.output_path}ontology_metadata_parquet&#34;)
-
-    def app_options(self):
-        return [self.ontology_input_path, self.output().path]</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.OntologyMetadataExtractor.app"><code class="name">var <span class="ident">app</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.OntologyMetadataExtractor.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.OntologyMetadataExtractor.ontology_input_path"><code class="name">var <span class="ident">ontology_input_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.extraction.OntologyMetadataExtractor.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.OntologyMetadataExtractor.app_options"><code class="name flex">
-<span>def <span class="ident">app_options</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def app_options(self):
-    return [self.ontology_input_path, self.output().path]</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.extraction.OntologyMetadataExtractor.output"><code class="name flex">
-<span>def <span class="ident">output</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The output that this Task produces.</p>
-<p>The output of the Task determines if the Task needs to be run&ndash;the task
-is considered finished iff the outputs all exist. Subclasses should
-override this method to return a single :py:class:<code>Target</code> or a list of
-:py:class:<code>Target</code> instances.</p>
-<p>Implementation note
-If running multiple workers, the output must be a resource that is accessible
-by all workers, such as a DFS or database. Otherwise, workers might compute
-the same output since they don't see the work done by other workers.</p>
-<p>See :ref:<code>Task.output</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def output(self):
-    self.output_path = (
-        self.output_path + &#34;/&#34;
-        if not self.output_path.endswith(&#34;/&#34;)
-        else self.output_path
-    )
-    return ImpcConfig().get_target(f&#34;{self.output_path}ontology_metadata_parquet&#34;)</code></pre>
-</details>
-</dd>
-</dl>
 </dd>
 <dt id="impc_etl.workflow.extraction.OpenStatsExtractor"><code class="flex name class">
 <span>class <span class="ident">OpenStatsExtractor</span></span>
@@ -1479,18 +698,7 @@ the same output since they don't see the work done by other workers.</p>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p>
-<p>Attributes</p>
-<hr>
-<pre><code>name: str
-    Name of the Spark task
-dcc_experiment_xml_path: luigi.Parameter
-    Path in the filesystem (local or HDFS) to the experiment XML files
-experiment_type: str
-    Type of experiment can be "specimen_level" or "line_level"
-output_path: luigi.Parameter
-    Path of the output directory where the new parquet file will be generated.
-</code></pre></div>
+<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1506,20 +714,17 @@ output_path: luigi.Parameter
 <li>luigi.contrib.external_program.ExternalProgramTask</li>
 <li>luigi.task.Task</li>
 </ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.extraction.SpecimenExperimentExtractor.experiment_type"><code class="name">var <span class="ident">experiment_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor">DCCExperimentExtractor</a></b></code>:
 <ul class="hlist">
 <li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.app_options" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.dcc_experiment_xml_path" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.dcc_experiment_xml_path">dcc_experiment_xml_path</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.experiment_type" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.experiment_type">experiment_type</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.main" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.name" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.name">name</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.output" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.output_path" href="../jobs/extract/dcc_experiment_extractor.html#impc_etl.jobs.extract.dcc_experiment_extractor.DCCExperimentExtractor.output_path">output_path</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1529,9 +734,11 @@ output_path: luigi.Parameter
 </article>
 <nav id="sidebar">
 <header>
-<div style="max-width: 300px, text-align: center">
+<div style="max-width: 300px; text-align: center">
 <img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
 </div>
+<h1 style="text-align: center; max-width: 300px;">IMPC ETL</h1>
+<h2 style="text-align: center; max-width: 300px;">Reference Documentation</h2>
 </header>
 <h1>Index</h1>
 <div class="toc">
@@ -1588,92 +795,12 @@ output_path: luigi.Parameter
 </ul>
 </li>
 <li>
-<h4><code><a title="impc_etl.workflow.extraction.ImpressExtractor" href="#impc_etl.workflow.extraction.ImpressExtractor">ImpressExtractor</a></code></h4>
-<ul class="two-column">
-<li><code><a title="impc_etl.workflow.extraction.ImpressExtractor.app" href="#impc_etl.workflow.extraction.ImpressExtractor.app">app</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.ImpressExtractor.app_options" href="#impc_etl.workflow.extraction.ImpressExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.ImpressExtractor.http_proxy" href="#impc_etl.workflow.extraction.ImpressExtractor.http_proxy">http_proxy</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.ImpressExtractor.impress_api_url" href="#impc_etl.workflow.extraction.ImpressExtractor.impress_api_url">impress_api_url</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.ImpressExtractor.impress_root_type" href="#impc_etl.workflow.extraction.ImpressExtractor.impress_root_type">impress_root_type</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.ImpressExtractor.name" href="#impc_etl.workflow.extraction.ImpressExtractor.name">name</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.ImpressExtractor.output" href="#impc_etl.workflow.extraction.ImpressExtractor.output">output</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.ImpressExtractor.output_path" href="#impc_etl.workflow.extraction.ImpressExtractor.output_path">output_path</a></code></li>
-</ul>
-</li>
-<li>
 <h4><code><a title="impc_etl.workflow.extraction.LineExperimentExtractor" href="#impc_etl.workflow.extraction.LineExperimentExtractor">LineExperimentExtractor</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.extraction.LineExperimentExtractor.experiment_type" href="#impc_etl.workflow.extraction.LineExperimentExtractor.experiment_type">experiment_type</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.extraction.MGIAlleleExtractor" href="#impc_etl.workflow.extraction.MGIAlleleExtractor">MGIAlleleExtractor</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.extraction.MGIAlleleExtractor.entity_type" href="#impc_etl.workflow.extraction.MGIAlleleExtractor.entity_type">entity_type</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.extraction.MGIExtractor" href="#impc_etl.workflow.extraction.MGIExtractor">MGIExtractor</a></code></h4>
-<ul class="two-column">
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.app" href="#impc_etl.workflow.extraction.MGIExtractor.app">app</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.app_options" href="#impc_etl.workflow.extraction.MGIExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.entity_type" href="#impc_etl.workflow.extraction.MGIExtractor.entity_type">entity_type</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.mgi_input_path" href="#impc_etl.workflow.extraction.MGIExtractor.mgi_input_path">mgi_input_path</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.name" href="#impc_etl.workflow.extraction.MGIExtractor.name">name</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.output" href="#impc_etl.workflow.extraction.MGIExtractor.output">output</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.MGIExtractor.output_path" href="#impc_etl.workflow.extraction.MGIExtractor.output_path">output_path</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.extraction.MGIGenePhenoExtractor" href="#impc_etl.workflow.extraction.MGIGenePhenoExtractor">MGIGenePhenoExtractor</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.extraction.MGIGenePhenoExtractor.entity_type" href="#impc_etl.workflow.extraction.MGIGenePhenoExtractor.entity_type">entity_type</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.extraction.MGIHomoloGeneExtractor" href="#impc_etl.workflow.extraction.MGIHomoloGeneExtractor">MGIHomoloGeneExtractor</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.extraction.MGIHomoloGeneExtractor.entity_type" href="#impc_etl.workflow.extraction.MGIHomoloGeneExtractor.entity_type">entity_type</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.extraction.MGIMrkListExtractor" href="#impc_etl.workflow.extraction.MGIMrkListExtractor">MGIMrkListExtractor</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.extraction.MGIMrkListExtractor.entity_type" href="#impc_etl.workflow.extraction.MGIMrkListExtractor.entity_type">entity_type</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.extraction.MGIStrainExtractor" href="#impc_etl.workflow.extraction.MGIStrainExtractor">MGIStrainExtractor</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.extraction.MGIStrainExtractor.entity_type" href="#impc_etl.workflow.extraction.MGIStrainExtractor.entity_type">entity_type</a></code></li>
-</ul>
 </li>
 <li>
 <h4><code><a title="impc_etl.workflow.extraction.MouseSpecimenExtractor" href="#impc_etl.workflow.extraction.MouseSpecimenExtractor">MouseSpecimenExtractor</a></code></h4>
 <ul class="">
 <li><code><a title="impc_etl.workflow.extraction.MouseSpecimenExtractor.specimen_type" href="#impc_etl.workflow.extraction.MouseSpecimenExtractor.specimen_type">specimen_type</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.extraction.OntologyExtractor" href="#impc_etl.workflow.extraction.OntologyExtractor">OntologyExtractor</a></code></h4>
-<ul class="two-column">
-<li><code><a title="impc_etl.workflow.extraction.OntologyExtractor.app" href="#impc_etl.workflow.extraction.OntologyExtractor.app">app</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.OntologyExtractor.app_options" href="#impc_etl.workflow.extraction.OntologyExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.OntologyExtractor.name" href="#impc_etl.workflow.extraction.OntologyExtractor.name">name</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.OntologyExtractor.ontology_input_path" href="#impc_etl.workflow.extraction.OntologyExtractor.ontology_input_path">ontology_input_path</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.OntologyExtractor.output" href="#impc_etl.workflow.extraction.OntologyExtractor.output">output</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.OntologyExtractor.output_path" href="#impc_etl.workflow.extraction.OntologyExtractor.output_path">output_path</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.extraction.OntologyMetadataExtractor" href="#impc_etl.workflow.extraction.OntologyMetadataExtractor">OntologyMetadataExtractor</a></code></h4>
-<ul class="two-column">
-<li><code><a title="impc_etl.workflow.extraction.OntologyMetadataExtractor.app" href="#impc_etl.workflow.extraction.OntologyMetadataExtractor.app">app</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.OntologyMetadataExtractor.app_options" href="#impc_etl.workflow.extraction.OntologyMetadataExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.OntologyMetadataExtractor.name" href="#impc_etl.workflow.extraction.OntologyMetadataExtractor.name">name</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.OntologyMetadataExtractor.ontology_input_path" href="#impc_etl.workflow.extraction.OntologyMetadataExtractor.ontology_input_path">ontology_input_path</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.OntologyMetadataExtractor.output" href="#impc_etl.workflow.extraction.OntologyMetadataExtractor.output">output</a></code></li>
-<li><code><a title="impc_etl.workflow.extraction.OntologyMetadataExtractor.output_path" href="#impc_etl.workflow.extraction.OntologyMetadataExtractor.output_path">output_path</a></code></li>
 </ul>
 </li>
 <li>
@@ -1695,9 +822,6 @@ output_path: luigi.Parameter
 </li>
 <li>
 <h4><code><a title="impc_etl.workflow.extraction.SpecimenExperimentExtractor" href="#impc_etl.workflow.extraction.SpecimenExperimentExtractor">SpecimenExperimentExtractor</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.extraction.SpecimenExperimentExtractor.experiment_type" href="#impc_etl.workflow.extraction.SpecimenExperimentExtractor.experiment_type">experiment_type</a></code></li>
-</ul>
 </li>
 </ul>
 </li>

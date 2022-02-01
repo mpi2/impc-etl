@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>impc_etl.jobs.extract.mgi_gene_pheno_extractor API documentation</title>
+<meta name="description" content="[MGI Gene Pheno report](http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt) extraction Task.
+This report contains the list of Gene …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>impc_etl.jobs.extract.mgi_gene_pheno_extractor</code></h1>
+</header>
+<section id="section-intro">
+<p><a href="http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt">MGI Gene Pheno report</a> extraction Task.
+This report contains the list of Gene Phenotype Associations reported in MGI.</p>
+<h3 id="from-mgi-reports-alleles-and-phenotypes-section">From <a href="http://www.informatics.jax.org/downloads/reports/index.html#pheno">MGI Reports / Alleles and Phenotypes section</a>:</h3>
+<h4 id="9-genotypes-and-mammalian-phenotype-annotations-for-marker-type-genes">9.
+Genotypes and Mammalian Phenotype Annotations for Marker Type Genes</h4>
+<p>excluding conditional mutations (tab-delimited):</p>
+<table>
+<thead>
+<tr>
+<th>Allelic Composition</th>
+<th>Allele Symbol(s)</th>
+<th>Allele ID(s)</th>
+<th>Genetic Background</th>
+<th>Mammalian Phenotype ID</th>
+<th>PubMed ID (pipe-delimited)</th>
+<th>MGI Marker Accession ID (pipe-delimited)</th>
+<th>MGI Genotype Accession ID (pipe-delimited)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rb1<tm1Tyj>/Rb1<tm1Tyj></td>
+<td>Rb1<tm1Tyj></td>
+<td>MGI:1857242</td>
+<td>involves: 129S2/SvPas</td>
+<td>MP:0000600</td>
+<td>12529408</td>
+<td>MGI:97874</td>
+<td>MGI:2166359</td>
+</tr>
+<tr>
+<td>&hellip;</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+
+[MGI Gene Pheno report](http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt) extraction Task.
+This report contains the list of Gene Phenotype Associations reported in MGI.
+
+### From [MGI Reports / Alleles and Phenotypes section](http://www.informatics.jax.org/downloads/reports/index.html#pheno):
+
+#### 9.  Genotypes and Mammalian Phenotype Annotations for Marker Type Genes
+excluding conditional mutations (tab-delimited):
+
+| Allelic Composition     | Allele Symbol(s) | Allele ID(s) | Genetic Background    | Mammalian Phenotype ID | PubMed ID (pipe-delimited) | MGI Marker Accession ID (pipe-delimited) | MGI Genotype Accession ID (pipe-delimited) |
+|-------------------------|------------------|--------------|-----------------------|------------------------|----------------------------|------------------------------------------|--------------------------------------------|
+| Rb1&lt;tm1Tyj&gt;/Rb1&lt;tm1Tyj&gt; | Rb1&lt;tm1Tyj&gt;      | MGI:1857242  | involves: 129S2/SvPas | MP:0000600             | 12529408                   | MGI:97874                                | MGI:2166359                                |
+...
+&#34;&#34;&#34;
+import luigi
+from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.types import StructType, StructField, StringType
+
+from impc_etl.shared.utils import extract_tsv
+from impc_etl.workflow.config import ImpcConfig
+
+GENE_PHENO_SCHEMA = StructType(
+    [
+        StructField(&#34;allelicComposition&#34;, StringType(), True),
+        StructField(&#34;alleleSymbol&#34;, StringType(), True),
+        StructField(&#34;mgiAlleleID&#34;, StringType(), True),
+        StructField(&#34;geneticBackground&#34;, StringType(), True),
+        StructField(&#34;mammalianPhenotypeID&#34;, StringType(), True),
+        StructField(&#34;pubMedID&#34;, StringType(), True),
+        StructField(&#34;mgiMarkerAccessionID&#34;, StringType(), True),
+        StructField(&#34;mgiGenotypeAccessionID&#34;, StringType(), True),
+    ]
+)
+
+
+class MGIGenePhenoReportExtractor(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark Task class to extract the information from the
+    [MGI Gene Pheno report](http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt).
+    It also adds a header to the RPT format content (allelicComposition, alleleSymbol, mgiAlleleID, geneticBackground,
+    mammalianPhenotypeID, pubMedID, mgiMarkerAccessionID, mgiGenotypeAccessionID).
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name: str = &#34;IMPC_MGI_Gene_Pheno_Report_Extractor&#34;
+
+    #: Path of the MGI Gene Pheno report *.rpt file.
+    mgi_gene_pheno_report_path: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where ethe new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/mgi_gene_pheno_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(f&#34;{self.output_path}mgi_gene_pheno_parquet&#34;)
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.mgi_gene_pheno_report_path,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args):
+        &#34;&#34;&#34;
+        Takes in a SparkContext and the list of arguments generated by `app_options` and executes the PySpark job.
+        &#34;&#34;&#34;
+        mgi_gene_pheno_report_path = args[0]
+        output_path = args[1]
+
+        spark = SparkSession(sc)
+
+        mgi_gene_pheno_df: DataFrame = extract_tsv(
+            spark, mgi_gene_pheno_report_path, schema=GENE_PHENO_SCHEMA, header=False
+        )
+        mgi_gene_pheno_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor"><code class="flex name class">
+<span>class <span class="ident">MGIGenePhenoReportExtractor</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>PySpark Task class to extract the information from the
+<a href="http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt">MGI Gene Pheno report</a>.
+It also adds a header to the RPT format content (allelicComposition, alleleSymbol, mgiAlleleID, geneticBackground,
+mammalianPhenotypeID, pubMedID, mgiMarkerAccessionID, mgiGenotypeAccessionID).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MGIGenePhenoReportExtractor(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark Task class to extract the information from the
+    [MGI Gene Pheno report](http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt).
+    It also adds a header to the RPT format content (allelicComposition, alleleSymbol, mgiAlleleID, geneticBackground,
+    mammalianPhenotypeID, pubMedID, mgiMarkerAccessionID, mgiGenotypeAccessionID).
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name: str = &#34;IMPC_MGI_Gene_Pheno_Report_Extractor&#34;
+
+    #: Path of the MGI Gene Pheno report *.rpt file.
+    mgi_gene_pheno_report_path: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where ethe new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/mgi_gene_pheno_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(f&#34;{self.output_path}mgi_gene_pheno_parquet&#34;)
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.mgi_gene_pheno_report_path,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args):
+        &#34;&#34;&#34;
+        Takes in a SparkContext and the list of arguments generated by `app_options` and executes the PySpark job.
+        &#34;&#34;&#34;
+        mgi_gene_pheno_report_path = args[0]
+        output_path = args[1]
+
+        spark = SparkSession(sc)
+
+        mgi_gene_pheno_df: DataFrame = extract_tsv(
+            spark, mgi_gene_pheno_report_path, schema=GENE_PHENO_SCHEMA, header=False
+        )
+        mgi_gene_pheno_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.mgi_gene_pheno_report_path"><code class="name">var <span class="ident">mgi_gene_pheno_report_path</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>Path of the MGI Gene Pheno report *.rpt file.</p></div>
+</dd>
+<dt id="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>Name of the Spark task</p></div>
+</dd>
+<dt id="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>Path of the output directory where ethe new parquet file will be generated.</p></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates the options pass to the PySpark job</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    &#34;&#34;&#34;
+    Generates the options pass to the PySpark job
+    &#34;&#34;&#34;
+    return [
+        self.mgi_gene_pheno_report_path,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Takes in a SparkContext and the list of arguments generated by <code>app_options</code> and executes the PySpark job.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(self, sc: SparkContext, *args):
+    &#34;&#34;&#34;
+    Takes in a SparkContext and the list of arguments generated by `app_options` and executes the PySpark job.
+    &#34;&#34;&#34;
+    mgi_gene_pheno_report_path = args[0]
+    output_path = args[1]
+
+    spark = SparkSession(sc)
+
+    mgi_gene_pheno_df: DataFrame = extract_tsv(
+        spark, mgi_gene_pheno_report_path, schema=GENE_PHENO_SCHEMA, header=False
+    )
+    mgi_gene_pheno_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the full parquet path as an output for the Luigi Task
+(e.g. impc/dr15.2/parquet/mgi_gene_pheno_parquet)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    &#34;&#34;&#34;
+    Returns the full parquet path as an output for the Luigi Task
+    (e.g. impc/dr15.2/parquet/mgi_gene_pheno_parquet)
+    &#34;&#34;&#34;
+    return ImpcConfig().get_target(f&#34;{self.output_path}mgi_gene_pheno_parquet&#34;)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<header>
+<div style="max-width: 300px; text-align: center">
+<img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
+</div>
+<h1 style="text-align: center; max-width: 300px;">IMPC ETL</h1>
+<h2 style="text-align: center; max-width: 300px;">Reference Documentation</h2>
+</header>
+<h1>Index</h1>
+<div class="toc">
+<ul>
+<li><a href="#from-mgi-reports-alleles-and-phenotypes-section">From MGI Reports / Alleles and Phenotypes section:</a><ul>
+<li><a href="#9-genotypes-and-mammalian-phenotype-annotations-for-marker-type-genes">9.
+Genotypes and Mammalian Phenotype Annotations for Marker Type Genes</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="impc_etl.jobs.extract" href="index.html">impc_etl.jobs.extract</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor" href="#impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor">MGIGenePhenoReportExtractor</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.app_options" href="#impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.main" href="#impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.mgi_gene_pheno_report_path" href="#impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.mgi_gene_pheno_report_path">mgi_gene_pheno_report_path</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.name" href="#impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.output" href="#impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.output_path" href="#impc_etl.jobs.extract.mgi_gene_pheno_extractor.MGIGenePhenoReportExtractor.output_path">output_path</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p><span></span></p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

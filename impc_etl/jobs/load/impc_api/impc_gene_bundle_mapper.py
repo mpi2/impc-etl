@@ -1,22 +1,13 @@
 import luigi
 from luigi.contrib.spark import PySparkTask
-from typing import List, Dict
+from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import collect_set, struct, lit, col, concat, flatten
 
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
 )
-from impc_etl.workflow.config import ImpcConfig
-from pyspark.sql import SparkSession, DataFrame
 from impc_etl.jobs.load.solr.gene_mapper import get_gene_core_df, IMITS_GENE_COLUMNS
-from impc_etl.workflow.extraction import (
-    GeneExtractor,
-    AlleleExtractor,
-    MGIHomoloGeneExtractor,
-    MGIMrkListExtractor,
-    OntologyMetadataExtractor,
-    ProductReportExtractor,
-)
+from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.load import (
     ObservationsMapper,
     StatsResultsCoreLoader,
@@ -57,8 +48,8 @@ class ImpcGeneBundleMapper(PySparkTask):
         return [
             GeneExtractor(),
             AlleleExtractor(),
-            MGIHomoloGeneExtractor(),
-            MGIMrkListExtractor(),
+            MGIHomologyReportExtractor(),
+            MGIMarkerListReportExtractor(),
             ObservationsMapper(),
             StatsResultsCoreLoader(raw_data_in_output="bundled"),
             OntologyMetadataExtractor(),

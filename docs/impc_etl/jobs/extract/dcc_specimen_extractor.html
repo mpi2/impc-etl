@@ -46,33 +46,22 @@ DCC Specimen Extractor module
     &lt;DCC_XML_PATH&gt;/&lt;DATASOURCE&gt;/*specimen*.xml
     Each directory containing the raw XML in the XML schema defined by the DCC.
 &#34;&#34;&#34;
+import luigi
+from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
+from pyspark.sql import DataFrame, SparkSession
+
 from impc_etl.jobs.extract.dcc_extractor_helper import (
     extract_dcc_xml_files,
     get_entity_by_type,
 )
-from impc_etl.workflow.config import ImpcConfig
-import luigi
-from luigi.contrib.spark import PySparkTask
-from pyspark.sql import DataFrame, SparkSession
 from impc_etl.shared.exceptions import UnsupportedEntityError
+from impc_etl.workflow.config import ImpcConfig
 
 
 class DCCSpecimenExtractor(PySparkTask):
     &#34;&#34;&#34;
     PySpark Task class to extract experimental data from the DCC XML files.
-
-    Attributes
-    __________
-
-        name: str
-            Name of the Spark task
-        dcc_specimen_xml_path: luigi.Parameter
-            Path in the filesystem (local or HDFS) to the specimen XML files
-        specimen_type: str
-            Type of specimen can be &#34;embryo&#34; or &#34;mouse&#34;
-        output_path: luigi.Parameter
-            Path of the output directory where the new parquet file will be generated.
     &#34;&#34;&#34;
 
     name = &#34;IMPC_DCC_Specimen_Extractor&#34;
@@ -190,18 +179,7 @@ and gets the specimen data entities.</p>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p>
-<p>Attributes</p>
-<hr>
-<pre><code>name: str
-    Name of the Spark task
-dcc_specimen_xml_path: luigi.Parameter
-    Path in the filesystem (local or HDFS) to the specimen XML files
-specimen_type: str
-    Type of specimen can be "embryo" or "mouse"
-output_path: luigi.Parameter
-    Path of the output directory where the new parquet file will be generated.
-</code></pre></div>
+<div class="desc"><p>PySpark Task class to extract experimental data from the DCC XML files.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -209,18 +187,6 @@ output_path: luigi.Parameter
 <pre><code class="python">class DCCSpecimenExtractor(PySparkTask):
     &#34;&#34;&#34;
     PySpark Task class to extract experimental data from the DCC XML files.
-
-    Attributes
-    __________
-
-        name: str
-            Name of the Spark task
-        dcc_specimen_xml_path: luigi.Parameter
-            Path in the filesystem (local or HDFS) to the specimen XML files
-        specimen_type: str
-            Type of specimen can be &#34;embryo&#34; or &#34;mouse&#34;
-        output_path: luigi.Parameter
-            Path of the output directory where the new parquet file will be generated.
     &#34;&#34;&#34;
 
     name = &#34;IMPC_DCC_Specimen_Extractor&#34;
@@ -372,9 +338,11 @@ output_path: luigi.Parameter
 </article>
 <nav id="sidebar">
 <header>
-<div style="max-width: 300px, text-align: center">
+<div style="max-width: 300px; text-align: center">
 <img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
 </div>
+<h1 style="text-align: center; max-width: 300px;">IMPC ETL</h1>
+<h2 style="text-align: center; max-width: 300px;">Reference Documentation</h2>
 </header>
 <h1>Index</h1>
 <div class="toc">

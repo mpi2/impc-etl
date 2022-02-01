@@ -2,6 +2,7 @@
     Gene production status report extractor.
 """
 from typing import Dict, List
+
 import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
@@ -17,8 +18,8 @@ from pyspark.sql.functions import (
 )
 from pyspark.sql.types import StringType, IntegerType
 
-from impc_etl.workflow.config import ImpcConfig
 from impc_etl.jobs.extract.product_report_extractor import ProductReportExtractor
+from impc_etl.workflow.config import ImpcConfig
 
 
 class GeneProductionStatusExtractor(PySparkTask):
@@ -28,20 +29,15 @@ class GeneProductionStatusExtractor(PySparkTask):
     It takes as an input the Gene Interest report from gentar (https://www.gentar.org/tracker-api/api/reports/gene_interest)
     And the Products report from Gentar ().
     The output is a Parquet file containing a full report of the different Statuses available for a Gene.
-
-    Attributes
-    __________
-
-        name: str
-            Name of the Spark task
-        gentar_gene_status_path: luigi.Parameter
-            Path in the filesystem (local or HDFS) to the GenTar gene status report
-        output_path: luigi.Parameter
-            Path of the output directory where ethe new parquet file will be generated.
     """
 
-    name = "IMPC_Gene_Production_Status_Extractor"
-    gentar_gene_status_path = luigi.Parameter()
+    #: Name of the Spark task
+    name: str = "IMPC_Gene_Production_Status_Extractor"
+
+    #: Path in the filesystem (local or HDFS) to the GenTar gene status report
+    gentar_gene_status_path: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where the new parquet file will be generated.
     output_path = luigi.Parameter()
 
     def output(self):

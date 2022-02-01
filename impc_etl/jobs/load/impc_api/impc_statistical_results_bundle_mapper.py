@@ -1,6 +1,8 @@
-import luigi
 import json
+
+import luigi
 from luigi.contrib.spark import PySparkTask
+from pymongo import MongoClient
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import lit
 from pyspark.sql.types import StringType
@@ -13,7 +15,7 @@ from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.extraction import (
     AlleleExtractor,
     ImpressExtractor,
-    OntologyExtractor,
+    IMPCOntologyTermHierarchyExtractor,
     OpenStatsExtractor,
 )
 from impc_etl.workflow.load import (
@@ -21,7 +23,6 @@ from impc_etl.workflow.load import (
     PipelineCoreLoader,
     MPChooserLoader,
 )
-from pymongo import MongoClient
 
 
 class ImpcStatsBundleMapper(PySparkTask):
@@ -43,7 +44,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         return [
             OpenStatsExtractor(),
             ObservationsMapper(),
-            OntologyExtractor(),
+            IMPCOntologyTermHierarchyExtractor(),
             ImpressExtractor(),
             PipelineCoreLoader(),
             AlleleExtractor(),

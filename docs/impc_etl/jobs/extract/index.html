@@ -34,13 +34,25 @@ Module to group extraction jobs for input data. Most of these jobs ara simple re
 in and generate a Parquet file with a slightly different schema.
 &#34;&#34;&#34;
 
-from impc_etl.jobs.extract.product_report_extractor import ProductReportExtractor
-from impc_etl.jobs.extract.dcc_specimen_extractor import DCCSpecimenExtractor
-from impc_etl.jobs.extract.dcc_experiment_extractor import DCCExperimentExtractor
 from impc_etl.jobs.extract.colony_tracking_extractor import ColonyTrackingExtractor
+from impc_etl.jobs.extract.dcc_experiment_extractor import DCCExperimentExtractor
+from impc_etl.jobs.extract.dcc_specimen_extractor import DCCSpecimenExtractor
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
-)</code></pre>
+)
+from impc_etl.jobs.extract.impress_extractor import ImpressExtractor
+from impc_etl.jobs.extract.mgi_gene_pheno_extractor import MGIGenePhenoReportExtractor
+from impc_etl.jobs.extract.mgi_homology_extractor import MGIHomologyReportExtractor
+from impc_etl.jobs.extract.mgi_mrk_list_extractor import MGIMarkerListReportExtractor
+from impc_etl.jobs.extract.mgi_phenotypic_allele import MGIPhenotypicAlleleExtractor
+from impc_etl.jobs.extract.mgi_strain_extractor import MGIStrainReportExtractor
+from impc_etl.jobs.extract.ontology_hierarchy_extractor import (
+    IMPCOntologyTermHierarchyExtractor,
+)
+from impc_etl.jobs.extract.ontology_metadata_extractor import (
+    IMPCOntologyMetadataExtractor,
+)
+from impc_etl.jobs.extract.product_report_extractor import ProductReportExtractor</code></pre>
 </details>
 </section>
 <section>
@@ -84,25 +96,49 @@ There are three kind of IMITS …</p></div>
 </dd>
 <dt><code class="name"><a title="impc_etl.jobs.extract.impress_extractor" href="impress_extractor.html">impc_etl.jobs.extract.impress_extractor</a></code></dt>
 <dd>
-<div class="desc"><p>IMPRESS extractor
-extract_impress: Extract Impress data and load it to a dataframe</p></div>
+<div class="desc"><p>IMPRESS extractor task.
+Crawls <a href="https://www.mousephenotype.org/impress/index">IMPReSS</a> API to generate a full view of the current state of …</p></div>
 </dd>
 <dt><code class="name"><a title="impc_etl.jobs.extract.impress_extractor_batch" href="impress_extractor_batch.html">impc_etl.jobs.extract.impress_extractor_batch</a></code></dt>
 <dd>
 <div class="desc"><p>IMPRESS extractor
 extract_impress: Extract Impress data and load it to a dataframe</p></div>
 </dd>
-<dt><code class="name"><a title="impc_etl.jobs.extract.mgi_extractor" href="mgi_extractor.html">impc_etl.jobs.extract.mgi_extractor</a></code></dt>
+<dt><code class="name"><a title="impc_etl.jobs.extract.mgi_gene_pheno_extractor" href="mgi_gene_pheno_extractor.html">impc_etl.jobs.extract.mgi_gene_pheno_extractor</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><a href="http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt">MGI Gene Pheno report</a> extraction Task.
+This report contains the list of Gene …</p></div>
 </dd>
-<dt><code class="name"><a title="impc_etl.jobs.extract.ontology_extractor" href="ontology_extractor.html">impc_etl.jobs.extract.ontology_extractor</a></code></dt>
+<dt><code class="name"><a title="impc_etl.jobs.extract.mgi_homology_extractor" href="mgi_homology_extractor.html">impc_etl.jobs.extract.mgi_homology_extractor</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><a href="http://www.informatics.jax.org/downloads/reports/HGNC_AllianceHomology.rpt">MGI Alliance Homology, HGNC and CCDS IDs report</a> extraction Task.
+This …</p></div>
+</dd>
+<dt><code class="name"><a title="impc_etl.jobs.extract.mgi_mrk_list_extractor" href="mgi_mrk_list_extractor.html">impc_etl.jobs.extract.mgi_mrk_list_extractor</a></code></dt>
+<dd>
+<div class="desc"><p><a href="http://www.informatics.jax.org/downloads/reports/MRK_List1.rpt">MGI Markers report</a> extraction Task.
+This report contains the list of valid MGI …</p></div>
+</dd>
+<dt><code class="name"><a title="impc_etl.jobs.extract.mgi_phenotypic_allele" href="mgi_phenotypic_allele.html">impc_etl.jobs.extract.mgi_phenotypic_allele</a></code></dt>
+<dd>
+<div class="desc"><p><a href="http://www.informatics.jax.org/downloads/reports/MGI_PhenotypicAllele.rpt">MGI Phenotypic Allele report</a> extraction Task.
+This report contains the …</p></div>
+</dd>
+<dt><code class="name"><a title="impc_etl.jobs.extract.mgi_strain_extractor" href="mgi_strain_extractor.html">impc_etl.jobs.extract.mgi_strain_extractor</a></code></dt>
+<dd>
+<div class="desc"><p><a href="http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt">MGI strain report</a> extraction Task. This report maps
+the MGI accession IDs for the …</p></div>
+</dd>
+<dt><code class="name"><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor" href="ontology_hierarchy_extractor.html">impc_etl.jobs.extract.ontology_hierarchy_extractor</a></code></dt>
+<dd>
+<div class="desc"><p>IMPC Ontology Hierarchy Extraction task. It takes in a set of ontologies and returns them in a parquet file that
+represents the hierarchical relations …</p></div>
 </dd>
 <dt><code class="name"><a title="impc_etl.jobs.extract.ontology_metadata_extractor" href="ontology_metadata_extractor.html">impc_etl.jobs.extract.ontology_metadata_extractor</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Ontology metadata extractor Task.
+It takes the output of the <a href="https://github.com/mpi2/impc-ontology-pipeline">IMPC Ontology Pipeline</a>
+and transforms …</p></div>
 </dd>
 <dt><code class="name"><a title="impc_etl.jobs.extract.open_stats_extractor" href="open_stats_extractor.html">impc_etl.jobs.extract.open_stats_extractor</a></code></dt>
 <dd>
@@ -137,9 +173,11 @@ extract_ontology_terms:</p></div>
 </article>
 <nav id="sidebar">
 <header>
-<div style="max-width: 300px, text-align: center">
+<div style="max-width: 300px; text-align: center">
 <img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
 </div>
+<h1 style="text-align: center; max-width: 300px;">IMPC ETL</h1>
+<h2 style="text-align: center; max-width: 300px;">Reference Documentation</h2>
 </header>
 <h1>Index</h1>
 <div class="toc">
@@ -161,8 +199,12 @@ extract_ontology_terms:</p></div>
 <li><code><a title="impc_etl.jobs.extract.imits_extractor" href="imits_extractor.html">impc_etl.jobs.extract.imits_extractor</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.impress_extractor" href="impress_extractor.html">impc_etl.jobs.extract.impress_extractor</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.impress_extractor_batch" href="impress_extractor_batch.html">impc_etl.jobs.extract.impress_extractor_batch</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.mgi_extractor" href="mgi_extractor.html">impc_etl.jobs.extract.mgi_extractor</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_extractor" href="ontology_extractor.html">impc_etl.jobs.extract.ontology_extractor</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_gene_pheno_extractor" href="mgi_gene_pheno_extractor.html">impc_etl.jobs.extract.mgi_gene_pheno_extractor</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_homology_extractor" href="mgi_homology_extractor.html">impc_etl.jobs.extract.mgi_homology_extractor</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_mrk_list_extractor" href="mgi_mrk_list_extractor.html">impc_etl.jobs.extract.mgi_mrk_list_extractor</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_phenotypic_allele" href="mgi_phenotypic_allele.html">impc_etl.jobs.extract.mgi_phenotypic_allele</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.mgi_strain_extractor" href="mgi_strain_extractor.html">impc_etl.jobs.extract.mgi_strain_extractor</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor" href="ontology_hierarchy_extractor.html">impc_etl.jobs.extract.ontology_hierarchy_extractor</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor" href="ontology_metadata_extractor.html">impc_etl.jobs.extract.ontology_metadata_extractor</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.open_stats_extractor" href="open_stats_extractor.html">impc_etl.jobs.extract.open_stats_extractor</a></code></li>
 <li><code><a title="impc_etl.jobs.extract.product_report_extractor" href="product_report_extractor.html">impc_etl.jobs.extract.product_report_extractor</a></code></li>

@@ -30,32 +30,28 @@
 <pre><code class="python">&#34;&#34;&#34;
     Colony tracking extraction task. Extracts information from GenTar.
 &#34;&#34;&#34;
-from pyspark import SparkContext
-from impc_etl.shared import utils
-from impc_etl.workflow.config import ImpcConfig
-from pyspark.sql.session import SparkSession
 import luigi
 from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
+from pyspark.sql.session import SparkSession
+
+from impc_etl.shared import utils
+from impc_etl.workflow.config import ImpcConfig
 
 
 class ColonyTrackingExtractor(PySparkTask):
     &#34;&#34;&#34;
     PySpark Task class to extract colony tracking information from reports.
-
-    Attributes
-    __________
-
-        name: str
-            Name of the Spark task
-        gentar_colonies_tsv_path: luigi.Parameter
-            Path in the filesystem (local or HDFS) to the GenTar colonies report
-        output_path: luigi.Parameter
-            Path of the output directory where ethe new parquet file will be generated.
     &#34;&#34;&#34;
 
-    name = &#34;IMPC_Colony_Tracking_Extractor&#34;
-    gentar_colonies_tsv_path = luigi.Parameter()
-    output_path = luigi.Parameter()
+    #: Name of the Spark task
+    name: str = &#34;IMPC_Colony_Tracking_Extractor&#34;
+
+    #: Path in the filesystem (local or HDFS) to the GenTar colonies report
+    gentar_colonies_tsv_path: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where ethe new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
 
     def output(self):
         &#34;&#34;&#34;
@@ -121,16 +117,7 @@ class ColonyTrackingExtractor(PySparkTask):
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>PySpark Task class to extract colony tracking information from reports.</p>
-<p>Attributes</p>
-<hr>
-<pre><code>name: str
-    Name of the Spark task
-gentar_colonies_tsv_path: luigi.Parameter
-    Path in the filesystem (local or HDFS) to the GenTar colonies report
-output_path: luigi.Parameter
-    Path of the output directory where ethe new parquet file will be generated.
-</code></pre></div>
+<div class="desc"><p>PySpark Task class to extract colony tracking information from reports.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -138,21 +125,16 @@ output_path: luigi.Parameter
 <pre><code class="python">class ColonyTrackingExtractor(PySparkTask):
     &#34;&#34;&#34;
     PySpark Task class to extract colony tracking information from reports.
-
-    Attributes
-    __________
-
-        name: str
-            Name of the Spark task
-        gentar_colonies_tsv_path: luigi.Parameter
-            Path in the filesystem (local or HDFS) to the GenTar colonies report
-        output_path: luigi.Parameter
-            Path of the output directory where ethe new parquet file will be generated.
     &#34;&#34;&#34;
 
-    name = &#34;IMPC_Colony_Tracking_Extractor&#34;
-    gentar_colonies_tsv_path = luigi.Parameter()
-    output_path = luigi.Parameter()
+    #: Name of the Spark task
+    name: str = &#34;IMPC_Colony_Tracking_Extractor&#34;
+
+    #: Path in the filesystem (local or HDFS) to the GenTar colonies report
+    gentar_colonies_tsv_path: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where ethe new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
 
     def output(self):
         &#34;&#34;&#34;
@@ -212,17 +194,17 @@ output_path: luigi.Parameter
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.gentar_colonies_tsv_path"><code class="name">var <span class="ident">gentar_colonies_tsv_path</span></code></dt>
+<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.gentar_colonies_tsv_path"><code class="name">var <span class="ident">gentar_colonies_tsv_path</span> : luigi.parameter.Parameter</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Path in the filesystem (local or HDFS) to the GenTar colonies report</p></div>
 </dd>
-<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Name of the Spark task</p></div>
 </dd>
-<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dt id="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Path of the output directory where ethe new parquet file will be generated.</p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
@@ -313,9 +295,11 @@ output_path: luigi.Parameter
 </article>
 <nav id="sidebar">
 <header>
-<div style="max-width: 300px, text-align: center">
+<div style="max-width: 300px; text-align: center">
 <img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
 </div>
+<h1 style="text-align: center; max-width: 300px;">IMPC ETL</h1>
+<h2 style="text-align: center; max-width: 300px;">Reference Documentation</h2>
 </header>
 <h1>Index</h1>
 <div class="toc">

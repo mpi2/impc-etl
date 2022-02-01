@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>impc_etl.jobs.extract.ontology_metadata_extractor API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Ontology metadata extractor Task.
+It takes the output of the [IMPC Ontology Pipeline](https://github.com/mpi2/impc-ontology-pipeline)
+and transforms …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,34 +24,73 @@
 <h1 class="title">Module <code>impc_etl.jobs.extract.ontology_metadata_extractor</code></h1>
 </header>
 <section id="section-intro">
+<p>Ontology metadata extractor Task.
+It takes the output of the <a href="https://github.com/mpi2/impc-ontology-pipeline">IMPC Ontology Pipeline</a>
+and transforms it
+to a parquet files.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import sys
-from pyspark.sql import DataFrame, SparkSession
-from luigi.contrib.hdfs.hadoopcli_clients import HdfsClient
+<pre><code class="python">&#34;&#34;&#34;
+    Ontology metadata extractor Task.
+    It takes the output of the [IMPC Ontology Pipeline](https://github.com/mpi2/impc-ontology-pipeline)
+    and transforms it  to a parquet files.
+
+&#34;&#34;&#34;
+from typing import Any
+
+import luigi
+from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
+from pyspark.sql import SparkSession
+
+from impc_etl.workflow.config import ImpcConfig
 
 
-def main(argv):
-    &#34;&#34;&#34;
-    DCC Extractor job runner
-    :param list argv: the list elements should be:
-                    [1]: Input Path
-                    [2]: Output Path
-    &#34;&#34;&#34;
-    input_path = argv[1]
-    output_path = argv[2]
-    spark = SparkSession.builder.getOrCreate()
-    ontology_df = spark.read.csv(
-        input_path + &#34;/{eco,efo,emap,emapa,ma,mp,mpath,pato,uberon}_metadata_table.csv&#34;,
-        header=True,
-    )
-    ontology_df.distinct().write.mode(&#34;overwrite&#34;).parquet(output_path)
+class IMPCOntologyMetadataExtractor(PySparkTask):
+    &#34;&#34;&#34;&#34;&#34;&#34;
 
+    #: Name of the Spark task
+    name = &#34;IMPC_Ontology_Metadata_Extractor&#34;
 
-if __name__ == &#34;__main__&#34;:
-    sys.exit(main(sys.argv))</code></pre>
+    #: Path to the directory containing Ontology metadata CSV files
+    ontology_metadata_input_path: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where ethe new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/impc_ontology_term_hierarchy_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}impc_ontology_metadata_parquet&#34;
+        )
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.ontology_metadata_input_path,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args: Any):
+        &#34;&#34;&#34;
+        Ontology metadata extraction runner.
+        &#34;&#34;&#34;
+        input_path = args[0]
+        output_path = args[1]
+        spark = SparkSession.builder.getOrCreate()
+        ontology_df = spark.read.csv(
+            input_path
+            + &#34;/{eco,efo,emap,emapa,ma,mp,mpath,pato,uberon}_metadata_table.csv&#34;,
+            header=True,
+        )
+        ontology_df.distinct().write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </section>
 <section>
@@ -57,47 +98,163 @@ if __name__ == &#34;__main__&#34;:
 <section>
 </section>
 <section>
-<h2 class="section-title" id="header-functions">Functions</h2>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.main"><code class="name flex">
-<span>def <span class="ident">main</span></span>(<span>argv)</span>
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor"><code class="flex name class">
+<span>class <span class="ident">IMPCOntologyMetadataExtractor</span></span>
+<span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>DCC Extractor job runner
-:param list argv: the list elements should be:
-[1]: Input Path
-[2]: Output Path</p></div>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def main(argv):
+<pre><code class="python">class IMPCOntologyMetadataExtractor(PySparkTask):
+    &#34;&#34;&#34;&#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name = &#34;IMPC_Ontology_Metadata_Extractor&#34;
+
+    #: Path to the directory containing Ontology metadata CSV files
+    ontology_metadata_input_path: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where ethe new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/impc_ontology_term_hierarchy_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}impc_ontology_metadata_parquet&#34;
+        )
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.ontology_metadata_input_path,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args: Any):
+        &#34;&#34;&#34;
+        Ontology metadata extraction runner.
+        &#34;&#34;&#34;
+        input_path = args[0]
+        output_path = args[1]
+        spark = SparkSession.builder.getOrCreate()
+        ontology_df = spark.read.csv(
+            input_path
+            + &#34;/{eco,efo,emap,emapa,ma,mp,mpath,pato,uberon}_metadata_table.csv&#34;,
+            header=True,
+        )
+        ontology_df.distinct().write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"><p>Name of the Spark task</p></div>
+</dd>
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.ontology_metadata_input_path"><code class="name">var <span class="ident">ontology_metadata_input_path</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>Path to the directory containing Ontology metadata CSV files</p></div>
+</dd>
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>Path of the output directory where ethe new parquet file will be generated.</p></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates the options pass to the PySpark job</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
     &#34;&#34;&#34;
-    DCC Extractor job runner
-    :param list argv: the list elements should be:
-                    [1]: Input Path
-                    [2]: Output Path
+    Generates the options pass to the PySpark job
     &#34;&#34;&#34;
-    input_path = argv[1]
-    output_path = argv[2]
+    return [
+        self.ontology_metadata_input_path,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Ontology metadata extraction runner.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(self, sc: SparkContext, *args: Any):
+    &#34;&#34;&#34;
+    Ontology metadata extraction runner.
+    &#34;&#34;&#34;
+    input_path = args[0]
+    output_path = args[1]
     spark = SparkSession.builder.getOrCreate()
     ontology_df = spark.read.csv(
-        input_path + &#34;/{eco,efo,emap,emapa,ma,mp,mpath,pato,uberon}_metadata_table.csv&#34;,
+        input_path
+        + &#34;/{eco,efo,emap,emapa,ma,mp,mpath,pato,uberon}_metadata_table.csv&#34;,
         header=True,
     )
     ontology_df.distinct().write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </dd>
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the full parquet path as an output for the Luigi Task
+(e.g. impc/dr15.2/parquet/impc_ontology_term_hierarchy_parquet)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    &#34;&#34;&#34;
+    Returns the full parquet path as an output for the Luigi Task
+    (e.g. impc/dr15.2/parquet/impc_ontology_term_hierarchy_parquet)
+    &#34;&#34;&#34;
+    return ImpcConfig().get_target(
+        f&#34;{self.output_path}impc_ontology_metadata_parquet&#34;
+    )</code></pre>
+</details>
+</dd>
 </dl>
-</section>
-<section>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
 <header>
-<div style="max-width: 300px, text-align: center">
+<div style="max-width: 300px; text-align: center">
 <img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
 </div>
+<h1 style="text-align: center; max-width: 300px;">IMPC ETL</h1>
+<h2 style="text-align: center; max-width: 300px;">Reference Documentation</h2>
 </header>
 <h1>Index</h1>
 <div class="toc">
@@ -109,9 +266,19 @@ if __name__ == &#34;__main__&#34;:
 <li><code><a title="impc_etl.jobs.extract" href="index.html">impc_etl.jobs.extract</a></code></li>
 </ul>
 </li>
-<li><h3><a href="#header-functions">Functions</a></h3>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor">IMPCOntologyMetadataExtractor</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.main" href="#impc_etl.jobs.extract.ontology_metadata_extractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.app_options" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.main" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.name" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.ontology_metadata_input_path" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.ontology_metadata_input_path">ontology_metadata_input_path</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.output" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.output_path" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.output_path">output_path</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

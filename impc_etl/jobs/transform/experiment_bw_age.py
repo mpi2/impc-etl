@@ -13,10 +13,7 @@ from pyspark.sql.functions import (
     struct,
     udf,
     when,
-    lit,
     expr,
-    regexp_replace,
-    to_date,
     regexp_extract,
 )
 from pyspark.sql.types import (
@@ -29,7 +26,7 @@ from pyspark.sql.types import (
     DateType,
 )
 
-from impc_etl.config.constants import Constants
+from impc_etl.jobs.extract import ImpressExtractor
 from impc_etl.jobs.transform.experiment_parameter_derivator import (
     ExperimentParameterDerivator,
 )
@@ -37,7 +34,6 @@ from impc_etl.shared.utils import (
     unix_time_millis,
 )
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.extraction import ImpressExtractor
 from impc_etl.workflow.normalization import (
     MouseNormalizer,
 )
