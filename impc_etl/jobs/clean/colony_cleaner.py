@@ -25,10 +25,11 @@ from impc_etl.workflow.config import ImpcConfig
 class IMPCColonyCleaner(PySparkTask):
     """
     PySpark Task to clean some legacy colony  identifiers so they match the provided on the legacy  Specimen XML files.
+    This task depends on `impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor`.
     """
 
     #: Name of the Spark task
-    name = "IMPC_Colony_Cleaner"
+    name: str = "IMPC_Colony_Cleaner"
 
     #: Path of the output directory where ethe new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
@@ -60,7 +61,7 @@ class IMPCColonyCleaner(PySparkTask):
     def main(self, sc: SparkContext, *args: Any):
         colonies_tracking_parquet_path = args[0]
         output_path = args[1]
-        spark = SparkSession.builder.getOrCreate()
+        spark = SparkSession(sc)
         colonies_df = spark.read.parquet(colonies_tracking_parquet_path)
         specimen_clean_df = self.clean_colonies(colonies_df)
         specimen_clean_df.write.mode("overwrite").parquet(output_path)

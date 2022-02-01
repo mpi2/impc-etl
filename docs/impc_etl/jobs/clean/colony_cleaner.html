@@ -58,10 +58,11 @@ from impc_etl.workflow.config import ImpcConfig
 class IMPCColonyCleaner(PySparkTask):
     &#34;&#34;&#34;
     PySpark Task to clean some legacy colony  identifiers so they match the provided on the legacy  Specimen XML files.
+    This task depends on `impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor`.
     &#34;&#34;&#34;
 
     #: Name of the Spark task
-    name = &#34;IMPC_Colony_Cleaner&#34;
+    name: str = &#34;IMPC_Colony_Cleaner&#34;
 
     #: Path of the output directory where ethe new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
@@ -70,7 +71,7 @@ class IMPCColonyCleaner(PySparkTask):
         &#34;&#34;&#34;
         Defines the luigi  task dependencies
         &#34;&#34;&#34;
-        return ColonyTrackingExtractor
+        return ColonyTrackingExtractor()
 
     def output(self):
         &#34;&#34;&#34;
@@ -86,14 +87,14 @@ class IMPCColonyCleaner(PySparkTask):
         Generates the options pass to the PySpark job
         &#34;&#34;&#34;
         return [
-            self.input().path(),
+            self.input().path,
             self.output().path,
         ]
 
     def main(self, sc: SparkContext, *args: Any):
         colonies_tracking_parquet_path = args[0]
         output_path = args[1]
-        spark = SparkSession.builder.getOrCreate()
+        spark = SparkSession(sc)
         colonies_df = spark.read.parquet(colonies_tracking_parquet_path)
         specimen_clean_df = self.clean_colonies(colonies_df)
         specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
@@ -161,7 +162,8 @@ class IMPCColonyCleaner(PySparkTask):
 <dd>
 <div class="desc"><p>PySpark Task to clean some legacy colony
 identifiers so they match the provided on the legacy
-Specimen XML files.</p></div>
+Specimen XML files.
+This task depends on <code><a title="impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor" href="../extract/colony_tracking_extractor.html#impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor">ColonyTrackingExtractor</a></code>.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -169,10 +171,11 @@ Specimen XML files.</p></div>
 <pre><code class="python">class IMPCColonyCleaner(PySparkTask):
     &#34;&#34;&#34;
     PySpark Task to clean some legacy colony  identifiers so they match the provided on the legacy  Specimen XML files.
+    This task depends on `impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor`.
     &#34;&#34;&#34;
 
     #: Name of the Spark task
-    name = &#34;IMPC_Colony_Cleaner&#34;
+    name: str = &#34;IMPC_Colony_Cleaner&#34;
 
     #: Path of the output directory where ethe new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
@@ -181,7 +184,7 @@ Specimen XML files.</p></div>
         &#34;&#34;&#34;
         Defines the luigi  task dependencies
         &#34;&#34;&#34;
-        return ColonyTrackingExtractor
+        return ColonyTrackingExtractor()
 
     def output(self):
         &#34;&#34;&#34;
@@ -197,14 +200,14 @@ Specimen XML files.</p></div>
         Generates the options pass to the PySpark job
         &#34;&#34;&#34;
         return [
-            self.input().path(),
+            self.input().path,
             self.output().path,
         ]
 
     def main(self, sc: SparkContext, *args: Any):
         colonies_tracking_parquet_path = args[0]
         output_path = args[1]
-        spark = SparkSession.builder.getOrCreate()
+        spark = SparkSession(sc)
         colonies_df = spark.read.parquet(colonies_tracking_parquet_path)
         specimen_clean_df = self.clean_colonies(colonies_df)
         specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
@@ -264,7 +267,7 @@ Specimen XML files.</p></div>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
 <div class="desc"><p>Name of the Spark task</p></div>
 </dd>
@@ -289,7 +292,7 @@ Specimen XML files.</p></div>
     Generates the options pass to the PySpark job
     &#34;&#34;&#34;
     return [
-        self.input().path(),
+        self.input().path,
         self.output().path,
     ]</code></pre>
 </details>
@@ -359,7 +362,7 @@ given strain name.</p></div>
 <pre><code class="python">def main(self, sc: SparkContext, *args: Any):
     colonies_tracking_parquet_path = args[0]
     output_path = args[1]
-    spark = SparkSession.builder.getOrCreate()
+    spark = SparkSession(sc)
     colonies_df = spark.read.parquet(colonies_tracking_parquet_path)
     specimen_clean_df = self.clean_colonies(colonies_df)
     specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
@@ -433,7 +436,7 @@ task dependencies</p></div>
     &#34;&#34;&#34;
     Defines the luigi  task dependencies
     &#34;&#34;&#34;
-    return ColonyTrackingExtractor</code></pre>
+    return ColonyTrackingExtractor()</code></pre>
 </details>
 </dd>
 </dl>
