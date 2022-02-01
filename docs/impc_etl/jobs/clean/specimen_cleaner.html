@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>impc_etl.jobs.clean.specimen_cleaner API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Luigi PySpark task that takes the Specimen data coming from the different
+data sources
+(e.g. IMPC, 3i, EuroPhenome, PWG)
+and applies some data …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,181 +25,297 @@
 <h1 class="title">Module <code>impc_etl.jobs.clean.specimen_cleaner</code></h1>
 </header>
 <section id="section-intro">
+<p>Luigi PySpark task that takes the Specimen data coming from the different
+data sources
+(e.g. IMPC, 3i, EuroPhenome, PWG)
+and applies some data sanitizing functions.</p>
+<p>The cleaning process includes:</p>
+<ul>
+<li>mapping identifiers</li>
+<li>dropping entries with required values as NULL</li>
+<li>drop a list of predefined skipped experiments</li>
+<li>sanitize identifiers with XML elements (e.g. gt;)</li>
+<li>cleaning legacy identifiers</li>
+<li>drop duplicate specimen entries</li>
+<li>lastly generate a unique id</li>
+</ul>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import sys
+<pre><code class="python">&#34;&#34;&#34;
+    Luigi PySpark task that takes the Specimen data coming from the different  data sources  (e.g. IMPC, 3i, EuroPhenome, PWG)
+    and applies some data sanitizing functions.
+
+    The cleaning process includes:
+
+    - mapping identifiers
+    - dropping entries with required values as NULL
+    - drop a list of predefined skipped experiments
+    - sanitize identifiers with XML elements (e.g. gt;)
+    - cleaning legacy identifiers
+    - drop duplicate specimen entries
+    - lastly generate a unique id
+
+&#34;&#34;&#34;
+from typing import Any
+
+import luigi
+from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.types import StringType
 from pyspark.sql.functions import udf, when, regexp_replace, col, lit, md5, concat
+from pyspark.sql.types import StringType
+
 from impc_etl.shared import utils
-from impc_etl import logger
+from impc_etl.workflow.config import ImpcConfig
+from impc_etl.workflow.extraction import MouseSpecimenExtractor, EmbryoSpecimenExtractor
 
 
-def main(argv):
-    input_path = argv[1]
-    output_path = argv[2]
-    spark_session = SparkSession.builder.getOrCreate()
-    specimen_df = spark_session.read.parquet(input_path)
-    specimen_clean_df = clean_specimens(specimen_df)
-    specimen_clean_df = specimen_clean_df.dropDuplicates([&#34;_specimenID&#34;, &#34;_centreID&#34;])
-    specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
-
-
-def clean_specimens(specimen_df: DataFrame) -&gt; DataFrame:
+class IMPCSpecimenCleaner(PySparkTask):
     &#34;&#34;&#34;
-    DCC specimen cleaner
-    :return: a clean specimen parquet file
-    :rtype: DataFrame
+    PySpark task to clean IMPC Specimen data.
+
+    This task depends on `impc_etl.workflow.extraction.MouseSpecimenExtractor` for cleaning Mouse specimens
+    or `impc_etl.workflow.extraction.EmbryoSpecimenExtractor`
+    for cleaning Embryo specimens.
     &#34;&#34;&#34;
-    specimen_df: DataFrame = (
-        specimen_df.transform(map_centre_ids)
-        .transform(map_project_ids)
-        .transform(map_production_centre_ids)
-        .transform(map_phenotyping_centre_ids)
-    )
 
-    specimen_df = specimen_df.transform(truncate_europhenome_specimen_ids)
-    specimen_df = specimen_df.transform(truncate_europhenome_colony_ids)
-    specimen_df = specimen_df.transform(parse_europhenome_colony_xml_entities)
-    specimen_df = specimen_df.transform(standardize_strain_ids)
-    specimen_df = specimen_df.transform(override_3i_specimen_data)
-    specimen_df = specimen_df.transform(generate_unique_id)
-    specimen_df = specimen_df.drop_duplicates(
-        [col_name for col_name in specimen_df.columns if col_name != &#34;_sourceFile&#34;]
-    )
-    return specimen_df
+    #: Name of the Spark task
+    name: str = &#34;IMPC_Specimen_Cleaner&#34;
 
+    #: Specimen type can be &#39;mouse&#39; or &#39;embryo&#39;
+    specimen_type: luigi.Parameter = luigi.Parameter()
 
-def map_centre_ids(dcc_df: DataFrame) -&gt; DataFrame:
-    &#34;&#34;&#34;
-    Maps the center ids  found in the XML files to a standard list of ids e.g:
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
 
-    :param dcc_df: DataFrame
-    &#34;&#34;&#34;
-    dcc_df = dcc_df.withColumn(
-        &#34;_centreID&#34;, udf(utils.map_centre_id, StringType())(&#34;_centreID&#34;)
-    )
-    return dcc_df
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        return (
+            MouseSpecimenExtractor()
+            if self.specimen_type == &#34;mouse&#34;
+            else EmbryoSpecimenExtractor()
+        )
 
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/mouse_specimen_clean_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}{self.specimen_type}_specimen_clean_parquet&#34;
+        )
 
-def map_project_ids(dcc_df: DataFrame) -&gt; DataFrame:
-    dcc_df = dcc_df.withColumn(
-        &#34;_project&#34;, udf(utils.map_project_id, StringType())(&#34;_project&#34;)
-    )
-    return dcc_df
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.input().path,
+            self.output().path,
+        ]
 
+    def main(self, sc: SparkContext, *args: Any):
+        &#34;&#34;&#34;
+        Loads the given Specimen parquet and applies some data sanitizing functions.
+        &#34;&#34;&#34;
+        input_path = args[0]
+        output_path = args[1]
+        spark_session = SparkSession.builder.getOrCreate()
+        specimen_df = spark_session.read.parquet(input_path)
+        specimen_clean_df = self.clean_specimens(specimen_df)
+        specimen_clean_df = specimen_clean_df.dropDuplicates(
+            [&#34;_specimenID&#34;, &#34;_centreID&#34;]
+        )
+        specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
 
-def map_production_centre_ids(dcc_experiment_df: DataFrame):
-    if &#34;_productionCentre&#34; not in dcc_experiment_df.columns:
-        dcc_experiment_df = dcc_experiment_df.withColumn(&#34;_productionCentre&#34;, lit(None))
-    dcc_experiment_df = dcc_experiment_df.withColumn(
-        &#34;_productionCentre&#34;, udf(utils.map_centre_id, StringType())(&#34;_productionCentre&#34;)
-    )
-    return dcc_experiment_df
+    def clean_specimens(self, specimen_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        DCC specimen cleaner
+        :return: a clean specimen parquet file
+        :rtype: DataFrame
+        &#34;&#34;&#34;
+        specimen_df: DataFrame = (
+            specimen_df.transform(self.map_centre_ids)
+            .transform(self.map_project_ids)
+            .transform(self.map_production_centre_ids)
+            .transform(self.map_phenotyping_centre_ids)
+        )
 
+        specimen_df = specimen_df.transform(self.truncate_europhenome_specimen_ids)
+        specimen_df = specimen_df.transform(self.truncate_europhenome_colony_ids)
+        specimen_df = specimen_df.transform(self.parse_europhenome_colony_xml_entities)
+        specimen_df = specimen_df.transform(self.standardize_strain_ids)
+        specimen_df = specimen_df.transform(self.override_3i_specimen_data)
+        specimen_df = specimen_df.transform(self.generate_unique_id)
 
-def map_phenotyping_centre_ids(dcc_experiment_df: DataFrame):
-    dcc_experiment_df = dcc_experiment_df.withColumn(
-        &#34;_phenotypingCentre&#34;,
-        udf(utils.map_centre_id, StringType())(&#34;_phenotypingCentre&#34;),
-    )
-    return dcc_experiment_df
+        # Some specimen can be found several times in the XML file submitted by the IMPC
+        # So it is necessary to drop the duplicates
+        specimen_df = specimen_df.drop_duplicates(
+            [col_name for col_name in specimen_df.columns if col_name != &#34;_sourceFile&#34;]
+        )
+        return specimen_df
 
+    def map_centre_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Maps the center ids  found in the XML files to a standard list of ids e.g:
+            - gmc -&gt; HMGU
+            - h -&gt; MRC Harwell
+        The full list of mappings can be found at `impc_etl.config.Constants.CENTRE_ID_MAP`
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_centreID&#34;, udf(utils.map_centre_id, StringType())(&#34;_centreID&#34;)
+        )
+        return dcc_df
 
-def truncate_europhenome_specimen_ids(dcc_df: DataFrame) -&gt; DataFrame:
-    dcc_df = dcc_df.withColumn(
-        &#34;_specimenID&#34;,
-        when(
-            dcc_df[&#34;_dataSource&#34;].isin([&#34;europhenome&#34;, &#34;MGP&#34;]),
-            udf(utils.truncate_specimen_id, StringType())(dcc_df[&#34;_specimenID&#34;]),
-        ).otherwise(dcc_df[&#34;_specimenID&#34;]),
-    )
-    return dcc_df
+    def map_project_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Maps the center ids  found in the XML files to a standard list of ids e.g:
+            - dtcc -&gt; DTCC
+            - riken brc -&gt; RBRC
+        The full list of mappings can be found at `impc_etl.config.Constants.PROJECT_ID_MAP`
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_project&#34;, udf(utils.map_project_id, StringType())(&#34;_project&#34;)
+        )
+        return dcc_df
 
-
-def truncate_europhenome_colony_ids(dcc_df: DataFrame) -&gt; DataFrame:
-    dcc_df = dcc_df.withColumn(
-        &#34;_colonyID&#34;,
-        when(
-            dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;,
-            udf(utils.truncate_colony_id, StringType())(dcc_df[&#34;_colonyID&#34;]),
-        ).otherwise(dcc_df[&#34;_colonyID&#34;]),
-    )
-    return dcc_df
-
-
-def parse_europhenome_colony_xml_entities(dcc_df: DataFrame) -&gt; DataFrame:
-    &#34;&#34;&#34;
-    Some EuroPhenome Colony Ids have &amp;lt; &amp;gt; values that have to be replaced
-    :param dcc_df:
-    :return:
-    &#34;&#34;&#34;
-    dcc_df = dcc_df.withColumn(
-        &#34;_colonyID&#34;,
-        when(
-            (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
-            regexp_replace(&#34;_colonyID&#34;, &#34;&amp;lt;&#34;, &#34;&lt;&#34;),
-        ).otherwise(dcc_df[&#34;_colonyID&#34;]),
-    )
-
-    dcc_df = dcc_df.withColumn(
-        &#34;_colonyID&#34;,
-        when(
-            (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
-            regexp_replace(&#34;_colonyID&#34;, &#34;&amp;gt;&#34;, &#34;&gt;&#34;),
-        ).otherwise(dcc_df[&#34;_colonyID&#34;]),
-    )
-    return dcc_df
-
-
-def standardize_strain_ids(dcc_df: DataFrame) -&gt; DataFrame:
-    dcc_df = dcc_df.withColumn(
-        &#34;_strainID&#34;, regexp_replace(dcc_df[&#34;_strainID&#34;], &#34;MGI:&#34;, &#34;&#34;)
-    )
-    return dcc_df
-
-
-def override_3i_specimen_data(dcc_specimen_df: DataFrame) -&gt; DataFrame:
-    dcc_specimen_df_a = dcc_specimen_df.alias(&#34;a&#34;)
-    dcc_specimen_df_b = dcc_specimen_df.alias(&#34;b&#34;)
-    dcc_specimen_df = dcc_specimen_df_a.join(
-        dcc_specimen_df_b,
-        (dcc_specimen_df_a[&#34;_specimenID&#34;] == dcc_specimen_df_b[&#34;_specimenID&#34;])
-        &amp; (dcc_specimen_df_a[&#34;_centreID&#34;] == dcc_specimen_df_b[&#34;_centreID&#34;])
-        &amp; (dcc_specimen_df_a[&#34;_dataSource&#34;] != dcc_specimen_df_b[&#34;_dataSource&#34;]),
-        &#34;left_outer&#34;,
-    )
-    dcc_specimen_df = dcc_specimen_df.where(
-        col(&#34;b._specimenID&#34;).isNull()
-        | ((col(&#34;b._specimenID&#34;).isNotNull()) &amp; (col(&#34;a._dataSource&#34;) != &#34;3i&#34;))
-    )
-    return dcc_specimen_df.select(&#34;a.*&#34;).dropDuplicates()
-
-
-def generate_unique_id(dcc_specimen_df: DataFrame) -&gt; DataFrame:
-    dcc_specimen_df = dcc_specimen_df.withColumn(
-        &#34;unique_id&#34;,
-        md5(
-            concat(
-                *[
-                    when(col(&#34;_productionCentre&#34;).isNotNull(), col(&#34;_productionCentre&#34;))
-                    .when(
-                        col(&#34;_phenotypingCentre&#34;).isNotNull(),
-                        col(&#34;_phenotypingCentre&#34;),
-                    )
-                    .otherwise(lit(&#34;&#34;)),
-                    col(&#34;_specimenID&#34;),
-                ]
+    def map_production_centre_ids(self, dcc_experiment_df: DataFrame):
+        &#34;&#34;&#34;
+        Maps the center ids  found in the XML files to a standard list of ids e.g:
+            - gmc -&gt; HMGU
+            - h -&gt; MRC Harwell
+        The full list of mappings can be found at `impc_etl.config.Constants.CENTRE_ID_MAP`
+        &#34;&#34;&#34;
+        if &#34;_productionCentre&#34; not in dcc_experiment_df.columns:
+            dcc_experiment_df = dcc_experiment_df.withColumn(
+                &#34;_productionCentre&#34;, lit(None)
             )
-        ),
-    )
-    return dcc_specimen_df
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            &#34;_productionCentre&#34;,
+            udf(utils.map_centre_id, StringType())(&#34;_productionCentre&#34;),
+        )
+        return dcc_experiment_df
 
+    def map_phenotyping_centre_ids(self, dcc_experiment_df: DataFrame):
+        &#34;&#34;&#34;
+        Maps the center ids  found in the XML files to a standard list of ids e.g:
+            - gmc -&gt; HMGU
+            - h -&gt; MRC Harwell
+        The full list of mappings can be found at `impc_etl.config.Constants.CENTRE_ID_MAP`
+        &#34;&#34;&#34;
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            &#34;_phenotypingCentre&#34;,
+            udf(utils.map_centre_id, StringType())(&#34;_phenotypingCentre&#34;),
+        )
+        return dcc_experiment_df
 
-if __name__ == &#34;__main__&#34;:
-    sys.exit(main(sys.argv))</code></pre>
+    def truncate_europhenome_specimen_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some EuroPhenome Specimen Ids have a suffix that should be truncated, the legacy identifying strategy for Specimen id included
+        a suffix tno reference the production/phenotyping Centre (e.g. 232328312_HRW), that suffix needs to be removed.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_specimenID&#34;,
+            when(
+                dcc_df[&#34;_dataSource&#34;].isin([&#34;europhenome&#34;, &#34;MGP&#34;]),
+                udf(utils.truncate_specimen_id, StringType())(dcc_df[&#34;_specimenID&#34;]),
+            ).otherwise(dcc_df[&#34;_specimenID&#34;]),
+        )
+        return dcc_df
+
+    def truncate_europhenome_colony_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some EuroPhenome Colony Ids have a suffix that should be truncated. Same as Specimen IDs some colony IDs used to have a suffix to identify
+        the Centre and that has been  removed from the
+        tracking system, so we need to truncate them so they  match the corresponding  entry on GenTar.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_colonyID&#34;,
+            when(
+                dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;,
+                udf(utils.truncate_colony_id, StringType())(dcc_df[&#34;_colonyID&#34;]),
+            ).otherwise(dcc_df[&#34;_colonyID&#34;]),
+        )
+        return dcc_df
+
+    def parse_europhenome_colony_xml_entities(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some EuroPhenome Colony Ids have &amp;lt; &amp;gt; values that have to be replaced by the  corresponding characters &lt; and &gt;.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_colonyID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
+                regexp_replace(&#34;_colonyID&#34;, &#34;&amp;lt;&#34;, &#34;&lt;&#34;),
+            ).otherwise(dcc_df[&#34;_colonyID&#34;]),
+        )
+
+        dcc_df = dcc_df.withColumn(
+            &#34;_colonyID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
+                regexp_replace(&#34;_colonyID&#34;, &#34;&amp;gt;&#34;, &#34;&gt;&#34;),
+            ).otherwise(dcc_df[&#34;_colonyID&#34;]),
+        )
+        return dcc_df
+
+    def standardize_strain_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some strain IDs are provided as MGI identifiers and some others don&#39;t, some of the ones provided as MGI identifiers lack the  &#39;MGI:&#39;,
+        here we remove the &#39;MGI:&#39; from al of them to be able to process them in a consistent way in future tasks.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_strainID&#34;, regexp_replace(dcc_df[&#34;_strainID&#34;], &#34;MGI:&#34;, &#34;&#34;)
+        )
+        return dcc_df
+
+    def override_3i_specimen_data(self, dcc_specimen_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Whenever a Specime is presetn both in the 3i project and any other data source (e.g. EuroPhenome or IMPC) the other data source specimen data should be used instead of the 3i one.
+        &#34;&#34;&#34;
+        dcc_specimen_df_a = dcc_specimen_df.alias(&#34;a&#34;)
+        dcc_specimen_df_b = dcc_specimen_df.alias(&#34;b&#34;)
+        dcc_specimen_df = dcc_specimen_df_a.join(
+            dcc_specimen_df_b,
+            (dcc_specimen_df_a[&#34;_specimenID&#34;] == dcc_specimen_df_b[&#34;_specimenID&#34;])
+            &amp; (dcc_specimen_df_a[&#34;_centreID&#34;] == dcc_specimen_df_b[&#34;_centreID&#34;])
+            &amp; (dcc_specimen_df_a[&#34;_dataSource&#34;] != dcc_specimen_df_b[&#34;_dataSource&#34;]),
+            &#34;left_outer&#34;,
+        )
+        dcc_specimen_df = dcc_specimen_df.where(
+            col(&#34;b._specimenID&#34;).isNull()
+            | ((col(&#34;b._specimenID&#34;).isNotNull()) &amp; (col(&#34;a._dataSource&#34;) != &#34;3i&#34;))
+        )
+        return dcc_specimen_df.select(&#34;a.*&#34;).dropDuplicates()
+
+    def generate_unique_id(self, dcc_specimen_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Generates an unique identifier for the  Specimen using productin centre, phenotyping centre  and specimen ID.
+        &#34;&#34;&#34;
+        dcc_specimen_df = dcc_specimen_df.withColumn(
+            &#34;unique_id&#34;,
+            md5(
+                concat(
+                    *[
+                        when(
+                            col(&#34;_productionCentre&#34;).isNotNull(),
+                            col(&#34;_productionCentre&#34;),
+                        )
+                        .when(
+                            col(&#34;_phenotypingCentre&#34;).isNotNull(),
+                            col(&#34;_phenotypingCentre&#34;),
+                        )
+                        .otherwise(lit(&#34;&#34;)),
+                        col(&#34;_specimenID&#34;),
+                    ]
+                )
+            ),
+        )
+        return dcc_specimen_df</code></pre>
 </details>
 </section>
 <section>
@@ -204,10 +323,318 @@ if __name__ == &#34;__main__&#34;:
 <section>
 </section>
 <section>
-<h2 class="section-title" id="header-functions">Functions</h2>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.clean_specimens"><code class="name flex">
-<span>def <span class="ident">clean_specimens</span></span>(<span>specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner"><code class="flex name class">
+<span>class <span class="ident">IMPCSpecimenCleaner</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>PySpark task to clean IMPC Specimen data.</p>
+<p>This task depends on <code><a title="impc_etl.workflow.extraction.MouseSpecimenExtractor" href="../../workflow/extraction.html#impc_etl.workflow.extraction.MouseSpecimenExtractor">MouseSpecimenExtractor</a></code> for cleaning Mouse specimens
+or <code><a title="impc_etl.workflow.extraction.EmbryoSpecimenExtractor" href="../../workflow/extraction.html#impc_etl.workflow.extraction.EmbryoSpecimenExtractor">EmbryoSpecimenExtractor</a></code>
+for cleaning Embryo specimens.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class IMPCSpecimenCleaner(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark task to clean IMPC Specimen data.
+
+    This task depends on `impc_etl.workflow.extraction.MouseSpecimenExtractor` for cleaning Mouse specimens
+    or `impc_etl.workflow.extraction.EmbryoSpecimenExtractor`
+    for cleaning Embryo specimens.
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name: str = &#34;IMPC_Specimen_Cleaner&#34;
+
+    #: Specimen type can be &#39;mouse&#39; or &#39;embryo&#39;
+    specimen_type: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
+
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        return (
+            MouseSpecimenExtractor()
+            if self.specimen_type == &#34;mouse&#34;
+            else EmbryoSpecimenExtractor()
+        )
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/mouse_specimen_clean_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}{self.specimen_type}_specimen_clean_parquet&#34;
+        )
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.input().path,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args: Any):
+        &#34;&#34;&#34;
+        Loads the given Specimen parquet and applies some data sanitizing functions.
+        &#34;&#34;&#34;
+        input_path = args[0]
+        output_path = args[1]
+        spark_session = SparkSession.builder.getOrCreate()
+        specimen_df = spark_session.read.parquet(input_path)
+        specimen_clean_df = self.clean_specimens(specimen_df)
+        specimen_clean_df = specimen_clean_df.dropDuplicates(
+            [&#34;_specimenID&#34;, &#34;_centreID&#34;]
+        )
+        specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
+
+    def clean_specimens(self, specimen_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        DCC specimen cleaner
+        :return: a clean specimen parquet file
+        :rtype: DataFrame
+        &#34;&#34;&#34;
+        specimen_df: DataFrame = (
+            specimen_df.transform(self.map_centre_ids)
+            .transform(self.map_project_ids)
+            .transform(self.map_production_centre_ids)
+            .transform(self.map_phenotyping_centre_ids)
+        )
+
+        specimen_df = specimen_df.transform(self.truncate_europhenome_specimen_ids)
+        specimen_df = specimen_df.transform(self.truncate_europhenome_colony_ids)
+        specimen_df = specimen_df.transform(self.parse_europhenome_colony_xml_entities)
+        specimen_df = specimen_df.transform(self.standardize_strain_ids)
+        specimen_df = specimen_df.transform(self.override_3i_specimen_data)
+        specimen_df = specimen_df.transform(self.generate_unique_id)
+
+        # Some specimen can be found several times in the XML file submitted by the IMPC
+        # So it is necessary to drop the duplicates
+        specimen_df = specimen_df.drop_duplicates(
+            [col_name for col_name in specimen_df.columns if col_name != &#34;_sourceFile&#34;]
+        )
+        return specimen_df
+
+    def map_centre_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Maps the center ids  found in the XML files to a standard list of ids e.g:
+            - gmc -&gt; HMGU
+            - h -&gt; MRC Harwell
+        The full list of mappings can be found at `impc_etl.config.Constants.CENTRE_ID_MAP`
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_centreID&#34;, udf(utils.map_centre_id, StringType())(&#34;_centreID&#34;)
+        )
+        return dcc_df
+
+    def map_project_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Maps the center ids  found in the XML files to a standard list of ids e.g:
+            - dtcc -&gt; DTCC
+            - riken brc -&gt; RBRC
+        The full list of mappings can be found at `impc_etl.config.Constants.PROJECT_ID_MAP`
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_project&#34;, udf(utils.map_project_id, StringType())(&#34;_project&#34;)
+        )
+        return dcc_df
+
+    def map_production_centre_ids(self, dcc_experiment_df: DataFrame):
+        &#34;&#34;&#34;
+        Maps the center ids  found in the XML files to a standard list of ids e.g:
+            - gmc -&gt; HMGU
+            - h -&gt; MRC Harwell
+        The full list of mappings can be found at `impc_etl.config.Constants.CENTRE_ID_MAP`
+        &#34;&#34;&#34;
+        if &#34;_productionCentre&#34; not in dcc_experiment_df.columns:
+            dcc_experiment_df = dcc_experiment_df.withColumn(
+                &#34;_productionCentre&#34;, lit(None)
+            )
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            &#34;_productionCentre&#34;,
+            udf(utils.map_centre_id, StringType())(&#34;_productionCentre&#34;),
+        )
+        return dcc_experiment_df
+
+    def map_phenotyping_centre_ids(self, dcc_experiment_df: DataFrame):
+        &#34;&#34;&#34;
+        Maps the center ids  found in the XML files to a standard list of ids e.g:
+            - gmc -&gt; HMGU
+            - h -&gt; MRC Harwell
+        The full list of mappings can be found at `impc_etl.config.Constants.CENTRE_ID_MAP`
+        &#34;&#34;&#34;
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            &#34;_phenotypingCentre&#34;,
+            udf(utils.map_centre_id, StringType())(&#34;_phenotypingCentre&#34;),
+        )
+        return dcc_experiment_df
+
+    def truncate_europhenome_specimen_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some EuroPhenome Specimen Ids have a suffix that should be truncated, the legacy identifying strategy for Specimen id included
+        a suffix tno reference the production/phenotyping Centre (e.g. 232328312_HRW), that suffix needs to be removed.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_specimenID&#34;,
+            when(
+                dcc_df[&#34;_dataSource&#34;].isin([&#34;europhenome&#34;, &#34;MGP&#34;]),
+                udf(utils.truncate_specimen_id, StringType())(dcc_df[&#34;_specimenID&#34;]),
+            ).otherwise(dcc_df[&#34;_specimenID&#34;]),
+        )
+        return dcc_df
+
+    def truncate_europhenome_colony_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some EuroPhenome Colony Ids have a suffix that should be truncated. Same as Specimen IDs some colony IDs used to have a suffix to identify
+        the Centre and that has been  removed from the
+        tracking system, so we need to truncate them so they  match the corresponding  entry on GenTar.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_colonyID&#34;,
+            when(
+                dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;,
+                udf(utils.truncate_colony_id, StringType())(dcc_df[&#34;_colonyID&#34;]),
+            ).otherwise(dcc_df[&#34;_colonyID&#34;]),
+        )
+        return dcc_df
+
+    def parse_europhenome_colony_xml_entities(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some EuroPhenome Colony Ids have &amp;lt; &amp;gt; values that have to be replaced by the  corresponding characters &lt; and &gt;.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_colonyID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
+                regexp_replace(&#34;_colonyID&#34;, &#34;&amp;lt;&#34;, &#34;&lt;&#34;),
+            ).otherwise(dcc_df[&#34;_colonyID&#34;]),
+        )
+
+        dcc_df = dcc_df.withColumn(
+            &#34;_colonyID&#34;,
+            when(
+                (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;),
+                regexp_replace(&#34;_colonyID&#34;, &#34;&amp;gt;&#34;, &#34;&gt;&#34;),
+            ).otherwise(dcc_df[&#34;_colonyID&#34;]),
+        )
+        return dcc_df
+
+    def standardize_strain_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Some strain IDs are provided as MGI identifiers and some others don&#39;t, some of the ones provided as MGI identifiers lack the  &#39;MGI:&#39;,
+        here we remove the &#39;MGI:&#39; from al of them to be able to process them in a consistent way in future tasks.
+        &#34;&#34;&#34;
+        dcc_df = dcc_df.withColumn(
+            &#34;_strainID&#34;, regexp_replace(dcc_df[&#34;_strainID&#34;], &#34;MGI:&#34;, &#34;&#34;)
+        )
+        return dcc_df
+
+    def override_3i_specimen_data(self, dcc_specimen_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Whenever a Specime is presetn both in the 3i project and any other data source (e.g. EuroPhenome or IMPC) the other data source specimen data should be used instead of the 3i one.
+        &#34;&#34;&#34;
+        dcc_specimen_df_a = dcc_specimen_df.alias(&#34;a&#34;)
+        dcc_specimen_df_b = dcc_specimen_df.alias(&#34;b&#34;)
+        dcc_specimen_df = dcc_specimen_df_a.join(
+            dcc_specimen_df_b,
+            (dcc_specimen_df_a[&#34;_specimenID&#34;] == dcc_specimen_df_b[&#34;_specimenID&#34;])
+            &amp; (dcc_specimen_df_a[&#34;_centreID&#34;] == dcc_specimen_df_b[&#34;_centreID&#34;])
+            &amp; (dcc_specimen_df_a[&#34;_dataSource&#34;] != dcc_specimen_df_b[&#34;_dataSource&#34;]),
+            &#34;left_outer&#34;,
+        )
+        dcc_specimen_df = dcc_specimen_df.where(
+            col(&#34;b._specimenID&#34;).isNull()
+            | ((col(&#34;b._specimenID&#34;).isNotNull()) &amp; (col(&#34;a._dataSource&#34;) != &#34;3i&#34;))
+        )
+        return dcc_specimen_df.select(&#34;a.*&#34;).dropDuplicates()
+
+    def generate_unique_id(self, dcc_specimen_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Generates an unique identifier for the  Specimen using productin centre, phenotyping centre  and specimen ID.
+        &#34;&#34;&#34;
+        dcc_specimen_df = dcc_specimen_df.withColumn(
+            &#34;unique_id&#34;,
+            md5(
+                concat(
+                    *[
+                        when(
+                            col(&#34;_productionCentre&#34;).isNotNull(),
+                            col(&#34;_productionCentre&#34;),
+                        )
+                        .when(
+                            col(&#34;_phenotypingCentre&#34;).isNotNull(),
+                            col(&#34;_phenotypingCentre&#34;),
+                        )
+                        .otherwise(lit(&#34;&#34;)),
+                        col(&#34;_specimenID&#34;),
+                    ]
+                )
+            ),
+        )
+        return dcc_specimen_df</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="impc_etl.workflow.cleaning.EmbryoCleaner" href="../../workflow/cleaning.html#impc_etl.workflow.cleaning.EmbryoCleaner">EmbryoCleaner</a></li>
+<li><a title="impc_etl.workflow.cleaning.MouseCleaner" href="../../workflow/cleaning.html#impc_etl.workflow.cleaning.MouseCleaner">MouseCleaner</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>Name of the Spark task</p></div>
+</dd>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>Path of the output directory where the new parquet file will be generated.</p></div>
+</dd>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.specimen_type"><code class="name">var <span class="ident">specimen_type</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>Specimen type can be 'mouse' or 'embryo'</p></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates the options pass to the PySpark job</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    &#34;&#34;&#34;
+    Generates the options pass to the PySpark job
+    &#34;&#34;&#34;
+    return [
+        self.input().path,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.clean_specimens"><code class="name flex">
+<span>def <span class="ident">clean_specimens</span></span>(<span>self, specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
 <div class="desc"><p>DCC specimen cleaner
@@ -217,47 +644,58 @@ if __name__ == &#34;__main__&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def clean_specimens(specimen_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def clean_specimens(self, specimen_df: DataFrame) -&gt; DataFrame:
     &#34;&#34;&#34;
     DCC specimen cleaner
     :return: a clean specimen parquet file
     :rtype: DataFrame
     &#34;&#34;&#34;
     specimen_df: DataFrame = (
-        specimen_df.transform(map_centre_ids)
-        .transform(map_project_ids)
-        .transform(map_production_centre_ids)
-        .transform(map_phenotyping_centre_ids)
+        specimen_df.transform(self.map_centre_ids)
+        .transform(self.map_project_ids)
+        .transform(self.map_production_centre_ids)
+        .transform(self.map_phenotyping_centre_ids)
     )
 
-    specimen_df = specimen_df.transform(truncate_europhenome_specimen_ids)
-    specimen_df = specimen_df.transform(truncate_europhenome_colony_ids)
-    specimen_df = specimen_df.transform(parse_europhenome_colony_xml_entities)
-    specimen_df = specimen_df.transform(standardize_strain_ids)
-    specimen_df = specimen_df.transform(override_3i_specimen_data)
-    specimen_df = specimen_df.transform(generate_unique_id)
+    specimen_df = specimen_df.transform(self.truncate_europhenome_specimen_ids)
+    specimen_df = specimen_df.transform(self.truncate_europhenome_colony_ids)
+    specimen_df = specimen_df.transform(self.parse_europhenome_colony_xml_entities)
+    specimen_df = specimen_df.transform(self.standardize_strain_ids)
+    specimen_df = specimen_df.transform(self.override_3i_specimen_data)
+    specimen_df = specimen_df.transform(self.generate_unique_id)
+
+    # Some specimen can be found several times in the XML file submitted by the IMPC
+    # So it is necessary to drop the duplicates
     specimen_df = specimen_df.drop_duplicates(
         [col_name for col_name in specimen_df.columns if col_name != &#34;_sourceFile&#34;]
     )
     return specimen_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.generate_unique_id"><code class="name flex">
-<span>def <span class="ident">generate_unique_id</span></span>(<span>dcc_specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.generate_unique_id"><code class="name flex">
+<span>def <span class="ident">generate_unique_id</span></span>(<span>self, dcc_specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Generates an unique identifier for the
+Specimen using productin centre, phenotyping centre
+and specimen ID.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def generate_unique_id(dcc_specimen_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def generate_unique_id(self, dcc_specimen_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Generates an unique identifier for the  Specimen using productin centre, phenotyping centre  and specimen ID.
+    &#34;&#34;&#34;
     dcc_specimen_df = dcc_specimen_df.withColumn(
         &#34;unique_id&#34;,
         md5(
             concat(
                 *[
-                    when(col(&#34;_productionCentre&#34;).isNotNull(), col(&#34;_productionCentre&#34;))
+                    when(
+                        col(&#34;_productionCentre&#34;).isNotNull(),
+                        col(&#34;_productionCentre&#34;),
+                    )
                     .when(
                         col(&#34;_phenotypingCentre&#34;).isNotNull(),
                         col(&#34;_phenotypingCentre&#34;),
@@ -271,41 +709,49 @@ if __name__ == &#34;__main__&#34;:
     return dcc_specimen_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.main"><code class="name flex">
-<span>def <span class="ident">main</span></span>(<span>argv)</span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Loads the given Specimen parquet and applies some data sanitizing functions.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def main(argv):
-    input_path = argv[1]
-    output_path = argv[2]
+<pre><code class="python">def main(self, sc: SparkContext, *args: Any):
+    &#34;&#34;&#34;
+    Loads the given Specimen parquet and applies some data sanitizing functions.
+    &#34;&#34;&#34;
+    input_path = args[0]
+    output_path = args[1]
     spark_session = SparkSession.builder.getOrCreate()
     specimen_df = spark_session.read.parquet(input_path)
-    specimen_clean_df = clean_specimens(specimen_df)
-    specimen_clean_df = specimen_clean_df.dropDuplicates([&#34;_specimenID&#34;, &#34;_centreID&#34;])
+    specimen_clean_df = self.clean_specimens(specimen_df)
+    specimen_clean_df = specimen_clean_df.dropDuplicates(
+        [&#34;_specimenID&#34;, &#34;_centreID&#34;]
+    )
     specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.map_centre_ids"><code class="name flex">
-<span>def <span class="ident">map_centre_ids</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_centre_ids"><code class="name flex">
+<span>def <span class="ident">map_centre_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Maps the center ids
-found in the XML files to a standard list of ids e.g:</p>
-<p>:param dcc_df: DataFrame</p></div>
+found in the XML files to a standard list of ids e.g:
+- gmc -&gt; HMGU
+- h -&gt; MRC Harwell
+The full list of mappings can be found at <code>impc_etl.config.Constants.CENTRE_ID_MAP</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def map_centre_ids(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def map_centre_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
     &#34;&#34;&#34;
     Maps the center ids  found in the XML files to a standard list of ids e.g:
-
-    :param dcc_df: DataFrame
+        - gmc -&gt; HMGU
+        - h -&gt; MRC Harwell
+    The full list of mappings can be found at `impc_etl.config.Constants.CENTRE_ID_MAP`
     &#34;&#34;&#34;
     dcc_df = dcc_df.withColumn(
         &#34;_centreID&#34;, udf(utils.map_centre_id, StringType())(&#34;_centreID&#34;)
@@ -313,16 +759,26 @@ found in the XML files to a standard list of ids e.g:</p>
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.map_phenotyping_centre_ids"><code class="name flex">
-<span>def <span class="ident">map_phenotyping_centre_ids</span></span>(<span>dcc_experiment_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_phenotyping_centre_ids"><code class="name flex">
+<span>def <span class="ident">map_phenotyping_centre_ids</span></span>(<span>self, dcc_experiment_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Maps the center ids
+found in the XML files to a standard list of ids e.g:
+- gmc -&gt; HMGU
+- h -&gt; MRC Harwell
+The full list of mappings can be found at <code>impc_etl.config.Constants.CENTRE_ID_MAP</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def map_phenotyping_centre_ids(dcc_experiment_df: DataFrame):
+<pre><code class="python">def map_phenotyping_centre_ids(self, dcc_experiment_df: DataFrame):
+    &#34;&#34;&#34;
+    Maps the center ids  found in the XML files to a standard list of ids e.g:
+        - gmc -&gt; HMGU
+        - h -&gt; MRC Harwell
+    The full list of mappings can be found at `impc_etl.config.Constants.CENTRE_ID_MAP`
+    &#34;&#34;&#34;
     dcc_experiment_df = dcc_experiment_df.withColumn(
         &#34;_phenotypingCentre&#34;,
         udf(utils.map_centre_id, StringType())(&#34;_phenotypingCentre&#34;),
@@ -330,50 +786,96 @@ found in the XML files to a standard list of ids e.g:</p>
     return dcc_experiment_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.map_production_centre_ids"><code class="name flex">
-<span>def <span class="ident">map_production_centre_ids</span></span>(<span>dcc_experiment_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_production_centre_ids"><code class="name flex">
+<span>def <span class="ident">map_production_centre_ids</span></span>(<span>self, dcc_experiment_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Maps the center ids
+found in the XML files to a standard list of ids e.g:
+- gmc -&gt; HMGU
+- h -&gt; MRC Harwell
+The full list of mappings can be found at <code>impc_etl.config.Constants.CENTRE_ID_MAP</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def map_production_centre_ids(dcc_experiment_df: DataFrame):
+<pre><code class="python">def map_production_centre_ids(self, dcc_experiment_df: DataFrame):
+    &#34;&#34;&#34;
+    Maps the center ids  found in the XML files to a standard list of ids e.g:
+        - gmc -&gt; HMGU
+        - h -&gt; MRC Harwell
+    The full list of mappings can be found at `impc_etl.config.Constants.CENTRE_ID_MAP`
+    &#34;&#34;&#34;
     if &#34;_productionCentre&#34; not in dcc_experiment_df.columns:
-        dcc_experiment_df = dcc_experiment_df.withColumn(&#34;_productionCentre&#34;, lit(None))
+        dcc_experiment_df = dcc_experiment_df.withColumn(
+            &#34;_productionCentre&#34;, lit(None)
+        )
     dcc_experiment_df = dcc_experiment_df.withColumn(
-        &#34;_productionCentre&#34;, udf(utils.map_centre_id, StringType())(&#34;_productionCentre&#34;)
+        &#34;_productionCentre&#34;,
+        udf(utils.map_centre_id, StringType())(&#34;_productionCentre&#34;),
     )
     return dcc_experiment_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.map_project_ids"><code class="name flex">
-<span>def <span class="ident">map_project_ids</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_project_ids"><code class="name flex">
+<span>def <span class="ident">map_project_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Maps the center ids
+found in the XML files to a standard list of ids e.g:
+- dtcc -&gt; DTCC
+- riken brc -&gt; RBRC
+The full list of mappings can be found at <code>impc_etl.config.Constants.PROJECT_ID_MAP</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def map_project_ids(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def map_project_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Maps the center ids  found in the XML files to a standard list of ids e.g:
+        - dtcc -&gt; DTCC
+        - riken brc -&gt; RBRC
+    The full list of mappings can be found at `impc_etl.config.Constants.PROJECT_ID_MAP`
+    &#34;&#34;&#34;
     dcc_df = dcc_df.withColumn(
         &#34;_project&#34;, udf(utils.map_project_id, StringType())(&#34;_project&#34;)
     )
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.override_3i_specimen_data"><code class="name flex">
-<span>def <span class="ident">override_3i_specimen_data</span></span>(<span>dcc_specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns the full parquet path as an output for the Luigi Task
+(e.g. impc/dr15.2/parquet/mouse_specimen_clean_parquet)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def override_3i_specimen_data(dcc_specimen_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def output(self):
+    &#34;&#34;&#34;
+    Returns the full parquet path as an output for the Luigi Task
+    (e.g. impc/dr15.2/parquet/mouse_specimen_clean_parquet)
+    &#34;&#34;&#34;
+    return ImpcConfig().get_target(
+        f&#34;{self.output_path}{self.specimen_type}_specimen_clean_parquet&#34;
+    )</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.override_3i_specimen_data"><code class="name flex">
+<span>def <span class="ident">override_3i_specimen_data</span></span>(<span>self, dcc_specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Whenever a Specime is presetn both in the 3i project and any other data source (e.g. EuroPhenome or IMPC) the other data source specimen data should be used instead of the 3i one.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def override_3i_specimen_data(self, dcc_specimen_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Whenever a Specime is presetn both in the 3i project and any other data source (e.g. EuroPhenome or IMPC) the other data source specimen data should be used instead of the 3i one.
+    &#34;&#34;&#34;
     dcc_specimen_df_a = dcc_specimen_df.alias(&#34;a&#34;)
     dcc_specimen_df_b = dcc_specimen_df.alias(&#34;b&#34;)
     dcc_specimen_df = dcc_specimen_df_a.join(
@@ -390,22 +892,19 @@ found in the XML files to a standard list of ids e.g:</p>
     return dcc_specimen_df.select(&#34;a.*&#34;).dropDuplicates()</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.parse_europhenome_colony_xml_entities"><code class="name flex">
-<span>def <span class="ident">parse_europhenome_colony_xml_entities</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.parse_europhenome_colony_xml_entities"><code class="name flex">
+<span>def <span class="ident">parse_europhenome_colony_xml_entities</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Some EuroPhenome Colony Ids have &lt; &gt; values that have to be replaced
-:param dcc_df:
-:return:</p></div>
+<div class="desc"><p>Some EuroPhenome Colony Ids have &lt; &gt; values that have to be replaced by the
+corresponding characters &lt; and &gt;.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def parse_europhenome_colony_xml_entities(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def parse_europhenome_colony_xml_entities(self, dcc_df: DataFrame) -&gt; DataFrame:
     &#34;&#34;&#34;
-    Some EuroPhenome Colony Ids have &amp;lt; &amp;gt; values that have to be replaced
-    :param dcc_df:
-    :return:
+    Some EuroPhenome Colony Ids have &amp;lt; &amp;gt; values that have to be replaced by the  corresponding characters &lt; and &gt;.
     &#34;&#34;&#34;
     dcc_df = dcc_df.withColumn(
         &#34;_colonyID&#34;,
@@ -425,32 +924,69 @@ found in the XML files to a standard list of ids e.g:</p>
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.standardize_strain_ids"><code class="name flex">
-<span>def <span class="ident">standardize_strain_ids</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Defines the luigi
+task dependencies</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def standardize_strain_ids(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def requires(self):
+    &#34;&#34;&#34;
+    Defines the luigi  task dependencies
+    &#34;&#34;&#34;
+    return (
+        MouseSpecimenExtractor()
+        if self.specimen_type == &#34;mouse&#34;
+        else EmbryoSpecimenExtractor()
+    )</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.standardize_strain_ids"><code class="name flex">
+<span>def <span class="ident">standardize_strain_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Some strain IDs are provided as MGI identifiers and some others don't, some of the ones provided as MGI identifiers lack the
+'MGI:',
+here we remove the 'MGI:' from al of them to be able to process them in a consistent way in future tasks.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def standardize_strain_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Some strain IDs are provided as MGI identifiers and some others don&#39;t, some of the ones provided as MGI identifiers lack the  &#39;MGI:&#39;,
+    here we remove the &#39;MGI:&#39; from al of them to be able to process them in a consistent way in future tasks.
+    &#34;&#34;&#34;
     dcc_df = dcc_df.withColumn(
         &#34;_strainID&#34;, regexp_replace(dcc_df[&#34;_strainID&#34;], &#34;MGI:&#34;, &#34;&#34;)
     )
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.truncate_europhenome_colony_ids"><code class="name flex">
-<span>def <span class="ident">truncate_europhenome_colony_ids</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_colony_ids"><code class="name flex">
+<span>def <span class="ident">truncate_europhenome_colony_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Some EuroPhenome Colony Ids have a suffix that should be truncated. Same as Specimen IDs some colony IDs used to have a suffix to identify
+the Centre and that has been
+removed from the
+tracking system, so we need to truncate them so they
+match the corresponding
+entry on GenTar.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def truncate_europhenome_colony_ids(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def truncate_europhenome_colony_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Some EuroPhenome Colony Ids have a suffix that should be truncated. Same as Specimen IDs some colony IDs used to have a suffix to identify
+    the Centre and that has been  removed from the
+    tracking system, so we need to truncate them so they  match the corresponding  entry on GenTar.
+    &#34;&#34;&#34;
     dcc_df = dcc_df.withColumn(
         &#34;_colonyID&#34;,
         when(
@@ -461,16 +997,21 @@ found in the XML files to a standard list of ids e.g:</p>
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.truncate_europhenome_specimen_ids"><code class="name flex">
-<span>def <span class="ident">truncate_europhenome_specimen_ids</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_specimen_ids"><code class="name flex">
+<span>def <span class="ident">truncate_europhenome_specimen_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Some EuroPhenome Specimen Ids have a suffix that should be truncated, the legacy identifying strategy for Specimen id included
+a suffix tno reference the production/phenotyping Centre (e.g. 232328312_HRW), that suffix needs to be removed.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def truncate_europhenome_specimen_ids(dcc_df: DataFrame) -&gt; DataFrame:
+<pre><code class="python">def truncate_europhenome_specimen_ids(self, dcc_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Some EuroPhenome Specimen Ids have a suffix that should be truncated, the legacy identifying strategy for Specimen id included
+    a suffix tno reference the production/phenotyping Centre (e.g. 232328312_HRW), that suffix needs to be removed.
+    &#34;&#34;&#34;
     dcc_df = dcc_df.withColumn(
         &#34;_specimenID&#34;,
         when(
@@ -482,8 +1023,8 @@ found in the XML files to a standard list of ids e.g:</p>
 </details>
 </dd>
 </dl>
-</section>
-<section>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -504,20 +1045,31 @@ found in the XML files to a standard list of ids e.g:</p>
 <li><code><a title="impc_etl.jobs.clean" href="index.html">impc_etl.jobs.clean</a></code></li>
 </ul>
 </li>
-<li><h3><a href="#header-functions">Functions</a></h3>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner">IMPCSpecimenCleaner</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.clean_specimens" href="#impc_etl.jobs.clean.specimen_cleaner.clean_specimens">clean_specimens</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.generate_unique_id" href="#impc_etl.jobs.clean.specimen_cleaner.generate_unique_id">generate_unique_id</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.main" href="#impc_etl.jobs.clean.specimen_cleaner.main">main</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.map_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.map_centre_ids">map_centre_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.map_phenotyping_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.map_phenotyping_centre_ids">map_phenotyping_centre_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.map_production_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.map_production_centre_ids">map_production_centre_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.map_project_ids" href="#impc_etl.jobs.clean.specimen_cleaner.map_project_ids">map_project_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.override_3i_specimen_data" href="#impc_etl.jobs.clean.specimen_cleaner.override_3i_specimen_data">override_3i_specimen_data</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.parse_europhenome_colony_xml_entities" href="#impc_etl.jobs.clean.specimen_cleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.standardize_strain_ids" href="#impc_etl.jobs.clean.specimen_cleaner.standardize_strain_ids">standardize_strain_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.truncate_europhenome_colony_ids" href="#impc_etl.jobs.clean.specimen_cleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.truncate_europhenome_specimen_ids" href="#impc_etl.jobs.clean.specimen_cleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.app_options" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.clean_specimens" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.clean_specimens">clean_specimens</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.generate_unique_id" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.generate_unique_id">generate_unique_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.main" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_centre_ids">map_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_phenotyping_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_phenotyping_centre_ids">map_phenotyping_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_production_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_production_centre_ids">map_production_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_project_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_project_ids">map_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.name" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output_path" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.override_3i_specimen_data" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.override_3i_specimen_data">override_3i_specimen_data</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.parse_europhenome_colony_xml_entities" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.requires" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.specimen_type" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.specimen_type">specimen_type</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.standardize_strain_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.standardize_strain_ids">standardize_strain_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_colony_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_specimen_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

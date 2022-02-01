@@ -26,8 +26,8 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from impc_etl.jobs.clean.experiment_cleaner import IMPCExperimentCleaner
-from impc_etl.workflow.extraction import *
+<pre><code class="python">from impc_etl.jobs.clean import IMPCSpecimenCleaner
+from impc_etl.jobs.clean.experiment_cleaner import IMPCExperimentCleaner
 
 
 class SpecimenExperimentCleaner(IMPCExperimentCleaner):
@@ -38,40 +38,14 @@ class LineExperimentCleaner(IMPCExperimentCleaner):
     experiment_type = &#34;line_level&#34;
 
 
-class MouseCleaner(SparkSubmitTask):
-    name = &#34;Mouse_Cleaner&#34;
-    app = &#34;impc_etl/jobs/clean/specimen_cleaner.py&#34;
-    output_path = luigi.Parameter()
-    dcc_xml_path = luigi.Parameter()
-    resources = {&#34;overwrite_resource&#34;: 1}
-
-    def requires(self):
-        return MouseSpecimenExtractor()
-
-    def output(self):
-        output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
-        return ImpcConfig().get_target(output_path)
-
-    def app_options(self):
-        return [self.input().path, self.output().path]
+class MouseCleaner(IMPCSpecimenCleaner):
+    name = &#34;IMPC_Mouse_Specimen_Cleaner&#34;
+    specimen_type = &#34;mouse&#34;
 
 
-class EmbryoCleaner(SparkSubmitTask):
-    name = &#34;Embryo_Cleaner&#34;
-    app = &#34;impc_etl/jobs/clean/specimen_cleaner.py&#34;
-    output_path = luigi.Parameter()
-    dcc_xml_path = luigi.Parameter()
-    resources = {&#34;overwrite_resource&#34;: 1}
-
-    def requires(self):
-        return EmbryoSpecimenExtractor()
-
-    def output(self):
-        output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
-        return ImpcConfig().get_target(output_path)
-
-    def app_options(self):
-        return [self.input().path, self.output().path]</code></pre>
+class EmbryoCleaner(IMPCSpecimenCleaner):
+    name = &#34;IMPC_Embryo_Specimen_Cleaner&#34;
+    specimen_type = &#34;embryo&#34;</code></pre>
 </details>
 </section>
 <section>
@@ -88,118 +62,51 @@ class EmbryoCleaner(SparkSubmitTask):
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
+<div class="desc"><p>PySpark task to clean IMPC Specimen data.</p>
+<p>This task depends on <code><a title="impc_etl.workflow.extraction.MouseSpecimenExtractor" href="extraction.html#impc_etl.workflow.extraction.MouseSpecimenExtractor">MouseSpecimenExtractor</a></code> for cleaning Mouse specimens
+or <code><a title="impc_etl.workflow.extraction.EmbryoSpecimenExtractor" href="extraction.html#impc_etl.workflow.extraction.EmbryoSpecimenExtractor">EmbryoSpecimenExtractor</a></code>
+for cleaning Embryo specimens.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class EmbryoCleaner(SparkSubmitTask):
-    name = &#34;Embryo_Cleaner&#34;
-    app = &#34;impc_etl/jobs/clean/specimen_cleaner.py&#34;
-    output_path = luigi.Parameter()
-    dcc_xml_path = luigi.Parameter()
-    resources = {&#34;overwrite_resource&#34;: 1}
-
-    def requires(self):
-        return EmbryoSpecimenExtractor()
-
-    def output(self):
-        output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
-        return ImpcConfig().get_target(output_path)
-
-    def app_options(self):
-        return [self.input().path, self.output().path]</code></pre>
+<pre><code class="python">class EmbryoCleaner(IMPCSpecimenCleaner):
+    name = &#34;IMPC_Embryo_Specimen_Cleaner&#34;
+    specimen_type = &#34;embryo&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner">IMPCSpecimenCleaner</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
 <li>luigi.contrib.spark.SparkSubmitTask</li>
 <li>luigi.contrib.external_program.ExternalProgramTask</li>
 <li>luigi.task.Task</li>
 </ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.cleaning.EmbryoCleaner.app"><code class="name">var <span class="ident">app</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.cleaning.EmbryoCleaner.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.cleaning.EmbryoCleaner.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.cleaning.EmbryoCleaner.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.cleaning.EmbryoCleaner.resources"><code class="name">var <span class="ident">resources</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.cleaning.EmbryoCleaner.app_options"><code class="name flex">
-<span>def <span class="ident">app_options</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def app_options(self):
-    return [self.input().path, self.output().path]</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.cleaning.EmbryoCleaner.output"><code class="name flex">
-<span>def <span class="ident">output</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The output that this Task produces.</p>
-<p>The output of the Task determines if the Task needs to be run&ndash;the task
-is considered finished iff the outputs all exist. Subclasses should
-override this method to return a single :py:class:<code>Target</code> or a list of
-:py:class:<code>Target</code> instances.</p>
-<p>Implementation note
-If running multiple workers, the output must be a resource that is accessible
-by all workers, such as a DFS or database. Otherwise, workers might compute
-the same output since they don't see the work done by other workers.</p>
-<p>See :ref:<code>Task.output</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def output(self):
-    output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
-    return ImpcConfig().get_target(output_path)</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.cleaning.EmbryoCleaner.requires"><code class="name flex">
-<span>def <span class="ident">requires</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The Tasks that this Task depends on.</p>
-<p>A Task will only run if all of the Tasks that it requires are completed.
-If your Task does not require any other Tasks, then you don't need to
-override this method. Otherwise, a subclass can override this method
-to return a single Task, a list of Task instances, or a dict whose
-values are Task instances.</p>
-<p>See :ref:<code>Task.requires</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def requires(self):
-    return EmbryoSpecimenExtractor()</code></pre>
-</details>
-</dd>
-</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner">IMPCSpecimenCleaner</a></b></code>:
+<ul class="hlist">
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.app_options" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.clean_specimens" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.clean_specimens">clean_specimens</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.generate_unique_id" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.generate_unique_id">generate_unique_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.main" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_centre_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_centre_ids">map_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_phenotyping_centre_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_phenotyping_centre_ids">map_phenotyping_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_production_centre_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_production_centre_ids">map_production_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_project_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_project_ids">map_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.name" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output_path" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.override_3i_specimen_data" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.override_3i_specimen_data">override_3i_specimen_data</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.parse_europhenome_colony_xml_entities" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.requires" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.specimen_type" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.specimen_type">specimen_type</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.standardize_strain_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.standardize_strain_ids">standardize_strain_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_colony_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_specimen_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
+</ul>
+</li>
+</ul>
 </dd>
 <dt id="impc_etl.workflow.cleaning.LineExperimentCleaner"><code class="flex name class">
 <span>class <span class="ident">LineExperimentCleaner</span></span>
@@ -208,10 +115,9 @@ values are Task instances.</p>
 <dd>
 <div class="desc"><p>PySpark task
 to clean the IMPC Experimental data.</p>
-<pre><code>This task depends on &lt;code&gt;&lt;a title="impc_etl.workflow.extraction.SpecimenExperimentExtractor" href="extraction.html#impc_etl.workflow.extraction.SpecimenExperimentExtractor"&gt;SpecimenExperimentExtractor&lt;/a&gt;&lt;/code&gt; for cleaning Specimen Level experiments
-or &lt;code&gt;&lt;a title="impc_etl.workflow.extraction.LineExperimentExtractor" href="extraction.html#impc_etl.workflow.extraction.LineExperimentExtractor"&gt;LineExperimentExtractor&lt;/a&gt;&lt;/code&gt;
-for cleaning Line Level experiments.
-</code></pre></div>
+<p>This task depends on <code><a title="impc_etl.workflow.extraction.SpecimenExperimentExtractor" href="extraction.html#impc_etl.workflow.extraction.SpecimenExperimentExtractor">SpecimenExperimentExtractor</a></code> for cleaning Specimen Level experiments
+or <code><a title="impc_etl.workflow.extraction.LineExperimentExtractor" href="extraction.html#impc_etl.workflow.extraction.LineExperimentExtractor">LineExperimentExtractor</a></code>
+for cleaning Line Level experiments.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -268,118 +174,51 @@ for cleaning Line Level experiments.
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
+<div class="desc"><p>PySpark task to clean IMPC Specimen data.</p>
+<p>This task depends on <code><a title="impc_etl.workflow.extraction.MouseSpecimenExtractor" href="extraction.html#impc_etl.workflow.extraction.MouseSpecimenExtractor">MouseSpecimenExtractor</a></code> for cleaning Mouse specimens
+or <code><a title="impc_etl.workflow.extraction.EmbryoSpecimenExtractor" href="extraction.html#impc_etl.workflow.extraction.EmbryoSpecimenExtractor">EmbryoSpecimenExtractor</a></code>
+for cleaning Embryo specimens.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class MouseCleaner(SparkSubmitTask):
-    name = &#34;Mouse_Cleaner&#34;
-    app = &#34;impc_etl/jobs/clean/specimen_cleaner.py&#34;
-    output_path = luigi.Parameter()
-    dcc_xml_path = luigi.Parameter()
-    resources = {&#34;overwrite_resource&#34;: 1}
-
-    def requires(self):
-        return MouseSpecimenExtractor()
-
-    def output(self):
-        output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
-        return ImpcConfig().get_target(output_path)
-
-    def app_options(self):
-        return [self.input().path, self.output().path]</code></pre>
+<pre><code class="python">class MouseCleaner(IMPCSpecimenCleaner):
+    name = &#34;IMPC_Mouse_Specimen_Cleaner&#34;
+    specimen_type = &#34;mouse&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner">IMPCSpecimenCleaner</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
 <li>luigi.contrib.spark.SparkSubmitTask</li>
 <li>luigi.contrib.external_program.ExternalProgramTask</li>
 <li>luigi.task.Task</li>
 </ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.cleaning.MouseCleaner.app"><code class="name">var <span class="ident">app</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.cleaning.MouseCleaner.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.cleaning.MouseCleaner.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.cleaning.MouseCleaner.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.cleaning.MouseCleaner.resources"><code class="name">var <span class="ident">resources</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.cleaning.MouseCleaner.app_options"><code class="name flex">
-<span>def <span class="ident">app_options</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def app_options(self):
-    return [self.input().path, self.output().path]</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.cleaning.MouseCleaner.output"><code class="name flex">
-<span>def <span class="ident">output</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The output that this Task produces.</p>
-<p>The output of the Task determines if the Task needs to be run&ndash;the task
-is considered finished iff the outputs all exist. Subclasses should
-override this method to return a single :py:class:<code>Target</code> or a list of
-:py:class:<code>Target</code> instances.</p>
-<p>Implementation note
-If running multiple workers, the output must be a resource that is accessible
-by all workers, such as a DFS or database. Otherwise, workers might compute
-the same output since they don't see the work done by other workers.</p>
-<p>See :ref:<code>Task.output</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def output(self):
-    output_path = self.input().path.replace(&#34;_raw&#34;, &#34;&#34;)
-    return ImpcConfig().get_target(output_path)</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.cleaning.MouseCleaner.requires"><code class="name flex">
-<span>def <span class="ident">requires</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The Tasks that this Task depends on.</p>
-<p>A Task will only run if all of the Tasks that it requires are completed.
-If your Task does not require any other Tasks, then you don't need to
-override this method. Otherwise, a subclass can override this method
-to return a single Task, a list of Task instances, or a dict whose
-values are Task instances.</p>
-<p>See :ref:<code>Task.requires</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def requires(self):
-    return MouseSpecimenExtractor()</code></pre>
-</details>
-</dd>
-</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner">IMPCSpecimenCleaner</a></b></code>:
+<ul class="hlist">
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.app_options" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.clean_specimens" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.clean_specimens">clean_specimens</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.generate_unique_id" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.generate_unique_id">generate_unique_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.main" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_centre_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_centre_ids">map_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_phenotyping_centre_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_phenotyping_centre_ids">map_phenotyping_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_production_centre_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_production_centre_ids">map_production_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_project_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_project_ids">map_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.name" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output_path" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.override_3i_specimen_data" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.override_3i_specimen_data">override_3i_specimen_data</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.parse_europhenome_colony_xml_entities" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.requires" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.specimen_type" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.specimen_type">specimen_type</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.standardize_strain_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.standardize_strain_ids">standardize_strain_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_colony_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_specimen_ids" href="../jobs/clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
+</ul>
+</li>
+</ul>
 </dd>
 <dt id="impc_etl.workflow.cleaning.SpecimenExperimentCleaner"><code class="flex name class">
 <span>class <span class="ident">SpecimenExperimentCleaner</span></span>
@@ -388,10 +227,9 @@ values are Task instances.</p>
 <dd>
 <div class="desc"><p>PySpark task
 to clean the IMPC Experimental data.</p>
-<pre><code>This task depends on &lt;code&gt;&lt;a title="impc_etl.workflow.extraction.SpecimenExperimentExtractor" href="extraction.html#impc_etl.workflow.extraction.SpecimenExperimentExtractor"&gt;SpecimenExperimentExtractor&lt;/a&gt;&lt;/code&gt; for cleaning Specimen Level experiments
-or &lt;code&gt;&lt;a title="impc_etl.workflow.extraction.LineExperimentExtractor" href="extraction.html#impc_etl.workflow.extraction.LineExperimentExtractor"&gt;LineExperimentExtractor&lt;/a&gt;&lt;/code&gt;
-for cleaning Line Level experiments.
-</code></pre></div>
+<p>This task depends on <code><a title="impc_etl.workflow.extraction.SpecimenExperimentExtractor" href="extraction.html#impc_etl.workflow.extraction.SpecimenExperimentExtractor">SpecimenExperimentExtractor</a></code> for cleaning Specimen Level experiments
+or <code><a title="impc_etl.workflow.extraction.LineExperimentExtractor" href="extraction.html#impc_etl.workflow.extraction.LineExperimentExtractor">LineExperimentExtractor</a></code>
+for cleaning Line Level experiments.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -468,32 +306,12 @@ for cleaning Line Level experiments.
 <ul>
 <li>
 <h4><code><a title="impc_etl.workflow.cleaning.EmbryoCleaner" href="#impc_etl.workflow.cleaning.EmbryoCleaner">EmbryoCleaner</a></code></h4>
-<ul class="two-column">
-<li><code><a title="impc_etl.workflow.cleaning.EmbryoCleaner.app" href="#impc_etl.workflow.cleaning.EmbryoCleaner.app">app</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.EmbryoCleaner.app_options" href="#impc_etl.workflow.cleaning.EmbryoCleaner.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.EmbryoCleaner.dcc_xml_path" href="#impc_etl.workflow.cleaning.EmbryoCleaner.dcc_xml_path">dcc_xml_path</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.EmbryoCleaner.name" href="#impc_etl.workflow.cleaning.EmbryoCleaner.name">name</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.EmbryoCleaner.output" href="#impc_etl.workflow.cleaning.EmbryoCleaner.output">output</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.EmbryoCleaner.output_path" href="#impc_etl.workflow.cleaning.EmbryoCleaner.output_path">output_path</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.EmbryoCleaner.requires" href="#impc_etl.workflow.cleaning.EmbryoCleaner.requires">requires</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.EmbryoCleaner.resources" href="#impc_etl.workflow.cleaning.EmbryoCleaner.resources">resources</a></code></li>
-</ul>
 </li>
 <li>
 <h4><code><a title="impc_etl.workflow.cleaning.LineExperimentCleaner" href="#impc_etl.workflow.cleaning.LineExperimentCleaner">LineExperimentCleaner</a></code></h4>
 </li>
 <li>
 <h4><code><a title="impc_etl.workflow.cleaning.MouseCleaner" href="#impc_etl.workflow.cleaning.MouseCleaner">MouseCleaner</a></code></h4>
-<ul class="two-column">
-<li><code><a title="impc_etl.workflow.cleaning.MouseCleaner.app" href="#impc_etl.workflow.cleaning.MouseCleaner.app">app</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.MouseCleaner.app_options" href="#impc_etl.workflow.cleaning.MouseCleaner.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.MouseCleaner.dcc_xml_path" href="#impc_etl.workflow.cleaning.MouseCleaner.dcc_xml_path">dcc_xml_path</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.MouseCleaner.name" href="#impc_etl.workflow.cleaning.MouseCleaner.name">name</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.MouseCleaner.output" href="#impc_etl.workflow.cleaning.MouseCleaner.output">output</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.MouseCleaner.output_path" href="#impc_etl.workflow.cleaning.MouseCleaner.output_path">output_path</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.MouseCleaner.requires" href="#impc_etl.workflow.cleaning.MouseCleaner.requires">requires</a></code></li>
-<li><code><a title="impc_etl.workflow.cleaning.MouseCleaner.resources" href="#impc_etl.workflow.cleaning.MouseCleaner.resources">resources</a></code></li>
-</ul>
 </li>
 <li>
 <h4><code><a title="impc_etl.workflow.cleaning.SpecimenExperimentCleaner" href="#impc_etl.workflow.cleaning.SpecimenExperimentCleaner">SpecimenExperimentCleaner</a></code></h4>

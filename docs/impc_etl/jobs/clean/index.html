@@ -31,7 +31,9 @@
 Module to hold cleaning jobs.
 &#34;&#34;&#34;
 
-from impc_etl.jobs.clean.colony_cleaner import IMPCColonyCleaner</code></pre>
+from impc_etl.jobs.clean.colony_cleaner import IMPCColonyCleaner
+from impc_etl.jobs.clean.experiment_cleaner import IMPCExperimentCleaner
+from impc_etl.jobs.clean.specimen_cleaner import IMPCSpecimenCleaner</code></pre>
 </details>
 </section>
 <section>
@@ -51,7 +53,10 @@ and applies some data …</p></div>
 </dd>
 <dt><code class="name"><a title="impc_etl.jobs.clean.specimen_cleaner" href="specimen_cleaner.html">impc_etl.jobs.clean.specimen_cleaner</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Luigi PySpark task that takes the Specimen data coming from the different
+data sources
+(e.g. IMPC, 3i, EuroPhenome, PWG)
+and applies some data …</p></div>
 </dd>
 </dl>
 </section>
