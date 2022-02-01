@@ -60,7 +60,7 @@ class ColonyExtractor(ImitsExtractor):
 
 class OntologyExtractor(SparkSubmitTask):
     name = "IMPC_Ontology_Extractor"
-    app = "impc_etl/jobs/extract/ontology_extractor.py"
+    app = "impc_etl/jobs/extract/ontology_hierarchy_extractor.py"
 
     ontology_input_path = luigi.Parameter()
     output_path = luigi.Parameter()

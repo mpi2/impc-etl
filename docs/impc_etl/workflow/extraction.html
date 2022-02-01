@@ -88,7 +88,7 @@ class ColonyExtractor(ImitsExtractor):
 
 class OntologyExtractor(SparkSubmitTask):
     name = &#34;IMPC_Ontology_Extractor&#34;
-    app = &#34;impc_etl/jobs/extract/ontology_extractor.py&#34;
+    app = &#34;impc_etl/jobs/extract/ontology_hierarchy_extractor.py&#34;
 
     ontology_input_path = luigi.Parameter()
     output_path = luigi.Parameter()
@@ -580,7 +580,7 @@ for more information</p></div>
 </summary>
 <pre><code class="python">class OntologyExtractor(SparkSubmitTask):
     name = &#34;IMPC_Ontology_Extractor&#34;
-    app = &#34;impc_etl/jobs/extract/ontology_extractor.py&#34;
+    app = &#34;impc_etl/jobs/extract/ontology_hierarchy_extractor.py&#34;
 
     ontology_input_path = luigi.Parameter()
     output_path = luigi.Parameter()
