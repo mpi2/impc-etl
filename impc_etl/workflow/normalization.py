@@ -1,3 +1,4 @@
+from impc_etl.jobs.clean import *
 from impc_etl.workflow.cleaning import *
 from impc_etl.workflow.config import ImpcConfig
 
@@ -36,7 +37,7 @@ class MouseNormalizer(SpecimenNormalizer):
     def requires(self):
         return [
             MouseCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-            ColonyCleaner(
+            IMPCColonyCleaner(
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 output_path=self.output_path,
             ),
@@ -49,10 +50,7 @@ class EmbryoNormalizer(SpecimenNormalizer):
     def requires(self):
         return [
             EmbryoCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-            ColonyCleaner(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                output_path=self.output_path,
-            ),
+            IMPCColonyCleaner(),
         ]
 
 
@@ -116,10 +114,7 @@ class LineExperimentNormalizer(SparkSubmitTask):
             LineExperimentCleaner(
                 dcc_xml_path=self.dcc_xml_path, output_path=self.output_path
             ),
-            ColonyCleaner(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                output_path=self.output_path,
-            ),
+            IMPCColonyCleaner(),
             ImpressExtractor(output_path=self.output_path),
         ]
 

@@ -1,5 +1,4 @@
 from impc_etl.workflow.extraction import *
-from impc_etl.workflow.config import ImpcConfig
 
 
 class ExperimentCleaner(SparkSubmitTask):
@@ -71,23 +70,6 @@ class EmbryoCleaner(SparkSubmitTask):
     def output(self):
         output_path = self.input().path.replace("_raw", "")
         return ImpcConfig().get_target(output_path)
-
-    def app_options(self):
-        return [self.input().path, self.output().path]
-
-
-class ColonyCleaner(SparkSubmitTask):
-    name = "Colony_Cleaner"
-    app = "impc_etl/jobs/clean/colony_cleaner.py"
-    imits_colonies_tsv_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-    resources = {"overwrite_resource": 1}
-
-    def requires(self):
-        return ColonyTrackingExtractor()
-
-    def output(self):
-        return ImpcConfig().get_target(f"{self.output_path}colony_parquet")
 
     def app_options(self):
         return [self.input().path, self.output().path]
