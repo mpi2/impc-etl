@@ -1,12 +1,14 @@
 """
 DCC extractor test suite
 """
-from impc_etl.jobs.extract.dcc_extractor_helper import *
-import pytest
-from impc_etl.shared.exceptions import *
-from pathlib import Path
 import os
+from pathlib import Path
+
 import bs4
+import pytest
+
+from impc_etl.jobs.extract.xml_extraction_helper import *
+from impc_etl.shared.exceptions import *
 
 INPUT_PATH = (
     os.environ["INPUT_PATH"] if "INPUT_PATH" in os.environ else "tests/data/xml/"
