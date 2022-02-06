@@ -9,6 +9,7 @@ from pyspark.sql.functions import col, concat, lit, udf, when
 from pyspark.sql.types import StringType
 
 from impc_etl.config.constants import Constants
+from impc_etl.jobs.transform.cross_ref_helper import generate_allelic_composition
 from impc_etl.jobs.transform.experiment_cross_ref import (
     override_europhenome_datasource,
 )
