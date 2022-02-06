@@ -22,17 +22,21 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import udf, when, regexp_replace, col, lit, md5, concat
 from pyspark.sql.types import StringType
 
+from impc_etl.jobs.extract.specimen_extractor import (
+    EmbryoSpecimenExtractor,
+    MouseSpecimenExtractor,
+)
 from impc_etl.shared import utils
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.extraction import MouseSpecimenExtractor, EmbryoSpecimenExtractor
 
 
-class IMPCSpecimenCleaner(PySparkTask):
+class SpecimenCleaner(PySparkTask):
     """
     PySpark task to clean IMPC Specimen data.
 
-    This task depends on `impc_etl.workflow.extraction.MouseSpecimenExtractor` for cleaning Mouse specimens
-    or `impc_etl.workflow.extraction.EmbryoSpecimenExtractor`
+    This task depends on `impc_etl.jobs.extract.dcc_specimen_extractor.MouseSpecimenExtractor`
+    for cleaning Mouse specimens
+    or `impc_etl.jobs.extract.dcc_specimen_extractor.EmbryoSpecimenExtractor`
     for cleaning Embryo specimens.
     """
 
@@ -271,3 +275,13 @@ class IMPCSpecimenCleaner(PySparkTask):
             ),
         )
         return dcc_specimen_df
+
+
+class MouseSpecimenCleaner(SpecimenCleaner):
+    name = "IMPC_Mouse_Specimen_Cleaner"
+    specimen_type = "mouse"
+
+
+class EmbryoSpecimenCleaner(SpecimenCleaner):
+    name = "IMPC_Embryo_Specimen_Cleaner"
+    specimen_type = "embryo"

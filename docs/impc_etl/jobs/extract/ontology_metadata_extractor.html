@@ -48,7 +48,7 @@ from pyspark.sql import SparkSession
 from impc_etl.workflow.config import ImpcConfig
 
 
-class IMPCOntologyMetadataExtractor(PySparkTask):
+class OntologyMetadataExtractor(PySparkTask):
     &#34;&#34;&#34;
     PySpark task to generate the ontology metadata parquet.
     Takes in a  directory   containing a set of ontology  metadata CSV files and returns a parquet version of all of them.
@@ -107,8 +107,8 @@ class IMPCOntologyMetadataExtractor(PySparkTask):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor"><code class="flex name class">
-<span>class <span class="ident">IMPCOntologyMetadataExtractor</span></span>
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor"><code class="flex name class">
+<span>class <span class="ident">OntologyMetadataExtractor</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
@@ -123,7 +123,7 @@ eco, efo, emap, emapa, ma, mp, mpath, pato and uberon.</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class IMPCOntologyMetadataExtractor(PySparkTask):
+<pre><code class="python">class OntologyMetadataExtractor(PySparkTask):
     &#34;&#34;&#34;
     PySpark task to generate the ontology metadata parquet.
     Takes in a  directory   containing a set of ontology  metadata CSV files and returns a parquet version of all of them.
@@ -181,22 +181,22 @@ eco, efo, emap, emapa, ma, mp, mpath, pato and uberon.</p></div>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.name"><code class="name">var <span class="ident">name</span></code></dt>
 <dd>
 <div class="desc"><p>Name of the Spark task</p></div>
 </dd>
-<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.ontology_metadata_input_path"><code class="name">var <span class="ident">ontology_metadata_input_path</span> : luigi.parameter.Parameter</code></dt>
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.ontology_metadata_input_path"><code class="name">var <span class="ident">ontology_metadata_input_path</span> : luigi.parameter.Parameter</code></dt>
 <dd>
 <div class="desc"><p>Path to the directory containing Ontology metadata CSV files</p></div>
 </dd>
-<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
 <dd>
 <div class="desc"><p>Path of the output directory where ethe new parquet file will be generated.</p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.app_options"><code class="name flex">
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.app_options"><code class="name flex">
 <span>def <span class="ident">app_options</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -215,7 +215,7 @@ eco, efo, emap, emapa, ma, mp, mpath, pato and uberon.</p></div>
     ]</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.main"><code class="name flex">
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.main"><code class="name flex">
 <span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
 </code></dt>
 <dd>
@@ -239,7 +239,7 @@ eco, efo, emap, emapa, ma, mp, mpath, pato and uberon.</p></div>
     ontology_df.distinct().write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.output"><code class="name flex">
+<dt id="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.output"><code class="name flex">
 <span>def <span class="ident">output</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -285,14 +285,14 @@ eco, efo, emap, emapa, ma, mp, mpath, pato and uberon.</p></div>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor">IMPCOntologyMetadataExtractor</a></code></h4>
+<h4><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor" href="#impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor">OntologyMetadataExtractor</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.app_options" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.main" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.main">main</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.name" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.name">name</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.ontology_metadata_input_path" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.ontology_metadata_input_path">ontology_metadata_input_path</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.output" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.output">output</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.output_path" href="#impc_etl.jobs.extract.ontology_metadata_extractor.IMPCOntologyMetadataExtractor.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.app_options" href="#impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.main" href="#impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.name" href="#impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.ontology_metadata_input_path" href="#impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.ontology_metadata_input_path">ontology_metadata_input_path</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.output" href="#impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.output_path" href="#impc_etl.jobs.extract.ontology_metadata_extractor.OntologyMetadataExtractor.output_path">output_path</a></code></li>
 </ul>
 </li>
 </ul>

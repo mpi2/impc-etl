@@ -67,17 +67,21 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import udf, when, regexp_replace, col, lit, md5, concat
 from pyspark.sql.types import StringType
 
+from impc_etl.jobs.extract.specimen_extractor import (
+    EmbryoSpecimenExtractor,
+    MouseSpecimenExtractor,
+)
 from impc_etl.shared import utils
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.extraction import MouseSpecimenExtractor, EmbryoSpecimenExtractor
 
 
-class IMPCSpecimenCleaner(PySparkTask):
+class SpecimenCleaner(PySparkTask):
     &#34;&#34;&#34;
     PySpark task to clean IMPC Specimen data.
 
-    This task depends on `impc_etl.workflow.extraction.MouseSpecimenExtractor` for cleaning Mouse specimens
-    or `impc_etl.workflow.extraction.EmbryoSpecimenExtractor`
+    This task depends on `impc_etl.jobs.extract.dcc_specimen_extractor.MouseSpecimenExtractor`
+    for cleaning Mouse specimens
+    or `impc_etl.jobs.extract.dcc_specimen_extractor.EmbryoSpecimenExtractor`
     for cleaning Embryo specimens.
     &#34;&#34;&#34;
 
@@ -315,7 +319,17 @@ class IMPCSpecimenCleaner(PySparkTask):
                 )
             ),
         )
-        return dcc_specimen_df</code></pre>
+        return dcc_specimen_df
+
+
+class MouseSpecimenCleaner(SpecimenCleaner):
+    name = &#34;IMPC_Mouse_Specimen_Cleaner&#34;
+    specimen_type = &#34;mouse&#34;
+
+
+class EmbryoSpecimenCleaner(SpecimenCleaner):
+    name = &#34;IMPC_Embryo_Specimen_Cleaner&#34;
+    specimen_type = &#34;embryo&#34;</code></pre>
 </details>
 </section>
 <section>
@@ -327,25 +341,131 @@ class IMPCSpecimenCleaner(PySparkTask):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner"><code class="flex name class">
-<span>class <span class="ident">IMPCSpecimenCleaner</span></span>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner"><code class="flex name class">
+<span>class <span class="ident">EmbryoSpecimenCleaner</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>PySpark task to clean IMPC Specimen data.</p>
-<p>This task depends on <code><a title="impc_etl.workflow.extraction.MouseSpecimenExtractor" href="../../workflow/extraction.html#impc_etl.workflow.extraction.MouseSpecimenExtractor">MouseSpecimenExtractor</a></code> for cleaning Mouse specimens
-or <code><a title="impc_etl.workflow.extraction.EmbryoSpecimenExtractor" href="../../workflow/extraction.html#impc_etl.workflow.extraction.EmbryoSpecimenExtractor">EmbryoSpecimenExtractor</a></code>
+<p>This task depends on <code>impc_etl.jobs.extract.dcc_specimen_extractor.MouseSpecimenExtractor</code>
+for cleaning Mouse specimens
+or <code>impc_etl.jobs.extract.dcc_specimen_extractor.EmbryoSpecimenExtractor</code>
 for cleaning Embryo specimens.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class IMPCSpecimenCleaner(PySparkTask):
+<pre><code class="python">class EmbryoSpecimenCleaner(SpecimenCleaner):
+    name = &#34;IMPC_Embryo_Specimen_Cleaner&#34;
+    specimen_type = &#34;embryo&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></b></code>:
+<ul class="hlist">
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.app_options" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.clean_specimens" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.clean_specimens">clean_specimens</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.generate_unique_id" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.generate_unique_id">generate_unique_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.main" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_centre_ids">map_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_phenotyping_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_phenotyping_centre_ids">map_phenotyping_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_production_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_production_centre_ids">map_production_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_project_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_project_ids">map_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.name" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output_path" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.override_3i_specimen_data" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.override_3i_specimen_data">override_3i_specimen_data</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.parse_europhenome_colony_xml_entities" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.requires" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.specimen_type" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.specimen_type">specimen_type</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.standardize_strain_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.standardize_strain_ids">standardize_strain_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_colony_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_specimen_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner"><code class="flex name class">
+<span>class <span class="ident">MouseSpecimenCleaner</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>PySpark task to clean IMPC Specimen data.</p>
+<p>This task depends on <code>impc_etl.jobs.extract.dcc_specimen_extractor.MouseSpecimenExtractor</code>
+for cleaning Mouse specimens
+or <code>impc_etl.jobs.extract.dcc_specimen_extractor.EmbryoSpecimenExtractor</code>
+for cleaning Embryo specimens.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MouseSpecimenCleaner(SpecimenCleaner):
+    name = &#34;IMPC_Mouse_Specimen_Cleaner&#34;
+    specimen_type = &#34;mouse&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></b></code>:
+<ul class="hlist">
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.app_options" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.clean_specimens" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.clean_specimens">clean_specimens</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.generate_unique_id" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.generate_unique_id">generate_unique_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.main" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_centre_ids">map_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_phenotyping_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_phenotyping_centre_ids">map_phenotyping_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_production_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_production_centre_ids">map_production_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_project_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_project_ids">map_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.name" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output_path" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.override_3i_specimen_data" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.override_3i_specimen_data">override_3i_specimen_data</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.parse_europhenome_colony_xml_entities" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.requires" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.specimen_type" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.specimen_type">specimen_type</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.standardize_strain_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.standardize_strain_ids">standardize_strain_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_colony_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_specimen_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner"><code class="flex name class">
+<span>class <span class="ident">SpecimenCleaner</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>PySpark task to clean IMPC Specimen data.</p>
+<p>This task depends on <code>impc_etl.jobs.extract.dcc_specimen_extractor.MouseSpecimenExtractor</code>
+for cleaning Mouse specimens
+or <code>impc_etl.jobs.extract.dcc_specimen_extractor.EmbryoSpecimenExtractor</code>
+for cleaning Embryo specimens.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SpecimenCleaner(PySparkTask):
     &#34;&#34;&#34;
     PySpark task to clean IMPC Specimen data.
 
-    This task depends on `impc_etl.workflow.extraction.MouseSpecimenExtractor` for cleaning Mouse specimens
-    or `impc_etl.workflow.extraction.EmbryoSpecimenExtractor`
+    This task depends on `impc_etl.jobs.extract.dcc_specimen_extractor.MouseSpecimenExtractor`
+    for cleaning Mouse specimens
+    or `impc_etl.jobs.extract.dcc_specimen_extractor.EmbryoSpecimenExtractor`
     for cleaning Embryo specimens.
     &#34;&#34;&#34;
 
@@ -594,27 +714,27 @@ for cleaning Embryo specimens.</p></div>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="impc_etl.workflow.cleaning.EmbryoCleaner" href="../../workflow/cleaning.html#impc_etl.workflow.cleaning.EmbryoCleaner">EmbryoCleaner</a></li>
-<li><a title="impc_etl.workflow.cleaning.MouseCleaner" href="../../workflow/cleaning.html#impc_etl.workflow.cleaning.MouseCleaner">MouseCleaner</a></li>
+<li><a title="impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner" href="#impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner">EmbryoSpecimenCleaner</a></li>
+<li><a title="impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner" href="#impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner">MouseSpecimenCleaner</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
 <div class="desc"><p>Name of the Spark task</p></div>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
 <dd>
 <div class="desc"><p>Path of the output directory where the new parquet file will be generated.</p></div>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.specimen_type"><code class="name">var <span class="ident">specimen_type</span> : luigi.parameter.Parameter</code></dt>
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.specimen_type"><code class="name">var <span class="ident">specimen_type</span> : luigi.parameter.Parameter</code></dt>
 <dd>
 <div class="desc"><p>Specimen type can be 'mouse' or 'embryo'</p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.app_options"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.app_options"><code class="name flex">
 <span>def <span class="ident">app_options</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -633,7 +753,7 @@ for cleaning Embryo specimens.</p></div>
     ]</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.clean_specimens"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.clean_specimens"><code class="name flex">
 <span>def <span class="ident">clean_specimens</span></span>(<span>self, specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -672,7 +792,7 @@ for cleaning Embryo specimens.</p></div>
     return specimen_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.generate_unique_id"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.generate_unique_id"><code class="name flex">
 <span>def <span class="ident">generate_unique_id</span></span>(<span>self, dcc_specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -709,7 +829,7 @@ and specimen ID.</p></div>
     return dcc_specimen_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.main"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.main"><code class="name flex">
 <span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
 </code></dt>
 <dd>
@@ -733,7 +853,7 @@ and specimen ID.</p></div>
     specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_centre_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_centre_ids"><code class="name flex">
 <span>def <span class="ident">map_centre_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -759,7 +879,7 @@ The full list of mappings can be found at <code>impc_etl.config.Constants.CENTRE
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_phenotyping_centre_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_phenotyping_centre_ids"><code class="name flex">
 <span>def <span class="ident">map_phenotyping_centre_ids</span></span>(<span>self, dcc_experiment_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
@@ -786,7 +906,7 @@ The full list of mappings can be found at <code>impc_etl.config.Constants.CENTRE
     return dcc_experiment_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_production_centre_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_production_centre_ids"><code class="name flex">
 <span>def <span class="ident">map_production_centre_ids</span></span>(<span>self, dcc_experiment_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
@@ -817,7 +937,7 @@ The full list of mappings can be found at <code>impc_etl.config.Constants.CENTRE
     return dcc_experiment_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_project_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_project_ids"><code class="name flex">
 <span>def <span class="ident">map_project_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -843,7 +963,7 @@ The full list of mappings can be found at <code>impc_etl.config.Constants.PROJEC
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output"><code class="name flex">
 <span>def <span class="ident">output</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -863,7 +983,7 @@ The full list of mappings can be found at <code>impc_etl.config.Constants.PROJEC
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.override_3i_specimen_data"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.override_3i_specimen_data"><code class="name flex">
 <span>def <span class="ident">override_3i_specimen_data</span></span>(<span>self, dcc_specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -892,7 +1012,7 @@ The full list of mappings can be found at <code>impc_etl.config.Constants.PROJEC
     return dcc_specimen_df.select(&#34;a.*&#34;).dropDuplicates()</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.parse_europhenome_colony_xml_entities"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.parse_europhenome_colony_xml_entities"><code class="name flex">
 <span>def <span class="ident">parse_europhenome_colony_xml_entities</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -924,7 +1044,7 @@ corresponding characters &lt; and &gt;.</p></div>
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.requires"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.requires"><code class="name flex">
 <span>def <span class="ident">requires</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -945,7 +1065,7 @@ task dependencies</p></div>
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.standardize_strain_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.standardize_strain_ids"><code class="name flex">
 <span>def <span class="ident">standardize_strain_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -967,7 +1087,7 @@ here we remove the 'MGI:' from al of them to be able to process them in a consis
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_colony_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_colony_ids"><code class="name flex">
 <span>def <span class="ident">truncate_europhenome_colony_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -997,7 +1117,7 @@ entry on GenTar.</p></div>
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_specimen_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_specimen_ids"><code class="name flex">
 <span>def <span class="ident">truncate_europhenome_specimen_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -1048,26 +1168,32 @@ a suffix tno reference the production/phenotyping Centre (e.g. 232328312_HRW), t
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner">IMPCSpecimenCleaner</a></code></h4>
+<h4><code><a title="impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner" href="#impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner">EmbryoSpecimenCleaner</a></code></h4>
+</li>
+<li>
+<h4><code><a title="impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner" href="#impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner">MouseSpecimenCleaner</a></code></h4>
+</li>
+<li>
+<h4><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.app_options" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.clean_specimens" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.clean_specimens">clean_specimens</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.generate_unique_id" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.generate_unique_id">generate_unique_id</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.main" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.main">main</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_centre_ids">map_centre_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_phenotyping_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_phenotyping_centre_ids">map_phenotyping_centre_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_production_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_production_centre_ids">map_production_centre_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_project_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.map_project_ids">map_project_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.name" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.name">name</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output">output</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output_path" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.output_path">output_path</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.override_3i_specimen_data" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.override_3i_specimen_data">override_3i_specimen_data</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.parse_europhenome_colony_xml_entities" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.requires" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.requires">requires</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.specimen_type" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.specimen_type">specimen_type</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.standardize_strain_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.standardize_strain_ids">standardize_strain_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_colony_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_specimen_ids" href="#impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.app_options" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.clean_specimens" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.clean_specimens">clean_specimens</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.generate_unique_id" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.generate_unique_id">generate_unique_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.main" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_centre_ids">map_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_phenotyping_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_phenotyping_centre_ids">map_phenotyping_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_production_centre_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_production_centre_ids">map_production_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_project_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.map_project_ids">map_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.name" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output_path" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.override_3i_specimen_data" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.override_3i_specimen_data">override_3i_specimen_data</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.parse_europhenome_colony_xml_entities" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.requires" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.specimen_type" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.specimen_type">specimen_type</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.standardize_strain_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.standardize_strain_ids">standardize_strain_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_colony_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_specimen_ids" href="#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
 </ul>
 </li>
 </ul>

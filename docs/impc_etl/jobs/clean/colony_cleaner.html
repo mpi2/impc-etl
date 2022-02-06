@@ -55,7 +55,7 @@ from impc_etl.shared import utils
 from impc_etl.workflow.config import ImpcConfig
 
 
-class IMPCColonyCleaner(PySparkTask):
+class ColonyCleaner(PySparkTask):
     &#34;&#34;&#34;
     PySpark Task to clean some legacy colony  identifiers so they match the provided on the legacy  Specimen XML files.
     This task depends on `impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor`.
@@ -155,8 +155,8 @@ class IMPCColonyCleaner(PySparkTask):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner"><code class="flex name class">
-<span>class <span class="ident">IMPCColonyCleaner</span></span>
+<dt id="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner"><code class="flex name class">
+<span>class <span class="ident">ColonyCleaner</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
@@ -168,7 +168,7 @@ This task depends on <code><a title="impc_etl.jobs.extract.colony_tracking_extra
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class IMPCColonyCleaner(PySparkTask):
+<pre><code class="python">class ColonyCleaner(PySparkTask):
     &#34;&#34;&#34;
     PySpark Task to clean some legacy colony  identifiers so they match the provided on the legacy  Specimen XML files.
     This task depends on `impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor`.
@@ -267,18 +267,18 @@ This task depends on <code><a title="impc_etl.jobs.extract.colony_tracking_extra
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dt id="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
 <div class="desc"><p>Name of the Spark task</p></div>
 </dd>
-<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
+<dt id="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
 <dd>
 <div class="desc"><p>Path of the output directory where ethe new parquet file will be generated.</p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.app_options"><code class="name flex">
+<dt id="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.app_options"><code class="name flex">
 <span>def <span class="ident">app_options</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -297,7 +297,7 @@ This task depends on <code><a title="impc_etl.jobs.extract.colony_tracking_extra
     ]</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.clean_colonies"><code class="name flex">
+<dt id="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.clean_colonies"><code class="name flex">
 <span>def <span class="ident">clean_colonies</span></span>(<span>self, colonies_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -324,7 +324,7 @@ colony identifiers.</p></div>
     return colonies_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.generate_genetic_background"><code class="name flex">
+<dt id="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.generate_genetic_background"><code class="name flex">
 <span>def <span class="ident">generate_genetic_background</span></span>(<span>self, colonies_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -348,7 +348,7 @@ given strain name.</p></div>
     return colonies_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.main"><code class="name flex">
+<dt id="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.main"><code class="name flex">
 <span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
 </code></dt>
 <dd>
@@ -368,7 +368,7 @@ given strain name.</p></div>
     specimen_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.map_colonies_df_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.map_colonies_df_ids"><code class="name flex">
 <span>def <span class="ident">map_colonies_df_ids</span></span>(<span>self, colonies_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -402,7 +402,7 @@ production_consortium and maps them using a dictionary provided in the constants
     return colonies_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.output"><code class="name flex">
+<dt id="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.output"><code class="name flex">
 <span>def <span class="ident">output</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -422,7 +422,7 @@ production_consortium and maps them using a dictionary provided in the constants
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.requires"><code class="name flex">
+<dt id="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.requires"><code class="name flex">
 <span>def <span class="ident">requires</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -465,17 +465,17 @@ task dependencies</p></div>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner">IMPCColonyCleaner</a></code></h4>
+<h4><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner">ColonyCleaner</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.app_options" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.clean_colonies" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.clean_colonies">clean_colonies</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.generate_genetic_background" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.generate_genetic_background">generate_genetic_background</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.main" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.main">main</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.map_colonies_df_ids" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.map_colonies_df_ids">map_colonies_df_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.name" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.name">name</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.output" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.output">output</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.output_path" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.output_path">output_path</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.requires" href="#impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.app_options" href="#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.clean_colonies" href="#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.clean_colonies">clean_colonies</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.generate_genetic_background" href="#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.generate_genetic_background">generate_genetic_background</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.main" href="#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.map_colonies_df_ids" href="#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.map_colonies_df_ids">map_colonies_df_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.name" href="#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.output" href="#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.output_path" href="#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.requires" href="#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner.requires">requires</a></code></li>
 </ul>
 </li>
 </ul>

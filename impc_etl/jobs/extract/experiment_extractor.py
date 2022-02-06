@@ -11,7 +11,7 @@ from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import DataFrame, SparkSession
 
-from impc_etl.jobs.extract.dcc_extractor_helper import (
+from impc_etl.jobs.extract.xml_extraction_helper import (
     extract_dcc_xml_files,
     get_entity_by_type,
 )
@@ -19,13 +19,13 @@ from impc_etl.shared.exceptions import UnsupportedEntityError
 from impc_etl.workflow.config import ImpcConfig
 
 
-class DCCExperimentExtractor(PySparkTask):
+class ExperimentExtractor(PySparkTask):
     """
-    PySpark Task class to extract experimental data from the DCC XML files.
+    PySpark Task class to extract experimental data from the XML files compliant with the DCC XML format.
     """
 
     #: Name of the Spark task
-    name: str = "IMPC_DCC_Experiment_Extractor"
+    name: str = "IMPC_Experiment_Extractor"
 
     #: Path in the filesystem (local or HDFS) to the experiment XML files
     dcc_experiment_xml_path: luigi.Parameter = luigi.Parameter()
@@ -101,3 +101,13 @@ class DCCExperimentExtractor(PySparkTask):
             ["procedure.*"]
             + [column for column in experiment_df.columns if column is not "procedure"]
         ).drop("procedure")
+
+
+class SpecimenLevelExperimentExtractor(ExperimentExtractor):
+    name: str = "IMPC_Specimen_Level_Experiment_Extractor"
+    experiment_type: str = "specimen_level"
+
+
+class LineLevelExperimentExtractor(ExperimentExtractor):
+    name: str = "IMPC_Line_Level_Experiment_Extractor"
+    experiment_type: str = "line_level"

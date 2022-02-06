@@ -4,8 +4,10 @@ in and generate a Parquet file with a slightly different schema.
 """
 
 from impc_etl.jobs.extract.colony_tracking_extractor import ColonyTrackingExtractor
-from impc_etl.jobs.extract.dcc_experiment_extractor import DCCExperimentExtractor
-from impc_etl.jobs.extract.dcc_specimen_extractor import DCCSpecimenExtractor
+from impc_etl.jobs.extract.experiment_extractor import (
+    SpecimenLevelExperimentExtractor,
+    LineLevelExperimentExtractor,
+)
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
 )
@@ -16,9 +18,13 @@ from impc_etl.jobs.extract.mgi_mrk_list_extractor import MGIMarkerListReportExtr
 from impc_etl.jobs.extract.mgi_phenotypic_allele import MGIPhenotypicAlleleExtractor
 from impc_etl.jobs.extract.mgi_strain_extractor import MGIStrainReportExtractor
 from impc_etl.jobs.extract.ontology_hierarchy_extractor import (
-    IMPCOntologyTermHierarchyExtractor,
+    OntologyTermHierarchyExtractor,
 )
 from impc_etl.jobs.extract.ontology_metadata_extractor import (
-    IMPCOntologyMetadataExtractor,
+    OntologyMetadataExtractor,
 )
 from impc_etl.jobs.extract.product_report_extractor import ProductReportExtractor
+from impc_etl.jobs.extract.specimen_extractor import (
+    MouseSpecimenExtractor,
+    EmbryoSpecimenExtractor,
+)

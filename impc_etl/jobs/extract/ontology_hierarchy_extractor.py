@@ -16,7 +16,7 @@ from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 from impc_etl.workflow.config import ImpcConfig
 
 
-class IMPCOntologyTermHierarchyExtractor(PySparkTask):
+class OntologyTermHierarchyExtractor(PySparkTask):
     """
     PySpark Task class to extract the hierarchical relations between terms for the ontologies: MPATH, MA, EMAPA and MP.
     The main goal of this task is to assign to any ontology term a list of:

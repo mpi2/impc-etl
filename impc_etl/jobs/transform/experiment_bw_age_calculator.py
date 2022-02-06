@@ -43,9 +43,9 @@ from impc_etl.workflow.normalization import (
 )
 
 
-class ExperimentBWAgeProcessor(PySparkTask):
+class ExperimentBWAgeCalculator(PySparkTask):
     """
-    PysPark task to process determine AGE of Specimen and BW data associations for a given experiment.
+    PysPark task to calculate age of specimen and BW data associations for a given experiment.
     This task depends on `impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator`,
     `impc_etl.workflow.normalization.MouseNormalizer` and `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`.
     """

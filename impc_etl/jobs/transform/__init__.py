@@ -3,4 +3,6 @@
 """
 
 
-from impc_etl.jobs.transform.experiment_bw_age import ExperimentBWAgeProcessor
+from impc_etl.jobs.transform.experiment_bw_age_calculator import (
+    ExperimentBWAgeCalculator,
+)

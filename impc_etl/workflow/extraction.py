@@ -1,61 +1,7 @@
 import luigi
 from luigi.contrib.spark import SparkSubmitTask
 
-from impc_etl.jobs.extract import *
 from impc_etl.workflow.config import ImpcConfig
-
-
-class MouseSpecimenExtractor(DCCSpecimenExtractor):
-    specimen_type = "mouse"
-
-
-class EmbryoSpecimenExtractor(DCCSpecimenExtractor):
-    specimen_type = "embryo"
-
-
-class SpecimenExperimentExtractor(DCCExperimentExtractor):
-    experiment_type = "specimen_level"
-
-
-class LineExperimentExtractor(DCCExperimentExtractor):
-    experiment_type = "line_level"
-
-
-class ImitsExtractor(SparkSubmitTask):
-    name = "IMPC_IMITS_Extractor"
-    app = "impc_etl/jobs/extract/imits_extractor.py"
-    imits_tsv_path = luigi.Parameter()
-    entity_type = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def output(self):
-        self.output_path = (
-            self.output_path + "/"
-            if not self.output_path.endswith("/")
-            else self.output_path
-        )
-        return ImpcConfig().get_target(
-            f"{self.output_path}imits_{self.entity_type.lower()}_raw_parquet"
-        )
-
-    def app_options(self):
-        return [self.imits_tsv_path, self.output().path, self.entity_type]
-
-
-class AlleleExtractor(ImitsExtractor):
-    entity_type = "Allele"
-
-
-class GeneExtractor(ImitsExtractor):
-    entity_type = "Gene"
-
-
-class Allele2Extractor(ImitsExtractor):
-    entity_type = "allele2"
-
-
-class ColonyExtractor(ImitsExtractor):
-    entity_type = "Colony"
 
 
 class OpenStatsExtractor(SparkSubmitTask):

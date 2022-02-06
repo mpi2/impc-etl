@@ -12,7 +12,7 @@ from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import DataFrame, SparkSession
 
-from impc_etl.jobs.extract.dcc_extractor_helper import (
+from impc_etl.jobs.extract.xml_extraction_helper import (
     extract_dcc_xml_files,
     get_entity_by_type,
 )
@@ -20,7 +20,7 @@ from impc_etl.shared.exceptions import UnsupportedEntityError
 from impc_etl.workflow.config import ImpcConfig
 
 
-class DCCSpecimenExtractor(PySparkTask):
+class SpecimenExtractor(PySparkTask):
     """
     PySpark Task class to extract experimental data from the DCC XML files.
     """
@@ -86,3 +86,11 @@ def get_specimens_by_type(dcc_df: DataFrame, entity_type: str) -> DataFrame:
         entity_type,
         ["_centreID", "_sourceFile", "_dataSource", "_sourcePhenotypingStatus"],
     )
+
+
+class MouseSpecimenExtractor(SpecimenExtractor):
+    specimen_type = "mouse"
+
+
+class EmbryoSpecimenExtractor(SpecimenExtractor):
+    specimen_type = "embryo"

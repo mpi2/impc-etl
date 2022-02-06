@@ -1,13 +1,15 @@
 import sys
+
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import udf, lit
 from pyspark.sql.types import StringType
-from impc_etl.jobs.transform.experiment_normalizer import (
+
+from impc_etl.jobs.transform.cross_ref_helper import generate_allelic_composition
+from impc_etl.jobs.transform.experiment_cross_ref import (
     re_map_europhenome_experiments,
     generate_metadata_group,
     generate_metadata,
 )
-from impc_etl.jobs.transform.specimen_normalizer import _generate_allelic_composition
 
 
 def main(argv):
@@ -44,7 +46,7 @@ def normalize_lines(
         line_colony_df, pipeline_df, exp_type="line"
     )
     line_colony_df = generate_metadata(line_colony_df, pipeline_df, exp_type="line")
-    line_colony_df = generate_allelic_composition(line_colony_df)
+    line_colony_df = generate_line_allelic_composition(line_colony_df)
     line_columns = [
         col_name
         for col_name in line_df.columns
@@ -54,8 +56,8 @@ def normalize_lines(
     return line_df
 
 
-def generate_allelic_composition(line_df: DataFrame) -> DataFrame:
-    generate_allelic_composition_udf = udf(_generate_allelic_composition, StringType())
+def generate_line_allelic_composition(line_df: DataFrame) -> DataFrame:
+    generate_allelic_composition_udf = udf(generate_allelic_composition, StringType())
     line_df = line_df.withColumn(
         "allelicComposition",
         generate_allelic_composition_udf(

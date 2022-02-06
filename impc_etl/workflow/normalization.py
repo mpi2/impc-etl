@@ -2,14 +2,21 @@ import luigi
 from luigi.contrib.spark import SparkSubmitTask
 
 from impc_etl.jobs.clean import *
+from impc_etl.jobs.clean.experiment_cleaner import (
+    SpecimenLevelExperimentCleaner,
+    LineLevelExperimentCleaner,
+)
+from impc_etl.jobs.clean.specimen_cleaner import (
+    MouseSpecimenCleaner,
+    EmbryoSpecimenCleaner,
+)
 from impc_etl.jobs.extract import ImpressExtractor
-from impc_etl.workflow.cleaning import *
 from impc_etl.workflow.config import ImpcConfig
 
 
 class SpecimenNormalizer(SparkSubmitTask):
     name = "IMPC_Specimen_Normalizer"
-    app = "impc_etl/jobs/transform/specimen_normalizer.py"
+    app = "impc_etl/jobs/transform/specimen_cross_ref.py"
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     entity_type = luigi.Parameter()
@@ -40,8 +47,8 @@ class MouseNormalizer(SpecimenNormalizer):
 
     def requires(self):
         return [
-            MouseCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-            IMPCColonyCleaner(),
+            MouseSpecimenCleaner(),
+            ColonyCleaner(),
         ]
 
 
@@ -50,14 +57,14 @@ class EmbryoNormalizer(SpecimenNormalizer):
 
     def requires(self):
         return [
-            EmbryoCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-            IMPCColonyCleaner(),
+            EmbryoSpecimenCleaner(),
+            ColonyCleaner(),
         ]
 
 
 class ExperimentNormalizer(SparkSubmitTask):
     name = "IMPC_Experiment_Normalizer"
-    app = "impc_etl/jobs/transform/experiment_normalizer.py"
+    app = "impc_etl/jobs/transform/experiment_cross_ref.py"
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     entity_type = luigi.Parameter()
@@ -65,7 +72,7 @@ class ExperimentNormalizer(SparkSubmitTask):
 
     def requires(self):
         return [
-            SpecimenExperimentCleaner(),
+            SpecimenLevelExperimentCleaner(),
             MouseNormalizer(
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
                 dcc_xml_path=self.dcc_xml_path,
@@ -110,8 +117,8 @@ class LineExperimentNormalizer(SparkSubmitTask):
 
     def requires(self):
         return [
-            LineExperimentCleaner(),
-            IMPCColonyCleaner(),
+            LineLevelExperimentCleaner(),
+            ColonyCleaner(),
             ImpressExtractor(),
         ]
 

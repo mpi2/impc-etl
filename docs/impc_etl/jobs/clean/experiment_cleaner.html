@@ -76,20 +76,21 @@ from pyspark.sql.functions import (
 from pyspark.sql.types import StringType
 
 from impc_etl.config.constants import Constants
+from impc_etl.jobs.extract.experiment_extractor import (
+    SpecimenLevelExperimentExtractor,
+    LineLevelExperimentExtractor,
+)
 from impc_etl.shared import utils
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.extraction import (
-    SpecimenExperimentExtractor,
-    LineExperimentExtractor,
-)
 
 
-class IMPCExperimentCleaner(PySparkTask):
+class ExperimentCleaner(PySparkTask):
     &#34;&#34;&#34;
     PySpark task  to clean the IMPC Experimental data.
 
-    This task depends on `impc_etl.workflow.extraction.SpecimenExperimentExtractor` for cleaning Specimen Level experiments
-    or `impc_etl.workflow.extraction.LineExperimentExtractor`
+    This task depends on `impc_etl.jobs.extract.dcc_experiment_extractor.SpecimenLevelExperimentExtractor`
+    for cleaning Specimen Level experiments
+    or `impc_etl.jobs.extract.dcc_experiment_extractor.LineLevelExperimentExtractor`
     for cleaning Line Level experiments.
     &#34;&#34;&#34;
 
@@ -107,9 +108,9 @@ class IMPCExperimentCleaner(PySparkTask):
         Defines the luigi  task dependencies
         &#34;&#34;&#34;
         return (
-            SpecimenExperimentExtractor()
+            SpecimenLevelExperimentExtractor()
             if self.experiment_type == &#34;specimen_level&#34;
-            else LineExperimentExtractor()
+            else LineLevelExperimentExtractor()
         )
 
     def output(self):
@@ -417,7 +418,17 @@ class IMPCExperimentCleaner(PySparkTask):
         dcc_experiment_df = dcc_experiment_df.withColumn(
             &#34;unique_id&#34;, md5(concat(*unique_columns))
         )
-        return dcc_experiment_df</code></pre>
+        return dcc_experiment_df
+
+
+class SpecimenLevelExperimentCleaner(ExperimentCleaner):
+    name: str = &#34;Specimen_Level_Experiment_Cleaner&#34;
+    experiment_type: str = &#34;specimen_level&#34;
+
+
+class LineLevelExperimentCleaner(ExperimentCleaner):
+    name: str = &#34;Line_Level_Experiment_Cleaner&#34;
+    experiment_type = &#34;line_level&#34;</code></pre>
 </details>
 </section>
 <section>
@@ -429,26 +440,28 @@ class IMPCExperimentCleaner(PySparkTask):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner"><code class="flex name class">
-<span>class <span class="ident">IMPCExperimentCleaner</span></span>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner"><code class="flex name class">
+<span>class <span class="ident">ExperimentCleaner</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>PySpark task
 to clean the IMPC Experimental data.</p>
-<p>This task depends on <code><a title="impc_etl.workflow.extraction.SpecimenExperimentExtractor" href="../../workflow/extraction.html#impc_etl.workflow.extraction.SpecimenExperimentExtractor">SpecimenExperimentExtractor</a></code> for cleaning Specimen Level experiments
-or <code><a title="impc_etl.workflow.extraction.LineExperimentExtractor" href="../../workflow/extraction.html#impc_etl.workflow.extraction.LineExperimentExtractor">LineExperimentExtractor</a></code>
+<p>This task depends on <code>impc_etl.jobs.extract.dcc_experiment_extractor.SpecimenLevelExperimentExtractor</code>
+for cleaning Specimen Level experiments
+or <code>impc_etl.jobs.extract.dcc_experiment_extractor.LineLevelExperimentExtractor</code>
 for cleaning Line Level experiments.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class IMPCExperimentCleaner(PySparkTask):
+<pre><code class="python">class ExperimentCleaner(PySparkTask):
     &#34;&#34;&#34;
     PySpark task  to clean the IMPC Experimental data.
 
-    This task depends on `impc_etl.workflow.extraction.SpecimenExperimentExtractor` for cleaning Specimen Level experiments
-    or `impc_etl.workflow.extraction.LineExperimentExtractor`
+    This task depends on `impc_etl.jobs.extract.dcc_experiment_extractor.SpecimenLevelExperimentExtractor`
+    for cleaning Specimen Level experiments
+    or `impc_etl.jobs.extract.dcc_experiment_extractor.LineLevelExperimentExtractor`
     for cleaning Line Level experiments.
     &#34;&#34;&#34;
 
@@ -466,9 +479,9 @@ for cleaning Line Level experiments.</p></div>
         Defines the luigi  task dependencies
         &#34;&#34;&#34;
         return (
-            SpecimenExperimentExtractor()
+            SpecimenLevelExperimentExtractor()
             if self.experiment_type == &#34;specimen_level&#34;
-            else LineExperimentExtractor()
+            else LineLevelExperimentExtractor()
         )
 
     def output(self):
@@ -787,27 +800,27 @@ for cleaning Line Level experiments.</p></div>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="impc_etl.workflow.cleaning.LineExperimentCleaner" href="../../workflow/cleaning.html#impc_etl.workflow.cleaning.LineExperimentCleaner">LineExperimentCleaner</a></li>
-<li><a title="impc_etl.workflow.cleaning.SpecimenExperimentCleaner" href="../../workflow/cleaning.html#impc_etl.workflow.cleaning.SpecimenExperimentCleaner">SpecimenExperimentCleaner</a></li>
+<li><a title="impc_etl.jobs.clean.experiment_cleaner.LineLevelExperimentCleaner" href="#impc_etl.jobs.clean.experiment_cleaner.LineLevelExperimentCleaner">LineLevelExperimentCleaner</a></li>
+<li><a title="impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner" href="#impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner">SpecimenLevelExperimentCleaner</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.experiment_type"><code class="name">var <span class="ident">experiment_type</span> : luigi.parameter.Parameter</code></dt>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.experiment_type"><code class="name">var <span class="ident">experiment_type</span> : luigi.parameter.Parameter</code></dt>
 <dd>
 <div class="desc"><p>Experimental type can be 'specimen_level' or 'line_level'.</p></div>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
 <div class="desc"><p>Name of the Spark task</p></div>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
 <dd>
 <div class="desc"><p>Path of the output directory where the new parquet file will be generated.</p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.app_options"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.app_options"><code class="name flex">
 <span>def <span class="ident">app_options</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -827,7 +840,7 @@ for cleaning Line Level experiments.</p></div>
     ]</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.clean_experiments"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_experiments"><code class="name flex">
 <span>def <span class="ident">clean_experiments</span></span>(<span>self, experiment_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -861,7 +874,7 @@ level experiments.</p></div>
     return experiment_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.clean_lines"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_lines"><code class="name flex">
 <span>def <span class="ident">clean_lines</span></span>(<span>self, line_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -892,7 +905,7 @@ level experiments.</p></div>
     return line_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_if_null"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_if_null"><code class="name flex">
 <span>def <span class="ident">drop_if_null</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame, column: str) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -910,7 +923,7 @@ a null value on the specified column.</p></div>
     return dcc_df.where(dcc_df[column].isNotNull())</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_centre_id"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_centre_id"><code class="name flex">
 <span>def <span class="ident">drop_null_centre_id</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
@@ -927,7 +940,7 @@ data.</p></div>
     return self.drop_if_null(dcc_df, &#34;_centreID&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_data_source"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_data_source"><code class="name flex">
 <span>def <span class="ident">drop_null_data_source</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
@@ -944,7 +957,7 @@ data.</p></div>
     return self.drop_if_null(dcc_df, &#34;_dataSource&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_date_of_experiment"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_date_of_experiment"><code class="name flex">
 <span>def <span class="ident">drop_null_date_of_experiment</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
@@ -961,7 +974,7 @@ data.</p></div>
     return self.drop_if_null(dcc_df, &#34;_dateOfExperiment&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_pipeline"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_pipeline"><code class="name flex">
 <span>def <span class="ident">drop_null_pipeline</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
@@ -978,7 +991,7 @@ data.</p></div>
     return self.drop_if_null(dcc_df, &#34;_pipeline&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_procedure_id"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_procedure_id"><code class="name flex">
 <span>def <span class="ident">drop_null_procedure_id</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
@@ -995,7 +1008,7 @@ data.</p></div>
     return self.drop_if_null(dcc_df, &#34;_procedureID&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_project"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_project"><code class="name flex">
 <span>def <span class="ident">drop_null_project</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
@@ -1012,7 +1025,7 @@ data.</p></div>
     return self.drop_if_null(dcc_df, &#34;_project&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_specimen_id"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_specimen_id"><code class="name flex">
 <span>def <span class="ident">drop_null_specimen_id</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
@@ -1029,7 +1042,7 @@ data.</p></div>
     return self.drop_if_null(dcc_df, &#34;specimenID&#34;)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_skipped_experiments"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_experiments"><code class="name flex">
 <span>def <span class="ident">drop_skipped_experiments</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -1054,7 +1067,7 @@ data.</p></div>
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_skipped_procedures"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_procedures"><code class="name flex">
 <span>def <span class="ident">drop_skipped_procedures</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -1081,7 +1094,7 @@ at <code><a title="impc_etl.config.constants.Constants.SKIPPED_PROCEDURES" href=
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.generate_line_experiment_id"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_line_experiment_id"><code class="name flex">
 <span>def <span class="ident">generate_line_experiment_id</span></span>(<span>self, line_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -1103,7 +1116,7 @@ Line level experiments in the XML files don't have a experiment ID and that is n
     return line_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.generate_unique_id"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_unique_id"><code class="name flex">
 <span>def <span class="ident">generate_unique_id</span></span>(<span>self, dcc_experiment_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
@@ -1159,7 +1172,7 @@ an MD5 hash function to the resulting string.
     return dcc_experiment_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.main"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.main"><code class="name flex">
 <span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
 </code></dt>
 <dd>
@@ -1188,7 +1201,7 @@ parquet and applies some sanitizing functions to it.</p></div>
     dcc_clean_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_3i_project_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_3i_project_ids"><code class="name flex">
 <span>def <span class="ident">map_3i_project_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -1212,7 +1225,7 @@ parquet and applies some sanitizing functions to it.</p></div>
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_centre_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_centre_ids"><code class="name flex">
 <span>def <span class="ident">map_centre_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -1238,7 +1251,7 @@ The full list of mappings can be found at <code>impc_etl.config.Constants.CENTRE
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_project_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_project_ids"><code class="name flex">
 <span>def <span class="ident">map_project_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -1264,7 +1277,7 @@ The full list of mappings can be found at <code>impc_etl.config.Constants.PROJEC
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.output"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output"><code class="name flex">
 <span>def <span class="ident">output</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -1284,7 +1297,7 @@ The full list of mappings can be found at <code>impc_etl.config.Constants.PROJEC
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.parse_europhenome_colony_xml_entities"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.parse_europhenome_colony_xml_entities"><code class="name flex">
 <span>def <span class="ident">parse_europhenome_colony_xml_entities</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -1316,7 +1329,7 @@ corresponding characters &lt; and &gt;.</p></div>
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.prefix_3i_experiment_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.prefix_3i_experiment_ids"><code class="name flex">
 <span>def <span class="ident">prefix_3i_experiment_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -1344,7 +1357,7 @@ we add a prefix the
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.requires"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.requires"><code class="name flex">
 <span>def <span class="ident">requires</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -1359,13 +1372,13 @@ task dependencies</p></div>
     Defines the luigi  task dependencies
     &#34;&#34;&#34;
     return (
-        SpecimenExperimentExtractor()
+        SpecimenLevelExperimentExtractor()
         if self.experiment_type == &#34;specimen_level&#34;
-        else LineExperimentExtractor()
+        else LineLevelExperimentExtractor()
     )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.truncate_europhenome_colony_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_colony_ids"><code class="name flex">
 <span>def <span class="ident">truncate_europhenome_colony_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -1395,7 +1408,7 @@ entry on GenTar.</p></div>
     return dcc_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.truncate_europhenome_specimen_ids"><code class="name flex">
+<dt id="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_specimen_ids"><code class="name flex">
 <span>def <span class="ident">truncate_europhenome_specimen_ids</span></span>(<span>self, dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -1422,6 +1435,132 @@ a suffix tno reference the production/phenotyping Centre (e.g. 232328312_HRW), t
 </dd>
 </dl>
 </dd>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.LineLevelExperimentCleaner"><code class="flex name class">
+<span>class <span class="ident">LineLevelExperimentCleaner</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>PySpark task
+to clean the IMPC Experimental data.</p>
+<p>This task depends on <code>impc_etl.jobs.extract.dcc_experiment_extractor.SpecimenLevelExperimentExtractor</code>
+for cleaning Specimen Level experiments
+or <code>impc_etl.jobs.extract.dcc_experiment_extractor.LineLevelExperimentExtractor</code>
+for cleaning Line Level experiments.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LineLevelExperimentCleaner(ExperimentCleaner):
+    name: str = &#34;Line_Level_Experiment_Cleaner&#34;
+    experiment_type = &#34;line_level&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner">ExperimentCleaner</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner">ExperimentCleaner</a></b></code>:
+<ul class="hlist">
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.app_options" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_experiments" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_experiments">clean_experiments</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_lines" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_lines">clean_lines</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_if_null" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_if_null">drop_if_null</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_centre_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_centre_id">drop_null_centre_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_data_source" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_data_source">drop_null_data_source</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_date_of_experiment" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_date_of_experiment">drop_null_date_of_experiment</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_pipeline" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_pipeline">drop_null_pipeline</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_procedure_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_procedure_id">drop_null_procedure_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_project" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_project">drop_null_project</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_specimen_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_specimen_id">drop_null_specimen_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_experiments" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_experiments">drop_skipped_experiments</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_procedures" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_procedures">drop_skipped_procedures</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.experiment_type" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.experiment_type">experiment_type</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_line_experiment_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_line_experiment_id">generate_line_experiment_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_unique_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_unique_id">generate_unique_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.main" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_3i_project_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_3i_project_ids">map_3i_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_centre_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_centre_ids">map_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_project_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_project_ids">map_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.name" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output_path" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.parse_europhenome_colony_xml_entities" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.prefix_3i_experiment_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.prefix_3i_experiment_ids">prefix_3i_experiment_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.requires" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_colony_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_specimen_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner"><code class="flex name class">
+<span>class <span class="ident">SpecimenLevelExperimentCleaner</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>PySpark task
+to clean the IMPC Experimental data.</p>
+<p>This task depends on <code>impc_etl.jobs.extract.dcc_experiment_extractor.SpecimenLevelExperimentExtractor</code>
+for cleaning Specimen Level experiments
+or <code>impc_etl.jobs.extract.dcc_experiment_extractor.LineLevelExperimentExtractor</code>
+for cleaning Line Level experiments.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SpecimenLevelExperimentCleaner(ExperimentCleaner):
+    name: str = &#34;Specimen_Level_Experiment_Cleaner&#34;
+    experiment_type: str = &#34;specimen_level&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner">ExperimentCleaner</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner">ExperimentCleaner</a></b></code>:
+<ul class="hlist">
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.app_options" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_experiments" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_experiments">clean_experiments</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_lines" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_lines">clean_lines</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_if_null" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_if_null">drop_if_null</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_centre_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_centre_id">drop_null_centre_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_data_source" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_data_source">drop_null_data_source</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_date_of_experiment" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_date_of_experiment">drop_null_date_of_experiment</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_pipeline" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_pipeline">drop_null_pipeline</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_procedure_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_procedure_id">drop_null_procedure_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_project" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_project">drop_null_project</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_specimen_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_specimen_id">drop_null_specimen_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_experiments" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_experiments">drop_skipped_experiments</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_procedures" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_procedures">drop_skipped_procedures</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.experiment_type" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.experiment_type">experiment_type</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_line_experiment_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_line_experiment_id">generate_line_experiment_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_unique_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_unique_id">generate_unique_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.main" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_3i_project_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_3i_project_ids">map_3i_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_centre_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_centre_ids">map_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_project_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_project_ids">map_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.name" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output_path" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.parse_europhenome_colony_xml_entities" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.prefix_3i_experiment_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.prefix_3i_experiment_ids">prefix_3i_experiment_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.requires" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_colony_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_specimen_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
 </dl>
 </section>
 </article>
@@ -1446,37 +1585,43 @@ a suffix tno reference the production/phenotyping Centre (e.g. 232328312_HRW), t
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner">IMPCExperimentCleaner</a></code></h4>
+<h4><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner">ExperimentCleaner</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.app_options" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.clean_experiments" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.clean_experiments">clean_experiments</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.clean_lines" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.clean_lines">clean_lines</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_if_null" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_if_null">drop_if_null</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_centre_id" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_centre_id">drop_null_centre_id</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_data_source" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_data_source">drop_null_data_source</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_date_of_experiment" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_date_of_experiment">drop_null_date_of_experiment</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_pipeline" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_pipeline">drop_null_pipeline</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_procedure_id" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_procedure_id">drop_null_procedure_id</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_project" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_project">drop_null_project</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_specimen_id" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_null_specimen_id">drop_null_specimen_id</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_skipped_experiments" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_skipped_experiments">drop_skipped_experiments</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_skipped_procedures" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.drop_skipped_procedures">drop_skipped_procedures</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.experiment_type" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.experiment_type">experiment_type</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.generate_line_experiment_id" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.generate_line_experiment_id">generate_line_experiment_id</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.generate_unique_id" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.generate_unique_id">generate_unique_id</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.main" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.main">main</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_3i_project_ids" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_3i_project_ids">map_3i_project_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_centre_ids" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_centre_ids">map_centre_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_project_ids" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.map_project_ids">map_project_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.name" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.name">name</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.output" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.output">output</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.output_path" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.output_path">output_path</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.parse_europhenome_colony_xml_entities" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.prefix_3i_experiment_ids" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.prefix_3i_experiment_ids">prefix_3i_experiment_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.requires" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.requires">requires</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.truncate_europhenome_colony_ids" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
-<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.truncate_europhenome_specimen_ids" href="#impc_etl.jobs.clean.experiment_cleaner.IMPCExperimentCleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.app_options" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_experiments" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_experiments">clean_experiments</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_lines" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.clean_lines">clean_lines</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_if_null" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_if_null">drop_if_null</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_centre_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_centre_id">drop_null_centre_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_data_source" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_data_source">drop_null_data_source</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_date_of_experiment" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_date_of_experiment">drop_null_date_of_experiment</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_pipeline" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_pipeline">drop_null_pipeline</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_procedure_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_procedure_id">drop_null_procedure_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_project" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_project">drop_null_project</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_specimen_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_null_specimen_id">drop_null_specimen_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_experiments" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_experiments">drop_skipped_experiments</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_procedures" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.drop_skipped_procedures">drop_skipped_procedures</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.experiment_type" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.experiment_type">experiment_type</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_line_experiment_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_line_experiment_id">generate_line_experiment_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_unique_id" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.generate_unique_id">generate_unique_id</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.main" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_3i_project_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_3i_project_ids">map_3i_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_centre_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_centre_ids">map_centre_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_project_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.map_project_ids">map_project_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.name" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output_path" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.parse_europhenome_colony_xml_entities" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.parse_europhenome_colony_xml_entities">parse_europhenome_colony_xml_entities</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.prefix_3i_experiment_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.prefix_3i_experiment_ids">prefix_3i_experiment_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.requires" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_colony_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_colony_ids">truncate_europhenome_colony_ids</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_specimen_ids" href="#impc_etl.jobs.clean.experiment_cleaner.ExperimentCleaner.truncate_europhenome_specimen_ids">truncate_europhenome_specimen_ids</a></code></li>
 </ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.jobs.clean.experiment_cleaner.LineLevelExperimentCleaner" href="#impc_etl.jobs.clean.experiment_cleaner.LineLevelExperimentCleaner">LineLevelExperimentCleaner</a></code></h4>
+</li>
+<li>
+<h4><code><a title="impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner" href="#impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner">SpecimenLevelExperimentCleaner</a></code></h4>
 </li>
 </ul>
 </li>
