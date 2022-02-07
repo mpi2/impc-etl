@@ -37,10 +37,12 @@ from impc_etl.workflow.config import ImpcConfig
 class SpecimenCrossRef(PySparkTask):
     """
     PysPark task to cross-reference Specimen data with tracking systems reports.
-    This task depends on `impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner`
+    This task depends on:
+
+    - `impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner`
     (`impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner`
     or `impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner`)
-    and `impc_etl.jobs.clean.colony_cleaner.ColonyCleaner`.
+    - `impc_etl.jobs.clean.colony_cleaner.ColonyCleaner`
     """
 
     #: Name of the Spark task
@@ -219,13 +221,13 @@ class SpecimenCrossRef(PySparkTask):
         )
 
 
-class MouseCrossRef(SpecimenCrossRef):
+class MouseSpecimenCrossRef(SpecimenCrossRef):
     #: Name of the Spark task
-    name = "IMPC_Mouse_Cross_Reference"
+    name = "IMPC_Mouse_Specimen_Cross_Reference"
     specimen_type = "mouse"
 
 
-class EmbryoCrossRef(SpecimenCrossRef):
+class EmbryoSpecimenCrossRef(SpecimenCrossRef):
     #: Name of the Spark task
-    name = "IMPC_Embryo_Cross_Reference"
+    name = "IMPC_Embryo_Specimen_Cross_Reference"
     specimen_type = "embryo"

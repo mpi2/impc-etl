@@ -3,13 +3,18 @@ from luigi.contrib.spark import PySparkTask
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import collect_set, struct, lit, col, concat, flatten
 
+from impc_etl.jobs.extract import (
+    OntologyMetadataExtractor,
+    MGIMarkerListReportExtractor,
+    MGIHomologyReportExtractor,
+)
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
 )
+from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
 from impc_etl.jobs.load.solr.gene_mapper import get_gene_core_df, IMITS_GENE_COLUMNS
 from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.load import (
-    ObservationsMapper,
     StatsResultsCoreLoader,
     GenotypePhenotypeCoreLoader,
     ImpcImagesCoreLoader,
@@ -45,18 +50,19 @@ class ImpcGeneBundleMapper(PySparkTask):
         return super().packages + super(PySparkTask, self).packages
 
     def requires(self):
+        # TODO replace the Gene and Allele deps for MGI or Reference Service Deps
         return [
-            GeneExtractor(),
-            AlleleExtractor(),
+            # GeneExtractor(),
+            # AlleleExtractor(),
             MGIHomologyReportExtractor(),
             MGIMarkerListReportExtractor(),
-            ObservationsMapper(),
+            ExperimentToObservationMapper(),
             StatsResultsCoreLoader(raw_data_in_output="bundled"),
             OntologyMetadataExtractor(),
             GeneProductionStatusExtractor(),
             GenotypePhenotypeCoreLoader(),
             ImpcImagesCoreLoader(),
-            ProductReportExtractor(),
+            # ProductReportExtractor(),
         ]
 
     def output(self):

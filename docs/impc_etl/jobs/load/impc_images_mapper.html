@@ -26,25 +26,65 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python"># observations_df.where(
-#     (col(&#34;observation_type&#34;) == &#34;image_record&#34;)
-#     &amp; (col(&#34;download_file_path&#34;).contains(&#34;mousephenotype.org&#34;))
-#     &amp; (~col(&#34;download_file_path&#34;).like(&#34;%.mov&#34;))
-#     &amp; (~col(&#34;download_file_path&#34;).like(&#34;%.bz2&#34;))
-# ).select(
-#     &#34;observation_id&#34;,
-#     &#34;increment_value&#34;,
-#     &#34;download_file_path&#34;,
-#     &#34;phenotyping_center&#34;,
-#     &#34;pipeline_stable_id&#34;,
-#     &#34;procedure_stable_id&#34;,
-#     &#34;datasource_name&#34;,
-#     &#34;parameter_stable_id&#34;,
-# ).repartition(
-#     1
-# ).write.csv(
-#     &#34;impc/dr15.0/csv/impc_images_input/&#34;, header=True
-# )</code></pre>
+<pre><code class="python">from typing import Any
+
+import luigi
+from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
+from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.functions import col
+
+from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
+from impc_etl.workflow.config import ImpcConfig
+
+
+class ImagesPipelineInputGenerator(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark task that take sin the Observations parquet and filter
+    them to get the relevant information for the images pipeline.
+    &#34;&#34;&#34;
+
+    name = &#34;IMPC_Images_Pipeline_Input_Generation&#34;
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return ExperimentToObservationMapper()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}images_pipeline_input_csv&#34;)
+
+    def app_options(self):
+        return [self.input().path, self.output_path]
+
+    def main(self, sc: SparkContext, *args: Any):
+        observations_parquet_path = args[0]
+        output_path = args[1]
+        spark = SparkSession(sc)
+        observations_df: DataFrame = spark.read.parquet(observations_parquet_path)
+        observations_df.where(
+            (col(&#34;observation_type&#34;) == &#34;image_record&#34;)
+            &amp; (col(&#34;download_file_path&#34;).contains(&#34;mousephenotype.org&#34;))
+            &amp; (~col(&#34;download_file_path&#34;).like(&#34;%.mov&#34;))
+            &amp; (~col(&#34;download_file_path&#34;).like(&#34;%.bz2&#34;))
+        ).select(
+            &#34;observation_id&#34;,
+            &#34;increment_value&#34;,
+            &#34;download_file_path&#34;,
+            &#34;phenotyping_center&#34;,
+            &#34;pipeline_stable_id&#34;,
+            &#34;procedure_stable_id&#34;,
+            &#34;datasource_name&#34;,
+            &#34;parameter_stable_id&#34;,
+        ).repartition(
+            1
+        ).write.csv(
+            output_path, header=True
+        )</code></pre>
 </details>
 </section>
 <section>
@@ -54,6 +94,186 @@
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator"><code class="flex name class">
+<span>class <span class="ident">ImagesPipelineInputGenerator</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>PySpark task that take sin the Observations parquet and filter
+them to get the relevant information for the images pipeline.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ImagesPipelineInputGenerator(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark task that take sin the Observations parquet and filter
+    them to get the relevant information for the images pipeline.
+    &#34;&#34;&#34;
+
+    name = &#34;IMPC_Images_Pipeline_Input_Generation&#34;
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        return ExperimentToObservationMapper()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}images_pipeline_input_csv&#34;)
+
+    def app_options(self):
+        return [self.input().path, self.output_path]
+
+    def main(self, sc: SparkContext, *args: Any):
+        observations_parquet_path = args[0]
+        output_path = args[1]
+        spark = SparkSession(sc)
+        observations_df: DataFrame = spark.read.parquet(observations_parquet_path)
+        observations_df.where(
+            (col(&#34;observation_type&#34;) == &#34;image_record&#34;)
+            &amp; (col(&#34;download_file_path&#34;).contains(&#34;mousephenotype.org&#34;))
+            &amp; (~col(&#34;download_file_path&#34;).like(&#34;%.mov&#34;))
+            &amp; (~col(&#34;download_file_path&#34;).like(&#34;%.bz2&#34;))
+        ).select(
+            &#34;observation_id&#34;,
+            &#34;increment_value&#34;,
+            &#34;download_file_path&#34;,
+            &#34;phenotyping_center&#34;,
+            &#34;pipeline_stable_id&#34;,
+            &#34;procedure_stable_id&#34;,
+            &#34;datasource_name&#34;,
+            &#34;parameter_stable_id&#34;,
+        ).repartition(
+            1
+        ).write.csv(
+            output_path, header=True
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [self.input().path, self.output_path]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Called by the pyspark_runner with a SparkContext and any arguments returned by <code>app_options()</code></p>
+<p>:param sc: SparkContext
+:param args: arguments list</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(self, sc: SparkContext, *args: Any):
+    observations_parquet_path = args[0]
+    output_path = args[1]
+    spark = SparkSession(sc)
+    observations_df: DataFrame = spark.read.parquet(observations_parquet_path)
+    observations_df.where(
+        (col(&#34;observation_type&#34;) == &#34;image_record&#34;)
+        &amp; (col(&#34;download_file_path&#34;).contains(&#34;mousephenotype.org&#34;))
+        &amp; (~col(&#34;download_file_path&#34;).like(&#34;%.mov&#34;))
+        &amp; (~col(&#34;download_file_path&#34;).like(&#34;%.bz2&#34;))
+    ).select(
+        &#34;observation_id&#34;,
+        &#34;increment_value&#34;,
+        &#34;download_file_path&#34;,
+        &#34;phenotyping_center&#34;,
+        &#34;pipeline_stable_id&#34;,
+        &#34;procedure_stable_id&#34;,
+        &#34;datasource_name&#34;,
+        &#34;parameter_stable_id&#34;,
+    ).repartition(
+        1
+    ).write.csv(
+        output_path, header=True
+    )</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    return ImpcConfig().get_target(f&#34;{self.output_path}images_pipeline_input_csv&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The Tasks that this Task depends on.</p>
+<p>A Task will only run if all of the Tasks that it requires are completed.
+If your Task does not require any other Tasks, then you don't need to
+override this method. Otherwise, a subclass can override this method
+to return a single Task, a list of Task instances, or a dict whose
+values are Task instances.</p>
+<p>See :ref:<code>Task.requires</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    return ExperimentToObservationMapper()</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -72,6 +292,21 @@
 <li><h3>Super-module</h3>
 <ul>
 <li><code><a title="impc_etl.jobs.load" href="index.html">impc_etl.jobs.load</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator" href="#impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator">ImagesPipelineInputGenerator</a></code></h4>
+<ul class="two-column">
+<li><code><a title="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.app_options" href="#impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.main" href="#impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.name" href="#impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.output" href="#impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.output_path" href="#impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.requires" href="#impc_etl.jobs.load.impc_images_mapper.ImagesPipelineInputGenerator.requires">requires</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

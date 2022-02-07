@@ -82,17 +82,22 @@ from impc_etl.jobs.transform.cross_ref_helper import (
     generate_metadata_group,
     generate_metadata,
 )
-from impc_etl.jobs.transform.specimen_cross_ref import EmbryoCrossRef, MouseCrossRef
+from impc_etl.jobs.transform.specimen_cross_ref import (
+    MouseSpecimenCrossRef,
+    EmbryoSpecimenCrossRef,
+)
 from impc_etl.workflow.config import ImpcConfig
 
 
 class SpecimenLevelExperimentCrossRef(PySparkTask):
     &#34;&#34;&#34;
     PySpark task for cross-reference Specimen Level experiments.
-    Depends on `impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner`,
-    `impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef`,
-    `impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef`,
-    and `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`.
+    This tasks depends on:
+
+    - `impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner`
+    - `impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef`
+    - `impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef`
+    - `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`
     &#34;&#34;&#34;
 
     #: Name of the Spark task
@@ -108,8 +113,8 @@ class SpecimenLevelExperimentCrossRef(PySparkTask):
 
         return [
             SpecimenLevelExperimentCleaner(),
-            MouseCrossRef(),
-            EmbryoCrossRef(),
+            MouseSpecimenCrossRef(),
+            EmbryoSpecimenCrossRef(),
             ImpressExtractor(),
         ]
 
@@ -289,10 +294,13 @@ class SpecimenLevelExperimentCrossRef(PySparkTask):
 </code></dt>
 <dd>
 <div class="desc"><p>PySpark task for cross-reference Specimen Level experiments.
-Depends on <code><a title="impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner" href="../clean/experiment_cleaner.html#impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner">SpecimenLevelExperimentCleaner</a></code>,
-<code><a title="impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef" href="specimen_cross_ref.html#impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef">MouseCrossRef</a></code>,
-<code><a title="impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef" href="specimen_cross_ref.html#impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef">EmbryoCrossRef</a></code>,
-and <code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor" href="../extract/impress_extractor.html#impc_etl.jobs.extract.impress_extractor.ImpressExtractor">ImpressExtractor</a></code>.</p></div>
+This tasks depends on:</p>
+<ul>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner" href="../clean/experiment_cleaner.html#impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner">SpecimenLevelExperimentCleaner</a></code></li>
+<li><code>impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef</code></li>
+<li><code>impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef</code></li>
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor" href="../extract/impress_extractor.html#impc_etl.jobs.extract.impress_extractor.ImpressExtractor">ImpressExtractor</a></code></li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -300,10 +308,12 @@ and <code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor" hr
 <pre><code class="python">class SpecimenLevelExperimentCrossRef(PySparkTask):
     &#34;&#34;&#34;
     PySpark task for cross-reference Specimen Level experiments.
-    Depends on `impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner`,
-    `impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef`,
-    `impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef`,
-    and `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`.
+    This tasks depends on:
+
+    - `impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner`
+    - `impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef`
+    - `impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef`
+    - `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`
     &#34;&#34;&#34;
 
     #: Name of the Spark task
@@ -319,8 +329,8 @@ and <code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor" hr
 
         return [
             SpecimenLevelExperimentCleaner(),
-            MouseCrossRef(),
-            EmbryoCrossRef(),
+            MouseSpecimenCrossRef(),
+            EmbryoSpecimenCrossRef(),
             ImpressExtractor(),
         ]
 
@@ -745,8 +755,8 @@ task dependencies</p></div>
 
     return [
         SpecimenLevelExperimentCleaner(),
-        MouseCrossRef(),
-        EmbryoCrossRef(),
+        MouseSpecimenCrossRef(),
+        EmbryoSpecimenCrossRef(),
         ImpressExtractor(),
     ]</code></pre>
 </details>

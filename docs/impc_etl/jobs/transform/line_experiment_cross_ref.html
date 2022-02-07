@@ -33,7 +33,7 @@ and the IMPReSS data.</p>
 <li>Override the data source and the project info for MGP and MGP Legacy line experiments</li>
 <li>Generate metadata group (a hash value to identify experiments with the same experimental conditions)</li>
 <li>Generate metadata array (a list of "parameter = value" for metadata parameters in a given experiment)</li>
-<li>Generates line allelelic compostion</li>
+<li>Generates line allelic composition</li>
 <li>Select the columns relevant to experimental data only</li>
 </ul>
 <details class="source">
@@ -52,7 +52,7 @@ and the IMPReSS data.</p>
     - Override the data source and the project info for MGP and MGP Legacy line experiments
     - Generate metadata group (a hash value to identify experiments with the same experimental conditions)
     - Generate metadata array (a list of &#34;parameter = value&#34; for metadata parameters in a given experiment)
-    - Generates line allelelic compostion
+    - Generates line allelic composition
     - Select the columns relevant to experimental data only
 &#34;&#34;&#34;
 from typing import Any
@@ -81,6 +81,11 @@ from impc_etl.workflow.config import ImpcConfig
 class LineLevelExperimentCrossRef(PySparkTask):
     &#34;&#34;&#34;
     PySpark task for cross-reference Specimen Level experiments.
+    This task depends on:
+
+    - `impc_etl.jobs.clean.experiment_cleaner.LineLevelExperimentCleaner`
+    - `impc_etl.jobs.clean.colony_cleaner.ColonyCleaner`
+    - `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`
     &#34;&#34;&#34;
 
     #: Name of the Spark task
@@ -219,7 +224,13 @@ class LineLevelExperimentCrossRef(PySparkTask):
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>PySpark task for cross-reference Specimen Level experiments.</p></div>
+<div class="desc"><p>PySpark task for cross-reference Specimen Level experiments.
+This task depends on:</p>
+<ul>
+<li><code><a title="impc_etl.jobs.clean.experiment_cleaner.LineLevelExperimentCleaner" href="../clean/experiment_cleaner.html#impc_etl.jobs.clean.experiment_cleaner.LineLevelExperimentCleaner">LineLevelExperimentCleaner</a></code></li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../clean/colony_cleaner.html#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner">ColonyCleaner</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor" href="../extract/impress_extractor.html#impc_etl.jobs.extract.impress_extractor.ImpressExtractor">ImpressExtractor</a></code></li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -227,6 +238,11 @@ class LineLevelExperimentCrossRef(PySparkTask):
 <pre><code class="python">class LineLevelExperimentCrossRef(PySparkTask):
     &#34;&#34;&#34;
     PySpark task for cross-reference Specimen Level experiments.
+    This task depends on:
+
+    - `impc_etl.jobs.clean.experiment_cleaner.LineLevelExperimentCleaner`
+    - `impc_etl.jobs.clean.colony_cleaner.ColonyCleaner`
+    - `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`
     &#34;&#34;&#34;
 
     #: Name of the Spark task

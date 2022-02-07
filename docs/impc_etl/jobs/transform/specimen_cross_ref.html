@@ -77,10 +77,12 @@ from impc_etl.workflow.config import ImpcConfig
 class SpecimenCrossRef(PySparkTask):
     &#34;&#34;&#34;
     PysPark task to cross-reference Specimen data with tracking systems reports.
-    This task depends on `impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner`
+    This task depends on:
+
+    - `impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner`
     (`impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner`
     or `impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner`)
-    and `impc_etl.jobs.clean.colony_cleaner.ColonyCleaner`.
+    - `impc_etl.jobs.clean.colony_cleaner.ColonyCleaner`
     &#34;&#34;&#34;
 
     #: Name of the Spark task
@@ -259,15 +261,15 @@ class SpecimenCrossRef(PySparkTask):
         )
 
 
-class MouseCrossRef(SpecimenCrossRef):
+class MouseSpecimenCrossRef(SpecimenCrossRef):
     #: Name of the Spark task
-    name = &#34;IMPC_Mouse_Cross_Reference&#34;
+    name = &#34;IMPC_Mouse_Specimen_Cross_Reference&#34;
     specimen_type = &#34;mouse&#34;
 
 
-class EmbryoCrossRef(SpecimenCrossRef):
+class EmbryoSpecimenCrossRef(SpecimenCrossRef):
     #: Name of the Spark task
-    name = &#34;IMPC_Embryo_Cross_Reference&#34;
+    name = &#34;IMPC_Embryo_Specimen_Cross_Reference&#34;
     specimen_type = &#34;embryo&#34;</code></pre>
 </details>
 </section>
@@ -280,23 +282,26 @@ class EmbryoCrossRef(SpecimenCrossRef):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef"><code class="flex name class">
-<span>class <span class="ident">EmbryoCrossRef</span></span>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.EmbryoSpecimenCrossRef"><code class="flex name class">
+<span>class <span class="ident">EmbryoSpecimenCrossRef</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>PysPark task to cross-reference Specimen data with tracking systems reports.
-This task depends on <code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></code>
+This task depends on:</p>
+<ul>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></code>
 (<code><a title="impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner">MouseSpecimenCleaner</a></code>
-or <code><a title="impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner">EmbryoSpecimenCleaner</a></code>)
-and <code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../clean/colony_cleaner.html#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner">ColonyCleaner</a></code>.</p></div>
+or <code><a title="impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner">EmbryoSpecimenCleaner</a></code>)</li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../clean/colony_cleaner.html#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner">ColonyCleaner</a></code></li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class EmbryoCrossRef(SpecimenCrossRef):
+<pre><code class="python">class EmbryoSpecimenCrossRef(SpecimenCrossRef):
     #: Name of the Spark task
-    name = &#34;IMPC_Embryo_Cross_Reference&#34;
+    name = &#34;IMPC_Embryo_Specimen_Cross_Reference&#34;
     specimen_type = &#34;embryo&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -328,23 +333,26 @@ and <code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../c
 </li>
 </ul>
 </dd>
-<dt id="impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef"><code class="flex name class">
-<span>class <span class="ident">MouseCrossRef</span></span>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.MouseSpecimenCrossRef"><code class="flex name class">
+<span>class <span class="ident">MouseSpecimenCrossRef</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>PysPark task to cross-reference Specimen data with tracking systems reports.
-This task depends on <code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></code>
+This task depends on:</p>
+<ul>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></code>
 (<code><a title="impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner">MouseSpecimenCleaner</a></code>
-or <code><a title="impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner">EmbryoSpecimenCleaner</a></code>)
-and <code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../clean/colony_cleaner.html#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner">ColonyCleaner</a></code>.</p></div>
+or <code><a title="impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner">EmbryoSpecimenCleaner</a></code>)</li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../clean/colony_cleaner.html#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner">ColonyCleaner</a></code></li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class MouseCrossRef(SpecimenCrossRef):
+<pre><code class="python">class MouseSpecimenCrossRef(SpecimenCrossRef):
     #: Name of the Spark task
-    name = &#34;IMPC_Mouse_Cross_Reference&#34;
+    name = &#34;IMPC_Mouse_Specimen_Cross_Reference&#34;
     specimen_type = &#34;mouse&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -382,10 +390,13 @@ and <code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../c
 </code></dt>
 <dd>
 <div class="desc"><p>PysPark task to cross-reference Specimen data with tracking systems reports.
-This task depends on <code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></code>
+This task depends on:</p>
+<ul>
+<li><code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></code>
 (<code><a title="impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner">MouseSpecimenCleaner</a></code>
-or <code><a title="impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner">EmbryoSpecimenCleaner</a></code>)
-and <code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../clean/colony_cleaner.html#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner">ColonyCleaner</a></code>.</p></div>
+or <code><a title="impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner">EmbryoSpecimenCleaner</a></code>)</li>
+<li><code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../clean/colony_cleaner.html#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner">ColonyCleaner</a></code></li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -393,10 +404,12 @@ and <code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../c
 <pre><code class="python">class SpecimenCrossRef(PySparkTask):
     &#34;&#34;&#34;
     PysPark task to cross-reference Specimen data with tracking systems reports.
-    This task depends on `impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner`
+    This task depends on:
+
+    - `impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner`
     (`impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner`
     or `impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner`)
-    and `impc_etl.jobs.clean.colony_cleaner.ColonyCleaner`.
+    - `impc_etl.jobs.clean.colony_cleaner.ColonyCleaner`
     &#34;&#34;&#34;
 
     #: Name of the Spark task
@@ -583,8 +596,8 @@ and <code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../c
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef">EmbryoCrossRef</a></li>
-<li><a title="impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef">MouseCrossRef</a></li>
+<li><a title="impc_etl.jobs.transform.specimen_cross_ref.EmbryoSpecimenCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.EmbryoSpecimenCrossRef">EmbryoSpecimenCrossRef</a></li>
+<li><a title="impc_etl.jobs.transform.specimen_cross_ref.MouseSpecimenCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.MouseSpecimenCrossRef">MouseSpecimenCrossRef</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -900,10 +913,10 @@ task dependencies</p></div>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef">EmbryoCrossRef</a></code></h4>
+<h4><code><a title="impc_etl.jobs.transform.specimen_cross_ref.EmbryoSpecimenCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.EmbryoSpecimenCrossRef">EmbryoSpecimenCrossRef</a></code></h4>
 </li>
 <li>
-<h4><code><a title="impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef">MouseCrossRef</a></code></h4>
+<h4><code><a title="impc_etl.jobs.transform.specimen_cross_ref.MouseSpecimenCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.MouseSpecimenCrossRef">MouseSpecimenCrossRef</a></code></h4>
 </li>
 <li>
 <h4><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef">SpecimenCrossRef</a></code></h4>

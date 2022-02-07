@@ -19,7 +19,6 @@ from impc_etl.workflow.extraction import (
     OpenStatsExtractor,
 )
 from impc_etl.workflow.load import (
-    ObservationsMapper,
     PipelineCoreLoader,
     MPChooserLoader,
 )

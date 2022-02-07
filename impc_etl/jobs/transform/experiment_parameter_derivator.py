@@ -1,7 +1,21 @@
-from typing import List, Dict
+"""
+    Module to hold Luigi task that calculates the derived parameters on experimental data.
+
+    The general process is:
+
+    - Takes in a set of experiments and the information coming from IMPReSS.
+    - Gets the derived parameter list from IMPReSS for IMPC parameters
+    and some EuroPhenome derivations from a constant list.
+    - Checks for each experiment that all the input values for the derivation formula are present
+    - Generates a string value containing the derivation formula and the input values
+    - Applies the derivation using the parameter derivation JAR application provided by the DCC.
+    - Adds the resulting derived parameter values to the original experiments as new parameter values.
+"""
+from typing import List, Dict, Any
 
 import luigi
 from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import (
     col,
@@ -26,6 +40,9 @@ from pyspark.sql.types import (
 
 from impc_etl.config.constants import Constants
 from impc_etl.jobs.extract import ImpressExtractor
+from impc_etl.jobs.transform.line_experiment_cross_ref import (
+    LineLevelExperimentCrossRef,
+)
 from impc_etl.jobs.transform.specimen_experiment_cross_ref import (
     SpecimenLevelExperimentCrossRef,
 )
@@ -34,32 +51,72 @@ from impc_etl.shared.utils import (
     has_column,
 )
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.normalization import (
-    LineExperimentNormalizer,
-)
 
 
 class ParameterDerivator(PySparkTask):
+    """
+    PySpark task that takes in a set of experiments and computes all the derived parameters.
+
+    This tasks depends on:
+
+    - `impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef` for
+    specimen level experiments or
+    `impc_etl.jobs.transform.line_experiment_cross_ref.LineLevelExperimentCrossRef` for line level
+     experiments
+     - `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`
+    """
+
+    #: Name of the Spark task
+    name = "IMPC_Experiment_Parameter_Derivator"
+
+    #: Experimental level of the data (can be 'specimen_level' or 'line_level')
     experiment_level = luigi.Parameter()
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
+
+    #: Path of the output directory where the new parquet file will be generated.
     output_path = luigi.Parameter()
 
     def output(self):
+        """
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/specimen_level_experiment_derived_parquet)
+        """
         return ImpcConfig().get_target(
-            f"{self.output_path}{self.experiment_level}_derived_parquet"
+            f"{self.output_path}{self.experiment_level}_experiment_derived_parquet"
         )
 
+    def requires(self):
+        """
+        Defines the luigi  task dependencies
+        """
+        experiment_dependency = (
+            SpecimenLevelExperimentCrossRef()
+            if self.experiment_level == "specimen_level"
+            else LineLevelExperimentCrossRef()
+        )
+        return [experiment_dependency, ImpressExtractor()]
+
     def app_options(self):
+        """
+        Generates the options pass to the PySpark job
+        """
         return [self.input()[0].path, self.input()[1].path, self.output().path]
 
-    def main(self, sc, *args):
+    def main(self, sc: SparkContext, *args: Any):
+        """
+        Takes in a set of experiments and the information coming from IMPReSS.
+        Gets the derived parameter list from IMPReSS for IMPC parameters and
+        some EuroPhenome derivations from a constant list.
+        Applies the derivations to all the experiments and adds the derived parameter values to each experiment.
+        """
         spark = SparkSession(sc)
         experiment_parquet_path = args[0]
-        pipeline_parquet_path = args[1]
+        impress_parquet_path = args[1]
         output_path = args[2]
-        dcc_experiment_df = spark.read.parquet(experiment_parquet_path)
-        impress_df = spark.read.parquet(pipeline_parquet_path)
+        experiment_df = spark.read.parquet(experiment_parquet_path)
+        impress_df = spark.read.parquet(impress_parquet_path)
+
+        # Some EuroPhenome derivations haven't been migrated to the new syntax
+        # so we load them from a Constant
         europhenome_derivations_json = spark.sparkContext.parallelize(
             Constants.EUROPHENOME_DERIVATIONS
         )
@@ -136,16 +193,16 @@ class ParameterDerivator(PySparkTask):
         # If the parameter has increments the inputs will have the form
         # <PARAMETER_KEY>$INCREMENT_1$<PARAMETER_VALUE>|INCREMENT_1$<PARAMETER_VALUE>
         experiments_simple = _get_inputs_by_parameter_type(
-            dcc_experiment_df, derived_parameters_ex, "simpleParameter"
+            experiment_df, derived_parameters_ex, "simpleParameter"
         )
         experiments_metadata = _get_inputs_by_parameter_type(
-            dcc_experiment_df, derived_parameters_ex, "procedureMetadata"
+            experiment_df, derived_parameters_ex, "procedureMetadata"
         )
         experiments_vs_derivations = experiments_simple.union(experiments_metadata)
 
-        if has_column(dcc_experiment_df, "seriesParameter"):
+        if has_column(experiment_df, "seriesParameter"):
             experiments_series = _get_inputs_by_parameter_type(
-                dcc_experiment_df, derived_parameters_ex, "seriesParameter"
+                experiment_df, derived_parameters_ex, "seriesParameter"
             )
             experiments_vs_derivations = experiments_vs_derivations.union(
                 experiments_series
@@ -246,11 +303,11 @@ class ParameterDerivator(PySparkTask):
             lit(None).cast(StringType()).alias("parameterStatus"),
             results_df["result"].alias("value"),
         ]
-        if self.experiment_level == "experiment":
+        if self.experiment_level == "specimen_level":
             result_schema_fields.insert(
                 1, lit(None).cast(LongType()).alias("_sequenceID")
             )
-        elif has_column(dcc_experiment_df, "simpleParameter._VALUE"):
+        elif has_column(experiment_df, "simpleParameter._VALUE"):
             result_schema_fields.insert(0, lit(None).cast(StringType()).alias("_VALUE"))
         result_struct = struct(*result_schema_fields)
         results_df = results_df.groupBy("unique_id", "pipelineKey", "procedureKey").agg(
@@ -258,22 +315,22 @@ class ParameterDerivator(PySparkTask):
         )
         results_df = results_df.withColumnRenamed("unique_id", "unique_id_result")
 
-        dcc_experiment_df = dcc_experiment_df.join(
+        experiment_df = experiment_df.join(
             results_df,
-            (dcc_experiment_df["unique_id"] == results_df["unique_id_result"])
-            & (dcc_experiment_df["_procedureID"] == results_df["procedureKey"])
-            & (dcc_experiment_df["_pipeline"] == results_df["pipelineKey"]),
+            (experiment_df["unique_id"] == results_df["unique_id_result"])
+            & (experiment_df["_procedureID"] == results_df["procedureKey"])
+            & (experiment_df["_pipeline"] == results_df["pipelineKey"]),
             "left_outer",
         )
 
         simple_parameter_type = None
 
-        for c_type in dcc_experiment_df.dtypes:
+        for c_type in experiment_df.dtypes:
             if c_type[0] == "simpleParameter":
                 simple_parameter_type = c_type[1]
                 break
         merge_simple_parameters = udf(_merge_simple_parameters, simple_parameter_type)
-        dcc_experiment_df = dcc_experiment_df.withColumn(
+        experiment_df = experiment_df.withColumn(
             "simpleParameter",
             when(
                 (col("results").isNotNull() & col("simpleParameter").isNotNull()),
@@ -282,7 +339,7 @@ class ParameterDerivator(PySparkTask):
             .when(col("simpleParameter").isNull(), col("results"))
             .otherwise(col("simpleParameter")),
         )
-        dcc_experiment_df = dcc_experiment_df.drop(
+        experiment_df = experiment_df.drop(
             "complete_derivations.unique_id",
             "unique_id_result",
             "pipelineKey",
@@ -290,7 +347,7 @@ class ParameterDerivator(PySparkTask):
             "parameterKey",
             "results",
         )
-        dcc_experiment_df.write.parquet(output_path)
+        experiment_df.write.parquet(output_path)
 
 
 def _merge_simple_parameters(simple_parameters: List[Dict], results: [Dict]):
@@ -374,17 +431,11 @@ def _get_inputs_by_parameter_type(
     )
 
 
-class ExperimentParameterDerivator(ParameterDerivator):
-    name = "IMPC_Experiment_Parameter_Derivator"
-    experiment_level = "experiment"
-
-    def requires(self):
-        return [SpecimenLevelExperimentCrossRef(), ImpressExtractor()]
+class SpecimenLevelExperimentParameterDerivator(ParameterDerivator):
+    name = "IMPC_Specimen_Level_Experiment_Parameter_Derivator"
+    experiment_level = "specimen_level"
 
 
-class LineParameterDerivator(ParameterDerivator):
-    name = "IMPC_Line_Parameter_Derivator"
-    experiment_level = "line"
-
-    def requires(self):
-        return [LineExperimentNormalizer(), ImpressExtractor()]
+class LineLevelExperimentParameterDerivator(ParameterDerivator):
+    name = "IMPC_Line_Level_Experiment_Parameter_Derivator"
+    experiment_level = "line_level"

@@ -10,7 +10,7 @@
     - Override the data source and the project info for MGP and MGP Legacy line experiments
     - Generate metadata group (a hash value to identify experiments with the same experimental conditions)
     - Generate metadata array (a list of "parameter = value" for metadata parameters in a given experiment)
-    - Generates line allelelic compostion
+    - Generates line allelic composition
     - Select the columns relevant to experimental data only
 """
 from typing import Any
@@ -39,6 +39,11 @@ from impc_etl.workflow.config import ImpcConfig
 class LineLevelExperimentCrossRef(PySparkTask):
     """
     PySpark task for cross-reference Specimen Level experiments.
+    This task depends on:
+
+    - `impc_etl.jobs.clean.experiment_cleaner.LineLevelExperimentCleaner`
+    - `impc_etl.jobs.clean.colony_cleaner.ColonyCleaner`
+    - `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`
     """
 
     #: Name of the Spark task

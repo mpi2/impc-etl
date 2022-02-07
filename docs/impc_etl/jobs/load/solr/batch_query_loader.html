@@ -35,7 +35,7 @@ from impc_etl.jobs.extract import OntologyMetadataExtractor
 from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.load import (
     GeneCoreLoader,
-    ObservationsMapper,
+    ExperimentToObservationMapper,
     StatsResultsCoreLoader,
 )
 
@@ -51,7 +51,7 @@ class BatchQueryLoader(PySparkTask):
 
     def requires(self):
         return [
-            ObservationsMapper(),
+            ExperimentToObservationMapper(),
             GeneCoreLoader(),
             StatsResultsCoreLoader(),
             OntologyMetadataExtractor(),
@@ -199,7 +199,7 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
 
     def requires(self):
         return [
-            ObservationsMapper(),
+            ExperimentToObservationMapper(),
             GeneCoreLoader(),
             StatsResultsCoreLoader(),
             OntologyMetadataExtractor(),
@@ -510,7 +510,7 @@ values are Task instances.</p>
 </summary>
 <pre><code class="python">def requires(self):
     return [
-        ObservationsMapper(),
+        ExperimentToObservationMapper(),
         GeneCoreLoader(),
         StatsResultsCoreLoader(),
         OntologyMetadataExtractor(),
