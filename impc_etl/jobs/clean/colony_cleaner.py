@@ -22,7 +22,7 @@ from impc_etl.shared import utils
 from impc_etl.workflow.config import ImpcConfig
 
 
-class IMPCColonyCleaner(PySparkTask):
+class ColonyCleaner(PySparkTask):
     """
     PySpark Task to clean some legacy colony  identifiers so they match the provided on the legacy  Specimen XML files.
     This task depends on `impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor`.

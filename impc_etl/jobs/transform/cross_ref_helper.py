@@ -1,159 +1,86 @@
+"""
+    Module to hold helper functions for cross-reference tasks.
+"""
 import hashlib
-import sys
 from typing import List
 
-from pyspark.sql import SparkSession, Window, DataFrame, Column
+from pyspark.sql import DataFrame, Column, Window, Row
 from pyspark.sql.functions import (
-    col,
     lit,
     when,
     lower,
-    concat,
-    md5,
     explode,
+    col,
+    concat,
     concat_ws,
+    md5,
     sort_array,
     collect_set,
-    max,
     udf,
     array_union,
     array,
+    max,
 )
-from pyspark.sql.types import (
-    ArrayType,
-    StringType,
-    Row,
-)
-from pyspark.sql.utils import AnalysisException
+from pyspark.sql.types import StringType, ArrayType
 
 from impc_etl.config.constants import Constants
 
 
-def main(argv):
-    experiment_parquet_path = argv[1]
-    mouse_parquet_path = argv[2]
-    embryo_parquet_path = argv[3]
-    pipeline_parquet_path = argv[4]
-    output_path = argv[5]
-    spark = SparkSession.builder.getOrCreate()
-    experiment_normalized_df = normalize_experiments(
-        spark,
-        experiment_parquet_path,
-        mouse_parquet_path,
-        embryo_parquet_path,
-        pipeline_parquet_path,
-    )
-    experiment_normalized_df.write.mode("overwrite").parquet(output_path)
-
-
-def normalize_experiments(
-    spark_session: SparkSession,
-    experiment_parquet_path: str,
-    mouse_parquet_path: str,
-    embryo_parquet_path: str,
-    pipeline_parquet_path: str,
-) -> DataFrame:
+def generate_allelic_composition(
+    zigosity: str,
+    allele_symbol: str,
+    gene_symbol: str,
+    is_baseline: bool,
+    colony_id: str,
+):
     """
-    DCC experiment normalizer
-
-    :param pipeline_parquet_path:
-    :param embryo_parquet_path:
-    :param mouse_parquet_path:
-    :param experiment_parquet_path:
-    :param SparkSession spark_session: PySpark session object
-    :return: a normalized specimen parquet file
-    :rtype: DataFrame
+    Takes in a zigosity, allele symbol, gene symbol,
+    baseline flag and a colony id and returns a description of the allelic composition.
     """
-    experiment_df = spark_session.read.parquet(experiment_parquet_path)
-    mouse_df = spark_session.read.parquet(mouse_parquet_path)
-    try:
-        embryo_df = spark_session.read.parquet(embryo_parquet_path)
-    except AnalysisException:
-        embryo_df = None
-    pipeline_df = spark_session.read.parquet(pipeline_parquet_path)
+    if is_baseline or colony_id == "baseline":
+        return ""
 
-    ## THIS IS NOT OK
-    experiment_df = experiment_df.withColumn(
-        "_pipeline",
-        when(
-            (col("_dataSource") == "3i")
-            & (col("_procedureID") == "MGP_PBI_001")
-            & (col("_pipeline") == "SLM_001"),
-            lit("MGP_001"),
-        ).otherwise(col("_pipeline")),
-    )
+    if zigosity in ["homozygous", "homozygote"]:
+        if allele_symbol is not None and allele_symbol is not "baseline":
+            if allele_symbol is not "" and " " not in allele_symbol:
+                return f"{allele_symbol}/{allele_symbol}"
+            else:
+                return f"{gene_symbol}<?>/{gene_symbol}<?>"
+        else:
+            return f"{gene_symbol}<+>/{gene_symbol}<+>"
 
-    experiment_df = experiment_df.withColumn(
-        "_pipeline",
-        when(
-            (lower(col("_dataSource")).isin(["europhenome", "mgp"]))
-            & (col("_procedureID") == "ESLIM_019_001")
-            & (col("_pipeline") == "ESLIM_001"),
-            lit("ESLIM_002"),
-        ).otherwise(col("_pipeline")),
-    )
-    ## THIS IS NOT OK
+    if zigosity in ["heterozygous", "heterozygote"]:
+        if allele_symbol is not "baseline":
+            if (
+                allele_symbol is not None
+                and allele_symbol is not ""
+                and " " not in allele_symbol
+            ):
+                return f"{allele_symbol}/{gene_symbol}<+>"
+            else:
+                return f"{gene_symbol}<?>/{gene_symbol}<+>"
+        else:
+            return None
 
-    specimen_cols = [
-        "_centreID",
-        "_specimenID",
-        "_colonyID",
-        "_isBaseline",
-        "_productionCentre",
-        "_phenotypingCentre",
-        "phenotyping_consortium",
-    ]
-
-    mouse_specimen_df = mouse_df.select(*specimen_cols)
-    if embryo_df is not None:
-        embryo_specimen_df = embryo_df.select(*specimen_cols)
-        specimen_df = mouse_specimen_df.union(embryo_specimen_df)
-    else:
-        specimen_df = mouse_specimen_df
-    experiment_df = experiment_df.alias("experiment")
-    specimen_df = specimen_df.alias("specimen")
-    experiment_specimen_df = experiment_df.join(
-        specimen_df,
-        (experiment_df["_centreID"] == specimen_df["_centreID"])
-        & (experiment_df["specimenID"] == specimen_df["_specimenID"]),
-    )
-
-    experiment_specimen_df = drop_null_colony_id(experiment_specimen_df)
-
-    experiment_specimen_df = re_map_europhenome_experiments(experiment_specimen_df)
-
-    experiment_specimen_df = generate_metadata_group(
-        experiment_specimen_df, pipeline_df
-    )
-
-    experiment_specimen_df = generate_metadata(experiment_specimen_df, pipeline_df)
-
-    experiment_columns = [
-        "experiment." + col_name
-        for col_name in experiment_df.columns
-        if col_name not in ["_dataSource", "_project"]
-    ] + ["metadata", "metadataGroup", "_project", "_dataSource"]
-    experiment_df = experiment_specimen_df.select(experiment_columns)
-    return experiment_df
-
-
-def drop_null_colony_id(experiment_specimen_df: DataFrame) -> DataFrame:
-    experiment_specimen_df = experiment_specimen_df.where(
-        (col("specimen._colonyID").isNotNull())
-        | (col("specimen._isBaseline") == True)
-        | (col("specimen._colonyID") == "baseline")
-    )
-    return experiment_specimen_df.dropDuplicates()
-
-
-def re_map_europhenome_experiments(experiment_specimen_df: DataFrame):
-    experiment_specimen_df = experiment_specimen_df.transform(
-        override_europhenome_datasource
-    )
-    return experiment_specimen_df
+    if zigosity in ["hemizygous", "hemizygote"]:
+        if allele_symbol is not "baseline":
+            if (
+                allele_symbol is not None
+                and allele_symbol is not ""
+                and " " not in allele_symbol
+            ):
+                return f"{allele_symbol}/0"
+            else:
+                return f"{gene_symbol}<?>/0"
+        else:
+            return None
 
 
 def override_europhenome_datasource(dcc_df: DataFrame) -> DataFrame:
+    """
+    Takes in a specimen dataframe and replaces the project with 'MGP' and data sources information,
+    for specimens with colonies marked as MGP and MGP Legacy.
+    """
     legacy_entity_cond: Column = (
         (dcc_df["_dataSource"] == "europhenome")
         & (~lower(dcc_df["_colonyID"]).startswith("baseline"))
@@ -165,7 +92,8 @@ def override_europhenome_datasource(dcc_df: DataFrame) -> DataFrame:
     )
 
     dcc_df = dcc_df.withColumn(
-        "_project", when(legacy_entity_cond, lit("MGP")).otherwise(dcc_df["_project"])
+        "_project",
+        when(legacy_entity_cond, lit("MGP")).otherwise(dcc_df["_project"]),
     )
 
     dcc_df = dcc_df.withColumn(
@@ -176,15 +104,28 @@ def override_europhenome_datasource(dcc_df: DataFrame) -> DataFrame:
 
 
 def generate_metadata_group(
-    experiment_specimen_df: DataFrame, impress_df: DataFrame, exp_type="experiment"
+    experiment_specimen_df: DataFrame,
+    impress_df: DataFrame,
+    exp_type="experiment",
 ) -> DataFrame:
+    """
+    Takes in an Experiment-Specimen DataFrame and the IMPReSS dataframe,
+    and generates a hash value with the parameters marked as 'isImportant' on IMPReSS.
+    This hash is used to identify experiments that are comparable (i.e. share the same experimental conditions).
+    """
+
+    # Explode the experiments by procedureMetadata so each row contains data for each procedureMetadata value
     experiment_metadata = experiment_specimen_df.withColumn(
         "procedureMetadata", explode("procedureMetadata")
     )
+
+    # Filter the IMPReSS to leave only those that generate a metadata split: isImportant = True
     impress_df_required = impress_df.where(
         (col("parameter.isImportant") == True)
         & (col("parameter.type") == "procedureMetadata")
     )
+
+    # Join the experiment DF with he IMPReSS DF
     experiment_metadata = experiment_metadata.join(
         impress_df_required,
         (
@@ -199,6 +140,8 @@ def generate_metadata_group(
             )
         ),
     )
+
+    # Create a new column by concatenating the parameter name and the parameter value
     experiment_metadata = experiment_metadata.withColumn(
         "metadataItem",
         when(
@@ -206,20 +149,28 @@ def generate_metadata_group(
             concat(col("parameter.name"), lit(" = "), col("procedureMetadata.value")),
         ).otherwise(concat(col("parameter.name"), lit(" = "), lit("null"))),
     )
+
+    # Select the right column name for production and phenotyping centre depending on experiment type
     if exp_type == "experiment":
         production_centre_col = "_productionCentre"
         phenotyping_centre_col = "_phenotypingCentre"
     else:
         production_centre_col = "production_centre"
         phenotyping_centre_col = "phenotyping_centre"
+
+    # Create a window for the DataFrame over experiment id, production and phenotyping centre
     window = Window.partitionBy(
         "unique_id", production_centre_col, phenotyping_centre_col
     ).orderBy("parameter.name")
 
+    # Use the window to create for every experiment an array containing the set of "parameter =  value" pairs.
     experiment_metadata_input = experiment_metadata.withColumn(
         "metadataItems", collect_set(col("metadataItem")).over(window)
     )
 
+    # Add the production centre to the metadata group when this is different form the phenotyping centre.
+    # This is because in that given case we would like to generate a metadata split among specimens
+    # That have been produced and phenotyped on the same centre
     experiment_metadata_input = experiment_metadata_input.withColumn(
         "metadataItems",
         when(
@@ -232,6 +183,7 @@ def generate_metadata_group(
         ).otherwise(col("metadataItems")),
     )
 
+    # Create a string with the concatenation of the metadata items "parameter = value" separated by '::'.
     experiment_metadata = experiment_metadata_input.groupBy(
         "unique_id", production_centre_col, phenotyping_centre_col
     ).agg(
@@ -240,13 +192,20 @@ def generate_metadata_group(
         )
     )
 
+    # Hash the list to generate a medata group identifier.
     experiment_metadata = experiment_metadata.withColumn(
         "metadataGroup", md5(col("metadataGroupList"))
     )
+
+    # Select the experiment IDs and the metadata group IDs
     experiment_metadata = experiment_metadata.select("unique_id", "metadataGroup")
+
+    # Join the original experiment DataFrame with the result of the metadata group generation
     experiment_specimen_df = experiment_specimen_df.join(
         experiment_metadata, "unique_id", "left_outer"
     )
+
+    # Add the hashed version of an empty string to those rows without a metadata group.
     experiment_specimen_df = experiment_specimen_df.withColumn(
         "metadataGroup",
         when(experiment_specimen_df["metadataGroup"].isNull(), md5(lit(""))).otherwise(
@@ -257,14 +216,27 @@ def generate_metadata_group(
 
 
 def generate_metadata(
-    experiment_specimen_df: DataFrame, impress_df: DataFrame, exp_type="experiment"
+    experiment_specimen_df: DataFrame,
+    impress_df: DataFrame,
+    exp_type="experiment",
 ) -> DataFrame:
+    """
+    Takes in a DataFrame with experiment and specimen data, and the IMPReSS information DataFrame.
+    For every experiment generates a list of "parameter = value" pairs containing
+    every metadata parameter for a that experiment.
+    """
+
+    # Explodes the experiment DF so every row represents a procedureMetadata value
     experiment_metadata = experiment_specimen_df.withColumn(
         "procedureMetadata", explode("procedureMetadata")
     )
+
+    # Filters the IMPReSS DF so it only contains metadata parameters
     impress_df_required = impress_df.where(
         (col("parameter.type") == "procedureMetadata")
     )
+
+    # Joins the experiment metadata values with the IMPReSS DF.
     experiment_metadata = experiment_metadata.join(
         impress_df_required,
         (
@@ -280,6 +252,7 @@ def generate_metadata(
         ),
     )
 
+    # Some experimenter IDs need to be replaced on the metadata values
     process_experimenter_id_udf = udf(_process_experimenter_id, StringType())
     experiment_metadata = experiment_metadata.withColumn(
         "experimenterIdMetadata",
@@ -294,6 +267,8 @@ def generate_metadata(
             col("experimenterIdMetadata").isNotNull(), col("experimenterIdMetadata")
         ).otherwise("procedureMetadata.value"),
     )
+
+    # Create the "parameter = value" pairs, if there is not value: "parameter = null"
     experiment_metadata = experiment_metadata.withColumn(
         "metadataItem",
         concat(
@@ -305,15 +280,23 @@ def generate_metadata(
             ).otherwise(lit("null")),
         ),
     )
+
+    # Select the right column name for production and phenotyping centre depending on experiment type
     if exp_type == "experiment":
         production_centre_col = "_productionCentre"
         phenotyping_centre_col = "_phenotypingCentre"
     else:
         production_centre_col = "production_centre"
         phenotyping_centre_col = "phenotyping_centre"
+
+    # Group by the experiment unique_id, phenotyping centre and production centre
+    # And create an array containing all the metadata pairs
     experiment_metadata = experiment_metadata.groupBy(
         "unique_id", production_centre_col, phenotyping_centre_col
     ).agg(sort_array(collect_set(col("metadataItem"))).alias("metadata"))
+
+    # Append the phenotyping centre value to all the
+    # experiments where the phenotyping centre !=  the production centre
     experiment_metadata = experiment_metadata.withColumn(
         "metadata",
         when(
@@ -324,6 +307,8 @@ def generate_metadata(
             ),
         ).otherwise(col("metadata")),
     )
+
+    # Join the original experiment DF with the resulting experiment metadata DF
     experiment_specimen_df = experiment_specimen_df.join(
         experiment_metadata, "unique_id", "left_outer"
     )
@@ -331,12 +316,18 @@ def generate_metadata(
 
 
 def _append_phenotyping_centre_to_metadata(metadata: List, prod_centre: str):
+    """
+    Takes in a metadata list and a production centre and appends the production centre as a metadata value.
+    """
     if prod_centre is not None:
         metadata.append("ProductionCenter = " + prod_centre)
     return metadata
 
 
 def _process_experimenter_id(experimenter_metadata: Row):
+    """
+    Some experimenter IDs need to be replaced on the metadata values.
+    """
     experimenter_metadata = experimenter_metadata.asDict()
     if experimenter_metadata["value"] in Constants.EXPERIMENTER_IDS:
         experimenter_metadata["value"] = Constants.EXPERIMENTER_IDS[
@@ -347,7 +338,3 @@ def _process_experimenter_id(experimenter_metadata: Row):
             hashlib.md5(experimenter_metadata["value"].encode()).hexdigest()[:5].upper()
         )
     return experimenter_metadata["value"]
-
-
-if __name__ == "__main__":
-    sys.exit(main(sys.argv))

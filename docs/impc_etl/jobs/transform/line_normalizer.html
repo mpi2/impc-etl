@@ -27,15 +27,17 @@
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">import sys
+
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import udf, lit
 from pyspark.sql.types import StringType
-from impc_etl.jobs.transform.experiment_normalizer import (
+
+from impc_etl.jobs.transform.cross_ref_helper import generate_allelic_composition
+from impc_etl.jobs.transform.experiment_cross_ref import (
     re_map_europhenome_experiments,
     generate_metadata_group,
     generate_metadata,
 )
-from impc_etl.jobs.transform.specimen_normalizer import _generate_allelic_composition
 
 
 def main(argv):
@@ -72,7 +74,7 @@ def normalize_lines(
         line_colony_df, pipeline_df, exp_type=&#34;line&#34;
     )
     line_colony_df = generate_metadata(line_colony_df, pipeline_df, exp_type=&#34;line&#34;)
-    line_colony_df = generate_allelic_composition(line_colony_df)
+    line_colony_df = generate_line_allelic_composition(line_colony_df)
     line_columns = [
         col_name
         for col_name in line_df.columns
@@ -82,8 +84,8 @@ def normalize_lines(
     return line_df
 
 
-def generate_allelic_composition(line_df: DataFrame) -&gt; DataFrame:
-    generate_allelic_composition_udf = udf(_generate_allelic_composition, StringType())
+def generate_line_allelic_composition(line_df: DataFrame) -&gt; DataFrame:
+    generate_allelic_composition_udf = udf(generate_allelic_composition, StringType())
     line_df = line_df.withColumn(
         &#34;allelicComposition&#34;,
         generate_allelic_composition_udf(
@@ -104,8 +106,8 @@ if __name__ == &#34;__main__&#34;:
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="impc_etl.jobs.transform.line_normalizer.generate_allelic_composition"><code class="name flex">
-<span>def <span class="ident">generate_allelic_composition</span></span>(<span>line_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.transform.line_normalizer.generate_line_allelic_composition"><code class="name flex">
+<span>def <span class="ident">generate_line_allelic_composition</span></span>(<span>line_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -113,8 +115,8 @@ if __name__ == &#34;__main__&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def generate_allelic_composition(line_df: DataFrame) -&gt; DataFrame:
-    generate_allelic_composition_udf = udf(_generate_allelic_composition, StringType())
+<pre><code class="python">def generate_line_allelic_composition(line_df: DataFrame) -&gt; DataFrame:
+    generate_allelic_composition_udf = udf(generate_allelic_composition, StringType())
     line_df = line_df.withColumn(
         &#34;allelicComposition&#34;,
         generate_allelic_composition_udf(
@@ -176,7 +178,7 @@ if __name__ == &#34;__main__&#34;:
         line_colony_df, pipeline_df, exp_type=&#34;line&#34;
     )
     line_colony_df = generate_metadata(line_colony_df, pipeline_df, exp_type=&#34;line&#34;)
-    line_colony_df = generate_allelic_composition(line_colony_df)
+    line_colony_df = generate_line_allelic_composition(line_colony_df)
     line_columns = [
         col_name
         for col_name in line_df.columns
@@ -211,7 +213,7 @@ if __name__ == &#34;__main__&#34;:
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="impc_etl.jobs.transform.line_normalizer.generate_allelic_composition" href="#impc_etl.jobs.transform.line_normalizer.generate_allelic_composition">generate_allelic_composition</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.line_normalizer.generate_line_allelic_composition" href="#impc_etl.jobs.transform.line_normalizer.generate_line_allelic_composition">generate_line_allelic_composition</a></code></li>
 <li><code><a title="impc_etl.jobs.transform.line_normalizer.main" href="#impc_etl.jobs.transform.line_normalizer.main">main</a></code></li>
 <li><code><a title="impc_etl.jobs.transform.line_normalizer.normalize_lines" href="#impc_etl.jobs.transform.line_normalizer.normalize_lines">normalize_lines</a></code></li>
 </ul>

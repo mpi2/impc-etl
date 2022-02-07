@@ -13,9 +13,9 @@ from impc_etl.jobs.load.solr.stats_results_mapper import (
 )
 from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.extraction import (
-    AlleleExtractor,
-    ImpressExtractor,
-    IMPCOntologyTermHierarchyExtractor,
+    # AlleleExtractor,
+    # ImpressExtractor,
+    # IMPCOntologyTermHierarchyExtractor,
     OpenStatsExtractor,
 )
 from impc_etl.workflow.load import (
@@ -44,10 +44,10 @@ class ImpcStatsBundleMapper(PySparkTask):
         return [
             OpenStatsExtractor(),
             ObservationsMapper(),
-            IMPCOntologyTermHierarchyExtractor(),
-            ImpressExtractor(),
+            # IMPCOntologyTermHierarchyExtractor(),
+            # ImpressExtractor(),
             PipelineCoreLoader(),
-            AlleleExtractor(),
+            # AlleleExtractor(),
             MPChooserLoader(),
         ]
 

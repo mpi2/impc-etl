@@ -30,106 +30,16 @@
 from luigi.contrib.spark import SparkSubmitTask
 
 from impc_etl.jobs.clean import *
+from impc_etl.jobs.clean.experiment_cleaner import (
+    LineLevelExperimentCleaner,
+)
 from impc_etl.jobs.extract import ImpressExtractor
-from impc_etl.workflow.cleaning import *
 from impc_etl.workflow.config import ImpcConfig
-
-
-class SpecimenNormalizer(SparkSubmitTask):
-    name = &#34;IMPC_Specimen_Normalizer&#34;
-    app = &#34;impc_etl/jobs/transform/specimen_normalizer.py&#34;
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
-    entity_type = luigi.Parameter()
-    output_path = luigi.Parameter()
-    resources = {&#34;overwrite_resource&#34;: 1}
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(
-            f&#34;{self.output_path}{self.entity_type}_normalized_parquet&#34;
-        )
-
-    def app_options(self):
-        return [
-            self.input()[0].path,
-            self.input()[1].path,
-            self.entity_type,
-            self.output().path,
-        ]
-
-
-class MouseNormalizer(SpecimenNormalizer):
-    entity_type = &#34;mouse&#34;
-
-    def requires(self):
-        return [
-            MouseCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-            IMPCColonyCleaner(),
-        ]
-
-
-class EmbryoNormalizer(SpecimenNormalizer):
-    entity_type = &#34;embryo&#34;
-
-    def requires(self):
-        return [
-            EmbryoCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-            IMPCColonyCleaner(),
-        ]
-
-
-class ExperimentNormalizer(SparkSubmitTask):
-    name = &#34;IMPC_Experiment_Normalizer&#34;
-    app = &#34;impc_etl/jobs/transform/experiment_normalizer.py&#34;
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
-    entity_type = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def requires(self):
-        return [
-            SpecimenExperimentCleaner(),
-            MouseNormalizer(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                dcc_xml_path=self.dcc_xml_path,
-                output_path=self.output_path,
-            ),
-            EmbryoNormalizer(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                dcc_xml_path=self.dcc_xml_path,
-                output_path=self.output_path,
-            ),
-            ImpressExtractor(),
-        ]
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(
-            f&#34;{self.output_path}{self.entity_type}_normalized_parquet&#34;
-        )
-
-    def app_options(self):
-        return [
-            self.input()[0].path,
-            self.input()[1].path,
-            self.input()[2].path,
-            self.input()[3].path,
-            self.output().path,
-        ]
 
 
 class LineExperimentNormalizer(SparkSubmitTask):
     name = &#34;IMPC_Line_Experiment_Normalizer&#34;
-    app = &#34;impc_etl/jobs/transform/line_normalizer.py&#34;
+    app = &#34;impc_etl/jobs/transform/line_experiment_cross_ref.py&#34;
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     entity_type = luigi.Parameter()
@@ -138,8 +48,8 @@ class LineExperimentNormalizer(SparkSubmitTask):
 
     def requires(self):
         return [
-            LineExperimentCleaner(),
-            IMPCColonyCleaner(),
+            LineLevelExperimentCleaner(),
+            ColonyCleaner(),
             ImpressExtractor(),
         ]
 
@@ -171,250 +81,6 @@ class LineExperimentNormalizer(SparkSubmitTask):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.workflow.normalization.EmbryoNormalizer"><code class="flex name class">
-<span>class <span class="ident">EmbryoNormalizer</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class EmbryoNormalizer(SpecimenNormalizer):
-    entity_type = &#34;embryo&#34;
-
-    def requires(self):
-        return [
-            EmbryoCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-            IMPCColonyCleaner(),
-        ]</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="impc_etl.workflow.normalization.SpecimenNormalizer" href="#impc_etl.workflow.normalization.SpecimenNormalizer">SpecimenNormalizer</a></li>
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.normalization.EmbryoNormalizer.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.normalization.EmbryoNormalizer.requires"><code class="name flex">
-<span>def <span class="ident">requires</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The Tasks that this Task depends on.</p>
-<p>A Task will only run if all of the Tasks that it requires are completed.
-If your Task does not require any other Tasks, then you don't need to
-override this method. Otherwise, a subclass can override this method
-to return a single Task, a list of Task instances, or a dict whose
-values are Task instances.</p>
-<p>See :ref:<code>Task.requires</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def requires(self):
-    return [
-        EmbryoCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-        IMPCColonyCleaner(),
-    ]</code></pre>
-</details>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="impc_etl.workflow.normalization.SpecimenNormalizer" href="#impc_etl.workflow.normalization.SpecimenNormalizer">SpecimenNormalizer</a></b></code>:
-<ul class="hlist">
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.app_options" href="#impc_etl.workflow.normalization.SpecimenNormalizer.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.output" href="#impc_etl.workflow.normalization.SpecimenNormalizer.output">output</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="impc_etl.workflow.normalization.ExperimentNormalizer"><code class="flex name class">
-<span>class <span class="ident">ExperimentNormalizer</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ExperimentNormalizer(SparkSubmitTask):
-    name = &#34;IMPC_Experiment_Normalizer&#34;
-    app = &#34;impc_etl/jobs/transform/experiment_normalizer.py&#34;
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
-    entity_type = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def requires(self):
-        return [
-            SpecimenExperimentCleaner(),
-            MouseNormalizer(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                dcc_xml_path=self.dcc_xml_path,
-                output_path=self.output_path,
-            ),
-            EmbryoNormalizer(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                dcc_xml_path=self.dcc_xml_path,
-                output_path=self.output_path,
-            ),
-            ImpressExtractor(),
-        ]
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(
-            f&#34;{self.output_path}{self.entity_type}_normalized_parquet&#34;
-        )
-
-    def app_options(self):
-        return [
-            self.input()[0].path,
-            self.input()[1].path,
-            self.input()[2].path,
-            self.input()[3].path,
-            self.output().path,
-        ]</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.normalization.ExperimentNormalizer.app"><code class="name">var <span class="ident">app</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.normalization.ExperimentNormalizer.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.normalization.ExperimentNormalizer.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.normalization.ExperimentNormalizer.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.normalization.ExperimentNormalizer.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.normalization.ExperimentNormalizer.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.normalization.ExperimentNormalizer.app_options"><code class="name flex">
-<span>def <span class="ident">app_options</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def app_options(self):
-    return [
-        self.input()[0].path,
-        self.input()[1].path,
-        self.input()[2].path,
-        self.input()[3].path,
-        self.output().path,
-    ]</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.normalization.ExperimentNormalizer.output"><code class="name flex">
-<span>def <span class="ident">output</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The output that this Task produces.</p>
-<p>The output of the Task determines if the Task needs to be run&ndash;the task
-is considered finished iff the outputs all exist. Subclasses should
-override this method to return a single :py:class:<code>Target</code> or a list of
-:py:class:<code>Target</code> instances.</p>
-<p>Implementation note
-If running multiple workers, the output must be a resource that is accessible
-by all workers, such as a DFS or database. Otherwise, workers might compute
-the same output since they don't see the work done by other workers.</p>
-<p>See :ref:<code>Task.output</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def output(self):
-    self.output_path = (
-        self.output_path + &#34;/&#34;
-        if not self.output_path.endswith(&#34;/&#34;)
-        else self.output_path
-    )
-    return ImpcConfig().get_target(
-        f&#34;{self.output_path}{self.entity_type}_normalized_parquet&#34;
-    )</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.normalization.ExperimentNormalizer.requires"><code class="name flex">
-<span>def <span class="ident">requires</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The Tasks that this Task depends on.</p>
-<p>A Task will only run if all of the Tasks that it requires are completed.
-If your Task does not require any other Tasks, then you don't need to
-override this method. Otherwise, a subclass can override this method
-to return a single Task, a list of Task instances, or a dict whose
-values are Task instances.</p>
-<p>See :ref:<code>Task.requires</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def requires(self):
-    return [
-        SpecimenExperimentCleaner(),
-        MouseNormalizer(
-            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-            dcc_xml_path=self.dcc_xml_path,
-            output_path=self.output_path,
-        ),
-        EmbryoNormalizer(
-            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-            dcc_xml_path=self.dcc_xml_path,
-            output_path=self.output_path,
-        ),
-        ImpressExtractor(),
-    ]</code></pre>
-</details>
-</dd>
-</dl>
-</dd>
 <dt id="impc_etl.workflow.normalization.LineExperimentNormalizer"><code class="flex name class">
 <span>class <span class="ident">LineExperimentNormalizer</span></span>
 <span>(</span><span>*args, **kwargs)</span>
@@ -430,7 +96,7 @@ for more information</p></div>
 </summary>
 <pre><code class="python">class LineExperimentNormalizer(SparkSubmitTask):
     name = &#34;IMPC_Line_Experiment_Normalizer&#34;
-    app = &#34;impc_etl/jobs/transform/line_normalizer.py&#34;
+    app = &#34;impc_etl/jobs/transform/line_experiment_cross_ref.py&#34;
     dcc_xml_path = luigi.Parameter()
     imits_colonies_tsv_path = luigi.Parameter()
     entity_type = luigi.Parameter()
@@ -439,8 +105,8 @@ for more information</p></div>
 
     def requires(self):
         return [
-            LineExperimentCleaner(),
-            IMPCColonyCleaner(),
+            LineLevelExperimentCleaner(),
+            ColonyCleaner(),
             ImpressExtractor(),
         ]
 
@@ -565,214 +231,10 @@ values are Task instances.</p>
 </summary>
 <pre><code class="python">def requires(self):
     return [
-        LineExperimentCleaner(),
-        IMPCColonyCleaner(),
+        LineLevelExperimentCleaner(),
+        ColonyCleaner(),
         ImpressExtractor(),
     ]</code></pre>
-</details>
-</dd>
-</dl>
-</dd>
-<dt id="impc_etl.workflow.normalization.MouseNormalizer"><code class="flex name class">
-<span>class <span class="ident">MouseNormalizer</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class MouseNormalizer(SpecimenNormalizer):
-    entity_type = &#34;mouse&#34;
-
-    def requires(self):
-        return [
-            MouseCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-            IMPCColonyCleaner(),
-        ]</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="impc_etl.workflow.normalization.SpecimenNormalizer" href="#impc_etl.workflow.normalization.SpecimenNormalizer">SpecimenNormalizer</a></li>
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.normalization.MouseNormalizer.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.normalization.MouseNormalizer.requires"><code class="name flex">
-<span>def <span class="ident">requires</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The Tasks that this Task depends on.</p>
-<p>A Task will only run if all of the Tasks that it requires are completed.
-If your Task does not require any other Tasks, then you don't need to
-override this method. Otherwise, a subclass can override this method
-to return a single Task, a list of Task instances, or a dict whose
-values are Task instances.</p>
-<p>See :ref:<code>Task.requires</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def requires(self):
-    return [
-        MouseCleaner(dcc_xml_path=self.dcc_xml_path, output_path=self.output_path),
-        IMPCColonyCleaner(),
-    ]</code></pre>
-</details>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="impc_etl.workflow.normalization.SpecimenNormalizer" href="#impc_etl.workflow.normalization.SpecimenNormalizer">SpecimenNormalizer</a></b></code>:
-<ul class="hlist">
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.app_options" href="#impc_etl.workflow.normalization.SpecimenNormalizer.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.output" href="#impc_etl.workflow.normalization.SpecimenNormalizer.output">output</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="impc_etl.workflow.normalization.SpecimenNormalizer"><code class="flex name class">
-<span>class <span class="ident">SpecimenNormalizer</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class SpecimenNormalizer(SparkSubmitTask):
-    name = &#34;IMPC_Specimen_Normalizer&#34;
-    app = &#34;impc_etl/jobs/transform/specimen_normalizer.py&#34;
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
-    entity_type = luigi.Parameter()
-    output_path = luigi.Parameter()
-    resources = {&#34;overwrite_resource&#34;: 1}
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(
-            f&#34;{self.output_path}{self.entity_type}_normalized_parquet&#34;
-        )
-
-    def app_options(self):
-        return [
-            self.input()[0].path,
-            self.input()[1].path,
-            self.entity_type,
-            self.output().path,
-        ]</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Subclasses</h3>
-<ul class="hlist">
-<li><a title="impc_etl.workflow.normalization.EmbryoNormalizer" href="#impc_etl.workflow.normalization.EmbryoNormalizer">EmbryoNormalizer</a></li>
-<li><a title="impc_etl.workflow.normalization.MouseNormalizer" href="#impc_etl.workflow.normalization.MouseNormalizer">MouseNormalizer</a></li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.normalization.SpecimenNormalizer.app"><code class="name">var <span class="ident">app</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.normalization.SpecimenNormalizer.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.normalization.SpecimenNormalizer.entity_type"><code class="name">var <span class="ident">entity_type</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.normalization.SpecimenNormalizer.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.normalization.SpecimenNormalizer.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.normalization.SpecimenNormalizer.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.normalization.SpecimenNormalizer.resources"><code class="name">var <span class="ident">resources</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.normalization.SpecimenNormalizer.app_options"><code class="name flex">
-<span>def <span class="ident">app_options</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def app_options(self):
-    return [
-        self.input()[0].path,
-        self.input()[1].path,
-        self.entity_type,
-        self.output().path,
-    ]</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.normalization.SpecimenNormalizer.output"><code class="name flex">
-<span>def <span class="ident">output</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The output that this Task produces.</p>
-<p>The output of the Task determines if the Task needs to be run&ndash;the task
-is considered finished iff the outputs all exist. Subclasses should
-override this method to return a single :py:class:<code>Target</code> or a list of
-:py:class:<code>Target</code> instances.</p>
-<p>Implementation note
-If running multiple workers, the output must be a resource that is accessible
-by all workers, such as a DFS or database. Otherwise, workers might compute
-the same output since they don't see the work done by other workers.</p>
-<p>See :ref:<code>Task.output</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def output(self):
-    self.output_path = (
-        self.output_path + &#34;/&#34;
-        if not self.output_path.endswith(&#34;/&#34;)
-        else self.output_path
-    )
-    return ImpcConfig().get_target(
-        f&#34;{self.output_path}{self.entity_type}_normalized_parquet&#34;
-    )</code></pre>
 </details>
 </dd>
 </dl>
@@ -801,27 +263,6 @@ the same output since they don't see the work done by other workers.</p>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="impc_etl.workflow.normalization.EmbryoNormalizer" href="#impc_etl.workflow.normalization.EmbryoNormalizer">EmbryoNormalizer</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.normalization.EmbryoNormalizer.entity_type" href="#impc_etl.workflow.normalization.EmbryoNormalizer.entity_type">entity_type</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.EmbryoNormalizer.requires" href="#impc_etl.workflow.normalization.EmbryoNormalizer.requires">requires</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.normalization.ExperimentNormalizer" href="#impc_etl.workflow.normalization.ExperimentNormalizer">ExperimentNormalizer</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.normalization.ExperimentNormalizer.app" href="#impc_etl.workflow.normalization.ExperimentNormalizer.app">app</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.ExperimentNormalizer.app_options" href="#impc_etl.workflow.normalization.ExperimentNormalizer.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.ExperimentNormalizer.dcc_xml_path" href="#impc_etl.workflow.normalization.ExperimentNormalizer.dcc_xml_path">dcc_xml_path</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.ExperimentNormalizer.entity_type" href="#impc_etl.workflow.normalization.ExperimentNormalizer.entity_type">entity_type</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.ExperimentNormalizer.imits_colonies_tsv_path" href="#impc_etl.workflow.normalization.ExperimentNormalizer.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.ExperimentNormalizer.name" href="#impc_etl.workflow.normalization.ExperimentNormalizer.name">name</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.ExperimentNormalizer.output" href="#impc_etl.workflow.normalization.ExperimentNormalizer.output">output</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.ExperimentNormalizer.output_path" href="#impc_etl.workflow.normalization.ExperimentNormalizer.output_path">output_path</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.ExperimentNormalizer.requires" href="#impc_etl.workflow.normalization.ExperimentNormalizer.requires">requires</a></code></li>
-</ul>
-</li>
-<li>
 <h4><code><a title="impc_etl.workflow.normalization.LineExperimentNormalizer" href="#impc_etl.workflow.normalization.LineExperimentNormalizer">LineExperimentNormalizer</a></code></h4>
 <ul class="">
 <li><code><a title="impc_etl.workflow.normalization.LineExperimentNormalizer.app" href="#impc_etl.workflow.normalization.LineExperimentNormalizer.app">app</a></code></li>
@@ -834,27 +275,6 @@ the same output since they don't see the work done by other workers.</p>
 <li><code><a title="impc_etl.workflow.normalization.LineExperimentNormalizer.output_path" href="#impc_etl.workflow.normalization.LineExperimentNormalizer.output_path">output_path</a></code></li>
 <li><code><a title="impc_etl.workflow.normalization.LineExperimentNormalizer.requires" href="#impc_etl.workflow.normalization.LineExperimentNormalizer.requires">requires</a></code></li>
 <li><code><a title="impc_etl.workflow.normalization.LineExperimentNormalizer.resources" href="#impc_etl.workflow.normalization.LineExperimentNormalizer.resources">resources</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.normalization.MouseNormalizer" href="#impc_etl.workflow.normalization.MouseNormalizer">MouseNormalizer</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.normalization.MouseNormalizer.entity_type" href="#impc_etl.workflow.normalization.MouseNormalizer.entity_type">entity_type</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.MouseNormalizer.requires" href="#impc_etl.workflow.normalization.MouseNormalizer.requires">requires</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer" href="#impc_etl.workflow.normalization.SpecimenNormalizer">SpecimenNormalizer</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.app" href="#impc_etl.workflow.normalization.SpecimenNormalizer.app">app</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.app_options" href="#impc_etl.workflow.normalization.SpecimenNormalizer.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.dcc_xml_path" href="#impc_etl.workflow.normalization.SpecimenNormalizer.dcc_xml_path">dcc_xml_path</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.entity_type" href="#impc_etl.workflow.normalization.SpecimenNormalizer.entity_type">entity_type</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.imits_colonies_tsv_path" href="#impc_etl.workflow.normalization.SpecimenNormalizer.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.name" href="#impc_etl.workflow.normalization.SpecimenNormalizer.name">name</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.output" href="#impc_etl.workflow.normalization.SpecimenNormalizer.output">output</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.output_path" href="#impc_etl.workflow.normalization.SpecimenNormalizer.output_path">output_path</a></code></li>
-<li><code><a title="impc_etl.workflow.normalization.SpecimenNormalizer.resources" href="#impc_etl.workflow.normalization.SpecimenNormalizer.resources">resources</a></code></li>
 </ul>
 </li>
 </ul>

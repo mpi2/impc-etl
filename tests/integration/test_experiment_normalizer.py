@@ -1,10 +1,12 @@
+import os
+
+import pytest
 from impc_etl.transformations.experiment_transformations import _get_closest_weight
-from impc_etl.jobs.extract.dcc_extractor_helper import *
+
 from impc_etl.jobs.clean.experiment_cleaner import *
 from impc_etl.jobs.clean.specimen_cleaner import clean_specimens
 from impc_etl.jobs.extract.impress_extractor import extract_impress
-import os
-import pytest
+from impc_etl.jobs.extract.xml_extraction_helper import *
 
 FIXTURES_PATH = (
     os.environ["FIXTURES_PATH"]

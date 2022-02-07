@@ -26,13 +26,15 @@ from pyspark.sql.types import (
 
 from impc_etl.config.constants import Constants
 from impc_etl.jobs.extract import ImpressExtractor
+from impc_etl.jobs.transform.specimen_experiment_cross_ref import (
+    SpecimenLevelExperimentCrossRef,
+)
 from impc_etl.shared.utils import (
     extract_parameters_from_derivation,
     has_column,
 )
 from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.normalization import (
-    ExperimentNormalizer,
     LineExperimentNormalizer,
 )
 
@@ -377,7 +379,7 @@ class ExperimentParameterDerivator(ParameterDerivator):
     experiment_level = "experiment"
 
     def requires(self):
-        return [ExperimentNormalizer(entity_type="experiment"), ImpressExtractor()]
+        return [SpecimenLevelExperimentCrossRef(), ImpressExtractor()]
 
 
 class LineParameterDerivator(ParameterDerivator):
@@ -385,4 +387,4 @@ class LineParameterDerivator(ParameterDerivator):
     experiment_level = "line"
 
     def requires(self):
-        return [LineExperimentNormalizer(entity_type="line"), ImpressExtractor()]
+        return [LineExperimentNormalizer(), ImpressExtractor()]

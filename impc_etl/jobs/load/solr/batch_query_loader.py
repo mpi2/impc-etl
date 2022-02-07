@@ -3,7 +3,7 @@ from luigi.contrib.spark import PySparkTask
 from pyspark.sql.functions import col, collect_set, explode
 from pyspark.sql.session import SparkSession
 
-from impc_etl.jobs.extract import IMPCOntologyMetadataExtractor
+from impc_etl.jobs.extract import OntologyMetadataExtractor
 from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.load import (
     GeneCoreLoader,
@@ -26,7 +26,7 @@ class BatchQueryLoader(PySparkTask):
             ObservationsMapper(),
             GeneCoreLoader(),
             StatsResultsCoreLoader(),
-            IMPCOntologyMetadataExtractor(),
+            OntologyMetadataExtractor(),
         ]
 
     def app_options(self):

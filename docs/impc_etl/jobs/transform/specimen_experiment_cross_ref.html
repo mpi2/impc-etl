@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>impc_etl.jobs.transform.specimen_experiment_cross_ref API documentation</title>
+<meta name="description" content="Luigi tasks to take care of cross-reference the Specimen Level Experimental data with the specimen data,
+and the IMPReSS data …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>impc_etl.jobs.transform.specimen_experiment_cross_ref</code></h1>
+</header>
+<section id="section-intro">
+<p>Luigi tasks to take care of cross-reference the Specimen Level Experimental data with the specimen data,
+and the IMPReSS data.</p>
+<p>The general cross-reference process is:</p>
+<ul>
+<li>Load parquet files (i.e. specimen level experiments, mouse specimens,
+embryo specimens, IMPReSS data) into data frames.</li>
+<li>Change the legacy data outdated pipelines, for 3i data with procedure MGP_PBI_001: SLM_001 -&gt; MGP_001;
+for EuroPhenome data with procedure ESLIM_019_001: ESLIM_001 -&gt; ESLIM_002.</li>
+<li>Merge mouse specimen data and embryo specimen data in one DataFrame.</li>
+<li>Join the Experimental data with the Specimen data</li>
+<li>Drop experiment for specimens without a colony id</li>
+<li>Override the data source and the project info for MGP and MGP Legacy experiments</li>
+<li>Generate metadata group (a hash value to identify experiments with the same experimental conditions)</li>
+<li>Generate metadata array (a list of "parameter = value" for metadata parameters in a given experiment)</li>
+<li>Select the columns relevant to experimental data only</li>
+</ul>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+    Luigi tasks to take care of cross-reference the Specimen Level Experimental data with the specimen data,
+    and the IMPReSS data.
+
+    The general cross-reference process is:
+
+    - Load parquet files (i.e. specimen level experiments, mouse specimens,
+    embryo specimens, IMPReSS data) into data frames.
+    - Change the legacy data outdated pipelines, for 3i data with procedure MGP_PBI_001: SLM_001 -&gt; MGP_001;
+    for EuroPhenome data with procedure ESLIM_019_001: ESLIM_001 -&gt; ESLIM_002.
+    - Merge mouse specimen data and embryo specimen data in one DataFrame.
+    - Join the Experimental data with the Specimen data
+    - Drop experiment for specimens without a colony id
+    - Override the data source and the project info for MGP and MGP Legacy experiments
+    - Generate metadata group (a hash value to identify experiments with the same experimental conditions)
+    - Generate metadata array (a list of &#34;parameter = value&#34; for metadata parameters in a given experiment)
+    - Select the columns relevant to experimental data only
+&#34;&#34;&#34;
+from typing import Any
+
+import luigi
+from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
+from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.functions import (
+    col,
+    lit,
+    when,
+    lower,
+)
+from pyspark.sql.utils import AnalysisException
+
+from impc_etl.jobs.clean.experiment_cleaner import SpecimenLevelExperimentCleaner
+from impc_etl.jobs.extract import ImpressExtractor
+from impc_etl.jobs.transform.cross_ref_helper import (
+    override_europhenome_datasource,
+    generate_metadata_group,
+    generate_metadata,
+)
+from impc_etl.jobs.transform.specimen_cross_ref import EmbryoCrossRef, MouseCrossRef
+from impc_etl.workflow.config import ImpcConfig
+
+
+class SpecimenLevelExperimentCrossRef(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark task for cross-reference Specimen Level experiments.
+    Depends on `impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner`,
+    `impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef`,
+    `impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef`,
+    and `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`.
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name = &#34;IMPC_Specimen_Level_Experiment_Cross_Reference&#34;
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+
+        return [
+            SpecimenLevelExperimentCleaner(),
+            MouseCrossRef(),
+            EmbryoCrossRef(),
+            ImpressExtractor(),
+        ]
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/specimen_level_experiment_cross_ref_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}specimen_level_experiment_cross_ref_parquet&#34;
+        )
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.input()[3].path,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args: Any):
+        &#34;&#34;&#34;
+        Loads the required parquets as DataFrames and applies the cross-reference transformations.
+        &#34;&#34;&#34;
+        experiment_parquet_path = args[0]
+        mouse_parquet_path = args[1]
+        embryo_parquet_path = args[2]
+        impress_parquet_path = args[3]
+        output_path = args[4]
+        spark = SparkSession(sc)
+        experiment_normalized_df = self.cross_reference_experiments(
+            spark,
+            experiment_parquet_path,
+            mouse_parquet_path,
+            embryo_parquet_path,
+            impress_parquet_path,
+        )
+        experiment_normalized_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
+
+    def cross_reference_experiments(
+        self,
+        spark_session: SparkSession,
+        experiment_parquet_path: str,
+        mouse_parquet_path: str,
+        embryo_parquet_path: str,
+        impress_parquet_path: str,
+    ) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Takes in the Specimen level experiment, the IMPReSS the mouse
+        and embryo specimen parquet paths, loads them into DataFrames and applies
+        cross-reference transformations to the Experimental data.
+        &#34;&#34;&#34;
+        experiment_df = spark_session.read.parquet(experiment_parquet_path)
+        mouse_df = spark_session.read.parquet(mouse_parquet_path)
+
+        # Sometimes the Embryo Specimen parquet could be empty
+        try:
+            embryo_df = spark_session.read.parquet(embryo_parquet_path)
+        except AnalysisException:
+            embryo_df = None
+        impress_df = spark_session.read.parquet(impress_parquet_path)
+
+        # TODO: Remove this data manipulation and change the source file instead
+        # Legacy data manipulation start
+
+        # Some 3i comes with an invalid pipeline SLM_001, this must be replaced by  MGP_001
+        experiment_df = experiment_df.withColumn(
+            &#34;_pipeline&#34;,
+            when(
+                (col(&#34;_dataSource&#34;) == &#34;3i&#34;)
+                &amp; (col(&#34;_procedureID&#34;) == &#34;MGP_PBI_001&#34;)
+                &amp; (col(&#34;_pipeline&#34;) == &#34;SLM_001&#34;),
+                lit(&#34;MGP_001&#34;),
+            ).otherwise(col(&#34;_pipeline&#34;)),
+        )
+
+        # Some EuroPhenome comes with an invalid pipeline ESLIM_001, this must be replaced by  ESLIM_002
+        experiment_df = experiment_df.withColumn(
+            &#34;_pipeline&#34;,
+            when(
+                (lower(col(&#34;_dataSource&#34;)).isin([&#34;europhenome&#34;, &#34;mgp&#34;]))
+                &amp; (col(&#34;_procedureID&#34;) == &#34;ESLIM_019_001&#34;)
+                &amp; (col(&#34;_pipeline&#34;) == &#34;ESLIM_001&#34;),
+                lit(&#34;ESLIM_002&#34;),
+            ).otherwise(col(&#34;_pipeline&#34;)),
+        )
+        # Legacy data manipulation end
+
+        specimen_df = self.merge_specimen_data(mouse_df, embryo_df)
+
+        # Add alias to experiment and specimen DF so is easier to operate after the join
+        experiment_df = experiment_df.alias(&#34;experiment&#34;)
+        specimen_df = specimen_df.alias(&#34;specimen&#34;)
+
+        experiment_specimen_df = experiment_df.join(
+            specimen_df,
+            (experiment_df[&#34;_centreID&#34;] == specimen_df[&#34;_centreID&#34;])
+            &amp; (experiment_df[&#34;specimenID&#34;] == specimen_df[&#34;_specimenID&#34;]),
+        )
+
+        experiment_specimen_df = self.drop_null_colony_id(experiment_specimen_df)
+
+        experiment_specimen_df = experiment_specimen_df.transform(
+            override_europhenome_datasource
+        )
+
+        experiment_specimen_df = generate_metadata_group(
+            experiment_specimen_df, impress_df
+        )
+
+        experiment_specimen_df = generate_metadata(experiment_specimen_df, impress_df)
+
+        experiment_columns = [
+            &#34;experiment.&#34; + col_name
+            for col_name in experiment_df.columns
+            if col_name not in [&#34;_dataSource&#34;, &#34;_project&#34;]
+        ] + [&#34;metadata&#34;, &#34;metadataGroup&#34;, &#34;_project&#34;, &#34;_dataSource&#34;]
+        experiment_df = experiment_specimen_df.select(experiment_columns)
+        return experiment_df
+
+    def drop_null_colony_id(self, experiment_specimen_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Drops experiments with a null colony ID, only when the specimen is a mutant.
+        &#34;&#34;&#34;
+        experiment_specimen_df = experiment_specimen_df.where(
+            (col(&#34;specimen._colonyID&#34;).isNotNull())
+            | (col(&#34;specimen._isBaseline&#34;) == True)
+            | (col(&#34;specimen._colonyID&#34;) == &#34;baseline&#34;)
+        )
+        return experiment_specimen_df.dropDuplicates()
+
+    def merge_specimen_data(
+        self, mouse_df: DataFrame, embryo_df: DataFrame
+    ) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Takes in a mouse dataframe and a embryo dataframe and returns a DataFrame
+        containing both Mouse and Embryo specimen data.
+        &#34;&#34;&#34;
+        specimen_cols = [
+            &#34;_centreID&#34;,
+            &#34;_specimenID&#34;,
+            &#34;_colonyID&#34;,
+            &#34;_isBaseline&#34;,
+            &#34;_productionCentre&#34;,
+            &#34;_phenotypingCentre&#34;,
+            &#34;phenotyping_consortium&#34;,
+        ]
+
+        # Select the relevant columns for specimen data
+        mouse_specimen_df = mouse_df.select(*specimen_cols)
+        if embryo_df is not None:
+            embryo_specimen_df = embryo_df.select(*specimen_cols)
+
+            # Merge both the mouse specimen data and the embryo specimen data in one DataFrame
+            specimen_df = mouse_specimen_df.union(embryo_specimen_df)
+        else:
+            specimen_df = mouse_specimen_df
+        return specimen_df</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef"><code class="flex name class">
+<span>class <span class="ident">SpecimenLevelExperimentCrossRef</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>PySpark task for cross-reference Specimen Level experiments.
+Depends on <code><a title="impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner" href="../clean/experiment_cleaner.html#impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner">SpecimenLevelExperimentCleaner</a></code>,
+<code><a title="impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef" href="specimen_cross_ref.html#impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef">MouseCrossRef</a></code>,
+<code><a title="impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef" href="specimen_cross_ref.html#impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef">EmbryoCrossRef</a></code>,
+and <code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor" href="../extract/impress_extractor.html#impc_etl.jobs.extract.impress_extractor.ImpressExtractor">ImpressExtractor</a></code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SpecimenLevelExperimentCrossRef(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark task for cross-reference Specimen Level experiments.
+    Depends on `impc_etl.jobs.clean.experiment_cleaner.SpecimenLevelExperimentCleaner`,
+    `impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef`,
+    `impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef`,
+    and `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`.
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name = &#34;IMPC_Specimen_Level_Experiment_Cross_Reference&#34;
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+
+        return [
+            SpecimenLevelExperimentCleaner(),
+            MouseCrossRef(),
+            EmbryoCrossRef(),
+            ImpressExtractor(),
+        ]
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/specimen_level_experiment_cross_ref_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}specimen_level_experiment_cross_ref_parquet&#34;
+        )
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
+            self.input()[3].path,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args: Any):
+        &#34;&#34;&#34;
+        Loads the required parquets as DataFrames and applies the cross-reference transformations.
+        &#34;&#34;&#34;
+        experiment_parquet_path = args[0]
+        mouse_parquet_path = args[1]
+        embryo_parquet_path = args[2]
+        impress_parquet_path = args[3]
+        output_path = args[4]
+        spark = SparkSession(sc)
+        experiment_normalized_df = self.cross_reference_experiments(
+            spark,
+            experiment_parquet_path,
+            mouse_parquet_path,
+            embryo_parquet_path,
+            impress_parquet_path,
+        )
+        experiment_normalized_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
+
+    def cross_reference_experiments(
+        self,
+        spark_session: SparkSession,
+        experiment_parquet_path: str,
+        mouse_parquet_path: str,
+        embryo_parquet_path: str,
+        impress_parquet_path: str,
+    ) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Takes in the Specimen level experiment, the IMPReSS the mouse
+        and embryo specimen parquet paths, loads them into DataFrames and applies
+        cross-reference transformations to the Experimental data.
+        &#34;&#34;&#34;
+        experiment_df = spark_session.read.parquet(experiment_parquet_path)
+        mouse_df = spark_session.read.parquet(mouse_parquet_path)
+
+        # Sometimes the Embryo Specimen parquet could be empty
+        try:
+            embryo_df = spark_session.read.parquet(embryo_parquet_path)
+        except AnalysisException:
+            embryo_df = None
+        impress_df = spark_session.read.parquet(impress_parquet_path)
+
+        # TODO: Remove this data manipulation and change the source file instead
+        # Legacy data manipulation start
+
+        # Some 3i comes with an invalid pipeline SLM_001, this must be replaced by  MGP_001
+        experiment_df = experiment_df.withColumn(
+            &#34;_pipeline&#34;,
+            when(
+                (col(&#34;_dataSource&#34;) == &#34;3i&#34;)
+                &amp; (col(&#34;_procedureID&#34;) == &#34;MGP_PBI_001&#34;)
+                &amp; (col(&#34;_pipeline&#34;) == &#34;SLM_001&#34;),
+                lit(&#34;MGP_001&#34;),
+            ).otherwise(col(&#34;_pipeline&#34;)),
+        )
+
+        # Some EuroPhenome comes with an invalid pipeline ESLIM_001, this must be replaced by  ESLIM_002
+        experiment_df = experiment_df.withColumn(
+            &#34;_pipeline&#34;,
+            when(
+                (lower(col(&#34;_dataSource&#34;)).isin([&#34;europhenome&#34;, &#34;mgp&#34;]))
+                &amp; (col(&#34;_procedureID&#34;) == &#34;ESLIM_019_001&#34;)
+                &amp; (col(&#34;_pipeline&#34;) == &#34;ESLIM_001&#34;),
+                lit(&#34;ESLIM_002&#34;),
+            ).otherwise(col(&#34;_pipeline&#34;)),
+        )
+        # Legacy data manipulation end
+
+        specimen_df = self.merge_specimen_data(mouse_df, embryo_df)
+
+        # Add alias to experiment and specimen DF so is easier to operate after the join
+        experiment_df = experiment_df.alias(&#34;experiment&#34;)
+        specimen_df = specimen_df.alias(&#34;specimen&#34;)
+
+        experiment_specimen_df = experiment_df.join(
+            specimen_df,
+            (experiment_df[&#34;_centreID&#34;] == specimen_df[&#34;_centreID&#34;])
+            &amp; (experiment_df[&#34;specimenID&#34;] == specimen_df[&#34;_specimenID&#34;]),
+        )
+
+        experiment_specimen_df = self.drop_null_colony_id(experiment_specimen_df)
+
+        experiment_specimen_df = experiment_specimen_df.transform(
+            override_europhenome_datasource
+        )
+
+        experiment_specimen_df = generate_metadata_group(
+            experiment_specimen_df, impress_df
+        )
+
+        experiment_specimen_df = generate_metadata(experiment_specimen_df, impress_df)
+
+        experiment_columns = [
+            &#34;experiment.&#34; + col_name
+            for col_name in experiment_df.columns
+            if col_name not in [&#34;_dataSource&#34;, &#34;_project&#34;]
+        ] + [&#34;metadata&#34;, &#34;metadataGroup&#34;, &#34;_project&#34;, &#34;_dataSource&#34;]
+        experiment_df = experiment_specimen_df.select(experiment_columns)
+        return experiment_df
+
+    def drop_null_colony_id(self, experiment_specimen_df: DataFrame) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Drops experiments with a null colony ID, only when the specimen is a mutant.
+        &#34;&#34;&#34;
+        experiment_specimen_df = experiment_specimen_df.where(
+            (col(&#34;specimen._colonyID&#34;).isNotNull())
+            | (col(&#34;specimen._isBaseline&#34;) == True)
+            | (col(&#34;specimen._colonyID&#34;) == &#34;baseline&#34;)
+        )
+        return experiment_specimen_df.dropDuplicates()
+
+    def merge_specimen_data(
+        self, mouse_df: DataFrame, embryo_df: DataFrame
+    ) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Takes in a mouse dataframe and a embryo dataframe and returns a DataFrame
+        containing both Mouse and Embryo specimen data.
+        &#34;&#34;&#34;
+        specimen_cols = [
+            &#34;_centreID&#34;,
+            &#34;_specimenID&#34;,
+            &#34;_colonyID&#34;,
+            &#34;_isBaseline&#34;,
+            &#34;_productionCentre&#34;,
+            &#34;_phenotypingCentre&#34;,
+            &#34;phenotyping_consortium&#34;,
+        ]
+
+        # Select the relevant columns for specimen data
+        mouse_specimen_df = mouse_df.select(*specimen_cols)
+        if embryo_df is not None:
+            embryo_specimen_df = embryo_df.select(*specimen_cols)
+
+            # Merge both the mouse specimen data and the embryo specimen data in one DataFrame
+            specimen_df = mouse_specimen_df.union(embryo_specimen_df)
+        else:
+            specimen_df = mouse_specimen_df
+        return specimen_df</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"><p>Name of the Spark task</p></div>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"><p>Path of the output directory where the new parquet file will be generated.</p></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates the options pass to the PySpark job</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    &#34;&#34;&#34;
+    Generates the options pass to the PySpark job
+    &#34;&#34;&#34;
+    return [
+        self.input()[0].path,
+        self.input()[1].path,
+        self.input()[2].path,
+        self.input()[3].path,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.cross_reference_experiments"><code class="name flex">
+<span>def <span class="ident">cross_reference_experiments</span></span>(<span>self, spark_session: pyspark.sql.session.SparkSession, experiment_parquet_path: str, mouse_parquet_path: str, embryo_parquet_path: str, impress_parquet_path: str) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Takes in the Specimen level experiment, the IMPReSS the mouse
+and embryo specimen parquet paths, loads them into DataFrames and applies
+cross-reference transformations to the Experimental data.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cross_reference_experiments(
+    self,
+    spark_session: SparkSession,
+    experiment_parquet_path: str,
+    mouse_parquet_path: str,
+    embryo_parquet_path: str,
+    impress_parquet_path: str,
+) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes in the Specimen level experiment, the IMPReSS the mouse
+    and embryo specimen parquet paths, loads them into DataFrames and applies
+    cross-reference transformations to the Experimental data.
+    &#34;&#34;&#34;
+    experiment_df = spark_session.read.parquet(experiment_parquet_path)
+    mouse_df = spark_session.read.parquet(mouse_parquet_path)
+
+    # Sometimes the Embryo Specimen parquet could be empty
+    try:
+        embryo_df = spark_session.read.parquet(embryo_parquet_path)
+    except AnalysisException:
+        embryo_df = None
+    impress_df = spark_session.read.parquet(impress_parquet_path)
+
+    # TODO: Remove this data manipulation and change the source file instead
+    # Legacy data manipulation start
+
+    # Some 3i comes with an invalid pipeline SLM_001, this must be replaced by  MGP_001
+    experiment_df = experiment_df.withColumn(
+        &#34;_pipeline&#34;,
+        when(
+            (col(&#34;_dataSource&#34;) == &#34;3i&#34;)
+            &amp; (col(&#34;_procedureID&#34;) == &#34;MGP_PBI_001&#34;)
+            &amp; (col(&#34;_pipeline&#34;) == &#34;SLM_001&#34;),
+            lit(&#34;MGP_001&#34;),
+        ).otherwise(col(&#34;_pipeline&#34;)),
+    )
+
+    # Some EuroPhenome comes with an invalid pipeline ESLIM_001, this must be replaced by  ESLIM_002
+    experiment_df = experiment_df.withColumn(
+        &#34;_pipeline&#34;,
+        when(
+            (lower(col(&#34;_dataSource&#34;)).isin([&#34;europhenome&#34;, &#34;mgp&#34;]))
+            &amp; (col(&#34;_procedureID&#34;) == &#34;ESLIM_019_001&#34;)
+            &amp; (col(&#34;_pipeline&#34;) == &#34;ESLIM_001&#34;),
+            lit(&#34;ESLIM_002&#34;),
+        ).otherwise(col(&#34;_pipeline&#34;)),
+    )
+    # Legacy data manipulation end
+
+    specimen_df = self.merge_specimen_data(mouse_df, embryo_df)
+
+    # Add alias to experiment and specimen DF so is easier to operate after the join
+    experiment_df = experiment_df.alias(&#34;experiment&#34;)
+    specimen_df = specimen_df.alias(&#34;specimen&#34;)
+
+    experiment_specimen_df = experiment_df.join(
+        specimen_df,
+        (experiment_df[&#34;_centreID&#34;] == specimen_df[&#34;_centreID&#34;])
+        &amp; (experiment_df[&#34;specimenID&#34;] == specimen_df[&#34;_specimenID&#34;]),
+    )
+
+    experiment_specimen_df = self.drop_null_colony_id(experiment_specimen_df)
+
+    experiment_specimen_df = experiment_specimen_df.transform(
+        override_europhenome_datasource
+    )
+
+    experiment_specimen_df = generate_metadata_group(
+        experiment_specimen_df, impress_df
+    )
+
+    experiment_specimen_df = generate_metadata(experiment_specimen_df, impress_df)
+
+    experiment_columns = [
+        &#34;experiment.&#34; + col_name
+        for col_name in experiment_df.columns
+        if col_name not in [&#34;_dataSource&#34;, &#34;_project&#34;]
+    ] + [&#34;metadata&#34;, &#34;metadataGroup&#34;, &#34;_project&#34;, &#34;_dataSource&#34;]
+    experiment_df = experiment_specimen_df.select(experiment_columns)
+    return experiment_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.drop_null_colony_id"><code class="name flex">
+<span>def <span class="ident">drop_null_colony_id</span></span>(<span>self, experiment_specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Drops experiments with a null colony ID, only when the specimen is a mutant.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def drop_null_colony_id(self, experiment_specimen_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Drops experiments with a null colony ID, only when the specimen is a mutant.
+    &#34;&#34;&#34;
+    experiment_specimen_df = experiment_specimen_df.where(
+        (col(&#34;specimen._colonyID&#34;).isNotNull())
+        | (col(&#34;specimen._isBaseline&#34;) == True)
+        | (col(&#34;specimen._colonyID&#34;) == &#34;baseline&#34;)
+    )
+    return experiment_specimen_df.dropDuplicates()</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Loads the required parquets as DataFrames and applies the cross-reference transformations.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(self, sc: SparkContext, *args: Any):
+    &#34;&#34;&#34;
+    Loads the required parquets as DataFrames and applies the cross-reference transformations.
+    &#34;&#34;&#34;
+    experiment_parquet_path = args[0]
+    mouse_parquet_path = args[1]
+    embryo_parquet_path = args[2]
+    impress_parquet_path = args[3]
+    output_path = args[4]
+    spark = SparkSession(sc)
+    experiment_normalized_df = self.cross_reference_experiments(
+        spark,
+        experiment_parquet_path,
+        mouse_parquet_path,
+        embryo_parquet_path,
+        impress_parquet_path,
+    )
+    experiment_normalized_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.merge_specimen_data"><code class="name flex">
+<span>def <span class="ident">merge_specimen_data</span></span>(<span>self, mouse_df: pyspark.sql.dataframe.DataFrame, embryo_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Takes in a mouse dataframe and a embryo dataframe and returns a DataFrame
+containing both Mouse and Embryo specimen data.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def merge_specimen_data(
+    self, mouse_df: DataFrame, embryo_df: DataFrame
+) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes in a mouse dataframe and a embryo dataframe and returns a DataFrame
+    containing both Mouse and Embryo specimen data.
+    &#34;&#34;&#34;
+    specimen_cols = [
+        &#34;_centreID&#34;,
+        &#34;_specimenID&#34;,
+        &#34;_colonyID&#34;,
+        &#34;_isBaseline&#34;,
+        &#34;_productionCentre&#34;,
+        &#34;_phenotypingCentre&#34;,
+        &#34;phenotyping_consortium&#34;,
+    ]
+
+    # Select the relevant columns for specimen data
+    mouse_specimen_df = mouse_df.select(*specimen_cols)
+    if embryo_df is not None:
+        embryo_specimen_df = embryo_df.select(*specimen_cols)
+
+        # Merge both the mouse specimen data and the embryo specimen data in one DataFrame
+        specimen_df = mouse_specimen_df.union(embryo_specimen_df)
+    else:
+        specimen_df = mouse_specimen_df
+    return specimen_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the full parquet path as an output for the Luigi Task
+(e.g. impc/dr15.2/parquet/specimen_level_experiment_cross_ref_parquet)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    &#34;&#34;&#34;
+    Returns the full parquet path as an output for the Luigi Task
+    (e.g. impc/dr15.2/parquet/specimen_level_experiment_cross_ref_parquet)
+    &#34;&#34;&#34;
+    return ImpcConfig().get_target(
+        f&#34;{self.output_path}specimen_level_experiment_cross_ref_parquet&#34;
+    )</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the luigi
+task dependencies</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    &#34;&#34;&#34;
+    Defines the luigi  task dependencies
+    &#34;&#34;&#34;
+
+    return [
+        SpecimenLevelExperimentCleaner(),
+        MouseCrossRef(),
+        EmbryoCrossRef(),
+        ImpressExtractor(),
+    ]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<header>
+<div style="max-width: 300px; text-align: center">
+<img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
+</div>
+<h1 style="text-align: center; max-width: 300px;">IMPC ETL</h1>
+<h2 style="text-align: center; max-width: 300px;">Reference Documentation</h2>
+</header>
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="impc_etl.jobs.transform" href="index.html">impc_etl.jobs.transform</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef" href="#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef">SpecimenLevelExperimentCrossRef</a></code></h4>
+<ul class="">
+<li><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.app_options" href="#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.cross_reference_experiments" href="#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.cross_reference_experiments">cross_reference_experiments</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.drop_null_colony_id" href="#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.drop_null_colony_id">drop_null_colony_id</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.main" href="#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.merge_specimen_data" href="#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.merge_specimen_data">merge_specimen_data</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.name" href="#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.output" href="#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.output_path" href="#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.requires" href="#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef.requires">requires</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p><span></span></p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

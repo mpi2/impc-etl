@@ -31,20 +31,21 @@ from pyspark.sql.functions import (
 from pyspark.sql.types import StringType
 
 from impc_etl.config.constants import Constants
+from impc_etl.jobs.extract.experiment_extractor import (
+    SpecimenLevelExperimentExtractor,
+    LineLevelExperimentExtractor,
+)
 from impc_etl.shared import utils
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.extraction import (
-    SpecimenExperimentExtractor,
-    LineExperimentExtractor,
-)
 
 
-class IMPCExperimentCleaner(PySparkTask):
+class ExperimentCleaner(PySparkTask):
     """
     PySpark task  to clean the IMPC Experimental data.
 
-    This task depends on `impc_etl.workflow.extraction.SpecimenExperimentExtractor` for cleaning Specimen Level experiments
-    or `impc_etl.workflow.extraction.LineExperimentExtractor`
+    This task depends on `impc_etl.jobs.extract.dcc_experiment_extractor.SpecimenLevelExperimentExtractor`
+    for cleaning Specimen Level experiments
+    or `impc_etl.jobs.extract.dcc_experiment_extractor.LineLevelExperimentExtractor`
     for cleaning Line Level experiments.
     """
 
@@ -62,9 +63,9 @@ class IMPCExperimentCleaner(PySparkTask):
         Defines the luigi  task dependencies
         """
         return (
-            SpecimenExperimentExtractor()
+            SpecimenLevelExperimentExtractor()
             if self.experiment_type == "specimen_level"
-            else LineExperimentExtractor()
+            else LineLevelExperimentExtractor()
         )
 
     def output(self):
@@ -373,3 +374,13 @@ class IMPCExperimentCleaner(PySparkTask):
             "unique_id", md5(concat(*unique_columns))
         )
         return dcc_experiment_df
+
+
+class SpecimenLevelExperimentCleaner(ExperimentCleaner):
+    name: str = "Specimen_Level_Experiment_Cleaner"
+    experiment_type: str = "specimen_level"
+
+
+class LineLevelExperimentCleaner(ExperimentCleaner):
+    name: str = "Line_Level_Experiment_Cleaner"
+    experiment_type = "line_level"

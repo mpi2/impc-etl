@@ -47,7 +47,7 @@ from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 from impc_etl.workflow.config import ImpcConfig
 
 
-class IMPCOntologyTermHierarchyExtractor(PySparkTask):
+class OntologyTermHierarchyExtractor(PySparkTask):
     &#34;&#34;&#34;
     PySpark Task class to extract the hierarchical relations between terms for the ontologies: MPATH, MA, EMAPA and MP.
     The main goal of this task is to assign to any ontology term a list of:
@@ -420,8 +420,8 @@ class IMPCOntologyTermHierarchyExtractor(PySparkTask):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor"><code class="flex name class">
-<span>class <span class="ident">IMPCOntologyTermHierarchyExtractor</span></span>
+<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor"><code class="flex name class">
+<span>class <span class="ident">OntologyTermHierarchyExtractor</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
@@ -438,7 +438,7 @@ The main goal of this task is to assign to any ontology term a list of:</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class IMPCOntologyTermHierarchyExtractor(PySparkTask):
+<pre><code class="python">class OntologyTermHierarchyExtractor(PySparkTask):
     &#34;&#34;&#34;
     PySpark Task class to extract the hierarchical relations between terms for the ontologies: MPATH, MA, EMAPA and MP.
     The main goal of this task is to assign to any ontology term a list of:
@@ -810,30 +810,30 @@ The main goal of this task is to assign to any ontology term a list of:</p>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.ONTOLOGIES"><code class="name">var <span class="ident">ONTOLOGIES</span> : List[Dict[~KT, ~VT]]</code></dt>
+<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.ONTOLOGIES"><code class="name">var <span class="ident">ONTOLOGIES</span> : List[Dict[~KT, ~VT]]</code></dt>
 <dd>
 <div class="desc"><p>List on ontologies to process with their corresponding top level terms</p></div>
 </dd>
-<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.ONTOLOGY_SCHEMA"><code class="name">var <span class="ident">ONTOLOGY_SCHEMA</span> : pyspark.sql.types.StructType</code></dt>
+<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.ONTOLOGY_SCHEMA"><code class="name">var <span class="ident">ONTOLOGY_SCHEMA</span> : pyspark.sql.types.StructType</code></dt>
 <dd>
 <div class="desc"><p>Schema of the resulting parquet file</p></div>
 </dd>
-<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.name"><code class="name">var <span class="ident">name</span></code></dt>
 <dd>
 <div class="desc"><p>Name of the Spark task</p></div>
 </dd>
-<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.obo_ontology_input_path"><code class="name">var <span class="ident">obo_ontology_input_path</span> : luigi.parameter.Parameter</code></dt>
+<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.obo_ontology_input_path"><code class="name">var <span class="ident">obo_ontology_input_path</span> : luigi.parameter.Parameter</code></dt>
 <dd>
 <div class="desc"><p>Path to the directory containing OBO files for MA, MPATH, EMAPA and MP.</p></div>
 </dd>
-<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
+<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.output_path"><code class="name">var <span class="ident">output_path</span> : luigi.parameter.Parameter</code></dt>
 <dd>
 <div class="desc"><p>Path of the output directory where ethe new parquet file will be generated.</p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.app_options"><code class="name flex">
+<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.app_options"><code class="name flex">
 <span>def <span class="ident">app_options</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -852,7 +852,7 @@ The main goal of this task is to assign to any ontology term a list of:</p>
     ]</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.extract_ontology_terms"><code class="name flex">
+<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.extract_ontology_terms"><code class="name flex">
 <span>def <span class="ident">extract_ontology_terms</span></span>(<span>self, spark_session: pyspark.sql.session.SparkSession, ontologies_path: str) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
@@ -937,7 +937,7 @@ a DataFrame that represents Ontology terms hierarchical relationships.</p></div>
     return ontology_terms_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.main"><code class="name flex">
+<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.main"><code class="name flex">
 <span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
 </code></dt>
 <dd>
@@ -958,7 +958,7 @@ a DataFrame that represents Ontology terms hierarchical relationships.</p></div>
     ontology_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.output"><code class="name flex">
+<dt id="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.output"><code class="name flex">
 <span>def <span class="ident">output</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -1004,17 +1004,17 @@ a DataFrame that represents Ontology terms hierarchical relationships.</p></div>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor">IMPCOntologyTermHierarchyExtractor</a></code></h4>
+<h4><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor">OntologyTermHierarchyExtractor</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.ONTOLOGIES" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.ONTOLOGIES">ONTOLOGIES</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.ONTOLOGY_SCHEMA" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.ONTOLOGY_SCHEMA">ONTOLOGY_SCHEMA</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.app_options" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.extract_ontology_terms" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.extract_ontology_terms">extract_ontology_terms</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.main" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.main">main</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.name" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.name">name</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.obo_ontology_input_path" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.obo_ontology_input_path">obo_ontology_input_path</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.output" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.output">output</a></code></li>
-<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.output_path" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.IMPCOntologyTermHierarchyExtractor.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.ONTOLOGIES" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.ONTOLOGIES">ONTOLOGIES</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.ONTOLOGY_SCHEMA" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.ONTOLOGY_SCHEMA">ONTOLOGY_SCHEMA</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.app_options" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.extract_ontology_terms" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.extract_ontology_terms">extract_ontology_terms</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.main" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.name" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.obo_ontology_input_path" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.obo_ontology_input_path">obo_ontology_input_path</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.output" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.output_path" href="#impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor.output_path">output_path</a></code></li>
 </ul>
 </li>
 </ul>

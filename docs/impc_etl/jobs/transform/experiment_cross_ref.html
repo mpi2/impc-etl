@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>impc_etl.jobs.transform.experiment_cross_ref API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>impc_etl.jobs.transform.experiment_cross_ref</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import hashlib
+import sys
+from typing import List
+
+from pyspark.sql import SparkSession, Window, DataFrame, Column
+from pyspark.sql.functions import (
+    col,
+    lit,
+    when,
+    lower,
+    concat,
+    md5,
+    explode,
+    concat_ws,
+    sort_array,
+    collect_set,
+    max,
+    udf,
+    array_union,
+    array,
+)
+from pyspark.sql.types import (
+    ArrayType,
+    StringType,
+    Row,
+)
+from pyspark.sql.utils import AnalysisException
+
+from impc_etl.config.constants import Constants
+
+
+def main(argv):
+    experiment_parquet_path = argv[1]
+    mouse_parquet_path = argv[2]
+    embryo_parquet_path = argv[3]
+    pipeline_parquet_path = argv[4]
+    output_path = argv[5]
+    spark = SparkSession.builder.getOrCreate()
+    experiment_normalized_df = normalize_experiments(
+        spark,
+        experiment_parquet_path,
+        mouse_parquet_path,
+        embryo_parquet_path,
+        pipeline_parquet_path,
+    )
+    experiment_normalized_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
+
+
+def normalize_experiments(
+    spark_session: SparkSession,
+    experiment_parquet_path: str,
+    mouse_parquet_path: str,
+    embryo_parquet_path: str,
+    pipeline_parquet_path: str,
+) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    DCC experiment normalizer
+
+    :param pipeline_parquet_path:
+    :param embryo_parquet_path:
+    :param mouse_parquet_path:
+    :param experiment_parquet_path:
+    :param SparkSession spark_session: PySpark session object
+    :return: a normalized specimen parquet file
+    :rtype: DataFrame
+    &#34;&#34;&#34;
+    experiment_df = spark_session.read.parquet(experiment_parquet_path)
+    mouse_df = spark_session.read.parquet(mouse_parquet_path)
+    try:
+        embryo_df = spark_session.read.parquet(embryo_parquet_path)
+    except AnalysisException:
+        embryo_df = None
+    pipeline_df = spark_session.read.parquet(pipeline_parquet_path)
+
+    ## THIS IS NOT OK
+    experiment_df = experiment_df.withColumn(
+        &#34;_pipeline&#34;,
+        when(
+            (col(&#34;_dataSource&#34;) == &#34;3i&#34;)
+            &amp; (col(&#34;_procedureID&#34;) == &#34;MGP_PBI_001&#34;)
+            &amp; (col(&#34;_pipeline&#34;) == &#34;SLM_001&#34;),
+            lit(&#34;MGP_001&#34;),
+        ).otherwise(col(&#34;_pipeline&#34;)),
+    )
+
+    experiment_df = experiment_df.withColumn(
+        &#34;_pipeline&#34;,
+        when(
+            (lower(col(&#34;_dataSource&#34;)).isin([&#34;europhenome&#34;, &#34;mgp&#34;]))
+            &amp; (col(&#34;_procedureID&#34;) == &#34;ESLIM_019_001&#34;)
+            &amp; (col(&#34;_pipeline&#34;) == &#34;ESLIM_001&#34;),
+            lit(&#34;ESLIM_002&#34;),
+        ).otherwise(col(&#34;_pipeline&#34;)),
+    )
+    ## THIS IS NOT OK
+
+    specimen_cols = [
+        &#34;_centreID&#34;,
+        &#34;_specimenID&#34;,
+        &#34;_colonyID&#34;,
+        &#34;_isBaseline&#34;,
+        &#34;_productionCentre&#34;,
+        &#34;_phenotypingCentre&#34;,
+        &#34;phenotyping_consortium&#34;,
+    ]
+
+    mouse_specimen_df = mouse_df.select(*specimen_cols)
+    if embryo_df is not None:
+        embryo_specimen_df = embryo_df.select(*specimen_cols)
+        specimen_df = mouse_specimen_df.union(embryo_specimen_df)
+    else:
+        specimen_df = mouse_specimen_df
+    experiment_df = experiment_df.alias(&#34;experiment&#34;)
+    specimen_df = specimen_df.alias(&#34;specimen&#34;)
+    experiment_specimen_df = experiment_df.join(
+        specimen_df,
+        (experiment_df[&#34;_centreID&#34;] == specimen_df[&#34;_centreID&#34;])
+        &amp; (experiment_df[&#34;specimenID&#34;] == specimen_df[&#34;_specimenID&#34;]),
+    )
+
+    experiment_specimen_df = drop_null_colony_id(experiment_specimen_df)
+
+    experiment_specimen_df = re_map_europhenome_experiments(experiment_specimen_df)
+
+    experiment_specimen_df = generate_metadata_group(
+        experiment_specimen_df, pipeline_df
+    )
+
+    experiment_specimen_df = generate_metadata(experiment_specimen_df, pipeline_df)
+
+    experiment_columns = [
+        &#34;experiment.&#34; + col_name
+        for col_name in experiment_df.columns
+        if col_name not in [&#34;_dataSource&#34;, &#34;_project&#34;]
+    ] + [&#34;metadata&#34;, &#34;metadataGroup&#34;, &#34;_project&#34;, &#34;_dataSource&#34;]
+    experiment_df = experiment_specimen_df.select(experiment_columns)
+    return experiment_df
+
+
+def drop_null_colony_id(experiment_specimen_df: DataFrame) -&gt; DataFrame:
+    experiment_specimen_df = experiment_specimen_df.where(
+        (col(&#34;specimen._colonyID&#34;).isNotNull())
+        | (col(&#34;specimen._isBaseline&#34;) == True)
+        | (col(&#34;specimen._colonyID&#34;) == &#34;baseline&#34;)
+    )
+    return experiment_specimen_df.dropDuplicates()
+
+
+def re_map_europhenome_experiments(experiment_specimen_df: DataFrame):
+    experiment_specimen_df = experiment_specimen_df.transform(
+        override_europhenome_datasource
+    )
+    return experiment_specimen_df
+
+
+def override_europhenome_datasource(dcc_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes in a specimen dataframe and replaces the project with &#39;MGP&#39; and data sources information,
+    for specimens with colonies marked as MGP and MGP Legacy.
+    &#34;&#34;&#34;
+    legacy_entity_cond: Column = (
+        (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;)
+        &amp; (~lower(dcc_df[&#34;_colonyID&#34;]).startswith(&#34;baseline&#34;))
+        &amp; (dcc_df[&#34;_colonyID&#34;].isNotNull())
+        &amp; (
+            (dcc_df[&#34;phenotyping_consortium&#34;] == &#34;MGP&#34;)
+            | (dcc_df[&#34;phenotyping_consortium&#34;] == &#34;MGP Legacy&#34;)
+        )
+    )
+
+    dcc_df = dcc_df.withColumn(
+        &#34;_project&#34;, when(legacy_entity_cond, lit(&#34;MGP&#34;)).otherwise(dcc_df[&#34;_project&#34;])
+    )
+
+    dcc_df = dcc_df.withColumn(
+        &#34;_dataSource&#34;,
+        when(legacy_entity_cond, lit(&#34;MGP&#34;)).otherwise(dcc_df[&#34;_dataSource&#34;]),
+    )
+    return dcc_df
+
+
+def generate_metadata_group(
+    experiment_specimen_df: DataFrame, impress_df: DataFrame, exp_type=&#34;experiment&#34;
+) -&gt; DataFrame:
+    experiment_metadata = experiment_specimen_df.withColumn(
+        &#34;procedureMetadata&#34;, explode(&#34;procedureMetadata&#34;)
+    )
+    impress_df_required = impress_df.where(
+        (col(&#34;parameter.isImportant&#34;) == True)
+        &amp; (col(&#34;parameter.type&#34;) == &#34;procedureMetadata&#34;)
+    )
+    experiment_metadata = experiment_metadata.join(
+        impress_df_required,
+        (
+            (experiment_metadata[&#34;_pipeline&#34;] == impress_df_required[&#34;pipelineKey&#34;])
+            &amp; (
+                experiment_metadata[&#34;_procedureID&#34;]
+                == impress_df_required[&#34;procedure.procedureKey&#34;]
+            )
+            &amp; (
+                experiment_metadata[&#34;procedureMetadata._parameterID&#34;]
+                == impress_df_required[&#34;parameter.parameterKey&#34;]
+            )
+        ),
+    )
+    experiment_metadata = experiment_metadata.withColumn(
+        &#34;metadataItem&#34;,
+        when(
+            col(&#34;procedureMetadata.value&#34;).isNotNull(),
+            concat(col(&#34;parameter.name&#34;), lit(&#34; = &#34;), col(&#34;procedureMetadata.value&#34;)),
+        ).otherwise(concat(col(&#34;parameter.name&#34;), lit(&#34; = &#34;), lit(&#34;null&#34;))),
+    )
+    if exp_type == &#34;experiment&#34;:
+        production_centre_col = &#34;_productionCentre&#34;
+        phenotyping_centre_col = &#34;_phenotypingCentre&#34;
+    else:
+        production_centre_col = &#34;production_centre&#34;
+        phenotyping_centre_col = &#34;phenotyping_centre&#34;
+    window = Window.partitionBy(
+        &#34;unique_id&#34;, production_centre_col, phenotyping_centre_col
+    ).orderBy(&#34;parameter.name&#34;)
+
+    experiment_metadata_input = experiment_metadata.withColumn(
+        &#34;metadataItems&#34;, collect_set(col(&#34;metadataItem&#34;)).over(window)
+    )
+
+    experiment_metadata_input = experiment_metadata_input.withColumn(
+        &#34;metadataItems&#34;,
+        when(
+            (col(production_centre_col).isNotNull())
+            &amp; (col(production_centre_col) != col(phenotyping_centre_col)),
+            array_union(
+                col(&#34;metadataItems&#34;),
+                array(concat(lit(&#34;ProductionCenter = &#34;), col(production_centre_col))),
+            ),
+        ).otherwise(col(&#34;metadataItems&#34;)),
+    )
+
+    experiment_metadata = experiment_metadata_input.groupBy(
+        &#34;unique_id&#34;, production_centre_col, phenotyping_centre_col
+    ).agg(
+        concat_ws(&#34;::&#34;, sort_array(max(col(&#34;metadataItems&#34;)))).alias(
+            &#34;metadataGroupList&#34;
+        )
+    )
+
+    experiment_metadata = experiment_metadata.withColumn(
+        &#34;metadataGroup&#34;, md5(col(&#34;metadataGroupList&#34;))
+    )
+    experiment_metadata = experiment_metadata.select(&#34;unique_id&#34;, &#34;metadataGroup&#34;)
+    experiment_specimen_df = experiment_specimen_df.join(
+        experiment_metadata, &#34;unique_id&#34;, &#34;left_outer&#34;
+    )
+    experiment_specimen_df = experiment_specimen_df.withColumn(
+        &#34;metadataGroup&#34;,
+        when(experiment_specimen_df[&#34;metadataGroup&#34;].isNull(), md5(lit(&#34;&#34;))).otherwise(
+            experiment_specimen_df[&#34;metadataGroup&#34;]
+        ),
+    )
+    return experiment_specimen_df
+
+
+def generate_metadata(
+    experiment_specimen_df: DataFrame, impress_df: DataFrame, exp_type=&#34;experiment&#34;
+) -&gt; DataFrame:
+    experiment_metadata = experiment_specimen_df.withColumn(
+        &#34;procedureMetadata&#34;, explode(&#34;procedureMetadata&#34;)
+    )
+    impress_df_required = impress_df.where(
+        (col(&#34;parameter.type&#34;) == &#34;procedureMetadata&#34;)
+    )
+    experiment_metadata = experiment_metadata.join(
+        impress_df_required,
+        (
+            (experiment_metadata[&#34;_pipeline&#34;] == impress_df_required[&#34;pipelineKey&#34;])
+            &amp; (
+                experiment_metadata[&#34;_procedureID&#34;]
+                == impress_df_required[&#34;procedure.procedureKey&#34;]
+            )
+            &amp; (
+                experiment_metadata[&#34;procedureMetadata._parameterID&#34;]
+                == impress_df_required[&#34;parameter.parameterKey&#34;]
+            )
+        ),
+    )
+
+    process_experimenter_id_udf = udf(_process_experimenter_id, StringType())
+    experiment_metadata = experiment_metadata.withColumn(
+        &#34;experimenterIdMetadata&#34;,
+        when(
+            lower(col(&#34;parameter.name&#34;)).contains(&#34;experimenter&#34;),
+            process_experimenter_id_udf(&#34;procedureMetadata&#34;),
+        ).otherwise(lit(None)),
+    )
+    experiment_metadata = experiment_metadata.withColumn(
+        &#34;procedureMetadata.value&#34;,
+        when(
+            col(&#34;experimenterIdMetadata&#34;).isNotNull(), col(&#34;experimenterIdMetadata&#34;)
+        ).otherwise(&#34;procedureMetadata.value&#34;),
+    )
+    experiment_metadata = experiment_metadata.withColumn(
+        &#34;metadataItem&#34;,
+        concat(
+            col(&#34;parameter.name&#34;),
+            lit(&#34; = &#34;),
+            when(
+                col(&#34;procedureMetadata.value&#34;).isNotNull(),
+                col(&#34;procedureMetadata.value&#34;),
+            ).otherwise(lit(&#34;null&#34;)),
+        ),
+    )
+    if exp_type == &#34;experiment&#34;:
+        production_centre_col = &#34;_productionCentre&#34;
+        phenotyping_centre_col = &#34;_phenotypingCentre&#34;
+    else:
+        production_centre_col = &#34;production_centre&#34;
+        phenotyping_centre_col = &#34;phenotyping_centre&#34;
+    experiment_metadata = experiment_metadata.groupBy(
+        &#34;unique_id&#34;, production_centre_col, phenotyping_centre_col
+    ).agg(sort_array(collect_set(col(&#34;metadataItem&#34;))).alias(&#34;metadata&#34;))
+    experiment_metadata = experiment_metadata.withColumn(
+        &#34;metadata&#34;,
+        when(
+            (col(production_centre_col).isNotNull())
+            &amp; (col(production_centre_col) != col(phenotyping_centre_col)),
+            udf(_append_phenotyping_centre_to_metadata, ArrayType(StringType()))(
+                col(&#34;metadata&#34;), col(production_centre_col)
+            ),
+        ).otherwise(col(&#34;metadata&#34;)),
+    )
+    experiment_specimen_df = experiment_specimen_df.join(
+        experiment_metadata, &#34;unique_id&#34;, &#34;left_outer&#34;
+    )
+    return experiment_specimen_df
+
+
+def _append_phenotyping_centre_to_metadata(metadata: List, prod_centre: str):
+    if prod_centre is not None:
+        metadata.append(&#34;ProductionCenter = &#34; + prod_centre)
+    return metadata
+
+
+def _process_experimenter_id(experimenter_metadata: Row):
+    experimenter_metadata = experimenter_metadata.asDict()
+    if experimenter_metadata[&#34;value&#34;] in Constants.EXPERIMENTER_IDS:
+        experimenter_metadata[&#34;value&#34;] = Constants.EXPERIMENTER_IDS[
+            experimenter_metadata[&#34;value&#34;]
+        ]
+    if experimenter_metadata[&#34;value&#34;] is not None:
+        experimenter_metadata[&#34;value&#34;] = (
+            hashlib.md5(experimenter_metadata[&#34;value&#34;].encode()).hexdigest()[:5].upper()
+        )
+    return experimenter_metadata[&#34;value&#34;]
+
+
+if __name__ == &#34;__main__&#34;:
+    sys.exit(main(sys.argv))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="impc_etl.jobs.transform.experiment_cross_ref.drop_null_colony_id"><code class="name flex">
+<span>def <span class="ident">drop_null_colony_id</span></span>(<span>experiment_specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def drop_null_colony_id(experiment_specimen_df: DataFrame) -&gt; DataFrame:
+    experiment_specimen_df = experiment_specimen_df.where(
+        (col(&#34;specimen._colonyID&#34;).isNotNull())
+        | (col(&#34;specimen._isBaseline&#34;) == True)
+        | (col(&#34;specimen._colonyID&#34;) == &#34;baseline&#34;)
+    )
+    return experiment_specimen_df.dropDuplicates()</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.experiment_cross_ref.generate_metadata"><code class="name flex">
+<span>def <span class="ident">generate_metadata</span></span>(<span>experiment_specimen_df: pyspark.sql.dataframe.DataFrame, impress_df: pyspark.sql.dataframe.DataFrame, exp_type='experiment') ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def generate_metadata(
+    experiment_specimen_df: DataFrame, impress_df: DataFrame, exp_type=&#34;experiment&#34;
+) -&gt; DataFrame:
+    experiment_metadata = experiment_specimen_df.withColumn(
+        &#34;procedureMetadata&#34;, explode(&#34;procedureMetadata&#34;)
+    )
+    impress_df_required = impress_df.where(
+        (col(&#34;parameter.type&#34;) == &#34;procedureMetadata&#34;)
+    )
+    experiment_metadata = experiment_metadata.join(
+        impress_df_required,
+        (
+            (experiment_metadata[&#34;_pipeline&#34;] == impress_df_required[&#34;pipelineKey&#34;])
+            &amp; (
+                experiment_metadata[&#34;_procedureID&#34;]
+                == impress_df_required[&#34;procedure.procedureKey&#34;]
+            )
+            &amp; (
+                experiment_metadata[&#34;procedureMetadata._parameterID&#34;]
+                == impress_df_required[&#34;parameter.parameterKey&#34;]
+            )
+        ),
+    )
+
+    process_experimenter_id_udf = udf(_process_experimenter_id, StringType())
+    experiment_metadata = experiment_metadata.withColumn(
+        &#34;experimenterIdMetadata&#34;,
+        when(
+            lower(col(&#34;parameter.name&#34;)).contains(&#34;experimenter&#34;),
+            process_experimenter_id_udf(&#34;procedureMetadata&#34;),
+        ).otherwise(lit(None)),
+    )
+    experiment_metadata = experiment_metadata.withColumn(
+        &#34;procedureMetadata.value&#34;,
+        when(
+            col(&#34;experimenterIdMetadata&#34;).isNotNull(), col(&#34;experimenterIdMetadata&#34;)
+        ).otherwise(&#34;procedureMetadata.value&#34;),
+    )
+    experiment_metadata = experiment_metadata.withColumn(
+        &#34;metadataItem&#34;,
+        concat(
+            col(&#34;parameter.name&#34;),
+            lit(&#34; = &#34;),
+            when(
+                col(&#34;procedureMetadata.value&#34;).isNotNull(),
+                col(&#34;procedureMetadata.value&#34;),
+            ).otherwise(lit(&#34;null&#34;)),
+        ),
+    )
+    if exp_type == &#34;experiment&#34;:
+        production_centre_col = &#34;_productionCentre&#34;
+        phenotyping_centre_col = &#34;_phenotypingCentre&#34;
+    else:
+        production_centre_col = &#34;production_centre&#34;
+        phenotyping_centre_col = &#34;phenotyping_centre&#34;
+    experiment_metadata = experiment_metadata.groupBy(
+        &#34;unique_id&#34;, production_centre_col, phenotyping_centre_col
+    ).agg(sort_array(collect_set(col(&#34;metadataItem&#34;))).alias(&#34;metadata&#34;))
+    experiment_metadata = experiment_metadata.withColumn(
+        &#34;metadata&#34;,
+        when(
+            (col(production_centre_col).isNotNull())
+            &amp; (col(production_centre_col) != col(phenotyping_centre_col)),
+            udf(_append_phenotyping_centre_to_metadata, ArrayType(StringType()))(
+                col(&#34;metadata&#34;), col(production_centre_col)
+            ),
+        ).otherwise(col(&#34;metadata&#34;)),
+    )
+    experiment_specimen_df = experiment_specimen_df.join(
+        experiment_metadata, &#34;unique_id&#34;, &#34;left_outer&#34;
+    )
+    return experiment_specimen_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.experiment_cross_ref.generate_metadata_group"><code class="name flex">
+<span>def <span class="ident">generate_metadata_group</span></span>(<span>experiment_specimen_df: pyspark.sql.dataframe.DataFrame, impress_df: pyspark.sql.dataframe.DataFrame, exp_type='experiment') ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def generate_metadata_group(
+    experiment_specimen_df: DataFrame, impress_df: DataFrame, exp_type=&#34;experiment&#34;
+) -&gt; DataFrame:
+    experiment_metadata = experiment_specimen_df.withColumn(
+        &#34;procedureMetadata&#34;, explode(&#34;procedureMetadata&#34;)
+    )
+    impress_df_required = impress_df.where(
+        (col(&#34;parameter.isImportant&#34;) == True)
+        &amp; (col(&#34;parameter.type&#34;) == &#34;procedureMetadata&#34;)
+    )
+    experiment_metadata = experiment_metadata.join(
+        impress_df_required,
+        (
+            (experiment_metadata[&#34;_pipeline&#34;] == impress_df_required[&#34;pipelineKey&#34;])
+            &amp; (
+                experiment_metadata[&#34;_procedureID&#34;]
+                == impress_df_required[&#34;procedure.procedureKey&#34;]
+            )
+            &amp; (
+                experiment_metadata[&#34;procedureMetadata._parameterID&#34;]
+                == impress_df_required[&#34;parameter.parameterKey&#34;]
+            )
+        ),
+    )
+    experiment_metadata = experiment_metadata.withColumn(
+        &#34;metadataItem&#34;,
+        when(
+            col(&#34;procedureMetadata.value&#34;).isNotNull(),
+            concat(col(&#34;parameter.name&#34;), lit(&#34; = &#34;), col(&#34;procedureMetadata.value&#34;)),
+        ).otherwise(concat(col(&#34;parameter.name&#34;), lit(&#34; = &#34;), lit(&#34;null&#34;))),
+    )
+    if exp_type == &#34;experiment&#34;:
+        production_centre_col = &#34;_productionCentre&#34;
+        phenotyping_centre_col = &#34;_phenotypingCentre&#34;
+    else:
+        production_centre_col = &#34;production_centre&#34;
+        phenotyping_centre_col = &#34;phenotyping_centre&#34;
+    window = Window.partitionBy(
+        &#34;unique_id&#34;, production_centre_col, phenotyping_centre_col
+    ).orderBy(&#34;parameter.name&#34;)
+
+    experiment_metadata_input = experiment_metadata.withColumn(
+        &#34;metadataItems&#34;, collect_set(col(&#34;metadataItem&#34;)).over(window)
+    )
+
+    experiment_metadata_input = experiment_metadata_input.withColumn(
+        &#34;metadataItems&#34;,
+        when(
+            (col(production_centre_col).isNotNull())
+            &amp; (col(production_centre_col) != col(phenotyping_centre_col)),
+            array_union(
+                col(&#34;metadataItems&#34;),
+                array(concat(lit(&#34;ProductionCenter = &#34;), col(production_centre_col))),
+            ),
+        ).otherwise(col(&#34;metadataItems&#34;)),
+    )
+
+    experiment_metadata = experiment_metadata_input.groupBy(
+        &#34;unique_id&#34;, production_centre_col, phenotyping_centre_col
+    ).agg(
+        concat_ws(&#34;::&#34;, sort_array(max(col(&#34;metadataItems&#34;)))).alias(
+            &#34;metadataGroupList&#34;
+        )
+    )
+
+    experiment_metadata = experiment_metadata.withColumn(
+        &#34;metadataGroup&#34;, md5(col(&#34;metadataGroupList&#34;))
+    )
+    experiment_metadata = experiment_metadata.select(&#34;unique_id&#34;, &#34;metadataGroup&#34;)
+    experiment_specimen_df = experiment_specimen_df.join(
+        experiment_metadata, &#34;unique_id&#34;, &#34;left_outer&#34;
+    )
+    experiment_specimen_df = experiment_specimen_df.withColumn(
+        &#34;metadataGroup&#34;,
+        when(experiment_specimen_df[&#34;metadataGroup&#34;].isNull(), md5(lit(&#34;&#34;))).otherwise(
+            experiment_specimen_df[&#34;metadataGroup&#34;]
+        ),
+    )
+    return experiment_specimen_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.experiment_cross_ref.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>argv)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(argv):
+    experiment_parquet_path = argv[1]
+    mouse_parquet_path = argv[2]
+    embryo_parquet_path = argv[3]
+    pipeline_parquet_path = argv[4]
+    output_path = argv[5]
+    spark = SparkSession.builder.getOrCreate()
+    experiment_normalized_df = normalize_experiments(
+        spark,
+        experiment_parquet_path,
+        mouse_parquet_path,
+        embryo_parquet_path,
+        pipeline_parquet_path,
+    )
+    experiment_normalized_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.experiment_cross_ref.normalize_experiments"><code class="name flex">
+<span>def <span class="ident">normalize_experiments</span></span>(<span>spark_session: pyspark.sql.session.SparkSession, experiment_parquet_path: str, mouse_parquet_path: str, embryo_parquet_path: str, pipeline_parquet_path: str) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>DCC experiment normalizer</p>
+<p>:param pipeline_parquet_path:
+:param embryo_parquet_path:
+:param mouse_parquet_path:
+:param experiment_parquet_path:
+:param SparkSession spark_session: PySpark session object
+:return: a normalized specimen parquet file
+:rtype: DataFrame</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def normalize_experiments(
+    spark_session: SparkSession,
+    experiment_parquet_path: str,
+    mouse_parquet_path: str,
+    embryo_parquet_path: str,
+    pipeline_parquet_path: str,
+) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    DCC experiment normalizer
+
+    :param pipeline_parquet_path:
+    :param embryo_parquet_path:
+    :param mouse_parquet_path:
+    :param experiment_parquet_path:
+    :param SparkSession spark_session: PySpark session object
+    :return: a normalized specimen parquet file
+    :rtype: DataFrame
+    &#34;&#34;&#34;
+    experiment_df = spark_session.read.parquet(experiment_parquet_path)
+    mouse_df = spark_session.read.parquet(mouse_parquet_path)
+    try:
+        embryo_df = spark_session.read.parquet(embryo_parquet_path)
+    except AnalysisException:
+        embryo_df = None
+    pipeline_df = spark_session.read.parquet(pipeline_parquet_path)
+
+    ## THIS IS NOT OK
+    experiment_df = experiment_df.withColumn(
+        &#34;_pipeline&#34;,
+        when(
+            (col(&#34;_dataSource&#34;) == &#34;3i&#34;)
+            &amp; (col(&#34;_procedureID&#34;) == &#34;MGP_PBI_001&#34;)
+            &amp; (col(&#34;_pipeline&#34;) == &#34;SLM_001&#34;),
+            lit(&#34;MGP_001&#34;),
+        ).otherwise(col(&#34;_pipeline&#34;)),
+    )
+
+    experiment_df = experiment_df.withColumn(
+        &#34;_pipeline&#34;,
+        when(
+            (lower(col(&#34;_dataSource&#34;)).isin([&#34;europhenome&#34;, &#34;mgp&#34;]))
+            &amp; (col(&#34;_procedureID&#34;) == &#34;ESLIM_019_001&#34;)
+            &amp; (col(&#34;_pipeline&#34;) == &#34;ESLIM_001&#34;),
+            lit(&#34;ESLIM_002&#34;),
+        ).otherwise(col(&#34;_pipeline&#34;)),
+    )
+    ## THIS IS NOT OK
+
+    specimen_cols = [
+        &#34;_centreID&#34;,
+        &#34;_specimenID&#34;,
+        &#34;_colonyID&#34;,
+        &#34;_isBaseline&#34;,
+        &#34;_productionCentre&#34;,
+        &#34;_phenotypingCentre&#34;,
+        &#34;phenotyping_consortium&#34;,
+    ]
+
+    mouse_specimen_df = mouse_df.select(*specimen_cols)
+    if embryo_df is not None:
+        embryo_specimen_df = embryo_df.select(*specimen_cols)
+        specimen_df = mouse_specimen_df.union(embryo_specimen_df)
+    else:
+        specimen_df = mouse_specimen_df
+    experiment_df = experiment_df.alias(&#34;experiment&#34;)
+    specimen_df = specimen_df.alias(&#34;specimen&#34;)
+    experiment_specimen_df = experiment_df.join(
+        specimen_df,
+        (experiment_df[&#34;_centreID&#34;] == specimen_df[&#34;_centreID&#34;])
+        &amp; (experiment_df[&#34;specimenID&#34;] == specimen_df[&#34;_specimenID&#34;]),
+    )
+
+    experiment_specimen_df = drop_null_colony_id(experiment_specimen_df)
+
+    experiment_specimen_df = re_map_europhenome_experiments(experiment_specimen_df)
+
+    experiment_specimen_df = generate_metadata_group(
+        experiment_specimen_df, pipeline_df
+    )
+
+    experiment_specimen_df = generate_metadata(experiment_specimen_df, pipeline_df)
+
+    experiment_columns = [
+        &#34;experiment.&#34; + col_name
+        for col_name in experiment_df.columns
+        if col_name not in [&#34;_dataSource&#34;, &#34;_project&#34;]
+    ] + [&#34;metadata&#34;, &#34;metadataGroup&#34;, &#34;_project&#34;, &#34;_dataSource&#34;]
+    experiment_df = experiment_specimen_df.select(experiment_columns)
+    return experiment_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.experiment_cross_ref.override_europhenome_datasource"><code class="name flex">
+<span>def <span class="ident">override_europhenome_datasource</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Takes in a specimen dataframe and replaces the project with 'MGP' and data sources information,
+for specimens with colonies marked as MGP and MGP Legacy.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def override_europhenome_datasource(dcc_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes in a specimen dataframe and replaces the project with &#39;MGP&#39; and data sources information,
+    for specimens with colonies marked as MGP and MGP Legacy.
+    &#34;&#34;&#34;
+    legacy_entity_cond: Column = (
+        (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;)
+        &amp; (~lower(dcc_df[&#34;_colonyID&#34;]).startswith(&#34;baseline&#34;))
+        &amp; (dcc_df[&#34;_colonyID&#34;].isNotNull())
+        &amp; (
+            (dcc_df[&#34;phenotyping_consortium&#34;] == &#34;MGP&#34;)
+            | (dcc_df[&#34;phenotyping_consortium&#34;] == &#34;MGP Legacy&#34;)
+        )
+    )
+
+    dcc_df = dcc_df.withColumn(
+        &#34;_project&#34;, when(legacy_entity_cond, lit(&#34;MGP&#34;)).otherwise(dcc_df[&#34;_project&#34;])
+    )
+
+    dcc_df = dcc_df.withColumn(
+        &#34;_dataSource&#34;,
+        when(legacy_entity_cond, lit(&#34;MGP&#34;)).otherwise(dcc_df[&#34;_dataSource&#34;]),
+    )
+    return dcc_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.experiment_cross_ref.re_map_europhenome_experiments"><code class="name flex">
+<span>def <span class="ident">re_map_europhenome_experiments</span></span>(<span>experiment_specimen_df: pyspark.sql.dataframe.DataFrame)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def re_map_europhenome_experiments(experiment_specimen_df: DataFrame):
+    experiment_specimen_df = experiment_specimen_df.transform(
+        override_europhenome_datasource
+    )
+    return experiment_specimen_df</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<header>
+<div style="max-width: 300px; text-align: center">
+<img src="https://www.mousephenotype.org/wp-content/themes/impc/images/IMPC_10_YEAR_Logo.svg" alt="IMPC Logo">
+</div>
+<h1 style="text-align: center; max-width: 300px;">IMPC ETL</h1>
+<h2 style="text-align: center; max-width: 300px;">Reference Documentation</h2>
+</header>
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="impc_etl.jobs.transform" href="index.html">impc_etl.jobs.transform</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="impc_etl.jobs.transform.experiment_cross_ref.drop_null_colony_id" href="#impc_etl.jobs.transform.experiment_cross_ref.drop_null_colony_id">drop_null_colony_id</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_cross_ref.generate_metadata" href="#impc_etl.jobs.transform.experiment_cross_ref.generate_metadata">generate_metadata</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_cross_ref.generate_metadata_group" href="#impc_etl.jobs.transform.experiment_cross_ref.generate_metadata_group">generate_metadata_group</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_cross_ref.main" href="#impc_etl.jobs.transform.experiment_cross_ref.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_cross_ref.normalize_experiments" href="#impc_etl.jobs.transform.experiment_cross_ref.normalize_experiments">normalize_experiments</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_cross_ref.override_europhenome_datasource" href="#impc_etl.jobs.transform.experiment_cross_ref.override_europhenome_datasource">override_europhenome_datasource</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_cross_ref.re_map_europhenome_experiments" href="#impc_etl.jobs.transform.experiment_cross_ref.re_map_europhenome_experiments">re_map_europhenome_experiments</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p><span></span></p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

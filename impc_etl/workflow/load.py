@@ -3,7 +3,9 @@ import os
 from luigi.contrib.webhdfs import WebHdfsClient
 from luigi.task import flatten
 
-from impc_etl.jobs.transform.experiment_bw_age import ExperimentBWAgeProcessor
+from impc_etl.jobs.transform.experiment_bw_age_calculator import (
+    ExperimentBWAgeCalculator,
+)
 from impc_etl.jobs.transform.experiment_parameter_derivator import (
     LineParameterDerivator,
 )
@@ -23,7 +25,7 @@ class ObservationsMapper(SparkSubmitTask):
 
     def requires(self):
         return [
-            ExperimentBWAgeProcessor(),
+            ExperimentBWAgeCalculator(),
             LineParameterDerivator(),
             MouseNormalizer(
                 imits_colonies_tsv_path=self.imits_colonies_tsv_path,
