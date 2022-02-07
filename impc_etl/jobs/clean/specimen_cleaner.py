@@ -34,9 +34,9 @@ class SpecimenCleaner(PySparkTask):
     """
     PySpark task to clean IMPC Specimen data.
 
-    This task depends on `impc_etl.jobs.extract.dcc_specimen_extractor.MouseSpecimenExtractor`
+    This task depends on `impc_etl.jobs.extract.specimen_extractor.MouseSpecimenExtractor`
     for cleaning Mouse specimens
-    or `impc_etl.jobs.extract.dcc_specimen_extractor.EmbryoSpecimenExtractor`
+    or `impc_etl.jobs.extract.specimen_extractor.EmbryoSpecimenExtractor`
     for cleaning Embryo specimens.
     """
 

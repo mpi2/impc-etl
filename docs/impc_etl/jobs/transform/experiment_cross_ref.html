@@ -182,6 +182,10 @@ def re_map_europhenome_experiments(experiment_specimen_df: DataFrame):
 
 
 def override_europhenome_datasource(dcc_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes in a specimen dataframe and replaces the project with &#39;MGP&#39; and data sources information,
+    for specimens with colonies marked as MGP and MGP Legacy.
+    &#34;&#34;&#34;
     legacy_entity_cond: Column = (
         (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;)
         &amp; (~lower(dcc_df[&#34;_colonyID&#34;]).startswith(&#34;baseline&#34;))
@@ -716,12 +720,17 @@ if __name__ == &#34;__main__&#34;:
 <span>def <span class="ident">override_europhenome_datasource</span></span>(<span>dcc_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Takes in a specimen dataframe and replaces the project with 'MGP' and data sources information,
+for specimens with colonies marked as MGP and MGP Legacy.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def override_europhenome_datasource(dcc_df: DataFrame) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes in a specimen dataframe and replaces the project with &#39;MGP&#39; and data sources information,
+    for specimens with colonies marked as MGP and MGP Legacy.
+    &#34;&#34;&#34;
     legacy_entity_cond: Column = (
         (dcc_df[&#34;_dataSource&#34;] == &#34;europhenome&#34;)
         &amp; (~lower(dcc_df[&#34;_colonyID&#34;]).startswith(&#34;baseline&#34;))

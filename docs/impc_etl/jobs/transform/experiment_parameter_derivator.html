@@ -54,13 +54,15 @@ from pyspark.sql.types import (
 
 from impc_etl.config.constants import Constants
 from impc_etl.jobs.extract import ImpressExtractor
+from impc_etl.jobs.transform.specimen_experiment_cross_ref import (
+    SpecimenLevelExperimentCrossRef,
+)
 from impc_etl.shared.utils import (
     extract_parameters_from_derivation,
     has_column,
 )
 from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.normalization import (
-    ExperimentNormalizer,
     LineExperimentNormalizer,
 )
 
@@ -405,7 +407,7 @@ class ExperimentParameterDerivator(ParameterDerivator):
     experiment_level = &#34;experiment&#34;
 
     def requires(self):
-        return [ExperimentNormalizer(entity_type=&#34;experiment&#34;), ImpressExtractor()]
+        return [SpecimenLevelExperimentCrossRef(), ImpressExtractor()]
 
 
 class LineParameterDerivator(ParameterDerivator):
@@ -413,7 +415,7 @@ class LineParameterDerivator(ParameterDerivator):
     experiment_level = &#34;line&#34;
 
     def requires(self):
-        return [LineExperimentNormalizer(entity_type=&#34;line&#34;), ImpressExtractor()]</code></pre>
+        return [LineExperimentNormalizer(), ImpressExtractor()]</code></pre>
 </details>
 </section>
 <section>
@@ -443,7 +445,7 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
     experiment_level = &#34;experiment&#34;
 
     def requires(self):
-        return [ExperimentNormalizer(entity_type=&#34;experiment&#34;), ImpressExtractor()]</code></pre>
+        return [SpecimenLevelExperimentCrossRef(), ImpressExtractor()]</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -482,7 +484,7 @@ values are Task instances.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def requires(self):
-    return [ExperimentNormalizer(entity_type=&#34;experiment&#34;), ImpressExtractor()]</code></pre>
+    return [SpecimenLevelExperimentCrossRef(), ImpressExtractor()]</code></pre>
 </details>
 </dd>
 </dl>
@@ -515,7 +517,7 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
     experiment_level = &#34;line&#34;
 
     def requires(self):
-        return [LineExperimentNormalizer(entity_type=&#34;line&#34;), ImpressExtractor()]</code></pre>
+        return [LineExperimentNormalizer(), ImpressExtractor()]</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -554,7 +556,7 @@ values are Task instances.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def requires(self):
-    return [LineExperimentNormalizer(entity_type=&#34;line&#34;), ImpressExtractor()]</code></pre>
+    return [LineExperimentNormalizer(), ImpressExtractor()]</code></pre>
 </details>
 </dd>
 </dl>

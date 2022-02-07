@@ -25,6 +25,15 @@ It also applies some sanitation functions to the data …" />
 <section id="section-intro">
 <p>Luigi tasks to take care of cross-reference the Specimen data with the tracking system reports.
 It also applies some sanitation functions to the data after dong the cross-reference operations.</p>
+<p>The general cross-reference process is:</p>
+<ul>
+<li>Join the specimen information with the colony information</li>
+<li>Generate the specimen allelic composition using the colony information</li>
+<li>Override the data source and the project info for MGP and MGP Legacy colonies</li>
+<li>Override 3i specimen project using the colony phenotyping consortium</li>
+<li>Add production centre information when is missing using the colony information</li>
+<li>Add life stage</li>
+</ul>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -32,61 +41,125 @@ It also applies some sanitation functions to the data after dong the cross-refer
 <pre><code class="python">&#34;&#34;&#34;
     Luigi tasks to take care of cross-reference the Specimen data with the tracking system reports.
     It also applies some sanitation functions to the data after dong the cross-reference operations.
-&#34;&#34;&#34;
 
+    The general cross-reference process is:
+
+    - Join the specimen information with the colony information
+    - Generate the specimen allelic composition using the colony information
+    - Override the data source and the project info for MGP and MGP Legacy colonies
+    - Override 3i specimen project using the colony phenotyping consortium
+    - Add production centre information when is missing using the colony information
+    - Add life stage
+
+&#34;&#34;&#34;
+from typing import Any
+
+import luigi
 from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col, concat, lit, udf, when
 from pyspark.sql.types import StringType
 
 from impc_etl.config.constants import Constants
-from impc_etl.jobs.transform.experiment_cross_ref import (
+from impc_etl.jobs.clean import ColonyCleaner
+from impc_etl.jobs.clean.specimen_cleaner import (
+    EmbryoSpecimenCleaner,
+    MouseSpecimenCleaner,
+)
+from impc_etl.jobs.transform.cross_ref_helper import (
+    generate_allelic_composition,
     override_europhenome_datasource,
 )
+from impc_etl.workflow.config import ImpcConfig
 
 
-class IMPCSpecimenCrossRef(PySparkTask):
+class SpecimenCrossRef(PySparkTask):
     &#34;&#34;&#34;
     PysPark task to cross-reference Specimen data with tracking systems reports.
-    This task depends on `impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner`
-    (`impc_etl.workflow.cleaning.IMPCMouseCleaner` or `impc_etl.workflow.cleaning.IMPCEmbryoCleaner`)
-    and `impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner`.
+    This task depends on `impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner`
+    (`impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner`
+    or `impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner`)
+    and `impc_etl.jobs.clean.colony_cleaner.ColonyCleaner`.
     &#34;&#34;&#34;
 
-    def main(self, argv):
-        specimen_parquet_path = argv[1]
-        colonies_parquet_path = argv[2]
-        entity_type = argv[3]
-        output_path = argv[4]
-        spark = SparkSession.builder.getOrCreate()
+    #: Name of the Spark task
+    name = &#34;IMPC_Specimen_Cross_Reference&#34;
+
+    #: Specimen type can be &#39;mouse&#39; or &#39;embryo&#39;
+    specimen_type: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        specimen_cleaning_dep = (
+            MouseSpecimenCleaner()
+            if self.specimen_type == &#34;mouse&#34;
+            else EmbryoSpecimenCleaner()
+        )
+
+        return [specimen_cleaning_dep, ColonyCleaner()]
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/mouse_specimen_cross_ref_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}{self.specimen_type}_specimen_cross_ref_parquet&#34;
+        )
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.specimen_type,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args: Any):
+        &#34;&#34;&#34;
+        Load the specified Specimen parquet and Colonies parquet, does some cross-reference between them
+        and applies some data sanitation functions after.
+        &#34;&#34;&#34;
+        specimen_parquet_path = args[0]
+        colonies_parquet_path = args[1]
+        specimen_type = args[2]
+        output_path = args[3]
+        spark = SparkSession(sc)
         specimen_df = spark.read.parquet(specimen_parquet_path)
         colonies_df = spark.read.parquet(colonies_parquet_path)
-        specimen_normalized_df = self.cross_reference_specimens(
-            specimen_df, colonies_df, entity_type
+        specimen_cross_ref_df = self.cross_reference_specimens(
+            specimen_df, colonies_df, specimen_type
         )
-        specimen_normalized_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
+        specimen_cross_ref_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
 
     def cross_reference_specimens(
         self, specimen_df: DataFrame, colonies_df: DataFrame, entity_type: str
     ) -&gt; DataFrame:
         &#34;&#34;&#34;
-        DCC specimen normalizer
-
-        :param colonies_df:
-        :param specimen_df:
-        :param entity_type:
-        :return: a normalized specimen parquet file
-        :rtype: DataFrame
+        Cross-reference Specimen data with colony tracking report information.
         &#34;&#34;&#34;
         specimen_df = specimen_df.alias(&#34;specimen&#34;)
         colonies_df = colonies_df.alias(&#34;colony&#34;)
 
+        # join the specimen information with the colony information
         specimen_df = specimen_df.join(
             colonies_df,
             (specimen_df[&#34;_colonyID&#34;] == colonies_df[&#34;colony_name&#34;]),
             &#34;left_outer&#34;,
         )
 
+        # generate the specimen allelic composition using the colony information
+        # override 3i specimen project using the colony phenotyping consortium
+        # override the data source and the project info for MGP and MGP Legacy colonies
         specimen_df = (
             specimen_df.transform(self.generate_specimen_allelic_composition)
             .transform(override_europhenome_datasource)
@@ -115,12 +188,15 @@ class IMPCSpecimenCrossRef(PySparkTask):
         return specimen_df
 
     def generate_specimen_allelic_composition(
-        self, dcc_specimen_df: DataFrame
+        self, specimen_df: DataFrame
     ) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Takes in a specimen dataframe and adds the specimen allelic composition.
+        &#34;&#34;&#34;
         generate_allelic_composition_udf = udf(
             generate_allelic_composition, StringType()
         )
-        dcc_specimen_df = dcc_specimen_df.withColumn(
+        specimen_df = specimen_df.withColumn(
             &#34;allelicComposition&#34;,
             generate_allelic_composition_udf(
                 &#34;specimen._zygosity&#34;,
@@ -130,43 +206,69 @@ class IMPCSpecimenCrossRef(PySparkTask):
                 &#34;specimen._colonyID&#34;,
             ),
         )
-        return dcc_specimen_df
+        return specimen_df
 
-    def override_3i_specimen_project(self, dcc_specimen_df: DataFrame):
-        dcc_specimen_df.withColumn(
+    def override_3i_specimen_project(self, specimen_df: DataFrame):
+        &#34;&#34;&#34;
+        Takes in a Specimen dataframe and replaces the _&#39;project&#39;_
+        value for the 3i specimens with the value for the _&#39;phenotyping_consortium&#39;_ coming
+        from the colonies tracking report.
+        &#34;&#34;&#34;
+        specimen_df.withColumn(
             &#34;_project&#34;,
             when(
-                dcc_specimen_df[&#34;_dataSource&#34;] == &#34;3i&#34;, col(&#34;phenotyping_consortium&#34;)
+                specimen_df[&#34;_dataSource&#34;] == &#34;3i&#34;, col(&#34;phenotyping_consortium&#34;)
             ).otherwise(&#34;_project&#34;),
         )
-        return dcc_specimen_df
+        return specimen_df
 
-    def add_mouse_life_stage_acc(self, dcc_specimen_df: DataFrame):
-        dcc_specimen_df = dcc_specimen_df.withColumn(
+    def add_mouse_life_stage_acc(self, specimen_df: DataFrame):
+        &#34;&#34;&#34;
+        Adds life stage to mouse specimen dataframe.
+        &#34;&#34;&#34;
+        specimen_df = specimen_df.withColumn(
             &#34;developmental_stage_acc&#34;, lit(&#34;EFO:0002948&#34;)
         )
-        dcc_specimen_df = dcc_specimen_df.withColumn(
+        specimen_df = specimen_df.withColumn(
             &#34;developmental_stage_name&#34;, lit(&#34;postnatal&#34;)
         )
-        return dcc_specimen_df
+        return specimen_df
 
-    def add_embryo_life_stage_acc(self, dcc_specimen_df: DataFrame):
+    def add_embryo_life_stage_acc(self, specimen_df: DataFrame):
+        &#34;&#34;&#34;
+        Adds life stage to embryo specimen dataframe.
+        &#34;&#34;&#34;
         efo_acc_udf = udf(self.resolve_embryo_life_stage, StringType())
-        dcc_specimen_df = dcc_specimen_df.withColumn(
+        specimen_df = specimen_df.withColumn(
             &#34;developmental_stage_acc&#34;, efo_acc_udf(&#34;_stage&#34;)
         )
-        dcc_specimen_df = dcc_specimen_df.withColumn(
+        specimen_df = specimen_df.withColumn(
             &#34;developmental_stage_name&#34;, concat(lit(&#34;embryonic day &#34;), col(&#34;_stage&#34;))
         )
-        return dcc_specimen_df
+        return specimen_df
 
     def resolve_embryo_life_stage(self, embryo_stage):
+        &#34;&#34;&#34;
+        Resolves the life stage of an Embryo specimen using `impc_etl.config.constants.Constants.EFO_EMBRYONIC_STAGES`
+        &#34;&#34;&#34;
         embryo_stage = str(embryo_stage).replace(&#34;E&#34;, &#34;&#34;)
         return (
             Constants.EFO_EMBRYONIC_STAGES[embryo_stage]
             if embryo_stage in Constants.EFO_EMBRYONIC_STAGES
             else &#34;EFO:&#34; + embryo_stage + &#34;NOT_FOUND&#34;
-        )</code></pre>
+        )
+
+
+class MouseCrossRef(SpecimenCrossRef):
+    #: Name of the Spark task
+    name = &#34;IMPC_Mouse_Cross_Reference&#34;
+    specimen_type = &#34;mouse&#34;
+
+
+class EmbryoCrossRef(SpecimenCrossRef):
+    #: Name of the Spark task
+    name = &#34;IMPC_Embryo_Cross_Reference&#34;
+    specimen_type = &#34;embryo&#34;</code></pre>
 </details>
 </section>
 <section>
@@ -178,61 +280,202 @@ class IMPCSpecimenCrossRef(PySparkTask):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef"><code class="flex name class">
-<span>class <span class="ident">IMPCSpecimenCrossRef</span></span>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef"><code class="flex name class">
+<span>class <span class="ident">EmbryoCrossRef</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>PysPark task to cross-reference Specimen data with tracking systems reports.
-This task depends on <code>impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner</code>
-(<code>impc_etl.workflow.cleaning.IMPCMouseCleaner</code> or <code>impc_etl.workflow.cleaning.IMPCEmbryoCleaner</code>)
-and <code>impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner</code>.</p></div>
+This task depends on <code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></code>
+(<code><a title="impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner">MouseSpecimenCleaner</a></code>
+or <code><a title="impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner">EmbryoSpecimenCleaner</a></code>)
+and <code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../clean/colony_cleaner.html#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner">ColonyCleaner</a></code>.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class IMPCSpecimenCrossRef(PySparkTask):
+<pre><code class="python">class EmbryoCrossRef(SpecimenCrossRef):
+    #: Name of the Spark task
+    name = &#34;IMPC_Embryo_Cross_Reference&#34;
+    specimen_type = &#34;embryo&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef">SpecimenCrossRef</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef">SpecimenCrossRef</a></b></code>:
+<ul class="hlist">
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_embryo_life_stage_acc" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_embryo_life_stage_acc">add_embryo_life_stage_acc</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_mouse_life_stage_acc" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_mouse_life_stage_acc">add_mouse_life_stage_acc</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.app_options" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.cross_reference_specimens" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.cross_reference_specimens">cross_reference_specimens</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.generate_specimen_allelic_composition" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.generate_specimen_allelic_composition">generate_specimen_allelic_composition</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.main" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.name" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output_path" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.override_3i_specimen_project" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.override_3i_specimen_project">override_3i_specimen_project</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.requires" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.resolve_embryo_life_stage" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.resolve_embryo_life_stage">resolve_embryo_life_stage</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.specimen_type" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.specimen_type">specimen_type</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef"><code class="flex name class">
+<span>class <span class="ident">MouseCrossRef</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>PysPark task to cross-reference Specimen data with tracking systems reports.
+This task depends on <code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></code>
+(<code><a title="impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner">MouseSpecimenCleaner</a></code>
+or <code><a title="impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner">EmbryoSpecimenCleaner</a></code>)
+and <code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../clean/colony_cleaner.html#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner">ColonyCleaner</a></code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MouseCrossRef(SpecimenCrossRef):
+    #: Name of the Spark task
+    name = &#34;IMPC_Mouse_Cross_Reference&#34;
+    specimen_type = &#34;mouse&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef">SpecimenCrossRef</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef">SpecimenCrossRef</a></b></code>:
+<ul class="hlist">
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_embryo_life_stage_acc" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_embryo_life_stage_acc">add_embryo_life_stage_acc</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_mouse_life_stage_acc" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_mouse_life_stage_acc">add_mouse_life_stage_acc</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.app_options" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.cross_reference_specimens" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.cross_reference_specimens">cross_reference_specimens</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.generate_specimen_allelic_composition" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.generate_specimen_allelic_composition">generate_specimen_allelic_composition</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.main" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.name" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output_path" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.override_3i_specimen_project" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.override_3i_specimen_project">override_3i_specimen_project</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.requires" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.resolve_embryo_life_stage" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.resolve_embryo_life_stage">resolve_embryo_life_stage</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.specimen_type" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.specimen_type">specimen_type</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef"><code class="flex name class">
+<span>class <span class="ident">SpecimenCrossRef</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>PysPark task to cross-reference Specimen data with tracking systems reports.
+This task depends on <code><a title="impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner">SpecimenCleaner</a></code>
+(<code><a title="impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner">MouseSpecimenCleaner</a></code>
+or <code><a title="impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner" href="../clean/specimen_cleaner.html#impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner">EmbryoSpecimenCleaner</a></code>)
+and <code><a title="impc_etl.jobs.clean.colony_cleaner.ColonyCleaner" href="../clean/colony_cleaner.html#impc_etl.jobs.clean.colony_cleaner.ColonyCleaner">ColonyCleaner</a></code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SpecimenCrossRef(PySparkTask):
     &#34;&#34;&#34;
     PysPark task to cross-reference Specimen data with tracking systems reports.
-    This task depends on `impc_etl.jobs.clean.specimen_cleaner.IMPCSpecimenCleaner`
-    (`impc_etl.workflow.cleaning.IMPCMouseCleaner` or `impc_etl.workflow.cleaning.IMPCEmbryoCleaner`)
-    and `impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner`.
+    This task depends on `impc_etl.jobs.clean.specimen_cleaner.SpecimenCleaner`
+    (`impc_etl.jobs.clean.specimen_cleaner.MouseSpecimenCleaner`
+    or `impc_etl.jobs.clean.specimen_cleaner.EmbryoSpecimenCleaner`)
+    and `impc_etl.jobs.clean.colony_cleaner.ColonyCleaner`.
     &#34;&#34;&#34;
 
-    def main(self, argv):
-        specimen_parquet_path = argv[1]
-        colonies_parquet_path = argv[2]
-        entity_type = argv[3]
-        output_path = argv[4]
-        spark = SparkSession.builder.getOrCreate()
+    #: Name of the Spark task
+    name = &#34;IMPC_Specimen_Cross_Reference&#34;
+
+    #: Specimen type can be &#39;mouse&#39; or &#39;embryo&#39;
+    specimen_type: luigi.Parameter = luigi.Parameter()
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        specimen_cleaning_dep = (
+            MouseSpecimenCleaner()
+            if self.specimen_type == &#34;mouse&#34;
+            else EmbryoSpecimenCleaner()
+        )
+
+        return [specimen_cleaning_dep, ColonyCleaner()]
+
+    def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/mouse_specimen_cross_ref_parquet)
+        &#34;&#34;&#34;
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}{self.specimen_type}_specimen_cross_ref_parquet&#34;
+        )
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.specimen_type,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args: Any):
+        &#34;&#34;&#34;
+        Load the specified Specimen parquet and Colonies parquet, does some cross-reference between them
+        and applies some data sanitation functions after.
+        &#34;&#34;&#34;
+        specimen_parquet_path = args[0]
+        colonies_parquet_path = args[1]
+        specimen_type = args[2]
+        output_path = args[3]
+        spark = SparkSession(sc)
         specimen_df = spark.read.parquet(specimen_parquet_path)
         colonies_df = spark.read.parquet(colonies_parquet_path)
-        specimen_normalized_df = self.cross_reference_specimens(
-            specimen_df, colonies_df, entity_type
+        specimen_cross_ref_df = self.cross_reference_specimens(
+            specimen_df, colonies_df, specimen_type
         )
-        specimen_normalized_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
+        specimen_cross_ref_df.write.mode(&#34;overwrite&#34;).parquet(output_path)
 
     def cross_reference_specimens(
         self, specimen_df: DataFrame, colonies_df: DataFrame, entity_type: str
     ) -&gt; DataFrame:
         &#34;&#34;&#34;
-        DCC specimen normalizer
-
-        :param colonies_df:
-        :param specimen_df:
-        :param entity_type:
-        :return: a normalized specimen parquet file
-        :rtype: DataFrame
+        Cross-reference Specimen data with colony tracking report information.
         &#34;&#34;&#34;
         specimen_df = specimen_df.alias(&#34;specimen&#34;)
         colonies_df = colonies_df.alias(&#34;colony&#34;)
 
+        # join the specimen information with the colony information
         specimen_df = specimen_df.join(
             colonies_df,
             (specimen_df[&#34;_colonyID&#34;] == colonies_df[&#34;colony_name&#34;]),
             &#34;left_outer&#34;,
         )
 
+        # generate the specimen allelic composition using the colony information
+        # override 3i specimen project using the colony phenotyping consortium
+        # override the data source and the project info for MGP and MGP Legacy colonies
         specimen_df = (
             specimen_df.transform(self.generate_specimen_allelic_composition)
             .transform(override_europhenome_datasource)
@@ -261,12 +504,15 @@ and <code>impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner</code>.</p></div>
         return specimen_df
 
     def generate_specimen_allelic_composition(
-        self, dcc_specimen_df: DataFrame
+        self, specimen_df: DataFrame
     ) -&gt; DataFrame:
+        &#34;&#34;&#34;
+        Takes in a specimen dataframe and adds the specimen allelic composition.
+        &#34;&#34;&#34;
         generate_allelic_composition_udf = udf(
             generate_allelic_composition, StringType()
         )
-        dcc_specimen_df = dcc_specimen_df.withColumn(
+        specimen_df = specimen_df.withColumn(
             &#34;allelicComposition&#34;,
             generate_allelic_composition_udf(
                 &#34;specimen._zygosity&#34;,
@@ -276,37 +522,51 @@ and <code>impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner</code>.</p></div>
                 &#34;specimen._colonyID&#34;,
             ),
         )
-        return dcc_specimen_df
+        return specimen_df
 
-    def override_3i_specimen_project(self, dcc_specimen_df: DataFrame):
-        dcc_specimen_df.withColumn(
+    def override_3i_specimen_project(self, specimen_df: DataFrame):
+        &#34;&#34;&#34;
+        Takes in a Specimen dataframe and replaces the _&#39;project&#39;_
+        value for the 3i specimens with the value for the _&#39;phenotyping_consortium&#39;_ coming
+        from the colonies tracking report.
+        &#34;&#34;&#34;
+        specimen_df.withColumn(
             &#34;_project&#34;,
             when(
-                dcc_specimen_df[&#34;_dataSource&#34;] == &#34;3i&#34;, col(&#34;phenotyping_consortium&#34;)
+                specimen_df[&#34;_dataSource&#34;] == &#34;3i&#34;, col(&#34;phenotyping_consortium&#34;)
             ).otherwise(&#34;_project&#34;),
         )
-        return dcc_specimen_df
+        return specimen_df
 
-    def add_mouse_life_stage_acc(self, dcc_specimen_df: DataFrame):
-        dcc_specimen_df = dcc_specimen_df.withColumn(
+    def add_mouse_life_stage_acc(self, specimen_df: DataFrame):
+        &#34;&#34;&#34;
+        Adds life stage to mouse specimen dataframe.
+        &#34;&#34;&#34;
+        specimen_df = specimen_df.withColumn(
             &#34;developmental_stage_acc&#34;, lit(&#34;EFO:0002948&#34;)
         )
-        dcc_specimen_df = dcc_specimen_df.withColumn(
+        specimen_df = specimen_df.withColumn(
             &#34;developmental_stage_name&#34;, lit(&#34;postnatal&#34;)
         )
-        return dcc_specimen_df
+        return specimen_df
 
-    def add_embryo_life_stage_acc(self, dcc_specimen_df: DataFrame):
+    def add_embryo_life_stage_acc(self, specimen_df: DataFrame):
+        &#34;&#34;&#34;
+        Adds life stage to embryo specimen dataframe.
+        &#34;&#34;&#34;
         efo_acc_udf = udf(self.resolve_embryo_life_stage, StringType())
-        dcc_specimen_df = dcc_specimen_df.withColumn(
+        specimen_df = specimen_df.withColumn(
             &#34;developmental_stage_acc&#34;, efo_acc_udf(&#34;_stage&#34;)
         )
-        dcc_specimen_df = dcc_specimen_df.withColumn(
+        specimen_df = specimen_df.withColumn(
             &#34;developmental_stage_name&#34;, concat(lit(&#34;embryonic day &#34;), col(&#34;_stage&#34;))
         )
-        return dcc_specimen_df
+        return specimen_df
 
     def resolve_embryo_life_stage(self, embryo_stage):
+        &#34;&#34;&#34;
+        Resolves the life stage of an Embryo specimen using `impc_etl.config.constants.Constants.EFO_EMBRYONIC_STAGES`
+        &#34;&#34;&#34;
         embryo_stage = str(embryo_stage).replace(&#34;E&#34;, &#34;&#34;)
         return (
             Constants.EFO_EMBRYONIC_STAGES[embryo_stage]
@@ -321,57 +581,99 @@ and <code>impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner</code>.</p></div>
 <li>luigi.contrib.external_program.ExternalProgramTask</li>
 <li>luigi.task.Task</li>
 </ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef">EmbryoCrossRef</a></li>
+<li><a title="impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef">MouseCrossRef</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<div class="desc"><p>Name of the Spark task</p></div>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"><p>Path of the output directory where the new parquet file will be generated.</p></div>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.specimen_type"><code class="name">var <span class="ident">specimen_type</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>Specimen type can be 'mouse' or 'embryo'</p></div>
+</dd>
+</dl>
 <h3>Methods</h3>
 <dl>
-<dt id="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.add_embryo_life_stage_acc"><code class="name flex">
-<span>def <span class="ident">add_embryo_life_stage_acc</span></span>(<span>self, dcc_specimen_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_embryo_life_stage_acc"><code class="name flex">
+<span>def <span class="ident">add_embryo_life_stage_acc</span></span>(<span>self, specimen_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Adds life stage to embryo specimen dataframe.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def add_embryo_life_stage_acc(self, dcc_specimen_df: DataFrame):
+<pre><code class="python">def add_embryo_life_stage_acc(self, specimen_df: DataFrame):
+    &#34;&#34;&#34;
+    Adds life stage to embryo specimen dataframe.
+    &#34;&#34;&#34;
     efo_acc_udf = udf(self.resolve_embryo_life_stage, StringType())
-    dcc_specimen_df = dcc_specimen_df.withColumn(
+    specimen_df = specimen_df.withColumn(
         &#34;developmental_stage_acc&#34;, efo_acc_udf(&#34;_stage&#34;)
     )
-    dcc_specimen_df = dcc_specimen_df.withColumn(
+    specimen_df = specimen_df.withColumn(
         &#34;developmental_stage_name&#34;, concat(lit(&#34;embryonic day &#34;), col(&#34;_stage&#34;))
     )
-    return dcc_specimen_df</code></pre>
+    return specimen_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.add_mouse_life_stage_acc"><code class="name flex">
-<span>def <span class="ident">add_mouse_life_stage_acc</span></span>(<span>self, dcc_specimen_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_mouse_life_stage_acc"><code class="name flex">
+<span>def <span class="ident">add_mouse_life_stage_acc</span></span>(<span>self, specimen_df: pyspark.sql.dataframe.DataFrame)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Adds life stage to mouse specimen dataframe.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def add_mouse_life_stage_acc(self, dcc_specimen_df: DataFrame):
-    dcc_specimen_df = dcc_specimen_df.withColumn(
+<pre><code class="python">def add_mouse_life_stage_acc(self, specimen_df: DataFrame):
+    &#34;&#34;&#34;
+    Adds life stage to mouse specimen dataframe.
+    &#34;&#34;&#34;
+    specimen_df = specimen_df.withColumn(
         &#34;developmental_stage_acc&#34;, lit(&#34;EFO:0002948&#34;)
     )
-    dcc_specimen_df = dcc_specimen_df.withColumn(
+    specimen_df = specimen_df.withColumn(
         &#34;developmental_stage_name&#34;, lit(&#34;postnatal&#34;)
     )
-    return dcc_specimen_df</code></pre>
+    return specimen_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.cross_reference_specimens"><code class="name flex">
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates the options pass to the PySpark job</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    &#34;&#34;&#34;
+    Generates the options pass to the PySpark job
+    &#34;&#34;&#34;
+    return [
+        self.input()[0].path,
+        self.input()[1].path,
+        self.specimen_type,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.cross_reference_specimens"><code class="name flex">
 <span>def <span class="ident">cross_reference_specimens</span></span>(<span>self, specimen_df: pyspark.sql.dataframe.DataFrame, colonies_df: pyspark.sql.dataframe.DataFrame, entity_type: str) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"><p>DCC specimen normalizer</p>
-<p>:param colonies_df:
-:param specimen_df:
-:param entity_type:
-:return: a normalized specimen parquet file
-:rtype: DataFrame</p></div>
+<div class="desc"><p>Cross-reference Specimen data with colony tracking report information.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -380,23 +682,21 @@ and <code>impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner</code>.</p></div>
     self, specimen_df: DataFrame, colonies_df: DataFrame, entity_type: str
 ) -&gt; DataFrame:
     &#34;&#34;&#34;
-    DCC specimen normalizer
-
-    :param colonies_df:
-    :param specimen_df:
-    :param entity_type:
-    :return: a normalized specimen parquet file
-    :rtype: DataFrame
+    Cross-reference Specimen data with colony tracking report information.
     &#34;&#34;&#34;
     specimen_df = specimen_df.alias(&#34;specimen&#34;)
     colonies_df = colonies_df.alias(&#34;colony&#34;)
 
+    # join the specimen information with the colony information
     specimen_df = specimen_df.join(
         colonies_df,
         (specimen_df[&#34;_colonyID&#34;] == colonies_df[&#34;colony_name&#34;]),
         &#34;left_outer&#34;,
     )
 
+    # generate the specimen allelic composition using the colony information
+    # override 3i specimen project using the colony phenotyping consortium
+    # override the data source and the project info for MGP and MGP Legacy colonies
     specimen_df = (
         specimen_df.transform(self.generate_specimen_allelic_composition)
         .transform(override_europhenome_datasource)
@@ -425,22 +725,25 @@ and <code>impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner</code>.</p></div>
     return specimen_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.generate_specimen_allelic_composition"><code class="name flex">
-<span>def <span class="ident">generate_specimen_allelic_composition</span></span>(<span>self, dcc_specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.generate_specimen_allelic_composition"><code class="name flex">
+<span>def <span class="ident">generate_specimen_allelic_composition</span></span>(<span>self, specimen_df: pyspark.sql.dataframe.DataFrame) ‑> pyspark.sql.dataframe.DataFrame</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Takes in a specimen dataframe and adds the specimen allelic composition.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def generate_specimen_allelic_composition(
-    self, dcc_specimen_df: DataFrame
+    self, specimen_df: DataFrame
 ) -&gt; DataFrame:
+    &#34;&#34;&#34;
+    Takes in a specimen dataframe and adds the specimen allelic composition.
+    &#34;&#34;&#34;
     generate_allelic_composition_udf = udf(
         generate_allelic_composition, StringType()
     )
-    dcc_specimen_df = dcc_specimen_df.withColumn(
+    specimen_df = specimen_df.withColumn(
         &#34;allelicComposition&#34;,
         generate_allelic_composition_udf(
             &#34;specimen._zygosity&#34;,
@@ -450,63 +753,119 @@ and <code>impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner</code>.</p></div>
             &#34;specimen._colonyID&#34;,
         ),
     )
-    return dcc_specimen_df</code></pre>
+    return specimen_df</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.main"><code class="name flex">
-<span>def <span class="ident">main</span></span>(<span>self, argv)</span>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Called by the pyspark_runner with a SparkContext and any arguments returned by <code>app_options()</code></p>
-<p>:param sc: SparkContext
-:param args: arguments list</p></div>
+<div class="desc"><p>Load the specified Specimen parquet and Colonies parquet, does some cross-reference between them
+and applies some data sanitation functions after.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def main(self, argv):
-    specimen_parquet_path = argv[1]
-    colonies_parquet_path = argv[2]
-    entity_type = argv[3]
-    output_path = argv[4]
-    spark = SparkSession.builder.getOrCreate()
+<pre><code class="python">def main(self, sc: SparkContext, *args: Any):
+    &#34;&#34;&#34;
+    Load the specified Specimen parquet and Colonies parquet, does some cross-reference between them
+    and applies some data sanitation functions after.
+    &#34;&#34;&#34;
+    specimen_parquet_path = args[0]
+    colonies_parquet_path = args[1]
+    specimen_type = args[2]
+    output_path = args[3]
+    spark = SparkSession(sc)
     specimen_df = spark.read.parquet(specimen_parquet_path)
     colonies_df = spark.read.parquet(colonies_parquet_path)
-    specimen_normalized_df = self.cross_reference_specimens(
-        specimen_df, colonies_df, entity_type
+    specimen_cross_ref_df = self.cross_reference_specimens(
+        specimen_df, colonies_df, specimen_type
     )
-    specimen_normalized_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
+    specimen_cross_ref_df.write.mode(&#34;overwrite&#34;).parquet(output_path)</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.override_3i_specimen_project"><code class="name flex">
-<span>def <span class="ident">override_3i_specimen_project</span></span>(<span>self, dcc_specimen_df: pyspark.sql.dataframe.DataFrame)</span>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns the full parquet path as an output for the Luigi Task
+(e.g. impc/dr15.2/parquet/mouse_specimen_cross_ref_parquet)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def override_3i_specimen_project(self, dcc_specimen_df: DataFrame):
-    dcc_specimen_df.withColumn(
-        &#34;_project&#34;,
-        when(
-            dcc_specimen_df[&#34;_dataSource&#34;] == &#34;3i&#34;, col(&#34;phenotyping_consortium&#34;)
-        ).otherwise(&#34;_project&#34;),
-    )
-    return dcc_specimen_df</code></pre>
+<pre><code class="python">def output(self):
+    &#34;&#34;&#34;
+    Returns the full parquet path as an output for the Luigi Task
+    (e.g. impc/dr15.2/parquet/mouse_specimen_cross_ref_parquet)
+    &#34;&#34;&#34;
+    return ImpcConfig().get_target(
+        f&#34;{self.output_path}{self.specimen_type}_specimen_cross_ref_parquet&#34;
+    )</code></pre>
 </details>
 </dd>
-<dt id="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.resolve_embryo_life_stage"><code class="name flex">
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.override_3i_specimen_project"><code class="name flex">
+<span>def <span class="ident">override_3i_specimen_project</span></span>(<span>self, specimen_df: pyspark.sql.dataframe.DataFrame)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Takes in a Specimen dataframe and replaces the <em>'project'</em>
+value for the 3i specimens with the value for the <em>'phenotyping_consortium'</em> coming
+from the colonies tracking report.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def override_3i_specimen_project(self, specimen_df: DataFrame):
+    &#34;&#34;&#34;
+    Takes in a Specimen dataframe and replaces the _&#39;project&#39;_
+    value for the 3i specimens with the value for the _&#39;phenotyping_consortium&#39;_ coming
+    from the colonies tracking report.
+    &#34;&#34;&#34;
+    specimen_df.withColumn(
+        &#34;_project&#34;,
+        when(
+            specimen_df[&#34;_dataSource&#34;] == &#34;3i&#34;, col(&#34;phenotyping_consortium&#34;)
+        ).otherwise(&#34;_project&#34;),
+    )
+    return specimen_df</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the luigi
+task dependencies</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    &#34;&#34;&#34;
+    Defines the luigi  task dependencies
+    &#34;&#34;&#34;
+    specimen_cleaning_dep = (
+        MouseSpecimenCleaner()
+        if self.specimen_type == &#34;mouse&#34;
+        else EmbryoSpecimenCleaner()
+    )
+
+    return [specimen_cleaning_dep, ColonyCleaner()]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.resolve_embryo_life_stage"><code class="name flex">
 <span>def <span class="ident">resolve_embryo_life_stage</span></span>(<span>self, embryo_stage)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Resolves the life stage of an Embryo specimen using <code><a title="impc_etl.config.constants.Constants.EFO_EMBRYONIC_STAGES" href="../../config/constants.html#impc_etl.config.constants.Constants.EFO_EMBRYONIC_STAGES">Constants.EFO_EMBRYONIC_STAGES</a></code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def resolve_embryo_life_stage(self, embryo_stage):
+    &#34;&#34;&#34;
+    Resolves the life stage of an Embryo specimen using `impc_etl.config.constants.Constants.EFO_EMBRYONIC_STAGES`
+    &#34;&#34;&#34;
     embryo_stage = str(embryo_stage).replace(&#34;E&#34;, &#34;&#34;)
     return (
         Constants.EFO_EMBRYONIC_STAGES[embryo_stage]
@@ -541,15 +900,27 @@ and <code>impc_etl.jobs.clean.colony_cleaner.IMPCColonyCleaner</code>.</p></div>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef">IMPCSpecimenCrossRef</a></code></h4>
+<h4><code><a title="impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.EmbryoCrossRef">EmbryoCrossRef</a></code></h4>
+</li>
+<li>
+<h4><code><a title="impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef">MouseCrossRef</a></code></h4>
+</li>
+<li>
+<h4><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef">SpecimenCrossRef</a></code></h4>
 <ul class="">
-<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.add_embryo_life_stage_acc" href="#impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.add_embryo_life_stage_acc">add_embryo_life_stage_acc</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.add_mouse_life_stage_acc" href="#impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.add_mouse_life_stage_acc">add_mouse_life_stage_acc</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.cross_reference_specimens" href="#impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.cross_reference_specimens">cross_reference_specimens</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.generate_specimen_allelic_composition" href="#impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.generate_specimen_allelic_composition">generate_specimen_allelic_composition</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.main" href="#impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.main">main</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.override_3i_specimen_project" href="#impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.override_3i_specimen_project">override_3i_specimen_project</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.resolve_embryo_life_stage" href="#impc_etl.jobs.transform.specimen_cross_ref.IMPCSpecimenCrossRef.resolve_embryo_life_stage">resolve_embryo_life_stage</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_embryo_life_stage_acc" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_embryo_life_stage_acc">add_embryo_life_stage_acc</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_mouse_life_stage_acc" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.add_mouse_life_stage_acc">add_mouse_life_stage_acc</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.app_options" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.cross_reference_specimens" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.cross_reference_specimens">cross_reference_specimens</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.generate_specimen_allelic_composition" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.generate_specimen_allelic_composition">generate_specimen_allelic_composition</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.main" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.name" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output_path" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.override_3i_specimen_project" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.override_3i_specimen_project">override_3i_specimen_project</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.requires" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.requires">requires</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.resolve_embryo_life_stage" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.resolve_embryo_life_stage">resolve_embryo_life_stage</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.specimen_type" href="#impc_etl.jobs.transform.specimen_cross_ref.SpecimenCrossRef.specimen_type">specimen_type</a></code></li>
 </ul>
 </li>
 </ul>

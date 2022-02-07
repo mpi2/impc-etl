@@ -34,20 +34,18 @@ from impc_etl.jobs.extract import ImpressExtractor
 from impc_etl.jobs.transform.experiment_parameter_derivator import (
     ExperimentParameterDerivator,
 )
+from impc_etl.jobs.transform.specimen_cross_ref import MouseCrossRef
 from impc_etl.shared.utils import (
     unix_time_millis,
 )
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.normalization import (
-    MouseNormalizer,
-)
 
 
 class ExperimentBWAgeCalculator(PySparkTask):
     """
     PysPark task to calculate age of specimen and BW data associations for a given experiment.
     This task depends on `impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator`,
-    `impc_etl.workflow.normalization.MouseNormalizer` and `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`.
+    `impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef` and `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`.
     """
 
     #: Name of the Spark task
@@ -60,7 +58,7 @@ class ExperimentBWAgeCalculator(PySparkTask):
         """
         Defines the luigi  task dependencies
         """
-        return [ExperimentParameterDerivator(), MouseNormalizer(), ImpressExtractor()]
+        return [ExperimentParameterDerivator(), MouseCrossRef(), ImpressExtractor()]
 
     def output(self):
         """

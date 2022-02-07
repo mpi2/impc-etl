@@ -65,20 +65,18 @@ from impc_etl.jobs.extract import ImpressExtractor
 from impc_etl.jobs.transform.experiment_parameter_derivator import (
     ExperimentParameterDerivator,
 )
+from impc_etl.jobs.transform.specimen_cross_ref import MouseCrossRef
 from impc_etl.shared.utils import (
     unix_time_millis,
 )
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.normalization import (
-    MouseNormalizer,
-)
 
 
 class ExperimentBWAgeCalculator(PySparkTask):
     &#34;&#34;&#34;
     PysPark task to calculate age of specimen and BW data associations for a given experiment.
     This task depends on `impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator`,
-    `impc_etl.workflow.normalization.MouseNormalizer` and `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`.
+    `impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef` and `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`.
     &#34;&#34;&#34;
 
     #: Name of the Spark task
@@ -91,7 +89,7 @@ class ExperimentBWAgeCalculator(PySparkTask):
         &#34;&#34;&#34;
         Defines the luigi  task dependencies
         &#34;&#34;&#34;
-        return [ExperimentParameterDerivator(), MouseNormalizer(), ImpressExtractor()]
+        return [ExperimentParameterDerivator(), MouseCrossRef(), ImpressExtractor()]
 
     def output(self):
         &#34;&#34;&#34;
@@ -482,7 +480,7 @@ class ExperimentBWAgeCalculator(PySparkTask):
 <dd>
 <div class="desc"><p>PysPark task to calculate age of specimen and BW data associations for a given experiment.
 This task depends on <code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator" href="experiment_parameter_derivator.html#impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator">ExperimentParameterDerivator</a></code>,
-<code><a title="impc_etl.workflow.normalization.MouseNormalizer" href="../../workflow/normalization.html#impc_etl.workflow.normalization.MouseNormalizer">MouseNormalizer</a></code> and <code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor" href="../extract/impress_extractor.html#impc_etl.jobs.extract.impress_extractor.ImpressExtractor">ImpressExtractor</a></code>.</p></div>
+<code><a title="impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef" href="specimen_cross_ref.html#impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef">MouseCrossRef</a></code> and <code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor" href="../extract/impress_extractor.html#impc_etl.jobs.extract.impress_extractor.ImpressExtractor">ImpressExtractor</a></code>.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -491,7 +489,7 @@ This task depends on <code><a title="impc_etl.jobs.transform.experiment_paramete
     &#34;&#34;&#34;
     PysPark task to calculate age of specimen and BW data associations for a given experiment.
     This task depends on `impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator`,
-    `impc_etl.workflow.normalization.MouseNormalizer` and `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`.
+    `impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef` and `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`.
     &#34;&#34;&#34;
 
     #: Name of the Spark task
@@ -504,7 +502,7 @@ This task depends on <code><a title="impc_etl.jobs.transform.experiment_paramete
         &#34;&#34;&#34;
         Defines the luigi  task dependencies
         &#34;&#34;&#34;
-        return [ExperimentParameterDerivator(), MouseNormalizer(), ImpressExtractor()]
+        return [ExperimentParameterDerivator(), MouseCrossRef(), ImpressExtractor()]
 
     def output(self):
         &#34;&#34;&#34;
@@ -1195,7 +1193,7 @@ task dependencies</p></div>
     &#34;&#34;&#34;
     Defines the luigi  task dependencies
     &#34;&#34;&#34;
-    return [ExperimentParameterDerivator(), MouseNormalizer(), ImpressExtractor()]</code></pre>
+    return [ExperimentParameterDerivator(), MouseCrossRef(), ImpressExtractor()]</code></pre>
 </details>
 </dd>
 </dl>
