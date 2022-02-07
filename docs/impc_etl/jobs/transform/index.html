@@ -35,12 +35,12 @@
 from impc_etl.jobs.transform.experiment_bw_age_calculator import (
     ExperimentBWAgeCalculator,
 )
+from impc_etl.jobs.transform.experiment_parameter_derivator import (
+    LineLevelExperimentParameterDerivator,
+    SpecimenLevelExperimentParameterDerivator,
+)
 from impc_etl.jobs.transform.line_experiment_cross_ref import (
     LineLevelExperimentCrossRef,
-)
-from impc_etl.jobs.transform.specimen_experiment_cross_ref import (
-    EmbryoCrossRef,
-    MouseCrossRef,
 )
 from impc_etl.jobs.transform.specimen_experiment_cross_ref import (
     SpecimenLevelExperimentCrossRef,
@@ -61,7 +61,7 @@ specimen and the associated BW information for a given data point.</p></div>
 </dd>
 <dt><code class="name"><a title="impc_etl.jobs.transform.experiment_parameter_derivator" href="experiment_parameter_derivator.html">impc_etl.jobs.transform.experiment_parameter_derivator</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Module to hold Luigi task that calculates the derived parameters on experimental data …</p></div>
 </dd>
 <dt><code class="name"><a title="impc_etl.jobs.transform.line_experiment_cross_ref" href="line_experiment_cross_ref.html">impc_etl.jobs.transform.line_experiment_cross_ref</a></code></dt>
 <dd>

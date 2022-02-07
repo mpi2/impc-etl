@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>impc_etl.jobs.transform.experiment_parameter_derivator API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Module to hold Luigi task that calculates the derived parameters on experimental data …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,14 +22,39 @@
 <h1 class="title">Module <code>impc_etl.jobs.transform.experiment_parameter_derivator</code></h1>
 </header>
 <section id="section-intro">
+<p>Module to hold Luigi task that calculates the derived parameters on experimental data.</p>
+<p>The general process is:</p>
+<ul>
+<li>Takes in a set of experiments and the information coming from IMPReSS.</li>
+<li>Gets the derived parameter list from IMPReSS for IMPC parameters
+and some EuroPhenome derivations from a constant list.</li>
+<li>Checks for each experiment that all the input values for the derivation formula are present</li>
+<li>Generates a string value containing the derivation formula and the input values</li>
+<li>Applies the derivation using the parameter derivation JAR application provided by the DCC.</li>
+<li>Adds the resulting derived parameter values to the original experiments as new parameter values.</li>
+</ul>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from typing import List, Dict
+<pre><code class="python">&#34;&#34;&#34;
+    Module to hold Luigi task that calculates the derived parameters on experimental data.
+
+    The general process is:
+
+    - Takes in a set of experiments and the information coming from IMPReSS.
+    - Gets the derived parameter list from IMPReSS for IMPC parameters
+    and some EuroPhenome derivations from a constant list.
+    - Checks for each experiment that all the input values for the derivation formula are present
+    - Generates a string value containing the derivation formula and the input values
+    - Applies the derivation using the parameter derivation JAR application provided by the DCC.
+    - Adds the resulting derived parameter values to the original experiments as new parameter values.
+&#34;&#34;&#34;
+from typing import List, Dict, Any
 
 import luigi
 from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import (
     col,
@@ -54,6 +79,9 @@ from pyspark.sql.types import (
 
 from impc_etl.config.constants import Constants
 from impc_etl.jobs.extract import ImpressExtractor
+from impc_etl.jobs.transform.line_experiment_cross_ref import (
+    LineLevelExperimentCrossRef,
+)
 from impc_etl.jobs.transform.specimen_experiment_cross_ref import (
     SpecimenLevelExperimentCrossRef,
 )
@@ -62,32 +90,72 @@ from impc_etl.shared.utils import (
     has_column,
 )
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.normalization import (
-    LineExperimentNormalizer,
-)
 
 
 class ParameterDerivator(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark task that takes in a set of experiments and computes all the derived parameters.
+
+    This tasks depends on:
+
+    - `impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef` for
+    specimen level experiments or
+    `impc_etl.jobs.transform.line_experiment_cross_ref.LineLevelExperimentCrossRef` for line level
+     experiments
+     - `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name = &#34;IMPC_Experiment_Parameter_Derivator&#34;
+
+    #: Experimental level of the data (can be &#39;specimen_level&#39; or &#39;line_level&#39;)
     experiment_level = luigi.Parameter()
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
+
+    #: Path of the output directory where the new parquet file will be generated.
     output_path = luigi.Parameter()
 
     def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/specimen_level_experiment_derived_parquet)
+        &#34;&#34;&#34;
         return ImpcConfig().get_target(
-            f&#34;{self.output_path}{self.experiment_level}_derived_parquet&#34;
+            f&#34;{self.output_path}{self.experiment_level}_experiment_derived_parquet&#34;
         )
 
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        experiment_dependency = (
+            SpecimenLevelExperimentCrossRef()
+            if self.experiment_level == &#34;specimen_level&#34;
+            else LineLevelExperimentCrossRef()
+        )
+        return [experiment_dependency, ImpressExtractor()]
+
     def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
         return [self.input()[0].path, self.input()[1].path, self.output().path]
 
-    def main(self, sc, *args):
+    def main(self, sc: SparkContext, *args: Any):
+        &#34;&#34;&#34;
+        Takes in a set of experiments and the information coming from IMPReSS.
+        Gets the derived parameter list from IMPReSS for IMPC parameters and
+        some EuroPhenome derivations from a constant list.
+        Applies the derivations to all the experiments and adds the derived parameter values to each experiment.
+        &#34;&#34;&#34;
         spark = SparkSession(sc)
         experiment_parquet_path = args[0]
-        pipeline_parquet_path = args[1]
+        impress_parquet_path = args[1]
         output_path = args[2]
-        dcc_experiment_df = spark.read.parquet(experiment_parquet_path)
-        impress_df = spark.read.parquet(pipeline_parquet_path)
+        experiment_df = spark.read.parquet(experiment_parquet_path)
+        impress_df = spark.read.parquet(impress_parquet_path)
+
+        # Some EuroPhenome derivations haven&#39;t been migrated to the new syntax
+        # so we load them from a Constant
         europhenome_derivations_json = spark.sparkContext.parallelize(
             Constants.EUROPHENOME_DERIVATIONS
         )
@@ -164,16 +232,16 @@ class ParameterDerivator(PySparkTask):
         # If the parameter has increments the inputs will have the form
         # &lt;PARAMETER_KEY&gt;$INCREMENT_1$&lt;PARAMETER_VALUE&gt;|INCREMENT_1$&lt;PARAMETER_VALUE&gt;
         experiments_simple = _get_inputs_by_parameter_type(
-            dcc_experiment_df, derived_parameters_ex, &#34;simpleParameter&#34;
+            experiment_df, derived_parameters_ex, &#34;simpleParameter&#34;
         )
         experiments_metadata = _get_inputs_by_parameter_type(
-            dcc_experiment_df, derived_parameters_ex, &#34;procedureMetadata&#34;
+            experiment_df, derived_parameters_ex, &#34;procedureMetadata&#34;
         )
         experiments_vs_derivations = experiments_simple.union(experiments_metadata)
 
-        if has_column(dcc_experiment_df, &#34;seriesParameter&#34;):
+        if has_column(experiment_df, &#34;seriesParameter&#34;):
             experiments_series = _get_inputs_by_parameter_type(
-                dcc_experiment_df, derived_parameters_ex, &#34;seriesParameter&#34;
+                experiment_df, derived_parameters_ex, &#34;seriesParameter&#34;
             )
             experiments_vs_derivations = experiments_vs_derivations.union(
                 experiments_series
@@ -274,11 +342,11 @@ class ParameterDerivator(PySparkTask):
             lit(None).cast(StringType()).alias(&#34;parameterStatus&#34;),
             results_df[&#34;result&#34;].alias(&#34;value&#34;),
         ]
-        if self.experiment_level == &#34;experiment&#34;:
+        if self.experiment_level == &#34;specimen_level&#34;:
             result_schema_fields.insert(
                 1, lit(None).cast(LongType()).alias(&#34;_sequenceID&#34;)
             )
-        elif has_column(dcc_experiment_df, &#34;simpleParameter._VALUE&#34;):
+        elif has_column(experiment_df, &#34;simpleParameter._VALUE&#34;):
             result_schema_fields.insert(0, lit(None).cast(StringType()).alias(&#34;_VALUE&#34;))
         result_struct = struct(*result_schema_fields)
         results_df = results_df.groupBy(&#34;unique_id&#34;, &#34;pipelineKey&#34;, &#34;procedureKey&#34;).agg(
@@ -286,22 +354,22 @@ class ParameterDerivator(PySparkTask):
         )
         results_df = results_df.withColumnRenamed(&#34;unique_id&#34;, &#34;unique_id_result&#34;)
 
-        dcc_experiment_df = dcc_experiment_df.join(
+        experiment_df = experiment_df.join(
             results_df,
-            (dcc_experiment_df[&#34;unique_id&#34;] == results_df[&#34;unique_id_result&#34;])
-            &amp; (dcc_experiment_df[&#34;_procedureID&#34;] == results_df[&#34;procedureKey&#34;])
-            &amp; (dcc_experiment_df[&#34;_pipeline&#34;] == results_df[&#34;pipelineKey&#34;]),
+            (experiment_df[&#34;unique_id&#34;] == results_df[&#34;unique_id_result&#34;])
+            &amp; (experiment_df[&#34;_procedureID&#34;] == results_df[&#34;procedureKey&#34;])
+            &amp; (experiment_df[&#34;_pipeline&#34;] == results_df[&#34;pipelineKey&#34;]),
             &#34;left_outer&#34;,
         )
 
         simple_parameter_type = None
 
-        for c_type in dcc_experiment_df.dtypes:
+        for c_type in experiment_df.dtypes:
             if c_type[0] == &#34;simpleParameter&#34;:
                 simple_parameter_type = c_type[1]
                 break
         merge_simple_parameters = udf(_merge_simple_parameters, simple_parameter_type)
-        dcc_experiment_df = dcc_experiment_df.withColumn(
+        experiment_df = experiment_df.withColumn(
             &#34;simpleParameter&#34;,
             when(
                 (col(&#34;results&#34;).isNotNull() &amp; col(&#34;simpleParameter&#34;).isNotNull()),
@@ -310,7 +378,7 @@ class ParameterDerivator(PySparkTask):
             .when(col(&#34;simpleParameter&#34;).isNull(), col(&#34;results&#34;))
             .otherwise(col(&#34;simpleParameter&#34;)),
         )
-        dcc_experiment_df = dcc_experiment_df.drop(
+        experiment_df = experiment_df.drop(
             &#34;complete_derivations.unique_id&#34;,
             &#34;unique_id_result&#34;,
             &#34;pipelineKey&#34;,
@@ -318,7 +386,7 @@ class ParameterDerivator(PySparkTask):
             &#34;parameterKey&#34;,
             &#34;results&#34;,
         )
-        dcc_experiment_df.write.parquet(output_path)
+        experiment_df.write.parquet(output_path)
 
 
 def _merge_simple_parameters(simple_parameters: List[Dict], results: [Dict]):
@@ -402,20 +470,14 @@ def _get_inputs_by_parameter_type(
     )
 
 
-class ExperimentParameterDerivator(ParameterDerivator):
-    name = &#34;IMPC_Experiment_Parameter_Derivator&#34;
-    experiment_level = &#34;experiment&#34;
-
-    def requires(self):
-        return [SpecimenLevelExperimentCrossRef(), ImpressExtractor()]
+class SpecimenLevelExperimentParameterDerivator(ParameterDerivator):
+    name = &#34;IMPC_Specimen_Level_Experiment_Parameter_Derivator&#34;
+    experiment_level = &#34;specimen_level&#34;
 
 
-class LineParameterDerivator(ParameterDerivator):
-    name = &#34;IMPC_Line_Parameter_Derivator&#34;
-    experiment_level = &#34;line&#34;
-
-    def requires(self):
-        return [LineExperimentNormalizer(), ImpressExtractor()]</code></pre>
+class LineLevelExperimentParameterDerivator(ParameterDerivator):
+    name = &#34;IMPC_Line_Level_Experiment_Parameter_Derivator&#34;
+    experiment_level = &#34;line_level&#34;</code></pre>
 </details>
 </section>
 <section>
@@ -427,25 +489,27 @@ class LineParameterDerivator(ParameterDerivator):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator"><code class="flex name class">
-<span>class <span class="ident">ExperimentParameterDerivator</span></span>
+<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.LineLevelExperimentParameterDerivator"><code class="flex name class">
+<span>class <span class="ident">LineLevelExperimentParameterDerivator</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Template task for running an inline PySpark job</p>
-<p>Simply implement the <code>main</code> method in your subclass</p>
-<p>You can optionally define package names to be distributed to the cluster
-with <code>py_packages</code> (uses luigi's global py-packages configuration by default)</p></div>
+<div class="desc"><p>PySpark task that takes in a set of experiments and computes all the derived parameters.</p>
+<p>This tasks depends on:</p>
+<ul>
+<li><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef" href="specimen_experiment_cross_ref.html#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef">SpecimenLevelExperimentCrossRef</a></code> for
+specimen level experiments or
+<code><a title="impc_etl.jobs.transform.line_experiment_cross_ref.LineLevelExperimentCrossRef" href="line_experiment_cross_ref.html#impc_etl.jobs.transform.line_experiment_cross_ref.LineLevelExperimentCrossRef">LineLevelExperimentCrossRef</a></code> for line level
+experiments</li>
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor" href="../extract/impress_extractor.html#impc_etl.jobs.extract.impress_extractor.ImpressExtractor">ImpressExtractor</a></code></li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ExperimentParameterDerivator(ParameterDerivator):
-    name = &#34;IMPC_Experiment_Parameter_Derivator&#34;
-    experiment_level = &#34;experiment&#34;
-
-    def requires(self):
-        return [SpecimenLevelExperimentCrossRef(), ImpressExtractor()]</code></pre>
+<pre><code class="python">class LineLevelExperimentParameterDerivator(ParameterDerivator):
+    name = &#34;IMPC_Line_Level_Experiment_Parameter_Derivator&#34;
+    experiment_level = &#34;line_level&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -455,118 +519,17 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
 <li>luigi.contrib.external_program.ExternalProgramTask</li>
 <li>luigi.task.Task</li>
 </ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator.experiment_level"><code class="name">var <span class="ident">experiment_level</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator.requires"><code class="name flex">
-<span>def <span class="ident">requires</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The Tasks that this Task depends on.</p>
-<p>A Task will only run if all of the Tasks that it requires are completed.
-If your Task does not require any other Tasks, then you don't need to
-override this method. Otherwise, a subclass can override this method
-to return a single Task, a list of Task instances, or a dict whose
-values are Task instances.</p>
-<p>See :ref:<code>Task.requires</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def requires(self):
-    return [SpecimenLevelExperimentCrossRef(), ImpressExtractor()]</code></pre>
-</details>
-</dd>
-</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator">ParameterDerivator</a></b></code>:
 <ul class="hlist">
 <li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.app_options" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.experiment_level" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.experiment_level">experiment_level</a></code></li>
 <li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.main" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.name" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.name">name</a></code></li>
 <li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output">output</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator"><code class="flex name class">
-<span>class <span class="ident">LineParameterDerivator</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running an inline PySpark job</p>
-<p>Simply implement the <code>main</code> method in your subclass</p>
-<p>You can optionally define package names to be distributed to the cluster
-with <code>py_packages</code> (uses luigi's global py-packages configuration by default)</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class LineParameterDerivator(ParameterDerivator):
-    name = &#34;IMPC_Line_Parameter_Derivator&#34;
-    experiment_level = &#34;line&#34;
-
-    def requires(self):
-        return [LineExperimentNormalizer(), ImpressExtractor()]</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator">ParameterDerivator</a></li>
-<li>luigi.contrib.spark.PySparkTask</li>
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator.experiment_level"><code class="name">var <span class="ident">experiment_level</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator.requires"><code class="name flex">
-<span>def <span class="ident">requires</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The Tasks that this Task depends on.</p>
-<p>A Task will only run if all of the Tasks that it requires are completed.
-If your Task does not require any other Tasks, then you don't need to
-override this method. Otherwise, a subclass can override this method
-to return a single Task, a list of Task instances, or a dict whose
-values are Task instances.</p>
-<p>See :ref:<code>Task.requires</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def requires(self):
-    return [LineExperimentNormalizer(), ImpressExtractor()]</code></pre>
-</details>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator">ParameterDerivator</a></b></code>:
-<ul class="hlist">
-<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.app_options" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.main" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.main">main</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output_path" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.requires" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.requires">requires</a></code></li>
 </ul>
 </li>
 </ul>
@@ -576,35 +539,83 @@ values are Task instances.</p>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Template task for running an inline PySpark job</p>
-<p>Simply implement the <code>main</code> method in your subclass</p>
-<p>You can optionally define package names to be distributed to the cluster
-with <code>py_packages</code> (uses luigi's global py-packages configuration by default)</p></div>
+<div class="desc"><p>PySpark task that takes in a set of experiments and computes all the derived parameters.</p>
+<p>This tasks depends on:</p>
+<ul>
+<li><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef" href="specimen_experiment_cross_ref.html#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef">SpecimenLevelExperimentCrossRef</a></code> for
+specimen level experiments or
+<code><a title="impc_etl.jobs.transform.line_experiment_cross_ref.LineLevelExperimentCrossRef" href="line_experiment_cross_ref.html#impc_etl.jobs.transform.line_experiment_cross_ref.LineLevelExperimentCrossRef">LineLevelExperimentCrossRef</a></code> for line level
+experiments</li>
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor" href="../extract/impress_extractor.html#impc_etl.jobs.extract.impress_extractor.ImpressExtractor">ImpressExtractor</a></code></li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParameterDerivator(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark task that takes in a set of experiments and computes all the derived parameters.
+
+    This tasks depends on:
+
+    - `impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef` for
+    specimen level experiments or
+    `impc_etl.jobs.transform.line_experiment_cross_ref.LineLevelExperimentCrossRef` for line level
+     experiments
+     - `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name = &#34;IMPC_Experiment_Parameter_Derivator&#34;
+
+    #: Experimental level of the data (can be &#39;specimen_level&#39; or &#39;line_level&#39;)
     experiment_level = luigi.Parameter()
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
+
+    #: Path of the output directory where the new parquet file will be generated.
     output_path = luigi.Parameter()
 
     def output(self):
+        &#34;&#34;&#34;
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/specimen_level_experiment_derived_parquet)
+        &#34;&#34;&#34;
         return ImpcConfig().get_target(
-            f&#34;{self.output_path}{self.experiment_level}_derived_parquet&#34;
+            f&#34;{self.output_path}{self.experiment_level}_experiment_derived_parquet&#34;
         )
 
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        experiment_dependency = (
+            SpecimenLevelExperimentCrossRef()
+            if self.experiment_level == &#34;specimen_level&#34;
+            else LineLevelExperimentCrossRef()
+        )
+        return [experiment_dependency, ImpressExtractor()]
+
     def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
         return [self.input()[0].path, self.input()[1].path, self.output().path]
 
-    def main(self, sc, *args):
+    def main(self, sc: SparkContext, *args: Any):
+        &#34;&#34;&#34;
+        Takes in a set of experiments and the information coming from IMPReSS.
+        Gets the derived parameter list from IMPReSS for IMPC parameters and
+        some EuroPhenome derivations from a constant list.
+        Applies the derivations to all the experiments and adds the derived parameter values to each experiment.
+        &#34;&#34;&#34;
         spark = SparkSession(sc)
         experiment_parquet_path = args[0]
-        pipeline_parquet_path = args[1]
+        impress_parquet_path = args[1]
         output_path = args[2]
-        dcc_experiment_df = spark.read.parquet(experiment_parquet_path)
-        impress_df = spark.read.parquet(pipeline_parquet_path)
+        experiment_df = spark.read.parquet(experiment_parquet_path)
+        impress_df = spark.read.parquet(impress_parquet_path)
+
+        # Some EuroPhenome derivations haven&#39;t been migrated to the new syntax
+        # so we load them from a Constant
         europhenome_derivations_json = spark.sparkContext.parallelize(
             Constants.EUROPHENOME_DERIVATIONS
         )
@@ -681,16 +692,16 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
         # If the parameter has increments the inputs will have the form
         # &lt;PARAMETER_KEY&gt;$INCREMENT_1$&lt;PARAMETER_VALUE&gt;|INCREMENT_1$&lt;PARAMETER_VALUE&gt;
         experiments_simple = _get_inputs_by_parameter_type(
-            dcc_experiment_df, derived_parameters_ex, &#34;simpleParameter&#34;
+            experiment_df, derived_parameters_ex, &#34;simpleParameter&#34;
         )
         experiments_metadata = _get_inputs_by_parameter_type(
-            dcc_experiment_df, derived_parameters_ex, &#34;procedureMetadata&#34;
+            experiment_df, derived_parameters_ex, &#34;procedureMetadata&#34;
         )
         experiments_vs_derivations = experiments_simple.union(experiments_metadata)
 
-        if has_column(dcc_experiment_df, &#34;seriesParameter&#34;):
+        if has_column(experiment_df, &#34;seriesParameter&#34;):
             experiments_series = _get_inputs_by_parameter_type(
-                dcc_experiment_df, derived_parameters_ex, &#34;seriesParameter&#34;
+                experiment_df, derived_parameters_ex, &#34;seriesParameter&#34;
             )
             experiments_vs_derivations = experiments_vs_derivations.union(
                 experiments_series
@@ -791,11 +802,11 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
             lit(None).cast(StringType()).alias(&#34;parameterStatus&#34;),
             results_df[&#34;result&#34;].alias(&#34;value&#34;),
         ]
-        if self.experiment_level == &#34;experiment&#34;:
+        if self.experiment_level == &#34;specimen_level&#34;:
             result_schema_fields.insert(
                 1, lit(None).cast(LongType()).alias(&#34;_sequenceID&#34;)
             )
-        elif has_column(dcc_experiment_df, &#34;simpleParameter._VALUE&#34;):
+        elif has_column(experiment_df, &#34;simpleParameter._VALUE&#34;):
             result_schema_fields.insert(0, lit(None).cast(StringType()).alias(&#34;_VALUE&#34;))
         result_struct = struct(*result_schema_fields)
         results_df = results_df.groupBy(&#34;unique_id&#34;, &#34;pipelineKey&#34;, &#34;procedureKey&#34;).agg(
@@ -803,22 +814,22 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
         )
         results_df = results_df.withColumnRenamed(&#34;unique_id&#34;, &#34;unique_id_result&#34;)
 
-        dcc_experiment_df = dcc_experiment_df.join(
+        experiment_df = experiment_df.join(
             results_df,
-            (dcc_experiment_df[&#34;unique_id&#34;] == results_df[&#34;unique_id_result&#34;])
-            &amp; (dcc_experiment_df[&#34;_procedureID&#34;] == results_df[&#34;procedureKey&#34;])
-            &amp; (dcc_experiment_df[&#34;_pipeline&#34;] == results_df[&#34;pipelineKey&#34;]),
+            (experiment_df[&#34;unique_id&#34;] == results_df[&#34;unique_id_result&#34;])
+            &amp; (experiment_df[&#34;_procedureID&#34;] == results_df[&#34;procedureKey&#34;])
+            &amp; (experiment_df[&#34;_pipeline&#34;] == results_df[&#34;pipelineKey&#34;]),
             &#34;left_outer&#34;,
         )
 
         simple_parameter_type = None
 
-        for c_type in dcc_experiment_df.dtypes:
+        for c_type in experiment_df.dtypes:
             if c_type[0] == &#34;simpleParameter&#34;:
                 simple_parameter_type = c_type[1]
                 break
         merge_simple_parameters = udf(_merge_simple_parameters, simple_parameter_type)
-        dcc_experiment_df = dcc_experiment_df.withColumn(
+        experiment_df = experiment_df.withColumn(
             &#34;simpleParameter&#34;,
             when(
                 (col(&#34;results&#34;).isNotNull() &amp; col(&#34;simpleParameter&#34;).isNotNull()),
@@ -827,7 +838,7 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
             .when(col(&#34;simpleParameter&#34;).isNull(), col(&#34;results&#34;))
             .otherwise(col(&#34;simpleParameter&#34;)),
         )
-        dcc_experiment_df = dcc_experiment_df.drop(
+        experiment_df = experiment_df.drop(
             &#34;complete_derivations.unique_id&#34;,
             &#34;unique_id_result&#34;,
             &#34;pipelineKey&#34;,
@@ -835,7 +846,7 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
             &#34;parameterKey&#34;,
             &#34;results&#34;,
         )
-        dcc_experiment_df.write.parquet(output_path)</code></pre>
+        experiment_df.write.parquet(output_path)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -846,26 +857,22 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator">ExperimentParameterDerivator</a></li>
-<li><a title="impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator">LineParameterDerivator</a></li>
+<li><a title="impc_etl.jobs.transform.experiment_parameter_derivator.LineLevelExperimentParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.LineLevelExperimentParameterDerivator">LineLevelExperimentParameterDerivator</a></li>
+<li><a title="impc_etl.jobs.transform.experiment_parameter_derivator.SpecimenLevelExperimentParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.SpecimenLevelExperimentParameterDerivator">SpecimenLevelExperimentParameterDerivator</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
 <dt id="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.experiment_level"><code class="name">var <span class="ident">experiment_level</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Experimental level of the data (can be 'specimen_level' or 'line_level')</p></div>
 </dd>
-<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
+<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.name"><code class="name">var <span class="ident">name</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Name of the Spark task</p></div>
 </dd>
 <dt id="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Path of the output directory where the new parquet file will be generated.</p></div>
 </dd>
 </dl>
 <h3>Methods</h3>
@@ -874,33 +881,46 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
 <span>def <span class="ident">app_options</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<div class="desc"><p>Generates the options pass to the PySpark job</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def app_options(self):
+    &#34;&#34;&#34;
+    Generates the options pass to the PySpark job
+    &#34;&#34;&#34;
     return [self.input()[0].path, self.input()[1].path, self.output().path]</code></pre>
 </details>
 </dd>
 <dt id="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.main"><code class="name flex">
-<span>def <span class="ident">main</span></span>(<span>self, sc, *args)</span>
+<span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Called by the pyspark_runner with a SparkContext and any arguments returned by <code>app_options()</code></p>
-<p>:param sc: SparkContext
-:param args: arguments list</p></div>
+<div class="desc"><p>Takes in a set of experiments and the information coming from IMPReSS.
+Gets the derived parameter list from IMPReSS for IMPC parameters and
+some EuroPhenome derivations from a constant list.
+Applies the derivations to all the experiments and adds the derived parameter values to each experiment.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def main(self, sc, *args):
+<pre><code class="python">def main(self, sc: SparkContext, *args: Any):
+    &#34;&#34;&#34;
+    Takes in a set of experiments and the information coming from IMPReSS.
+    Gets the derived parameter list from IMPReSS for IMPC parameters and
+    some EuroPhenome derivations from a constant list.
+    Applies the derivations to all the experiments and adds the derived parameter values to each experiment.
+    &#34;&#34;&#34;
     spark = SparkSession(sc)
     experiment_parquet_path = args[0]
-    pipeline_parquet_path = args[1]
+    impress_parquet_path = args[1]
     output_path = args[2]
-    dcc_experiment_df = spark.read.parquet(experiment_parquet_path)
-    impress_df = spark.read.parquet(pipeline_parquet_path)
+    experiment_df = spark.read.parquet(experiment_parquet_path)
+    impress_df = spark.read.parquet(impress_parquet_path)
+
+    # Some EuroPhenome derivations haven&#39;t been migrated to the new syntax
+    # so we load them from a Constant
     europhenome_derivations_json = spark.sparkContext.parallelize(
         Constants.EUROPHENOME_DERIVATIONS
     )
@@ -977,16 +997,16 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
     # If the parameter has increments the inputs will have the form
     # &lt;PARAMETER_KEY&gt;$INCREMENT_1$&lt;PARAMETER_VALUE&gt;|INCREMENT_1$&lt;PARAMETER_VALUE&gt;
     experiments_simple = _get_inputs_by_parameter_type(
-        dcc_experiment_df, derived_parameters_ex, &#34;simpleParameter&#34;
+        experiment_df, derived_parameters_ex, &#34;simpleParameter&#34;
     )
     experiments_metadata = _get_inputs_by_parameter_type(
-        dcc_experiment_df, derived_parameters_ex, &#34;procedureMetadata&#34;
+        experiment_df, derived_parameters_ex, &#34;procedureMetadata&#34;
     )
     experiments_vs_derivations = experiments_simple.union(experiments_metadata)
 
-    if has_column(dcc_experiment_df, &#34;seriesParameter&#34;):
+    if has_column(experiment_df, &#34;seriesParameter&#34;):
         experiments_series = _get_inputs_by_parameter_type(
-            dcc_experiment_df, derived_parameters_ex, &#34;seriesParameter&#34;
+            experiment_df, derived_parameters_ex, &#34;seriesParameter&#34;
         )
         experiments_vs_derivations = experiments_vs_derivations.union(
             experiments_series
@@ -1087,11 +1107,11 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
         lit(None).cast(StringType()).alias(&#34;parameterStatus&#34;),
         results_df[&#34;result&#34;].alias(&#34;value&#34;),
     ]
-    if self.experiment_level == &#34;experiment&#34;:
+    if self.experiment_level == &#34;specimen_level&#34;:
         result_schema_fields.insert(
             1, lit(None).cast(LongType()).alias(&#34;_sequenceID&#34;)
         )
-    elif has_column(dcc_experiment_df, &#34;simpleParameter._VALUE&#34;):
+    elif has_column(experiment_df, &#34;simpleParameter._VALUE&#34;):
         result_schema_fields.insert(0, lit(None).cast(StringType()).alias(&#34;_VALUE&#34;))
     result_struct = struct(*result_schema_fields)
     results_df = results_df.groupBy(&#34;unique_id&#34;, &#34;pipelineKey&#34;, &#34;procedureKey&#34;).agg(
@@ -1099,22 +1119,22 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
     )
     results_df = results_df.withColumnRenamed(&#34;unique_id&#34;, &#34;unique_id_result&#34;)
 
-    dcc_experiment_df = dcc_experiment_df.join(
+    experiment_df = experiment_df.join(
         results_df,
-        (dcc_experiment_df[&#34;unique_id&#34;] == results_df[&#34;unique_id_result&#34;])
-        &amp; (dcc_experiment_df[&#34;_procedureID&#34;] == results_df[&#34;procedureKey&#34;])
-        &amp; (dcc_experiment_df[&#34;_pipeline&#34;] == results_df[&#34;pipelineKey&#34;]),
+        (experiment_df[&#34;unique_id&#34;] == results_df[&#34;unique_id_result&#34;])
+        &amp; (experiment_df[&#34;_procedureID&#34;] == results_df[&#34;procedureKey&#34;])
+        &amp; (experiment_df[&#34;_pipeline&#34;] == results_df[&#34;pipelineKey&#34;]),
         &#34;left_outer&#34;,
     )
 
     simple_parameter_type = None
 
-    for c_type in dcc_experiment_df.dtypes:
+    for c_type in experiment_df.dtypes:
         if c_type[0] == &#34;simpleParameter&#34;:
             simple_parameter_type = c_type[1]
             break
     merge_simple_parameters = udf(_merge_simple_parameters, simple_parameter_type)
-    dcc_experiment_df = dcc_experiment_df.withColumn(
+    experiment_df = experiment_df.withColumn(
         &#34;simpleParameter&#34;,
         when(
             (col(&#34;results&#34;).isNotNull() &amp; col(&#34;simpleParameter&#34;).isNotNull()),
@@ -1123,7 +1143,7 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
         .when(col(&#34;simpleParameter&#34;).isNull(), col(&#34;results&#34;))
         .otherwise(col(&#34;simpleParameter&#34;)),
     )
-    dcc_experiment_df = dcc_experiment_df.drop(
+    experiment_df = experiment_df.drop(
         &#34;complete_derivations.unique_id&#34;,
         &#34;unique_id_result&#34;,
         &#34;pipelineKey&#34;,
@@ -1131,34 +1151,97 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
         &#34;parameterKey&#34;,
         &#34;results&#34;,
     )
-    dcc_experiment_df.write.parquet(output_path)</code></pre>
+    experiment_df.write.parquet(output_path)</code></pre>
 </details>
 </dd>
 <dt id="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output"><code class="name flex">
 <span>def <span class="ident">output</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>The output that this Task produces.</p>
-<p>The output of the Task determines if the Task needs to be run&ndash;the task
-is considered finished iff the outputs all exist. Subclasses should
-override this method to return a single :py:class:<code>Target</code> or a list of
-:py:class:<code>Target</code> instances.</p>
-<p>Implementation note
-If running multiple workers, the output must be a resource that is accessible
-by all workers, such as a DFS or database. Otherwise, workers might compute
-the same output since they don't see the work done by other workers.</p>
-<p>See :ref:<code>Task.output</code></p></div>
+<div class="desc"><p>Returns the full parquet path as an output for the Luigi Task
+(e.g. impc/dr15.2/parquet/specimen_level_experiment_derived_parquet)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def output(self):
+    &#34;&#34;&#34;
+    Returns the full parquet path as an output for the Luigi Task
+    (e.g. impc/dr15.2/parquet/specimen_level_experiment_derived_parquet)
+    &#34;&#34;&#34;
     return ImpcConfig().get_target(
-        f&#34;{self.output_path}{self.experiment_level}_derived_parquet&#34;
+        f&#34;{self.output_path}{self.experiment_level}_experiment_derived_parquet&#34;
     )</code></pre>
 </details>
 </dd>
+<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the luigi
+task dependencies</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    &#34;&#34;&#34;
+    Defines the luigi  task dependencies
+    &#34;&#34;&#34;
+    experiment_dependency = (
+        SpecimenLevelExperimentCrossRef()
+        if self.experiment_level == &#34;specimen_level&#34;
+        else LineLevelExperimentCrossRef()
+    )
+    return [experiment_dependency, ImpressExtractor()]</code></pre>
+</details>
+</dd>
 </dl>
+</dd>
+<dt id="impc_etl.jobs.transform.experiment_parameter_derivator.SpecimenLevelExperimentParameterDerivator"><code class="flex name class">
+<span>class <span class="ident">SpecimenLevelExperimentParameterDerivator</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>PySpark task that takes in a set of experiments and computes all the derived parameters.</p>
+<p>This tasks depends on:</p>
+<ul>
+<li><code><a title="impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef" href="specimen_experiment_cross_ref.html#impc_etl.jobs.transform.specimen_experiment_cross_ref.SpecimenLevelExperimentCrossRef">SpecimenLevelExperimentCrossRef</a></code> for
+specimen level experiments or
+<code><a title="impc_etl.jobs.transform.line_experiment_cross_ref.LineLevelExperimentCrossRef" href="line_experiment_cross_ref.html#impc_etl.jobs.transform.line_experiment_cross_ref.LineLevelExperimentCrossRef">LineLevelExperimentCrossRef</a></code> for line level
+experiments</li>
+<li><code><a title="impc_etl.jobs.extract.impress_extractor.ImpressExtractor" href="../extract/impress_extractor.html#impc_etl.jobs.extract.impress_extractor.ImpressExtractor">ImpressExtractor</a></code></li>
+</ul></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SpecimenLevelExperimentParameterDerivator(ParameterDerivator):
+    name = &#34;IMPC_Specimen_Level_Experiment_Parameter_Derivator&#34;
+    experiment_level = &#34;specimen_level&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator">ParameterDerivator</a></li>
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator">ParameterDerivator</a></b></code>:
+<ul class="hlist">
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.app_options" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.experiment_level" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.experiment_level">experiment_level</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.main" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.name" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output_path" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.requires" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.requires">requires</a></code></li>
+</ul>
+</li>
+</ul>
 </dd>
 </dl>
 </section>
@@ -1184,32 +1267,22 @@ the same output since they don't see the work done by other workers.</p>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator">ExperimentParameterDerivator</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator.experiment_level" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator.experiment_level">experiment_level</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator.name" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator.name">name</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator.requires" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator.requires">requires</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator">LineParameterDerivator</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator.experiment_level" href="#impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator.experiment_level">experiment_level</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator.name" href="#impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator.name">name</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator.requires" href="#impc_etl.jobs.transform.experiment_parameter_derivator.LineParameterDerivator.requires">requires</a></code></li>
-</ul>
+<h4><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.LineLevelExperimentParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.LineLevelExperimentParameterDerivator">LineLevelExperimentParameterDerivator</a></code></h4>
 </li>
 <li>
 <h4><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator">ParameterDerivator</a></code></h4>
-<ul class="">
+<ul class="two-column">
 <li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.app_options" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.dcc_xml_path" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.dcc_xml_path">dcc_xml_path</a></code></li>
 <li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.experiment_level" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.experiment_level">experiment_level</a></code></li>
-<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.imits_colonies_tsv_path" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
 <li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.main" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.name" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.name">name</a></code></li>
 <li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output">output</a></code></li>
 <li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output_path" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.requires" href="#impc_etl.jobs.transform.experiment_parameter_derivator.ParameterDerivator.requires">requires</a></code></li>
 </ul>
+</li>
+<li>
+<h4><code><a title="impc_etl.jobs.transform.experiment_parameter_derivator.SpecimenLevelExperimentParameterDerivator" href="#impc_etl.jobs.transform.experiment_parameter_derivator.SpecimenLevelExperimentParameterDerivator">SpecimenLevelExperimentParameterDerivator</a></code></h4>
 </li>
 </ul>
 </li>

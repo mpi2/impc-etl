@@ -1,9 +1,47 @@
+import luigi
+from luigi.contrib.spark import PySparkTask
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import concat_ws, col, lit, when
-from luigi.contrib.spark import PySparkTask
+
+from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
+from impc_etl.workflow.config import ImpcConfig
 
 
 class StatsPipelineInputMapper(PySparkTask):
+    """
+    PySpark task to generate the Statistical Analysis Input.
+    It basically flattens the Observations multivalued columsn so they can be processed on R.
+
+    This task depends on:
+
+    - `impc_etl.workflow.load.PipelineCoreLoader`
+    """
+
+    #: Name of the Spark task
+    name: str = "IMPC_Statistical_Analysis_Input_Mapper"
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        """
+        Defines the luigi  task dependencies
+        """
+        return ExperimentToObservationMapper()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + "/"
+            if not self.output_path.endswith("/")
+            else self.output_path
+        )
+        return ImpcConfig().get_target(
+            f"{self.output_path}flatten_observations_parquet"
+        )
+
+    def app_options(self):
+        return [self.input().path, self.output_path]
+
     def main(self, sc, *args):
         observations_parquet_path = args[1]
         output_path = args[2]

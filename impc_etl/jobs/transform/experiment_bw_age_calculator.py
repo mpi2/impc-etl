@@ -4,10 +4,11 @@
 """
 import math
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Any
 
 import luigi
 from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import (
     explode_outer,
@@ -32,9 +33,9 @@ from pyspark.sql.types import (
 
 from impc_etl.jobs.extract import ImpressExtractor
 from impc_etl.jobs.transform.experiment_parameter_derivator import (
-    ExperimentParameterDerivator,
+    SpecimenLevelExperimentParameterDerivator,
 )
-from impc_etl.jobs.transform.specimen_cross_ref import MouseCrossRef
+from impc_etl.jobs.transform.specimen_cross_ref import MouseSpecimenCrossRef
 from impc_etl.shared.utils import (
     unix_time_millis,
 )
@@ -44,21 +45,28 @@ from impc_etl.workflow.config import ImpcConfig
 class ExperimentBWAgeCalculator(PySparkTask):
     """
     PysPark task to calculate age of specimen and BW data associations for a given experiment.
-    This task depends on `impc_etl.jobs.transform.experiment_parameter_derivator.ExperimentParameterDerivator`,
-    `impc_etl.jobs.transform.specimen_cross_ref.MouseCrossRef` and `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`.
+    This task depends on:
+
+    - `impc_etl.jobs.transform.experiment_parameter_derivator.SpecimenLevelExperimentParameterDerivator`
+    - `impc_etl.jobs.transform.specimen_cross_ref.MouseSpecimenCrossRef`
+    - `impc_etl.jobs.extract.impress_extractor.ImpressExtractor`
     """
 
     #: Name of the Spark task
-    name = "IMPC_Experiment_ADD_BW_AGE_Processor"
+    name: str = "IMPC_Experiment_ADD_BW_AGE_Processor"
 
     #: Path of the output directory where the new parquet file will be generated.
-    output_path = luigi.Parameter()
+    output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
         """
         Defines the luigi  task dependencies
         """
-        return [ExperimentParameterDerivator(), MouseCrossRef(), ImpressExtractor()]
+        return [
+            SpecimenLevelExperimentParameterDerivator(),
+            MouseSpecimenCrossRef(),
+            ImpressExtractor(),
+        ]
 
     def output(self):
         """
@@ -80,7 +88,7 @@ class ExperimentBWAgeCalculator(PySparkTask):
             self.output().path,
         ]
 
-    def main(self, sc, *args):
+    def main(self, sc: SparkContext, *args: Any):
         """
         Loads the given the Experiment parquet, the Specimen parquet and the Impress parquet,
         and uses them to calculate the age of the specimen at any given experiment date and to associate

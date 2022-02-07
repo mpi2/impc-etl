@@ -26,12 +26,50 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from pyspark.sql import SparkSession
-from pyspark.sql.functions import concat_ws, col, lit, when
+<pre><code class="python">import luigi
 from luigi.contrib.spark import PySparkTask
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import concat_ws, col, lit, when
+
+from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
+from impc_etl.workflow.config import ImpcConfig
 
 
 class StatsPipelineInputMapper(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark task to generate the Statistical Analysis Input.
+    It basically flattens the Observations multivalued columsn so they can be processed on R.
+
+    This task depends on:
+
+    - `impc_etl.workflow.load.PipelineCoreLoader`
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name: str = &#34;IMPC_Statistical_Analysis_Input_Mapper&#34;
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        return ExperimentToObservationMapper()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}flatten_observations_parquet&#34;
+        )
+
+    def app_options(self):
+        return [self.input().path, self.output_path]
+
     def main(self, sc, *args):
         observations_parquet_path = args[1]
         output_path = args[2]
@@ -68,15 +106,51 @@ class StatsPipelineInputMapper(PySparkTask):
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Template task for running an inline PySpark job</p>
-<p>Simply implement the <code>main</code> method in your subclass</p>
-<p>You can optionally define package names to be distributed to the cluster
-with <code>py_packages</code> (uses luigi's global py-packages configuration by default)</p></div>
+<div class="desc"><p>PySpark task to generate the Statistical Analysis Input.
+It basically flattens the Observations multivalued columsn so they can be processed on R.</p>
+<p>This task depends on:</p>
+<ul>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader" href="../../workflow/load.html#impc_etl.workflow.load.PipelineCoreLoader">PipelineCoreLoader</a></code></li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class StatsPipelineInputMapper(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark task to generate the Statistical Analysis Input.
+    It basically flattens the Observations multivalued columsn so they can be processed on R.
+
+    This task depends on:
+
+    - `impc_etl.workflow.load.PipelineCoreLoader`
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name: str = &#34;IMPC_Statistical_Analysis_Input_Mapper&#34;
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        return ExperimentToObservationMapper()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(
+            f&#34;{self.output_path}flatten_observations_parquet&#34;
+        )
+
+    def app_options(self):
+        return [self.input().path, self.output_path]
+
     def main(self, sc, *args):
         observations_parquet_path = args[1]
         output_path = args[2]
@@ -105,8 +179,32 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
 <li>luigi.contrib.external_program.ExternalProgramTask</li>
 <li>luigi.task.Task</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>Name of the Spark task</p></div>
+</dd>
+<dt id="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"><p>Path of the output directory where the new parquet file will be generated.</p></div>
+</dd>
+</dl>
 <h3>Methods</h3>
 <dl>
+<dt id="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    return [self.input().path, self.output_path]</code></pre>
+</details>
+</dd>
 <dt id="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.main"><code class="name flex">
 <span>def <span class="ident">main</span></span>(<span>self, sc, *args)</span>
 </code></dt>
@@ -140,6 +238,52 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
     flatten_observations__temp.write.parquet(output_path)</code></pre>
 </details>
 </dd>
+<dt id="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    return ImpcConfig().get_target(
+        f&#34;{self.output_path}flatten_observations_parquet&#34;
+    )</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the luigi
+task dependencies</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    &#34;&#34;&#34;
+    Defines the luigi  task dependencies
+    &#34;&#34;&#34;
+    return ExperimentToObservationMapper()</code></pre>
+</details>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -167,8 +311,13 @@ with <code>py_packages</code> (uses luigi's global py-packages configuration by 
 <ul>
 <li>
 <h4><code><a title="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper" href="#impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper">StatsPipelineInputMapper</a></code></h4>
-<ul class="">
+<ul class="two-column">
+<li><code><a title="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.app_options" href="#impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.app_options">app_options</a></code></li>
 <li><code><a title="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.main" href="#impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.name" href="#impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.output" href="#impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.output_path" href="#impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.requires" href="#impc_etl.jobs.load.stats_pipeline_input_mapper.StatsPipelineInputMapper.requires">requires</a></code></li>
 </ul>
 </li>
 </ul>

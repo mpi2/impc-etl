@@ -31,74 +31,10 @@
 from luigi.contrib.webhdfs import WebHdfsClient
 from luigi.task import flatten
 
-from impc_etl.jobs.transform.experiment_bw_age_calculator import (
-    ExperimentBWAgeCalculator,
-)
-from impc_etl.jobs.transform.experiment_parameter_derivator import (
-    LineParameterDerivator,
-)
+from impc_etl.jobs.extract import OntologyTermHierarchyExtractor
+from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
 from impc_etl.workflow.normalization import *
-
-
-class ObservationsMapper(SparkSubmitTask):
-    name = &#34;IMPC_Observations_Mapper&#34;
-    app = &#34;impc_etl/jobs/load/observation_mapper.py&#34;
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
-    mgi_allele_input_path = luigi.Parameter()
-    mgi_strain_input_path = luigi.Parameter()
-    ontology_input_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def requires(self):
-        return [
-            ExperimentBWAgeCalculator(),
-            LineParameterDerivator(),
-            MouseNormalizer(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                dcc_xml_path=self.dcc_xml_path,
-                output_path=self.output_path,
-            ),
-            EmbryoNormalizer(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                dcc_xml_path=self.dcc_xml_path,
-                output_path=self.output_path,
-            ),
-            MGIPhenotypicAlleleExtractor(),
-            ColonyCleaner(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                output_path=self.output_path,
-            ),
-            ImpressExtractor(output_path=self.output_path),
-            MGIStrainReportExtractor(),
-            OntologyMetadataExtractor(
-                ontology_input_path=self.ontology_input_path,
-                output_path=self.output_path,
-            ),
-        ]
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(f&#34;{self.output_path}observations_parquet&#34;)
-
-    def app_options(self):
-        return [
-            self.input()[0].path,
-            self.input()[1].path,
-            self.input()[2].path,
-            self.input()[3].path,
-            self.input()[4].path,
-            self.input()[5].path,
-            self.input()[6].path,
-            self.input()[7].path,
-            self.input()[8].path,
-            self.output().path,
-        ]
 
 
 class PipelineCoreLoader(SparkSubmitTask):
@@ -117,19 +53,9 @@ class PipelineCoreLoader(SparkSubmitTask):
 
     def requires(self):
         return [
-            ImpressExtractor(output_path=self.output_path),
-            ObservationsMapper(
-                dcc_xml_path=self.dcc_xml_path,
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                output_path=self.output_path,
-                mgi_strain_input_path=self.mgi_strain_input_path,
-                mgi_allele_input_path=self.mgi_allele_input_path,
-                ontology_input_path=self.ontology_input_path,
-            ),
-            OntologyExtractor(
-                ontology_input_path=self.ontology_input_path,
-                output_path=self.output_path,
-            ),
+            ImpressExtractor(),
+            ExperimentToObservationMapper(),
+            OntologyTermHierarchyExtractor(),
         ]
 
     def output(self):
@@ -2401,217 +2327,6 @@ values are Task instances.</p>
 </dd>
 </dl>
 </dd>
-<dt id="impc_etl.workflow.load.ObservationsMapper"><code class="flex name class">
-<span>class <span class="ident">ObservationsMapper</span></span>
-<span>(</span><span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Template task for running a Spark job</p>
-<p>Supports running jobs on Spark local, standalone, Mesos or Yarn</p>
-<p>See <a href="http://spark.apache.org/docs/latest/submitting-applications.html">http://spark.apache.org/docs/latest/submitting-applications.html</a>
-for more information</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ObservationsMapper(SparkSubmitTask):
-    name = &#34;IMPC_Observations_Mapper&#34;
-    app = &#34;impc_etl/jobs/load/observation_mapper.py&#34;
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
-    mgi_allele_input_path = luigi.Parameter()
-    mgi_strain_input_path = luigi.Parameter()
-    ontology_input_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def requires(self):
-        return [
-            ExperimentBWAgeCalculator(),
-            LineParameterDerivator(),
-            MouseNormalizer(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                dcc_xml_path=self.dcc_xml_path,
-                output_path=self.output_path,
-            ),
-            EmbryoNormalizer(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                dcc_xml_path=self.dcc_xml_path,
-                output_path=self.output_path,
-            ),
-            MGIPhenotypicAlleleExtractor(),
-            ColonyCleaner(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                output_path=self.output_path,
-            ),
-            ImpressExtractor(output_path=self.output_path),
-            MGIStrainReportExtractor(),
-            OntologyMetadataExtractor(
-                ontology_input_path=self.ontology_input_path,
-                output_path=self.output_path,
-            ),
-        ]
-
-    def output(self):
-        self.output_path = (
-            self.output_path + &#34;/&#34;
-            if not self.output_path.endswith(&#34;/&#34;)
-            else self.output_path
-        )
-        return ImpcConfig().get_target(f&#34;{self.output_path}observations_parquet&#34;)
-
-    def app_options(self):
-        return [
-            self.input()[0].path,
-            self.input()[1].path,
-            self.input()[2].path,
-            self.input()[3].path,
-            self.input()[4].path,
-            self.input()[5].path,
-            self.input()[6].path,
-            self.input()[7].path,
-            self.input()[8].path,
-            self.output().path,
-        ]</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>luigi.contrib.spark.SparkSubmitTask</li>
-<li>luigi.contrib.external_program.ExternalProgramTask</li>
-<li>luigi.task.Task</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="impc_etl.workflow.load.ObservationsMapper.app"><code class="name">var <span class="ident">app</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.load.ObservationsMapper.dcc_xml_path"><code class="name">var <span class="ident">dcc_xml_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.load.ObservationsMapper.imits_colonies_tsv_path"><code class="name">var <span class="ident">imits_colonies_tsv_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.load.ObservationsMapper.mgi_allele_input_path"><code class="name">var <span class="ident">mgi_allele_input_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.load.ObservationsMapper.mgi_strain_input_path"><code class="name">var <span class="ident">mgi_strain_input_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.load.ObservationsMapper.name"><code class="name">var <span class="ident">name</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.load.ObservationsMapper.ontology_input_path"><code class="name">var <span class="ident">ontology_input_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="impc_etl.workflow.load.ObservationsMapper.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="impc_etl.workflow.load.ObservationsMapper.app_options"><code class="name flex">
-<span>def <span class="ident">app_options</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subclass this method to map your task parameters to the app's arguments</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def app_options(self):
-    return [
-        self.input()[0].path,
-        self.input()[1].path,
-        self.input()[2].path,
-        self.input()[3].path,
-        self.input()[4].path,
-        self.input()[5].path,
-        self.input()[6].path,
-        self.input()[7].path,
-        self.input()[8].path,
-        self.output().path,
-    ]</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.load.ObservationsMapper.output"><code class="name flex">
-<span>def <span class="ident">output</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The output that this Task produces.</p>
-<p>The output of the Task determines if the Task needs to be run&ndash;the task
-is considered finished iff the outputs all exist. Subclasses should
-override this method to return a single :py:class:<code>Target</code> or a list of
-:py:class:<code>Target</code> instances.</p>
-<p>Implementation note
-If running multiple workers, the output must be a resource that is accessible
-by all workers, such as a DFS or database. Otherwise, workers might compute
-the same output since they don't see the work done by other workers.</p>
-<p>See :ref:<code>Task.output</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def output(self):
-    self.output_path = (
-        self.output_path + &#34;/&#34;
-        if not self.output_path.endswith(&#34;/&#34;)
-        else self.output_path
-    )
-    return ImpcConfig().get_target(f&#34;{self.output_path}observations_parquet&#34;)</code></pre>
-</details>
-</dd>
-<dt id="impc_etl.workflow.load.ObservationsMapper.requires"><code class="name flex">
-<span>def <span class="ident">requires</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>The Tasks that this Task depends on.</p>
-<p>A Task will only run if all of the Tasks that it requires are completed.
-If your Task does not require any other Tasks, then you don't need to
-override this method. Otherwise, a subclass can override this method
-to return a single Task, a list of Task instances, or a dict whose
-values are Task instances.</p>
-<p>See :ref:<code>Task.requires</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def requires(self):
-    return [
-        ExperimentBWAgeCalculator(),
-        LineParameterDerivator(),
-        MouseNormalizer(
-            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-            dcc_xml_path=self.dcc_xml_path,
-            output_path=self.output_path,
-        ),
-        EmbryoNormalizer(
-            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-            dcc_xml_path=self.dcc_xml_path,
-            output_path=self.output_path,
-        ),
-        MGIPhenotypicAlleleExtractor(),
-        ColonyCleaner(
-            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-            output_path=self.output_path,
-        ),
-        ImpressExtractor(output_path=self.output_path),
-        MGIStrainReportExtractor(),
-        OntologyMetadataExtractor(
-            ontology_input_path=self.ontology_input_path,
-            output_path=self.output_path,
-        ),
-    ]</code></pre>
-</details>
-</dd>
-</dl>
-</dd>
 <dt id="impc_etl.workflow.load.Parquet2Solr"><code class="flex name class">
 <span>class <span class="ident">Parquet2Solr</span></span>
 <span>(</span><span>*args, **kwargs)</span>
@@ -2787,19 +2502,9 @@ for more information</p></div>
 
     def requires(self):
         return [
-            ImpressExtractor(output_path=self.output_path),
-            ObservationsMapper(
-                dcc_xml_path=self.dcc_xml_path,
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                output_path=self.output_path,
-                mgi_strain_input_path=self.mgi_strain_input_path,
-                mgi_allele_input_path=self.mgi_allele_input_path,
-                ontology_input_path=self.ontology_input_path,
-            ),
-            OntologyExtractor(
-                ontology_input_path=self.ontology_input_path,
-                output_path=self.output_path,
-            ),
+            ImpressExtractor(),
+            ExperimentToObservationMapper(),
+            OntologyTermHierarchyExtractor(),
         ]
 
     def output(self):
@@ -2945,19 +2650,9 @@ values are Task instances.</p>
 </summary>
 <pre><code class="python">def requires(self):
     return [
-        ImpressExtractor(output_path=self.output_path),
-        ObservationsMapper(
-            dcc_xml_path=self.dcc_xml_path,
-            imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-            output_path=self.output_path,
-            mgi_strain_input_path=self.mgi_strain_input_path,
-            mgi_allele_input_path=self.mgi_allele_input_path,
-            ontology_input_path=self.ontology_input_path,
-        ),
-        OntologyExtractor(
-            ontology_input_path=self.ontology_input_path,
-            output_path=self.output_path,
-        ),
+        ImpressExtractor(),
+        ExperimentToObservationMapper(),
+        OntologyTermHierarchyExtractor(),
     ]</code></pre>
 </details>
 </dd>
@@ -3467,22 +3162,6 @@ values are Task instances.</p>
 <li><code><a title="impc_etl.workflow.load.MPCoreLoader.output" href="#impc_etl.workflow.load.MPCoreLoader.output">output</a></code></li>
 <li><code><a title="impc_etl.workflow.load.MPCoreLoader.output_path" href="#impc_etl.workflow.load.MPCoreLoader.output_path">output_path</a></code></li>
 <li><code><a title="impc_etl.workflow.load.MPCoreLoader.requires" href="#impc_etl.workflow.load.MPCoreLoader.requires">requires</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="impc_etl.workflow.load.ObservationsMapper" href="#impc_etl.workflow.load.ObservationsMapper">ObservationsMapper</a></code></h4>
-<ul class="">
-<li><code><a title="impc_etl.workflow.load.ObservationsMapper.app" href="#impc_etl.workflow.load.ObservationsMapper.app">app</a></code></li>
-<li><code><a title="impc_etl.workflow.load.ObservationsMapper.app_options" href="#impc_etl.workflow.load.ObservationsMapper.app_options">app_options</a></code></li>
-<li><code><a title="impc_etl.workflow.load.ObservationsMapper.dcc_xml_path" href="#impc_etl.workflow.load.ObservationsMapper.dcc_xml_path">dcc_xml_path</a></code></li>
-<li><code><a title="impc_etl.workflow.load.ObservationsMapper.imits_colonies_tsv_path" href="#impc_etl.workflow.load.ObservationsMapper.imits_colonies_tsv_path">imits_colonies_tsv_path</a></code></li>
-<li><code><a title="impc_etl.workflow.load.ObservationsMapper.mgi_allele_input_path" href="#impc_etl.workflow.load.ObservationsMapper.mgi_allele_input_path">mgi_allele_input_path</a></code></li>
-<li><code><a title="impc_etl.workflow.load.ObservationsMapper.mgi_strain_input_path" href="#impc_etl.workflow.load.ObservationsMapper.mgi_strain_input_path">mgi_strain_input_path</a></code></li>
-<li><code><a title="impc_etl.workflow.load.ObservationsMapper.name" href="#impc_etl.workflow.load.ObservationsMapper.name">name</a></code></li>
-<li><code><a title="impc_etl.workflow.load.ObservationsMapper.ontology_input_path" href="#impc_etl.workflow.load.ObservationsMapper.ontology_input_path">ontology_input_path</a></code></li>
-<li><code><a title="impc_etl.workflow.load.ObservationsMapper.output" href="#impc_etl.workflow.load.ObservationsMapper.output">output</a></code></li>
-<li><code><a title="impc_etl.workflow.load.ObservationsMapper.output_path" href="#impc_etl.workflow.load.ObservationsMapper.output_path">output_path</a></code></li>
-<li><code><a title="impc_etl.workflow.load.ObservationsMapper.requires" href="#impc_etl.workflow.load.ObservationsMapper.requires">requires</a></code></li>
 </ul>
 </li>
 <li>

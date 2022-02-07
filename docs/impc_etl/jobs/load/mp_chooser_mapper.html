@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>impc_etl.jobs.load.mp_chooser_mapper API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Luigi PySpark task that generates a JSON data structure that allows to select an ontology
+term based on the Pipeline, Procedure, Parameter, Outcome or …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,89 +23,152 @@
 <h1 class="title">Module <code>impc_etl.jobs.load.mp_chooser_mapper</code></h1>
 </header>
 <section id="section-intro">
+<p>Luigi PySpark task that generates a JSON data structure that allows to select an ontology
+term based on the Pipeline, Procedure, Parameter, Outcome or Category.</p>
+<p>This data structure is called MP Chooser and is used by the Statistical Analysis pipeline.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import json
-import sys
+<pre><code class="python">&#34;&#34;&#34;
+    Luigi PySpark task that generates a JSON data structure that allows to select an ontology
+    term based on the Pipeline, Procedure, Parameter, Outcome or Category.
 
+    This data structure is called MP Chooser and is used by the Statistical Analysis pipeline.
+&#34;&#34;&#34;
+import json
+from typing import Any
+
+import luigi
 import requests
+from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
+from impc_etl.workflow.config import ImpcConfig
+from impc_etl.workflow.load import PipelineCoreLoader
 
-def main(argv):
-    pipeline_core_parquet_path = argv[1]
-    http_proxy = argv[2]
-    output_path = argv[3]
-    spark = SparkSession.builder.getOrCreate()
-    ontology_terms_list_url = (
-        &#34;http://sandbox.mousephenotype.org/impressapi/ontologyterm/list&#34;
-    )
-    ontology_term_dict = requests.get(
-        ontology_terms_list_url, proxies={&#34;http&#34;: http_proxy, &#34;https&#34;: http_proxy}
-    ).json()
-    impress_df = spark.read.parquet(pipeline_core_parquet_path)
-    mp_chooser = (
-        impress_df.where(impress_df.parammpterm.isNotNull())
-        .select(
-            &#34;pipelineKey&#34;,
-            &#34;procedure.procedureKey&#34;,
-            &#34;parameter.parameterKey&#34;,
-            &#34;parammpterm&#34;,
+
+class MPChooserGenerator(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark task to generate the MP Chooser data structure.
+
+    This task depends on:
+
+    - `impc_etl.workflow.load.PipelineCoreLoader`
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name: str = &#34;IMPC_MP_Chooser_Generator&#34;
+
+    #: IMPReSS API endpoint URL
+    impress_api_url: luigi.Parameter = luigi.Parameter()
+
+    #: URL to the HTTP proxy server to be used on the HTTP requests.
+    http_proxy: luigi.Parameter = luigi.Parameter(default=&#34;&#34;)
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        return PipelineCoreLoader()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
         )
-        .collect()
-    )
-    output_dict = {}
-    for row in mp_chooser:
+        return ImpcConfig().get_target(f&#34;{self.output_path}mp_chooser_json&#34;)
 
-        pipeline = row[&#34;pipelineKey&#34;]
-        if pipeline not in output_dict:
-            output_dict[pipeline] = {}
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.input().path,
+            self.impress_api_url,
+            self.http_proxy,
+            self.output().path,
+        ]
 
-        procedure = row[&#34;procedureKey&#34;][: row[&#34;procedureKey&#34;].rfind(&#34;_&#34;)]
-        if procedure not in output_dict[pipeline]:
-            output_dict[pipeline][procedure] = {}
-
-        parameter = row[&#34;parameterKey&#34;]
-        if parameter not in output_dict[pipeline][procedure]:
-            output_dict[pipeline][procedure][parameter] = {}
-
-        mpterm = row[&#34;parammpterm&#34;]
-
-        sex = mpterm[&#34;sex&#34;]
-        if sex == &#34;F&#34;:
-            sex = &#34;FEMALE&#34;
-        elif sex == &#34;M&#34;:
-            sex = &#34;MALE&#34;
-        else:
-            sex = &#34;UNSPECIFIED&#34;
-        if sex not in output_dict[pipeline][procedure][parameter]:
-            output_dict[pipeline][procedure][parameter][sex] = {}
-
-        selection_outcome = mpterm[&#34;selectionOutcome&#34;]
-        if selection_outcome not in output_dict[pipeline][procedure][parameter][sex]:
-            output_dict[pipeline][procedure][parameter][sex][selection_outcome] = {}
-
-        category = (
-            mpterm[&#34;optionText&#34;] if mpterm[&#34;optionText&#34;] is not None else &#34;OVERALL&#34;
+    def main(self, sc: SparkContext, *args: Any):
+        pipeline_core_parquet_path = args[0]
+        impress_api_url = args[1]
+        http_proxy = args[2]
+        output_path = args[3]
+        spark = SparkSession(sc)
+        ontology_terms_list_url = f&#34;{impress_api_url}/ontologyterm/list&#34;
+        ontology_term_dict = requests.get(
+            ontology_terms_list_url, proxies={&#34;http&#34;: http_proxy, &#34;https&#34;: http_proxy}
+        ).json()
+        impress_df = spark.read.parquet(pipeline_core_parquet_path)
+        mp_chooser = (
+            impress_df.where(impress_df.parammpterm.isNotNull())
+            .select(
+                &#34;pipelineKey&#34;,
+                &#34;procedure.procedureKey&#34;,
+                &#34;parameter.parameterKey&#34;,
+                &#34;parammpterm&#34;,
+            )
+            .collect()
         )
-        ontology_term_id = mpterm[&#34;ontologyTermId&#34;]
-        if (
-            category
-            not in output_dict[pipeline][procedure][parameter][sex][selection_outcome]
-        ):
-            output_dict[pipeline][procedure][parameter][sex][selection_outcome][
+        output_dict = {}
+        for row in mp_chooser:
+
+            pipeline = row[&#34;pipelineKey&#34;]
+            if pipeline not in output_dict:
+                output_dict[pipeline] = {}
+
+            procedure = row[&#34;procedureKey&#34;][: row[&#34;procedureKey&#34;].rfind(&#34;_&#34;)]
+            if procedure not in output_dict[pipeline]:
+                output_dict[pipeline][procedure] = {}
+
+            parameter = row[&#34;parameterKey&#34;]
+            if parameter not in output_dict[pipeline][procedure]:
+                output_dict[pipeline][procedure][parameter] = {}
+
+            mpterm = row[&#34;parammpterm&#34;]
+
+            sex = mpterm[&#34;sex&#34;]
+            if sex == &#34;F&#34;:
+                sex = &#34;FEMALE&#34;
+            elif sex == &#34;M&#34;:
+                sex = &#34;MALE&#34;
+            else:
+                sex = &#34;UNSPECIFIED&#34;
+            if sex not in output_dict[pipeline][procedure][parameter]:
+                output_dict[pipeline][procedure][parameter][sex] = {}
+
+            selection_outcome = mpterm[&#34;selectionOutcome&#34;]
+            if (
+                selection_outcome
+                not in output_dict[pipeline][procedure][parameter][sex]
+            ):
+                output_dict[pipeline][procedure][parameter][sex][selection_outcome] = {}
+
+            category = (
+                mpterm[&#34;optionText&#34;] if mpterm[&#34;optionText&#34;] is not None else &#34;OVERALL&#34;
+            )
+            ontology_term_id = mpterm[&#34;ontologyTermId&#34;]
+            if (
                 category
-            ] = {&#34;MPTERM&#34;: ontology_term_dict[ontology_term_id]}
-    output_df = spark.createDataFrame([{&#34;text&#34;: (json.dumps(output_dict, indent=2))}])
-    output_df.coalesce(1).write.format(&#34;text&#34;).option(&#34;header&#34;, &#34;false&#34;).mode(
-        &#34;append&#34;
-    ).save(output_path)
-
-
-if __name__ == &#34;__main__&#34;:
-    sys.exit(main(sys.argv))</code></pre>
+                not in output_dict[pipeline][procedure][parameter][sex][
+                    selection_outcome
+                ]
+            ):
+                output_dict[pipeline][procedure][parameter][sex][selection_outcome][
+                    category
+                ] = {&#34;MPTERM&#34;: ontology_term_dict[ontology_term_id]}
+        output_df = spark.createDataFrame(
+            [{&#34;text&#34;: (json.dumps(output_dict, indent=2))}]
+        )
+        output_df.coalesce(1).write.format(&#34;text&#34;).option(&#34;header&#34;, &#34;false&#34;).mode(
+            &#34;append&#34;
+        ).save(output_path)</code></pre>
 </details>
 </section>
 <section>
@@ -112,25 +176,212 @@ if __name__ == &#34;__main__&#34;:
 <section>
 </section>
 <section>
-<h2 class="section-title" id="header-functions">Functions</h2>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="impc_etl.jobs.load.mp_chooser_mapper.main"><code class="name flex">
-<span>def <span class="ident">main</span></span>(<span>argv)</span>
+<dt id="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator"><code class="flex name class">
+<span>class <span class="ident">MPChooserGenerator</span></span>
+<span>(</span><span>*args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>PySpark task to generate the MP Chooser data structure.</p>
+<p>This task depends on:</p>
+<ul>
+<li><code><a title="impc_etl.workflow.load.PipelineCoreLoader" href="../../workflow/load.html#impc_etl.workflow.load.PipelineCoreLoader">PipelineCoreLoader</a></code></li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def main(argv):
-    pipeline_core_parquet_path = argv[1]
-    http_proxy = argv[2]
-    output_path = argv[3]
-    spark = SparkSession.builder.getOrCreate()
-    ontology_terms_list_url = (
-        &#34;http://sandbox.mousephenotype.org/impressapi/ontologyterm/list&#34;
-    )
+<pre><code class="python">class MPChooserGenerator(PySparkTask):
+    &#34;&#34;&#34;
+    PySpark task to generate the MP Chooser data structure.
+
+    This task depends on:
+
+    - `impc_etl.workflow.load.PipelineCoreLoader`
+    &#34;&#34;&#34;
+
+    #: Name of the Spark task
+    name: str = &#34;IMPC_MP_Chooser_Generator&#34;
+
+    #: IMPReSS API endpoint URL
+    impress_api_url: luigi.Parameter = luigi.Parameter()
+
+    #: URL to the HTTP proxy server to be used on the HTTP requests.
+    http_proxy: luigi.Parameter = luigi.Parameter(default=&#34;&#34;)
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path = luigi.Parameter()
+
+    def requires(self):
+        &#34;&#34;&#34;
+        Defines the luigi  task dependencies
+        &#34;&#34;&#34;
+        return PipelineCoreLoader()
+
+    def output(self):
+        self.output_path = (
+            self.output_path + &#34;/&#34;
+            if not self.output_path.endswith(&#34;/&#34;)
+            else self.output_path
+        )
+        return ImpcConfig().get_target(f&#34;{self.output_path}mp_chooser_json&#34;)
+
+    def app_options(self):
+        &#34;&#34;&#34;
+        Generates the options pass to the PySpark job
+        &#34;&#34;&#34;
+        return [
+            self.input().path,
+            self.impress_api_url,
+            self.http_proxy,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args: Any):
+        pipeline_core_parquet_path = args[0]
+        impress_api_url = args[1]
+        http_proxy = args[2]
+        output_path = args[3]
+        spark = SparkSession(sc)
+        ontology_terms_list_url = f&#34;{impress_api_url}/ontologyterm/list&#34;
+        ontology_term_dict = requests.get(
+            ontology_terms_list_url, proxies={&#34;http&#34;: http_proxy, &#34;https&#34;: http_proxy}
+        ).json()
+        impress_df = spark.read.parquet(pipeline_core_parquet_path)
+        mp_chooser = (
+            impress_df.where(impress_df.parammpterm.isNotNull())
+            .select(
+                &#34;pipelineKey&#34;,
+                &#34;procedure.procedureKey&#34;,
+                &#34;parameter.parameterKey&#34;,
+                &#34;parammpterm&#34;,
+            )
+            .collect()
+        )
+        output_dict = {}
+        for row in mp_chooser:
+
+            pipeline = row[&#34;pipelineKey&#34;]
+            if pipeline not in output_dict:
+                output_dict[pipeline] = {}
+
+            procedure = row[&#34;procedureKey&#34;][: row[&#34;procedureKey&#34;].rfind(&#34;_&#34;)]
+            if procedure not in output_dict[pipeline]:
+                output_dict[pipeline][procedure] = {}
+
+            parameter = row[&#34;parameterKey&#34;]
+            if parameter not in output_dict[pipeline][procedure]:
+                output_dict[pipeline][procedure][parameter] = {}
+
+            mpterm = row[&#34;parammpterm&#34;]
+
+            sex = mpterm[&#34;sex&#34;]
+            if sex == &#34;F&#34;:
+                sex = &#34;FEMALE&#34;
+            elif sex == &#34;M&#34;:
+                sex = &#34;MALE&#34;
+            else:
+                sex = &#34;UNSPECIFIED&#34;
+            if sex not in output_dict[pipeline][procedure][parameter]:
+                output_dict[pipeline][procedure][parameter][sex] = {}
+
+            selection_outcome = mpterm[&#34;selectionOutcome&#34;]
+            if (
+                selection_outcome
+                not in output_dict[pipeline][procedure][parameter][sex]
+            ):
+                output_dict[pipeline][procedure][parameter][sex][selection_outcome] = {}
+
+            category = (
+                mpterm[&#34;optionText&#34;] if mpterm[&#34;optionText&#34;] is not None else &#34;OVERALL&#34;
+            )
+            ontology_term_id = mpterm[&#34;ontologyTermId&#34;]
+            if (
+                category
+                not in output_dict[pipeline][procedure][parameter][sex][
+                    selection_outcome
+                ]
+            ):
+                output_dict[pipeline][procedure][parameter][sex][selection_outcome][
+                    category
+                ] = {&#34;MPTERM&#34;: ontology_term_dict[ontology_term_id]}
+        output_df = spark.createDataFrame(
+            [{&#34;text&#34;: (json.dumps(output_dict, indent=2))}]
+        )
+        output_df.coalesce(1).write.format(&#34;text&#34;).option(&#34;header&#34;, &#34;false&#34;).mode(
+            &#34;append&#34;
+        ).save(output_path)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>luigi.contrib.spark.PySparkTask</li>
+<li>luigi.contrib.spark.SparkSubmitTask</li>
+<li>luigi.contrib.external_program.ExternalProgramTask</li>
+<li>luigi.task.Task</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.http_proxy"><code class="name">var <span class="ident">http_proxy</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>URL to the HTTP proxy server to be used on the HTTP requests.</p></div>
+</dd>
+<dt id="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.impress_api_url"><code class="name">var <span class="ident">impress_api_url</span> : luigi.parameter.Parameter</code></dt>
+<dd>
+<div class="desc"><p>IMPReSS API endpoint URL</p></div>
+</dd>
+<dt id="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>Name of the Spark task</p></div>
+</dd>
+<dt id="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.output_path"><code class="name">var <span class="ident">output_path</span></code></dt>
+<dd>
+<div class="desc"><p>Path of the output directory where the new parquet file will be generated.</p></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.app_options"><code class="name flex">
+<span>def <span class="ident">app_options</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates the options pass to the PySpark job</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def app_options(self):
+    &#34;&#34;&#34;
+    Generates the options pass to the PySpark job
+    &#34;&#34;&#34;
+    return [
+        self.input().path,
+        self.impress_api_url,
+        self.http_proxy,
+        self.output().path,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>self, sc: pyspark.context.SparkContext, *args: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Called by the pyspark_runner with a SparkContext and any arguments returned by <code>app_options()</code></p>
+<p>:param sc: SparkContext
+:param args: arguments list</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(self, sc: SparkContext, *args: Any):
+    pipeline_core_parquet_path = args[0]
+    impress_api_url = args[1]
+    http_proxy = args[2]
+    output_path = args[3]
+    spark = SparkSession(sc)
+    ontology_terms_list_url = f&#34;{impress_api_url}/ontologyterm/list&#34;
     ontology_term_dict = requests.get(
         ontology_terms_list_url, proxies={&#34;http&#34;: http_proxy, &#34;https&#34;: http_proxy}
     ).json()
@@ -173,7 +424,10 @@ if __name__ == &#34;__main__&#34;:
             output_dict[pipeline][procedure][parameter][sex] = {}
 
         selection_outcome = mpterm[&#34;selectionOutcome&#34;]
-        if selection_outcome not in output_dict[pipeline][procedure][parameter][sex]:
+        if (
+            selection_outcome
+            not in output_dict[pipeline][procedure][parameter][sex]
+        ):
             output_dict[pipeline][procedure][parameter][sex][selection_outcome] = {}
 
         category = (
@@ -182,20 +436,68 @@ if __name__ == &#34;__main__&#34;:
         ontology_term_id = mpterm[&#34;ontologyTermId&#34;]
         if (
             category
-            not in output_dict[pipeline][procedure][parameter][sex][selection_outcome]
+            not in output_dict[pipeline][procedure][parameter][sex][
+                selection_outcome
+            ]
         ):
             output_dict[pipeline][procedure][parameter][sex][selection_outcome][
                 category
             ] = {&#34;MPTERM&#34;: ontology_term_dict[ontology_term_id]}
-    output_df = spark.createDataFrame([{&#34;text&#34;: (json.dumps(output_dict, indent=2))}])
+    output_df = spark.createDataFrame(
+        [{&#34;text&#34;: (json.dumps(output_dict, indent=2))}]
+    )
     output_df.coalesce(1).write.format(&#34;text&#34;).option(&#34;header&#34;, &#34;false&#34;).mode(
         &#34;append&#34;
     ).save(output_path)</code></pre>
 </details>
 </dd>
+<dt id="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.output"><code class="name flex">
+<span>def <span class="ident">output</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The output that this Task produces.</p>
+<p>The output of the Task determines if the Task needs to be run&ndash;the task
+is considered finished iff the outputs all exist. Subclasses should
+override this method to return a single :py:class:<code>Target</code> or a list of
+:py:class:<code>Target</code> instances.</p>
+<p>Implementation note
+If running multiple workers, the output must be a resource that is accessible
+by all workers, such as a DFS or database. Otherwise, workers might compute
+the same output since they don't see the work done by other workers.</p>
+<p>See :ref:<code>Task.output</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def output(self):
+    self.output_path = (
+        self.output_path + &#34;/&#34;
+        if not self.output_path.endswith(&#34;/&#34;)
+        else self.output_path
+    )
+    return ImpcConfig().get_target(f&#34;{self.output_path}mp_chooser_json&#34;)</code></pre>
+</details>
+</dd>
+<dt id="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.requires"><code class="name flex">
+<span>def <span class="ident">requires</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the luigi
+task dependencies</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def requires(self):
+    &#34;&#34;&#34;
+    Defines the luigi  task dependencies
+    &#34;&#34;&#34;
+    return PipelineCoreLoader()</code></pre>
+</details>
+</dd>
 </dl>
-</section>
-<section>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -216,9 +518,21 @@ if __name__ == &#34;__main__&#34;:
 <li><code><a title="impc_etl.jobs.load" href="index.html">impc_etl.jobs.load</a></code></li>
 </ul>
 </li>
-<li><h3><a href="#header-functions">Functions</a></h3>
-<ul class="">
-<li><code><a title="impc_etl.jobs.load.mp_chooser_mapper.main" href="#impc_etl.jobs.load.mp_chooser_mapper.main">main</a></code></li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator" href="#impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator">MPChooserGenerator</a></code></h4>
+<ul class="two-column">
+<li><code><a title="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.app_options" href="#impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.app_options">app_options</a></code></li>
+<li><code><a title="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.http_proxy" href="#impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.http_proxy">http_proxy</a></code></li>
+<li><code><a title="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.impress_api_url" href="#impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.impress_api_url">impress_api_url</a></code></li>
+<li><code><a title="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.main" href="#impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.main">main</a></code></li>
+<li><code><a title="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.name" href="#impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.name">name</a></code></li>
+<li><code><a title="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.output" href="#impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.output">output</a></code></li>
+<li><code><a title="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.output_path" href="#impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.output_path">output_path</a></code></li>
+<li><code><a title="impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.requires" href="#impc_etl.jobs.load.mp_chooser_mapper.MPChooserGenerator.requires">requires</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

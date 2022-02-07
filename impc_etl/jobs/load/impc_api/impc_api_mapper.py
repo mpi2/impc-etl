@@ -4,8 +4,9 @@ import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import arrays_zip, when, col, to_json, lit
+
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.load import ObservationsMapper
+from impc_etl.workflow.load import ExperimentToObservationMapper
 
 
 class ApiMapper(PySparkTask):
@@ -79,7 +80,7 @@ class ApiSpecimenMapper(ApiMapper):
     ]
 
     def requires(self):
-        return [ObservationsMapper()]
+        return [ExperimentToObservationMapper()]
 
 
 class ApiExperimentMapper(ApiMapper):
@@ -115,7 +116,7 @@ class ApiExperimentMapper(ApiMapper):
     }
 
     def requires(self):
-        return [ObservationsMapper()]
+        return [ExperimentToObservationMapper()]
 
 
 class ApiObservationMapper(ApiMapper):
@@ -157,4 +158,4 @@ class ApiObservationMapper(ApiMapper):
     ]
 
     def requires(self):
-        return [ObservationsMapper()]
+        return [ExperimentToObservationMapper()]

@@ -3,74 +3,10 @@ import os
 from luigi.contrib.webhdfs import WebHdfsClient
 from luigi.task import flatten
 
-from impc_etl.jobs.transform.experiment_bw_age_calculator import (
-    ExperimentBWAgeCalculator,
-)
-from impc_etl.jobs.transform.experiment_parameter_derivator import (
-    LineParameterDerivator,
-)
+from impc_etl.jobs.extract import OntologyTermHierarchyExtractor
+from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
 from impc_etl.workflow.normalization import *
-
-
-class ObservationsMapper(SparkSubmitTask):
-    name = "IMPC_Observations_Mapper"
-    app = "impc_etl/jobs/load/observation_mapper.py"
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
-    mgi_allele_input_path = luigi.Parameter()
-    mgi_strain_input_path = luigi.Parameter()
-    ontology_input_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def requires(self):
-        return [
-            ExperimentBWAgeCalculator(),
-            LineParameterDerivator(),
-            MouseNormalizer(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                dcc_xml_path=self.dcc_xml_path,
-                output_path=self.output_path,
-            ),
-            EmbryoNormalizer(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                dcc_xml_path=self.dcc_xml_path,
-                output_path=self.output_path,
-            ),
-            MGIPhenotypicAlleleExtractor(),
-            ColonyCleaner(
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                output_path=self.output_path,
-            ),
-            ImpressExtractor(output_path=self.output_path),
-            MGIStrainReportExtractor(),
-            OntologyMetadataExtractor(
-                ontology_input_path=self.ontology_input_path,
-                output_path=self.output_path,
-            ),
-        ]
-
-    def output(self):
-        self.output_path = (
-            self.output_path + "/"
-            if not self.output_path.endswith("/")
-            else self.output_path
-        )
-        return ImpcConfig().get_target(f"{self.output_path}observations_parquet")
-
-    def app_options(self):
-        return [
-            self.input()[0].path,
-            self.input()[1].path,
-            self.input()[2].path,
-            self.input()[3].path,
-            self.input()[4].path,
-            self.input()[5].path,
-            self.input()[6].path,
-            self.input()[7].path,
-            self.input()[8].path,
-            self.output().path,
-        ]
 
 
 class PipelineCoreLoader(SparkSubmitTask):
@@ -89,19 +25,9 @@ class PipelineCoreLoader(SparkSubmitTask):
 
     def requires(self):
         return [
-            ImpressExtractor(output_path=self.output_path),
-            ObservationsMapper(
-                dcc_xml_path=self.dcc_xml_path,
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                output_path=self.output_path,
-                mgi_strain_input_path=self.mgi_strain_input_path,
-                mgi_allele_input_path=self.mgi_allele_input_path,
-                ontology_input_path=self.ontology_input_path,
-            ),
-            OntologyExtractor(
-                ontology_input_path=self.ontology_input_path,
-                output_path=self.output_path,
-            ),
+            ImpressExtractor(),
+            ExperimentToObservationMapper(),
+            OntologyTermHierarchyExtractor(),
         ]
 
     def output(self):

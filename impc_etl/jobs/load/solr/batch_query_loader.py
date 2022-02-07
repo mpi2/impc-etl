@@ -7,7 +7,7 @@ from impc_etl.jobs.extract import OntologyMetadataExtractor
 from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.load import (
     GeneCoreLoader,
-    ObservationsMapper,
+    ExperimentToObservationMapper,
     StatsResultsCoreLoader,
 )
 
@@ -23,7 +23,7 @@ class BatchQueryLoader(PySparkTask):
 
     def requires(self):
         return [
-            ObservationsMapper(),
+            ExperimentToObservationMapper(),
             GeneCoreLoader(),
             StatsResultsCoreLoader(),
             OntologyMetadataExtractor(),

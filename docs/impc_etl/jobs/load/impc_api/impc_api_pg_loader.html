@@ -26,24 +26,22 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from typing import List, Dict
-import luigi
+<pre><code class="python">import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import arrays_zip, when, col
+from pyspark.sql.functions import col
 
 from impc_etl.jobs.load.impc_api.impc_api_mapper import (
     ApiSpecimenMapper,
     ApiExperimentMapper,
     ApiObservationMapper,
 )
-from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.load import ObservationsMapper
 from impc_etl.jobs.load.impc_api.impc_api_tables import (
     SPECIMEN_COLUMN_TYPES,
     EXPERIMENT_COLUMN_TYPES,
     OBSERVATION_COLUMN_TYPES,
 )
+from impc_etl.workflow.config import ImpcConfig
 
 
 class ApiPostgreSQLLoader(PySparkTask):
