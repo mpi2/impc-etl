@@ -3,8 +3,9 @@ Python task to transform the Pain Working Group data (Formalin, VonFrey and Harg
 from the CSV format provided by them to a standard experimental data XML.
 """
 import csv
+import glob
 import os
-import sys
+from datetime import datetime
 from xml.etree.ElementTree import Element, ElementTree
 
 import luigi
@@ -512,6 +513,22 @@ PARAMETERS_UNITS = {
     "TCP_VFR_040_001": "g",
 }
 
+CENTRE_DOE_DATE_FORMAT = {
+    "BCM": "%d/%m/%Y",
+    "HAR": "%d/%m/%Y",
+    "JAX": "%m/%d/%Y",
+    "UCD": {"VFR": "%d/%m/%Y", "HRG": "%m/%d/%Y"},
+    "TCP": "%Y-%m-%d",
+}
+
+CENTRE_DOB_DATE_FORMAT = {
+    "BCM": "%d/%m/%Y",
+    "HAR": "%d/%m/%Y",
+    "JAX": "%m/%d/%Y",
+    "UCD": {"VFR": "%d/%m/%Y", "HRG": "%m/%d/%Y"},
+    "TCP": "%Y-%m-%d",
+}
+
 
 class PainDataCsvToXml(luigi.Task):
     name = "IMPC_Pain_Data_CSV_to_XML_Transformer"
@@ -522,7 +539,30 @@ class PainDataCsvToXml(luigi.Task):
         return ImpcConfig().get_target(f"{self.output_path}/pain-xml/")
 
     def run(self):
-        file_name = os.path.basename(self.pain_csv_raw_data_path)
+        specimens_by_centre = {
+            "BCM": {},
+            "HAR": {},
+            "JAX": {},
+            "UCD": {},
+            "TCP": {},
+        }
+        for filepath in glob.iglob(f"{self.pain_csv_raw_data_path}/*.csv"):
+            try:
+                self.process_file(filepath, specimens_by_centre)
+            except ValueError as e:
+                print("Failed procesing: " + filepath)
+                print(e)
+        colonies = []
+        for centre in specimens_by_centre.keys():
+            for specimen in specimens_by_centre[centre].values():
+                colony_id: str = specimen["colony_id"]
+                colony_id = colony_id.strip()
+                if colony_id not in colonies and specimen["isBaseline"]:
+                    colonies.append(colony_id)
+        print(colonies)
+
+    def process_file(self, file_path, specimens_by_centre):
+        file_name = os.path.basename(file_path)
         centre = str(file_name).split("_")[0]
         centre_id = CENTRE_ID_MAP[centre]
         pipeline_id = CENTRE_PIPELINE_MAP[centre]
@@ -530,7 +570,8 @@ class PainDataCsvToXml(luigi.Task):
         procedure = str(file_name).split("_")[1]
         procedure_stable_id = CENTRE_PROCEDURE_MAP[centre][procedure]
         exp_id_prefix = f"{centre}_{procedure_stable_id}"
-        with open(self.pain_csv_raw_data_path) as csv_file:
+
+        with open(file_path) as csv_file:
             csv_dict_reader = csv.DictReader(csv_file)
             centre_procedure_set_tag: Element = etree.Element(
                 "centreProcedureSet",
@@ -545,9 +586,34 @@ class PainDataCsvToXml(luigi.Task):
                 specimen_id = row["Animal name"]
                 if specimen_id is None or specimen_id == "":
                     continue
+                if specimen_id not in specimens_by_centre[centre]:
+                    if type(CENTRE_DOB_DATE_FORMAT[centre]) is dict:
+                        date_format = CENTRE_DOB_DATE_FORMAT[centre][procedure]
+                    else:
+                        date_format = CENTRE_DOB_DATE_FORMAT[centre]
+                    specimen_dob = str(
+                        datetime.strptime(row["Date of birth"], date_format).date()
+                    )
+                    specimens_by_centre[centre][specimen_id] = {
+                        "specimen_id": specimen_id,
+                        "date_of_birth": specimen_dob,
+                        "colony_id": row["Colony name"],
+                        "zygosity": str(row["Zygosity"]).lower(),
+                        "strain": row["Strain"],
+                        "sex": str(row["Sex"]).lower(),
+                        "isBaseline": bool(row["Is Baseline?"]),
+                    }
+
                 experiment_id = f"{exp_id_prefix}_{specimen_id}_{row_index}"
-                # TODO parse different date formats
-                date_of_experiment = row["Date of experiment"].replace("/", "-")
+
+                if type(CENTRE_DOE_DATE_FORMAT[centre]) is dict:
+                    date_format = CENTRE_DOE_DATE_FORMAT[centre][procedure]
+                else:
+                    date_format = CENTRE_DOE_DATE_FORMAT[centre]
+
+                date_of_experiment = str(
+                    datetime.strptime(row["Date of experiment"], date_format).date()
+                )
                 row_index += 1
 
                 experiment_tag: Element = etree.Element(
@@ -611,6 +677,11 @@ class PainDataCsvToXml(luigi.Task):
                     value_tag.text = parameter_value
                     parameter_tag.append(value_tag)
         full_tree: ElementTree = etree.ElementTree(centre_procedure_set_tag)
-        f = open("test.xml", "ab")
-        f.write(etree.tostring(centre_procedure_set_tag, pretty_print=True))
+        f = open(f"{self.output_path}/{file_name.replace('.csv', '.xml')}", "w")
+        xml_out = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        xml_out += "\n" + etree.tostring(
+            centre_procedure_set_tag, pretty_print=True
+        ).decode("utf-8")
+
+        f.write(xml_out)
         f.close()
