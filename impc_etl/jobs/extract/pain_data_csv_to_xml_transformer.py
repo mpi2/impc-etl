@@ -29,13 +29,15 @@ CENTRE_PIPELINE_MAP = {
     "TCP": "TCP_001",
 }
 CENTRE_PROCEDURE_MAP = {
-    "JAX": {"VFR": "JAX_VFR_001", "HRG": "JAX_HRG_001", "FOR": "JAX_FOR_001"},
-    "HAR": {"VFR": "HRWL_VFR_001", "FOR": "HRWL_FOR_001"},
-    "BCM": {"FOR": "BCM_FOR_001"},
+    "JAX": {"VFR": "JAX_VFR_001", "HRG": "JAX_HRG_001", "FOR": "IMPC_FOR_001"},
+    "HAR": {"VFR": "HRWL_VFR_001", "FOR": "IMPC_FOR_001"},
+    "BCM": {"FOR": "IMPC_FOR_001"},
     "UCD": {"HRG": "UCD_HRG_001", "VFR": "UCD_VFR_001"},
     "TCP": {"HRG": "TCP_HRG_001", "VFR": "TCP_VFR_001"},
 }
 SIMPLE_PARAMETERS = [
+    "IMPC_FOR_001_001",
+    "IMPC_FOR_002_001",
     "JAX_VFR_001_001",
     "JAX_VFR_002_001",
     "JAX_VFR_003_001",
@@ -51,23 +53,19 @@ SIMPLE_PARAMETERS = [
     "JAX_HRG_002_001",
     "JAX_HRG_004_001",
     "JAX_HRG_006_001",
-    "JAX_FOR_002_001",
+    "IMPC_FOR_001_001",
+    "IMPC_FOR_002_001",
+    "IMPC_FOR_003_001",
+    "IMPC_FOR_004_001",
+    "IMPC_FOR_005_001",
+    "IMPC_FOR_006_001",
+    "IMPC_FOR_023_001",
     "HRWL_VFR_005_001",
     "HRWL_VFR_006_001",
     "HRWL_VFR_011_001",
     "HRWL_VFR_012_001",
     "HRWL_VFR_017_001",
     "HRWL_VFR_018_001",
-    "HRWL_FOR_002_001",
-    "HRWL_FOR_024_001",
-    "HRWL_FOR_026_001",
-    "HRWL_FOR_027_001",
-    "BCM_FOR_002_001",
-    "BCM_FOR_024_001",
-    "BCM_FOR_026_001",
-    "BCM_FOR_027_001",
-    "BCM_FOR_029_001",
-    "BCM_FOR_030_001",
     "UCD_HRG_002_001",
     "UCD_HRG_004_001",
     "UCD_HRG_006_001",
@@ -88,6 +86,9 @@ SIMPLE_PARAMETERS = [
     "TCP_VFR_015_001",
 ]
 SERIES_PARAMETERS = [
+    "IMPC_FOR_020_001",
+    "IMPC_FOR_021_001",
+    "IMPC_FOR_022_001",
     "JAX_HRG_001_001",
     "JAX_HRG_003_001",
     "JAX_HRG_005_001",
@@ -135,6 +136,17 @@ SERIES_PARAMETERS = [
     "TCP_VFR_014_001",
 ]
 METADATA_PARAMETERS = [
+    "IMPC_FOR_015_001",
+    "IMPC_FOR_019_001",
+    "IMPC_FOR_026_001",
+    "IMPC_FOR_013_001",
+    "IMPC_FOR_025_001",
+    "IMPC_FOR_024_001",
+    "IMPC_FOR_017_001",
+    "IMPC_FOR_007_001",
+    "IMPC_FOR_011_001",
+    "IMPC_FOR_009_001",
+    "IMPC_FOR_008_001",
     "JAX_VFR_013_001",
     "JAX_VFR_014_001",
     "JAX_VFR_015_001",
@@ -378,6 +390,14 @@ METADATA_PARAMETERS = [
 ]
 
 PARAMETERS_UNITS = {
+    "IMPC_FOR_020_001": "s",
+    "IMPC_FOR_021_001": "s",
+    "IMPC_FOR_022_001": "s",
+    "IMPC_FOR_023_001": "s",
+    "IMPC_FOR_001_001": "s",
+    "IMPC_FOR_003_001": "s",
+    "IMPC_FOR_005_001": "s",
+    "IMPC_FOR_009_001": "ul",
     "JAX_VFR_002_001": "g",
     "JAX_VFR_003_001": "g",
     "JAX_VFR_006_001": "g",
@@ -409,11 +429,6 @@ PARAMETERS_UNITS = {
     "JAX_HRG_020_001": "%",
     "JAX_HRG_021_001": "%",
     "JAX_HRG_029_001": "cm",
-    "JAX_FOR_001_001": "s",
-    "JAX_FOR_002_001": "s",
-    "JAX_FOR_009_001": "ul",
-    "JAX_FOR_013_001": "mm",
-    "JAX_FOR_017_001": "min",
     "HRWL_VFR_002_001": "g",
     "HRWL_VFR_003_001": "g",
     "HRWL_VFR_005_001": "g",
@@ -431,24 +446,6 @@ PARAMETERS_UNITS = {
     "HRWL_VFR_034_001": "mm",
     "HRWL_VFR_038_001": "g",
     "HRWL_VFR_039_001": "g",
-    "HRWL_FOR_001_001": "s",
-    "HRWL_FOR_002_001": "s",
-    "HRWL_FOR_009_001": "ul",
-    "HRWL_FOR_013_001": "mm",
-    "HRWL_FOR_017_001": "min",
-    "HRWL_FOR_025_001": "s",
-    "HRWL_FOR_026_001": "s",
-    "HRWL_FOR_027_001": "s",
-    "BCM_FOR_001_001": "s",
-    "BCM_FOR_002_001": "s",
-    "BCM_FOR_009_001": "ul",
-    "BCM_FOR_013_001": "mm",
-    "BCM_FOR_017_001": "min",
-    "BCM_FOR_025_001": "s",
-    "BCM_FOR_026_001": "s",
-    "BCM_FOR_027_001": "s",
-    "BCM_FOR_028_001": "s",
-    "BCM_FOR_029_001": "s",
     "UCD_HRG_001_001": "s",
     "UCD_HRG_002_001": "s",
     "UCD_HRG_003_001": "s",
@@ -529,6 +526,29 @@ CENTRE_DOB_DATE_FORMAT = {
     "TCP": "%Y-%m-%d",
 }
 
+BCM_COLONY_MAP = {
+    "CD2AP Cas9highA HOM": "CDAPB",
+    "Cenpt Cas9highA HOM": "CNPTB",
+    "Foxn3 Cas9highA HOM": "FOXNB",
+    "Ipo9 Cas9ZyElectroA HOM": "IPONB",
+    "Mdh1 Cas9highB HOM": "MDHOB",
+    "Med27 Cas9highA HOM": "MEDTB",
+    "Mrps12 Cas9ZyElectroA HOM": "MRPSB",
+    "Mtg2 Cas9highB HOM": "MTGTB",
+    "Nars Cas9highA HOM": "NARSB",
+    "Ndufa6 Cas9ZyElectroA HOM": "NDUAB",
+    "Nsmce2 Cas9highB HOM": "NSMCB",
+    "Ola1 Cas9highB HOM": "OLAOB",
+    "Otud7a Cas9ZyElectroB HOM": "OTUDB",
+    "Oxa1l Cas9highB HOM": "OXAOB",
+    "Pex14 Cas9highA HOM": "PEXFB",
+    "Rps20 Cas9highA HOM": "RPSVB",
+    "Trim2 Cas9ZyElectroA HOM": "TRMDB",
+    "Trpa1Cas9Jax": "TRPA",
+    "Akr1b3 Cas9ZyElectroA HOM": "AKROB",
+    "P2rx4 EPD0850_1_E09": "PTRX",
+}
+
 
 class PainDataCsvToXml(luigi.Task):
     name = "IMPC_Pain_Data_CSV_to_XML_Transformer"
@@ -548,20 +568,37 @@ class PainDataCsvToXml(luigi.Task):
         }
         for filepath in glob.iglob(f"{self.pain_csv_raw_data_path}/*.csv"):
             try:
-                self.process_file(filepath, specimens_by_centre)
+                self.process_experiment_file(filepath, specimens_by_centre)
             except ValueError as e:
                 print("Failed procesing: " + filepath)
                 print(e)
-        colonies = []
+                raise e
+        mutant_colonies_index = []
+        mutant_colonies = []
         for centre in specimens_by_centre.keys():
+            self.process_centre_specimens(centre, specimens_by_centre[centre].values())
             for specimen in specimens_by_centre[centre].values():
-                colony_id: str = specimen["colony_id"]
-                colony_id = colony_id.strip()
-                if colony_id not in colonies and specimen["isBaseline"]:
-                    colonies.append(colony_id)
-        print(colonies)
+                if (
+                    not specimen["isBaseline"]
+                    and specimen["colony_id"] not in mutant_colonies_index
+                ):
+                    mutant_colonies.append(
+                        {"centre": centre, "colony": specimen["colony_id"]}
+                    )
+                    mutant_colonies_index.append(specimen["colony_id"])
 
-    def process_file(self, file_path, specimens_by_centre):
+        print("Mutant colonies:")
+        with open(
+            f"{self.output_path}/colonies_missing.csv", "w", encoding="utf8", newline=""
+        ) as output_file:
+            fc = csv.DictWriter(
+                output_file,
+                fieldnames=mutant_colonies[0].keys(),
+            )
+            fc.writeheader()
+            fc.writerows(mutant_colonies)
+
+    def process_experiment_file(self, file_path, specimens_by_centre):
         file_name = os.path.basename(file_path)
         centre = str(file_name).split("_")[0]
         centre_id = CENTRE_ID_MAP[centre]
@@ -586,6 +623,7 @@ class PainDataCsvToXml(luigi.Task):
                 specimen_id = row["Animal name"]
                 if specimen_id is None or specimen_id == "":
                     continue
+                specimen_id = f"{row['Animal name']}_PWG_MOUSE"
                 if specimen_id not in specimens_by_centre[centre]:
                     if type(CENTRE_DOB_DATE_FORMAT[centre]) is dict:
                         date_format = CENTRE_DOB_DATE_FORMAT[centre][procedure]
@@ -594,14 +632,21 @@ class PainDataCsvToXml(luigi.Task):
                     specimen_dob = str(
                         datetime.strptime(row["Date of birth"], date_format).date()
                     )
+                    colony_id = row["Colony name"].strip()
+                    colony_id = (
+                        BCM_COLONY_MAP[colony_id]
+                        if colony_id in BCM_COLONY_MAP
+                        else colony_id
+                    )
                     specimens_by_centre[centre][specimen_id] = {
                         "specimen_id": specimen_id,
                         "date_of_birth": specimen_dob,
-                        "colony_id": row["Colony name"],
+                        "colony_id": colony_id,
                         "zygosity": str(row["Zygosity"]).lower(),
                         "strain": row["Strain"],
                         "sex": str(row["Sex"]).lower(),
-                        "isBaseline": bool(row["Is Baseline?"]),
+                        "isBaseline": row["Is Baseline?"].lower() == "true"
+                        or str(row["Zygosity"]).lower().strip() == "wild type",
                     }
 
                 experiment_id = f"{exp_id_prefix}_{specimen_id}_{row_index}"
@@ -674,13 +719,57 @@ class PainDataCsvToXml(luigi.Task):
                     value_tag: Element = etree.Element("value")
                     if parameter_stable_id in SERIES_PARAMETERS:
                         value_tag.attrib["incrementValue"] = str(increment_value)
-                    value_tag.text = parameter_value
+                    value_tag.text = parameter_value.strip()
                     parameter_tag.append(value_tag)
         full_tree: ElementTree = etree.ElementTree(centre_procedure_set_tag)
-        f = open(f"{self.output_path}/{file_name.replace('.csv', '.xml')}", "w")
+        file_name_suffix = f"-{str(datetime.now().date())}.experiment.xml"
+        f = open(
+            f"{self.output_path}/{file_name.replace('.csv', file_name_suffix)}", "w"
+        )
         xml_out = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         xml_out += "\n" + etree.tostring(
             centre_procedure_set_tag, pretty_print=True
+        ).decode("utf-8")
+
+        f.write(xml_out)
+        f.close()
+
+    def process_centre_specimens(self, centre, specimens):
+        centre_specimen_set_tag: Element = etree.Element(
+            "centreSpecimenSet",
+            xmlns="http://www.mousephenotype.org/dcc/exportlibrary/datastructure/core/specimen",
+        )
+        centre_id = CENTRE_ID_MAP[centre]
+        pipeline_id = CENTRE_PIPELINE_MAP[centre]
+        project_id = CENTRE_PROJECT_MAP[centre]
+        centre_tag = etree.Element(
+            "centre", centreID=centre_id, pipeline=pipeline_id, project=project_id
+        )
+        centre_specimen_set_tag.append(centre_tag)
+        for specimen in specimens:
+            mouse_tag: Element = etree.Element(
+                "mouse",
+                DOB=specimen["date_of_birth"],
+                isBaseline=str(specimen["isBaseline"]).lower(),
+                strainID=specimen["strain"],
+                specimenID=specimen["specimen_id"],
+                gender=specimen["sex"],
+                zygosity=specimen["zygosity"],
+                litterId=f"{centre}-pwg",
+                pipeline=pipeline_id,
+                phenotypingCentre=centre_id,
+                project=project_id,
+            )
+            if specimen["colony_id"].strip() != "":
+                mouse_tag.attrib["colonyID"] = specimen["colony_id"].strip()
+            centre_tag.append(mouse_tag)
+        f = open(
+            f"{self.output_path}/{centre}-PWG-{str(datetime.now().date())}.specimen.xml",
+            "w",
+        )
+        xml_out = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        xml_out += "\n" + etree.tostring(
+            centre_specimen_set_tag, pretty_print=True
         ).decode("utf-8")
 
         f.write(xml_out)
