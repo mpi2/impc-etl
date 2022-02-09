@@ -42,6 +42,7 @@ class Constants:
         "Kmpc",
         "3i",
         "IMPC",
+        "PWG",
     }
     """
     List of valid project identifiers coming from the DCC XML files.
@@ -238,6 +239,7 @@ class Constants:
         "ccpcz": "CCP-IMG",
         "ccp": "CCP-IMG",
         "tobeloadedfromimits": "tobeloadedfromimits",
+        "pwg": "PWG",
     }
     """
     This map is used to translate the project IDs coming in the XML files to the ones we use on the website. 
