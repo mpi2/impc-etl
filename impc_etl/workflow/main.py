@@ -1,7 +1,6 @@
 import luigi
 
 from impc_etl.jobs.load.impc_images_mapper import ImagesPipelineInputGenerator
-from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.stats_pipeline_input_mapper import StatsPipelineInputMapper
 
 
@@ -9,7 +8,6 @@ class ImpcPreStatisticalAnalysis(luigi.Task):
     def requires(self):
         return [
             StatsPipelineInputMapper(),
-            MPChooserGenerator(),
             ImagesPipelineInputGenerator(),
         ]
 
