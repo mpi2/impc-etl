@@ -12,12 +12,6 @@ from impc_etl.workflow.normalization import *
 class PipelineCoreLoader(SparkSubmitTask):
     name = "IMPC_PipelineCore_Loader"
     app = "impc_etl/jobs/load/solr/pipeline_mapper.py"
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
-    imits_alleles_tsv_path = luigi.Parameter()
-    mgi_allele_input_path = luigi.Parameter()
-    mgi_strain_input_path = luigi.Parameter()
-    ontology_input_path = luigi.Parameter()
     emap_emapa_csv_path = luigi.Parameter()
     emapa_metadata_csv_path = luigi.Parameter()
     ma_metadata_csv_path = luigi.Parameter()
