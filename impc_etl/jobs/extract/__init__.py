@@ -17,9 +17,6 @@ from impc_etl.jobs.extract.mgi_homology_extractor import MGIHomologyReportExtrac
 from impc_etl.jobs.extract.mgi_mrk_list_extractor import MGIMarkerListReportExtractor
 from impc_etl.jobs.extract.mgi_phenotypic_allele import MGIPhenotypicAlleleExtractor
 from impc_etl.jobs.extract.mgi_strain_extractor import MGIStrainReportExtractor
-from impc_etl.jobs.extract.ontology_hierarchy_extractor import (
-    OntologyTermHierarchyExtractor,
-)
 from impc_etl.jobs.extract.ontology_metadata_extractor import (
     OntologyMetadataExtractor,
 )
