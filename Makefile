@@ -71,23 +71,15 @@ devEnv: .venv devDeps
 data:            ##@data Download and structure input data for the ETL. Parameters: staging-path (e.g. /nobackup/staging), dr-tag (e.g. dr15.0), input-data-path (e.g. /impc/), etl-host (e.g. hadoop-host), etl-dir (e.g. /user/impc/)
 	cd $(staging-path) && mkdir $(dr-tag)
 	cd $(staging-path)/$(dr-tag) && mkdir tracking mgi ontologies xml parquet solr misc
-	cd $(staging-path)/$(dr-tag)/xml && mkdir impc 3i europhenome
-	cp $(input-data-path)/phenotype_data/imits/imits-phenotyping-colonies-report.tsv $(staging-path)/$(dr-tag)/tracking/
-	cp $(input-data-path)/datafiles/daily/latest/gentar-phenotyping-colonies-report.tsv $(staging-path)/$(dr-tag)/tracking/
-	cp $(input-data-path)/datafiles/daily/latest/allele2Entries.tsv $(staging-path)/$(dr-tag)/tracking/
-	cp $(input-data-path)/datafiles/daily/latest/productEntries.tsv $(staging-path)/$(dr-tag)/tracking/
-	cp $(input-data-path)/datafiles/daily/latest/gene_interest.tsv $(staging-path)/$(dr-tag)/tracking/
-	cp $(input-data-path)/datafiles/daily/latest/mp2_load_gene_interest_report_es_cell.tsv $(staging-path)/$(dr-tag)/tracking/
-	cp -r $(input-data-path)/impc_ontologies/*  $(staging-path)/$(dr-tag)/ontologies/
-	cp -r $(input-data-path)/phenotype_data/3i/latest/*.xml $(staging-path)/$(dr-tag)/xml/3i/
-	cd $(staging-path)/$(dr-tag)/xml/3i/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
-	cd $(staging-path)/$(dr-tag)/xml/3i/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<\/ns2:/<\//g' {} \;
-	cp $(input-data-path)/datafiles/flow_results_EBIexport_180119.csv $(staging-path)/$(dr-tag)/misc/
-	cp -r $(input-data-path)/phenotype_data/europhenome/2013-10-31/*.xml $(staging-path)/$(dr-tag)/xml/europhenome/
-	cp -r $(input-data-path)/phenotype_data/europhenome/2013-05-20/*.xml $(staging-path)/$(dr-tag)/xml/europhenome/
-	cd $(staging-path)/$(dr-tag)/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<ns2:/</g' {} \;
-	cd $(staging-path)/$(dr-tag)/xml/europhenome/ && find ./*specimen*.xml -type f -exec sed -i -e 's/<\/ns2:/<\//g' {} \;
-	cp -r $(input-data-path)/phenotype_data/impc/latest/* $(staging-path)/$(dr-tag)/xml/impc/
+	cd $(staging-path)/$(dr-tag)/xml && mkdir impc 3i europhenome pwg
+	cp $(input-data-path)/gentar-data-archive/phenotyping_colonies.tsv $(staging-path)/$(dr-tag)/tracking/
+	cp $(input-data-path)/gentar-data-archive/gene_interest.tsv $(staging-path)/$(dr-tag)/tracking/
+	cp -r $(input-data-path)/ontologies-data-archive/*  $(staging-path)/$(dr-tag)/ontologies/
+	cp -r $(input-data-path)/3i-data-archive/*.xml $(staging-path)/$(dr-tag)/xml/3i/
+	cp -r $(input-data-path)/pwg-data-archive/*.xml $(staging-path)/$(dr-tag)/xml/pwg/
+	cp $(input-data-path)/3i-data-archive/flow_results_EBIexport_180119.csv $(staging-path)/$(dr-tag)/misc/
+	cp -r $(input-data-path)/europhenome-data-archive/*.xml $(staging-path)/$(dr-tag)/xml/europhenome/
+	cp -r $(input-data-path)/dcc-data-archive/latest/* $(staging-path)/$(dr-tag)/xml/impc/
 	cd $(staging-path)/$(dr-tag)/xml/impc/ && find "$$PWD" -type f -name "*.xml" -exec bash -c ' DIR=$$( dirname "{}"  ); mv "{}" "$$DIR"_$$(basename "{}")  ' \;
 	cd $(staging-path)/$(dr-tag)/xml/impc/normal && find "$$PWD" -type d -empty -delete
 	cd $(staging-path)/$(dr-tag)/xml/impc/finalising && find "$$PWD" -type d -empty -delete
