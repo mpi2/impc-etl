@@ -3,7 +3,9 @@ import os
 from luigi.contrib.webhdfs import WebHdfsClient
 from luigi.task import flatten
 
-from impc_etl.jobs.extract import OntologyTermHierarchyExtractor
+from impc_etl.jobs.extract.ontology_hierarchy_extractor import (
+    OntologyTermHierarchyExtractor,
+)
 from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
 from impc_etl.workflow.normalization import *
