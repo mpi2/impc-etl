@@ -71,10 +71,10 @@ class ExperimentBWAgeCalculator(PySparkTask):
     def output(self):
         """
         Returns the full parquet path as an output for the Luigi Task
-        (e.g. impc/dr15.2/parquet/experiment_with_bw_age_parquet)
+        (e.g. impc/dr15.2/parquet/specimen_level_experiment_with_bw_age_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}experiment_with_bw_age_parquet"
+            f"{self.output_path}specimen_level_experiment_with_bw_age_parquet"
         )
 
     def app_options(self):

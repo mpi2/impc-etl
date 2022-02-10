@@ -638,6 +638,8 @@ class PainDataCsvToXml(luigi.Task):
                         if colony_id in BCM_COLONY_MAP
                         else colony_id
                     )
+                    if centre == "JAX":
+                        colony_id = colony_id.replace("JR0", "JR")
                     specimens_by_centre[centre][specimen_id] = {
                         "specimen_id": specimen_id,
                         "date_of_birth": specimen_dob,
@@ -760,7 +762,7 @@ class PainDataCsvToXml(luigi.Task):
                 phenotypingCentre=centre_id,
                 project=project_id,
             )
-            if specimen["colony_id"].strip() != "":
+            if specimen["colony_id"].strip() != "" and not specimen["isBaseline"]:
                 mouse_tag.attrib["colonyID"] = specimen["colony_id"].strip()
             centre_tag.append(mouse_tag)
         f = open(
