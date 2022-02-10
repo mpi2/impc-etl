@@ -43,8 +43,8 @@ class StatsPipelineInputMapper(PySparkTask):
         return [self.input().path, self.output().path]
 
     def main(self, sc, *args):
-        observations_parquet_path = args[1]
-        output_path = args[2]
+        observations_parquet_path = args[0]
+        output_path = args[1]
         spark = SparkSession(sc)
         observations_df = spark.read.parquet(observations_parquet_path)
         flatten_observations_df = observations_df
