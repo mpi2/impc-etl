@@ -40,7 +40,7 @@ class StatsPipelineInputMapper(PySparkTask):
         )
 
     def app_options(self):
-        return [self.input().path, self.output_path]
+        return [self.input().path, self.output().path]
 
     def main(self, sc, *args):
         observations_parquet_path = args[1]

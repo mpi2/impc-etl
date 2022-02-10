@@ -31,7 +31,7 @@ class ImagesPipelineInputGenerator(PySparkTask):
         return ImpcConfig().get_target(f"{self.output_path}images_pipeline_input_csv")
 
     def app_options(self):
-        return [self.input().path, self.output_path]
+        return [self.input().path, self.output().path]
 
     def main(self, sc: SparkContext, *args: Any):
         observations_parquet_path = args[0]
