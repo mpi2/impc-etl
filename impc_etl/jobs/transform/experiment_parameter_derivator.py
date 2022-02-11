@@ -274,6 +274,7 @@ class ParameterDerivator(PySparkTask):
             "isComplete",
             "derivationInputStr",
         ).dropDuplicates()
+        results_df = results_df.repartition(4000)
         results_df = results_df.withColumn(
             "result",
             when(
