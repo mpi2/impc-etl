@@ -40,9 +40,13 @@ class ImagesPipelineInputGenerator(PySparkTask):
         observations_df: DataFrame = spark.read.parquet(observations_parquet_path)
         observations_df.where(
             (col("observation_type") == "image_record")
-            & (col("download_file_path").contains("mousephenotype.org"))
+            & (
+                col("download_file_path").contains("mousephenotype.org")
+                | col("download_file_path").contains("images/3i")
+            )
             & (~col("download_file_path").like("%.mov"))
             & (~col("download_file_path").like("%.bz2"))
+            & (~col("download_file_path").like("%.nrrd"))
         ).select(
             "observation_id",
             "increment_value",
