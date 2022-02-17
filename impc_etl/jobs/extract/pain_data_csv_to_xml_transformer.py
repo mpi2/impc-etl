@@ -647,8 +647,7 @@ class PainDataCsvToXml(luigi.Task):
                         "zygosity": str(row["Zygosity"]).lower(),
                         "strain": row["Strain"],
                         "sex": str(row["Sex"]).lower(),
-                        "isBaseline": row["Is Baseline?"].lower() == "true"
-                        or str(row["Zygosity"]).lower().strip() == "wild type",
+                        "isBaseline": row["Is Baseline?"].lower() == "true",
                     }
 
                 experiment_id = f"{exp_id_prefix}_{specimen_id}_{row_index}"
