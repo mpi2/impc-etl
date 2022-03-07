@@ -3,6 +3,7 @@
     represents the hierarchical relations between the terms on those ontologies.
 """
 import unicodedata
+from io import BytesIO
 from typing import Dict, Iterable, List, Any
 
 import luigi
@@ -186,58 +187,63 @@ class OntologyTermHierarchyExtractor(PySparkTask):
         ontology_terms = []
 
         # This process can only be performed on local or client mode
-        if ImpcConfig().deploy_mode in ["local", "client"]:
-            for ontology_desc in self.ONTOLOGIES:
-                print(f"Processing {ontology_desc['id']}.{ontology_desc['format']}")
+        for ontology_desc in self.ONTOLOGIES:
+            print(f"Processing {ontology_desc['id']}.{ontology_desc['format']}")
 
-                # Get the OBO file from the directory if MPATH otherwise get it from OBO foundry
-                if ontology_desc["id"] == "mpath":
+            # Get the OBO file from the directory if MPATH otherwise get it from OBO foundry
+            if ontology_desc["id"] == "mpath":
+                if ImpcConfig().deploy_mode in ["local", "client"]:
                     ontology: Ontology = Ontology(ontologies_path + "mpath.obo")
                 else:
-                    ontology: Ontology = pronto.Ontology.from_obo_library(
-                        f"{ontology_desc['id']}.{ontology_desc['format']}"
+                    full_ontology_str = spark_session.sparkContext.wholeTextFiles(
+                        ontologies_path + "mpath.obo"
+                    ).collect()[0][1]
+                    ontology: Ontology = Ontology(
+                        BytesIO(bytes(full_ontology_str, encoding="utf-8"))
                     )
-
-                part_of_rel: Relationship = None
-
-                # Find the part_of relationship on the current loaded ontology
-                for rel in ontology.relationships():
-                    if rel.id == "part_of":
-                        part_of_rel = rel
-                        break
-
-                # If a part_of relationship is found, compute the hierarchy of terms using it
-                if part_of_rel is not None:
-                    part_of_rel.transitive = False
-                    print("Starting to compute super classes from part_of")
-                    for term in ontology.terms():
-                        for super_part_term in term.objects(part_of_rel):
-                            if super_part_term.id in ontology.keys():
-                                term.superclasses().add(super_part_term)
-                    print("Finished to compute super classes from part_of")
-
-                # Get the set of ancestors for the top level terms
-                top_level_terms = [
-                    ontology[term] for term in ontology_desc["top_level_terms"]
-                ]
-                top_level_ancestors = []
-                for top_level_term in top_level_terms:
-                    top_level_ancestors.extend(
-                        top_level_term.superclasses(with_self=False)
-                    )
-                top_level_ancestors = set(top_level_ancestors)
-
-                # Iterate over the ontology terms and to get the hierarchy between them and the top level terms
-                ontology_terms += [
-                    self._parse_ontology_term(
-                        term, top_level_terms, top_level_ancestors, part_of_rel
-                    )
-                    for term in ontology.terms()
-                    if term.name is not None
-                ]
-                print(
-                    f"Finished processing {ontology_desc['id']}.{ontology_desc['format']}"
+            else:
+                ontology: Ontology = pronto.Ontology.from_obo_library(
+                    f"{ontology_desc['id']}.{ontology_desc['format']}"
                 )
+
+            part_of_rel: Relationship = None
+
+            # Find the part_of relationship on the current loaded ontology
+            for rel in ontology.relationships():
+                if rel.id == "part_of":
+                    part_of_rel = rel
+                    break
+
+            # If a part_of relationship is found, compute the hierarchy of terms using it
+            if part_of_rel is not None:
+                part_of_rel.transitive = False
+                print("Starting to compute super classes from part_of")
+                for term in ontology.terms():
+                    for super_part_term in term.objects(part_of_rel):
+                        if super_part_term.id in ontology.keys():
+                            term.superclasses().add(super_part_term)
+                print("Finished to compute super classes from part_of")
+
+            # Get the set of ancestors for the top level terms
+            top_level_terms = [
+                ontology[term] for term in ontology_desc["top_level_terms"]
+            ]
+            top_level_ancestors = []
+            for top_level_term in top_level_terms:
+                top_level_ancestors.extend(top_level_term.superclasses(with_self=False))
+            top_level_ancestors = set(top_level_ancestors)
+
+            # Iterate over the ontology terms and to get the hierarchy between them and the top level terms
+            ontology_terms += [
+                self._parse_ontology_term(
+                    term, top_level_terms, top_level_ancestors, part_of_rel
+                )
+                for term in ontology.terms()
+                if term.name is not None
+            ]
+            print(
+                f"Finished processing {ontology_desc['id']}.{ontology_desc['format']}"
+            )
 
         # Transform the list of dictionaries representing terms to JSON
         ontology_terms_json = spark_session.sparkContext.parallelize(ontology_terms)
