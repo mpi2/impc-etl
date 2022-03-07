@@ -1,5 +1,5 @@
 """
-    Module to hold Observation mapping transformation.
+    Module to hold Observation mapping transformation tasks.
 
     It takes experimental data, specimen data, colony tracking information, strain data, impress data and
     ontology data and generates a view where every row is an observation with all the relevant metadata available.
