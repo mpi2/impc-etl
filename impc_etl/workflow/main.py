@@ -2,7 +2,6 @@ import luigi
 
 from impc_etl.jobs.load.impc_images_mapper import ImagesPipelineInputGenerator
 from impc_etl.jobs.load.stats_pipeline_input_mapper import StatsPipelineInputMapper
-from impc_etl.jobs.extract.open_stats_extractor import StatisticalAnalysisOutputMapper
 
 
 class ImpcPreStatisticalAnalysis(luigi.Task):
