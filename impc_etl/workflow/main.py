@@ -1,10 +1,9 @@
 import luigi
 
-from impc_etl.jobs.extract.ontology_hierarchy_extractor import (
-    OntologyTermHierarchyExtractor,
-)
 from impc_etl.jobs.extract.open_stats_extractor import StatisticalAnalysisOutputMapper
 from impc_etl.jobs.load.impc_images_mapper import ImagesPipelineInputGenerator
+from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
+from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.stats_pipeline_input_mapper import StatsPipelineInputMapper
 
 
@@ -13,12 +12,13 @@ class ImpcPreStatisticalAnalysis(luigi.Task):
         return [
             StatsPipelineInputMapper(),
             ImagesPipelineInputGenerator(),
+            MPChooserGenerator(),
         ]
 
 
 class ImpcPostStatisticalAnalysis(luigi.Task):
     def requires(self):
-        return [OntologyTermHierarchyExtractor(), StatisticalAnalysisOutputMapper()]
+        return [ImpressToParameterMapper(), StatisticalAnalysisOutputMapper()]
 
 
 # class ImpcSolrCores(luigi.Task):
