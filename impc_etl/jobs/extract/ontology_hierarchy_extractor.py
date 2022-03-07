@@ -161,6 +161,7 @@ class OntologyTermHierarchyExtractor(PySparkTask):
         """
         return [
             self.obo_ontology_input_path,
+            ImpcConfig().deploy_mode,
             self.output().path,
         ]
 
@@ -169,14 +170,15 @@ class OntologyTermHierarchyExtractor(PySparkTask):
         DCC Extractor job runner
         """
         input_path = args[0]
-        output_path = args[1]
+        deploy_mode = args[1]
+        output_path = args[2]
 
         spark = SparkSession(sc)
-        ontology_df = self.extract_ontology_terms(spark, input_path)
+        ontology_df = self.extract_ontology_terms(spark, input_path, deploy_mode)
         ontology_df.write.mode("overwrite").parquet(output_path)
 
     def extract_ontology_terms(
-        self, spark_session: SparkSession, ontologies_path: str
+        self, spark_session: SparkSession, ontologies_path: str, deploy_mode: str
     ) -> DataFrame:
         """
         Takes in a spark session and the path containing cached OBO files and returns
@@ -192,7 +194,7 @@ class OntologyTermHierarchyExtractor(PySparkTask):
 
             # Get the OBO file from the directory if MPATH otherwise get it from OBO foundry
             if ontology_desc["id"] == "mpath":
-                if ImpcConfig().deploy_mode in ["local", "client"]:
+                if deploy_mode in ["local", "client"]:
                     ontology: Ontology = Ontology(ontologies_path + "mpath.obo")
                 else:
                     full_ontology_str = spark_session.sparkContext.wholeTextFiles(
