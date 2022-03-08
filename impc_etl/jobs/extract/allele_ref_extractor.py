@@ -32,7 +32,7 @@ class ExtractAlleleRef(PySparkTask):
     name = "IMPC_Extract_Allele_Ref"
 
     #: Reference DB connection JDBC string
-    jdbc_connection_str = luigi.Parameter()
+    ref_db_jdbc_connection_str = luigi.Parameter()
 
     #: Reference DB user
     ref_database_user = luigi.Parameter()
@@ -55,7 +55,7 @@ class ExtractAlleleRef(PySparkTask):
         Generates the options pass to the PySpark job
         """
         return [
-            self.jdbc_connection_str,
+            self.ref_db_jdbc_connection_str,
             self.ref_database_user,
             self.ref_database_password,
             self.output().path,

@@ -67,8 +67,7 @@ class ImpressToParameterMapper(PySparkTask):
     - `impc_etl.jobs.extract.ontology_hierarchy_extractor.OntologyTermHierarchyExtractor`
     """
 
-    name = "IMPC_PipelineCore_Loader"
-    app = "impc_etl/jobs/load/solr/pipeline_mapper.py"
+    name = "IMPC_Impress_To_Parameter_Mapper"
     emap_emapa_csv_path = luigi.Parameter()
     emapa_metadata_csv_path = luigi.Parameter()
     ma_metadata_csv_path = luigi.Parameter()
@@ -103,14 +102,6 @@ class ImpressToParameterMapper(PySparkTask):
     def main(self, sc: SparkContext, *args: Any):
         """
         Pipeline Solr Core loader
-        :param list argv: the list elements should be:
-                        [1]: Pipeline parquet path
-                        [2]: Observations parquet
-                        [3]: Ontology parquet
-                        [4]: EMAP-EMAPA tsv
-                        [5]: EMAPA metadata csv
-                        [6]: MA metadata csv
-                        [7]: Output Path
         """
         pipeline_parquet_path = args[0]
         observations_parquet_path = args[1]
