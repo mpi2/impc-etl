@@ -32,8 +32,8 @@ from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
 
-
 # TODO missing strain name and genetic background
+from impc_etl.workflow.config import ImpcConfig
 
 
 class StatsResultsMapper(PySparkTask):
@@ -56,6 +56,7 @@ class StatsResultsMapper(PySparkTask):
     mpath_metadata_path = luigi.Parameter()
     raw_data_in_output = luigi.Parameter()
     extract_windowed_data = luigi.Parameter()
+    output_path = luigi.Parameter()
 
     def requires(self):
         return [
@@ -67,6 +68,13 @@ class StatsResultsMapper(PySparkTask):
             ExtractAlleleRef(),
             MPChooserGenerator(),
         ]
+
+    def output(self):
+        """
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr16.0/parquet/allele_ref_parquet)
+        """
+        return ImpcConfig().get_target(f"{self.output_path}statistical_results_parquet")
 
     def app_options(self):
         """
