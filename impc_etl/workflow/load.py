@@ -212,15 +212,6 @@ class ImpcImagesCoreLoader(SparkSubmitTask):
     name = "IMPC_Images_Core_Loader"
     app = "impc_etl/jobs/load/solr/impc_images_mapper.py"
     omero_ids_csv_path = luigi.Parameter()
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
-    imits_alleles_tsv_path = luigi.Parameter()
-    mgi_allele_input_path = luigi.Parameter()
-    mgi_strain_input_path = luigi.Parameter()
-    ontology_input_path = luigi.Parameter()
-    emap_emapa_csv_path = luigi.Parameter()
-    emapa_metadata_csv_path = luigi.Parameter()
-    ma_metadata_csv_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def output(self):
