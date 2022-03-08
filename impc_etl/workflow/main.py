@@ -1,5 +1,6 @@
 import luigi
 
+from impc_etl.jobs.load.impc_api.impc_gene_bundle_mapper import ImpcGeneBundleMapper
 from impc_etl.jobs.load.impc_images_mapper import ImagesPipelineInputGenerator
 from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
@@ -19,6 +20,11 @@ class ImpcPreStatisticalAnalysis(luigi.Task):
 class ImpcPostStatisticalAnalysis(luigi.Task):
     def requires(self):
         return [ImpressToParameterMapper(), StatsResultsMapper()]
+
+
+class ImpcApi(luigi.Task):
+    def requires(self):
+        return [ImpcGeneBundleMapper()]
 
 
 # class ImpcSolrCores(luigi.Task):

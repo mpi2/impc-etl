@@ -7,15 +7,17 @@ from impc_etl.jobs.extract import (
     OntologyMetadataExtractor,
     MGIMarkerListReportExtractor,
     MGIHomologyReportExtractor,
+    ProductReportExtractor,
 )
 from impc_etl.jobs.extract.gene_production_status_extractor import (
     GeneProductionStatusExtractor,
 )
 from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
 from impc_etl.jobs.load.solr.gene_mapper import get_gene_core_df, IMITS_GENE_COLUMNS
+from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
 from impc_etl.workflow.config import ImpcConfig
+from impc_etl.workflow.extraction import GeneExtractor, AlleleExtractor
 from impc_etl.workflow.load import (
-    StatsResultsCoreLoader,
     GenotypePhenotypeCoreLoader,
     ImpcImagesCoreLoader,
 )
@@ -52,17 +54,17 @@ class ImpcGeneBundleMapper(PySparkTask):
     def requires(self):
         # TODO replace the Gene and Allele deps for MGI or Reference Service Deps
         return [
-            # GeneExtractor(),
-            # AlleleExtractor(),
+            GeneExtractor(),
+            AlleleExtractor(),
             MGIHomologyReportExtractor(),
             MGIMarkerListReportExtractor(),
             ExperimentToObservationMapper(),
-            StatsResultsCoreLoader(raw_data_in_output="bundled"),
+            StatsResultsMapper(raw_data_in_output="bundled"),
             OntologyMetadataExtractor(),
             GeneProductionStatusExtractor(),
             GenotypePhenotypeCoreLoader(),
             ImpcImagesCoreLoader(),
-            # ProductReportExtractor(),
+            ProductReportExtractor(),
         ]
 
     def output(self):
