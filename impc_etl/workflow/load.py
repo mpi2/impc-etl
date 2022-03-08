@@ -17,6 +17,7 @@ from impc_etl.jobs.extract.ontology_hierarchy_extractor import (
 from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
 from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
+from impc_etl.workflow.extraction import GeneExtractor, AlleleExtractor
 from impc_etl.workflow.normalization import *
 
 
