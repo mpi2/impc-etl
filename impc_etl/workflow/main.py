@@ -1,9 +1,9 @@
 import luigi
 
-from impc_etl.jobs.extract.open_stats_extractor import StatisticalAnalysisOutputMapper
 from impc_etl.jobs.load.impc_images_mapper import ImagesPipelineInputGenerator
 from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
+from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
 from impc_etl.jobs.load.stats_pipeline_input_mapper import StatsPipelineInputMapper
 
 
@@ -18,7 +18,7 @@ class ImpcPreStatisticalAnalysis(luigi.Task):
 
 class ImpcPostStatisticalAnalysis(luigi.Task):
     def requires(self):
-        return [ImpressToParameterMapper(), StatisticalAnalysisOutputMapper()]
+        return [ImpressToParameterMapper(), StatsResultsMapper()]
 
 
 # class ImpcSolrCores(luigi.Task):
