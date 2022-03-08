@@ -15,45 +15,11 @@ from impc_etl.jobs.extract.ontology_hierarchy_extractor import (
     OntologyTermHierarchyExtractor,
 )
 from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
+from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
 from impc_etl.workflow.extraction import GeneExtractor, AlleleExtractor
 from impc_etl.workflow.normalization import *
-
-
-class PipelineCoreLoader(SparkSubmitTask):
-    name = "IMPC_PipelineCore_Loader"
-    app = "impc_etl/jobs/load/solr/pipeline_mapper.py"
-    emap_emapa_csv_path = luigi.Parameter()
-    emapa_metadata_csv_path = luigi.Parameter()
-    ma_metadata_csv_path = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def requires(self):
-        return [
-            ImpressExtractor(),
-            ExperimentToObservationMapper(),
-            OntologyTermHierarchyExtractor(),
-        ]
-
-    def output(self):
-        self.output_path = (
-            self.output_path + "/"
-            if not self.output_path.endswith("/")
-            else self.output_path
-        )
-        return ImpcConfig().get_target(f"{self.output_path}pipeline_core_parquet")
-
-    def app_options(self):
-        return [
-            self.input()[0].path,
-            self.input()[1].path,
-            self.input()[2].path,
-            self.emap_emapa_csv_path,
-            self.emapa_metadata_csv_path,
-            self.ma_metadata_csv_path,
-            self.output().path,
-        ]
 
 
 class GenotypePhenotypeCoreLoader(SparkSubmitTask):
@@ -129,49 +95,6 @@ class MGIPhenotypeCoreLoader(SparkSubmitTask):
         ]
 
 
-class MPChooserLoader(SparkSubmitTask):
-    name = "IMPC_MP_Chooser_Mapper"
-    app = "impc_etl/jobs/load/mp_chooser_mapper.py"
-    dcc_xml_path = luigi.Parameter()
-    imits_colonies_tsv_path = luigi.Parameter()
-    imits_alleles_tsv_path = luigi.Parameter()
-    mgi_allele_input_path = luigi.Parameter()
-    mgi_strain_input_path = luigi.Parameter()
-    ontology_input_path = luigi.Parameter()
-    emap_emapa_csv_path = luigi.Parameter()
-    emapa_metadata_csv_path = luigi.Parameter()
-    ma_metadata_csv_path = luigi.Parameter()
-    http_proxy = luigi.Parameter()
-    output_path = luigi.Parameter()
-
-    def requires(self):
-        return [
-            PipelineCoreLoader(
-                dcc_xml_path=self.dcc_xml_path,
-                imits_colonies_tsv_path=self.imits_colonies_tsv_path,
-                imits_alleles_tsv_path=self.imits_alleles_tsv_path,
-                output_path=self.output_path,
-                mgi_strain_input_path=self.mgi_strain_input_path,
-                mgi_allele_input_path=self.mgi_allele_input_path,
-                ontology_input_path=self.ontology_input_path,
-                emap_emapa_csv_path=self.emap_emapa_csv_path,
-                emapa_metadata_csv_path=self.emapa_metadata_csv_path,
-                ma_metadata_csv_path=self.ma_metadata_csv_path,
-            )
-        ]
-
-    def output(self):
-        self.output_path = (
-            self.output_path + "/"
-            if not self.output_path.endswith("/")
-            else self.output_path
-        )
-        return ImpcConfig().get_target(f"{self.output_path}mp_chooser.json")
-
-    def app_options(self):
-        return [self.input()[0].path, self.http_proxy, self.output().path]
-
-
 class MPCoreLoader(SparkSubmitTask):
     name = "IMPC_MGI_Phenotype_Loader"
     app = "impc_etl/jobs/load/solr/mp_mapper.py"
@@ -194,7 +117,7 @@ class MPCoreLoader(SparkSubmitTask):
         return [
             OntologyTermHierarchyExtractor(),
             ExperimentToObservationMapper(),
-            PipelineCoreLoader(),
+            ImpressToParameterMapper(),
         ]
 
     def output(self):
@@ -329,7 +252,7 @@ class ImpcImagesCoreLoader(SparkSubmitTask):
     def requires(self):
         return [
             ExperimentToObservationMapper(),
-            PipelineCoreLoader(),
+            ImpressToParameterMapper(),
         ]
 
     def app_options(self):
