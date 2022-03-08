@@ -31,7 +31,6 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
-
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -89,6 +88,7 @@ class StatsResultsMapper(PySparkTask):
             self.input()[5].path,
             self.input()[6].path,
             self.threei_stats_csv_path,
+            self.mpath_metadata_path,
             self.raw_data_in_output,
             self.extract_windowed_data,
             self.output().path,
@@ -100,16 +100,16 @@ class StatsResultsMapper(PySparkTask):
         """
         open_stats_parquet_path = args[0]
         observations_parquet_path = args[1]
-        ontology_parquet_path = args[3]
-        pipeline_parquet_path = args[4]
-        pipeline_core_parquet_path = args[5]
-        allele_parquet_path = args[6]
-        mp_chooser_path = args[7]
-        threei_stats_csv_path = args[8]
-        mpath_metadata_path = args[9]
-        raw_data_in_output = args[10]
-        extract_windowed_data = args[11] == "true"
-        output_path = args[12]
+        ontology_parquet_path = args[2]
+        pipeline_parquet_path = args[3]
+        pipeline_core_parquet_path = args[4]
+        allele_parquet_path = args[5]
+        mp_chooser_path = args[6]
+        threei_stats_csv_path = args[7]
+        mpath_metadata_path = args[8]
+        raw_data_in_output = args[9]
+        extract_windowed_data = args[10] == "true"
+        output_path = args[11]
 
         spark = SparkSession(sc)
         open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
