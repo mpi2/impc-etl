@@ -13,8 +13,8 @@ from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
+from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.load import PipelineCoreLoader
 
 
 class MPChooserGenerator(PySparkTask):
@@ -42,7 +42,7 @@ class MPChooserGenerator(PySparkTask):
         """
         Defines the luigi  task dependencies
         """
-        return PipelineCoreLoader()
+        return ImpressToParameterMapper()
 
     def output(self):
         self.output_path = (
