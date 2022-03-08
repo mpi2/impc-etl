@@ -189,8 +189,35 @@ class ImpcGeneBundleMapper(PySparkTask):
                 )
             ).alias("gene_products")
         )
-
         gene_df = gene_df.join(products_by_gene, "mgi_accession_id", "left_outer")
+
+        parameters_by_gene = observations_df.select(
+            "gene_accession_id",
+            "pipeline_stable_id",
+            "pipeline_name",
+            "procedure_stable_id",
+            "procedure_name",
+            "parameter_stable_id",
+            "parameter_name",
+        ).distinct()
+
+        parameters_by_gene = parameters_by_gene.groupBy("gene_accession_id").agg(
+            collect_set(
+                struct(
+                    "pipeline_stable_id",
+                    "pipeline_name",
+                    "procedure_stable_id",
+                    "procedure_name",
+                    "parameter_stable_id",
+                    "parameter_name",
+                )
+            ).alias("tested_parameters")
+        )
+        parameters_by_gene = parameters_by_gene.withColumnRenamed(
+            "gene_accession_id", "mgi_accession_id"
+        )
+        gene_df = gene_df.join(parameters_by_gene, "mgi_accession_id", "left_outer")
+
         gene_df = gene_df.withColumn("_id", col("mgi_accession_id"))
         gene_df.write.format("mongo").mode("append").option(
             "spark.mongodb.output.uri",
@@ -212,6 +239,7 @@ class ImpcGeneBundleMapper(PySparkTask):
             "mouse_production_status",
             "phenotype_status",
             "phenotyping_data_available",
+            "tested_parameters",
             col("significant_top_level_mp_terms").alias("significant_phenotype_system"),
             col("not_significant_top_level_mp_terms").alias(
                 "non_significant_phenotype_system"
