@@ -1283,11 +1283,13 @@ class StatsResultsMapper(PySparkTask):
             ),
         )
         pwg_df = pwg_df.withColumn(
-            "sex",
+            "pwg_sex",
             pyspark.sql.functions.when(
-                pyspark.sql.functions.col("sex") == "both",
+                pyspark.sql.functions.col("pwg_sex") == "both",
                 pyspark.sql.functions.lit("not_considered"),
-            ).otherwise(pyspark.sql.functions.lower(pyspark.sql.functions.col("sex"))),
+            ).otherwise(
+                pyspark.sql.functions.lower(pyspark.sql.functions.col("pwg_sex"))
+            ),
         )
         pwg_df = pwg_df.withColumn(
             "zygosity",
@@ -1347,6 +1349,7 @@ class StatsResultsMapper(PySparkTask):
             "female_ko_effect_p_value",
             "female_percentage_change",
             "male_percentage_change",
+            "sex",
         ]
         for col_name in pwg_columns:
             open_stats_df = open_stats_df.withColumn(
