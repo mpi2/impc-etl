@@ -31,6 +31,7 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
+
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -1320,7 +1321,7 @@ class StatsResultsMapper(PySparkTask):
         pwg_df = pwg_df.withColumn(
             "pwg_significant",
             pyspark.sql.functions.when(
-                pyspark.sql.functions.col("pwg_significant") == "significant",
+                pyspark.sql.functions.col("pwg_significance") == "significant",
                 pyspark.sql.functions.lit(True),
             ).otherwise(pyspark.sql.functions.lit(False)),
         )
