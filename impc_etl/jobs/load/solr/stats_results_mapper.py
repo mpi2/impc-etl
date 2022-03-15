@@ -53,6 +53,7 @@ class StatsResultsMapper(PySparkTask):
     """
 
     threei_stats_csv_path = luigi.Parameter()
+    pwg_stats_csv_path = luigi.Parameter()
     mpath_metadata_path = luigi.Parameter()
     raw_data_in_output = luigi.Parameter()
     extract_windowed_data = luigi.Parameter()
@@ -90,6 +91,7 @@ class StatsResultsMapper(PySparkTask):
             self.input()[4].path,
             self.input()[5].path,
             self.input()[6].path,
+            self.pwg_stats_csv_path,
             self.threei_stats_csv_path,
             self.mpath_metadata_path,
             self.raw_data_in_output,
@@ -108,11 +110,12 @@ class StatsResultsMapper(PySparkTask):
         pipeline_core_parquet_path = args[4]
         allele_parquet_path = args[5]
         mp_chooser_path = args[6]
-        threei_stats_csv_path = args[7]
-        mpath_metadata_path = args[8]
-        raw_data_in_output = args[9]
-        extract_windowed_data = args[10] == "true"
-        output_path = args[11]
+        pwg_stats_csv_path = args[7]
+        threei_stats_csv_path = args[8]
+        mpath_metadata_path = args[9]
+        raw_data_in_output = args[10]
+        extract_windowed_data = args[11] == "true"
+        output_path = args[12]
 
         spark = SparkSession(sc)
         open_stats_complete_df = spark.read.parquet(open_stats_parquet_path)
@@ -121,6 +124,7 @@ class StatsResultsMapper(PySparkTask):
         pipeline_df = spark.read.parquet(pipeline_parquet_path)
         pipeline_core_df = spark.read.parquet(pipeline_core_parquet_path)
         observations_df = spark.read.parquet(observations_parquet_path)
+        pwg_df = spark.read.csv(pwg_stats_csv_path, header=True)
         threei_df = spark.read.csv(threei_stats_csv_path, header=True)
         mpath_metadata_df = spark.read.csv(mpath_metadata_path, header=True)
 
@@ -136,6 +140,7 @@ class StatsResultsMapper(PySparkTask):
             pipeline_df,
             pipeline_core_df,
             observations_df,
+            pwg_df,
             threei_df,
             mpath_metadata_df,
             mp_chooser,
@@ -174,6 +179,7 @@ class StatsResultsMapper(PySparkTask):
         pipeline_df,
         pipeline_core_df,
         observations_df,
+        pwg_df,
         threei_df,
         mpath_metadata_df,
         mp_chooser,
@@ -181,6 +187,7 @@ class StatsResultsMapper(PySparkTask):
         raw_data_in_output="include",
     ):
         threei_df = self.standardize_threei_schema(threei_df)
+        pwg_df = self.standardize_pwg_schema(pwg_df)
 
         embryo_stat_packets = open_stats_complete_df.where(
             (
@@ -229,10 +236,17 @@ class StatsResultsMapper(PySparkTask):
                 | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GEO"))
                 | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GPP"))
                 | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GEP"))
+                | (pyspark.sql.functions.col("procedure_group").startswith("ALT"))
             )
         )
 
-        fertility_stats = self._fertility_stats_results(observations_df, pipeline_df)
+        manual_hits_observations_df = observations_df.where(
+            ~pyspark.sql.functions.col("procedure_stable_id").startswith("ALT")
+        )
+
+        fertility_stats = self._fertility_stats_results(
+            manual_hits_observations_df, pipeline_df
+        )
 
         for col_name in open_stats_df.columns:
             if col_name not in fertility_stats.columns:
@@ -243,7 +257,9 @@ class StatsResultsMapper(PySparkTask):
 
         open_stats_df = open_stats_df.union(fertility_stats)
 
-        viability_stats = self._viability_stats_results(observations_df, pipeline_df)
+        viability_stats = self._viability_stats_results(
+            manual_hits_observations_df, pipeline_df
+        )
         for col_name in open_stats_df.columns:
             if col_name not in viability_stats.columns:
                 viability_stats = viability_stats.withColumn(
@@ -252,7 +268,9 @@ class StatsResultsMapper(PySparkTask):
         viability_stats = viability_stats.select(open_stats_df.columns)
         open_stats_df = open_stats_df.union(viability_stats)
 
-        gross_pathology_stats = self._gross_pathology_stats_results(observations_df)
+        gross_pathology_stats = self._gross_pathology_stats_results(
+            manual_hits_observations_df
+        )
         for col_name in open_stats_df.columns:
             if col_name not in gross_pathology_stats.columns:
                 gross_pathology_stats = gross_pathology_stats.withColumn(
@@ -261,7 +279,9 @@ class StatsResultsMapper(PySparkTask):
         gross_pathology_stats = gross_pathology_stats.select(open_stats_df.columns)
         open_stats_df = open_stats_df.union(gross_pathology_stats)
 
-        histopathology_stats = self._histopathology_stats_results(observations_df)
+        histopathology_stats = self._histopathology_stats_results(
+            manual_hits_observations_df
+        )
         for col_name in open_stats_df.columns:
             if col_name not in histopathology_stats.columns:
                 histopathology_stats = histopathology_stats.withColumn(
@@ -273,7 +293,7 @@ class StatsResultsMapper(PySparkTask):
         open_stats_df = open_stats_df.union(histopathology_stats)
 
         embryo_viability_stats = self._embryo_viability_stats_results(
-            observations_df, pipeline_df
+            manual_hits_observations_df, pipeline_df
         )
         for col_name in open_stats_df.columns:
             if col_name not in embryo_viability_stats.columns:
@@ -452,6 +472,19 @@ class StatsResultsMapper(PySparkTask):
             "left_outer",
         )
         open_stats_df = self.map_three_i(open_stats_df)
+        open_stats_df = open_stats_df.join(
+            pwg_df,
+            [
+                "resource_name",
+                "colony_id",
+                "marker_accession_id",
+                "procedure_stable_id",
+                "parameter_stable_id",
+                "zygosity",
+            ],
+            "left_outer",
+        )
+        open_stats_df = self.map_pwg(open_stats_df)
         open_stats_df = open_stats_df.withColumn(
             "collapsed_mp_term",
             pyspark.sql.functions.when(
@@ -1226,6 +1259,112 @@ class StatsResultsMapper(PySparkTask):
             ).otherwise(pyspark.sql.functions.col("genotype_effect_p_value")),
         )
         open_stats_df = open_stats_df.drop("threei_genotype_effect_p_value")
+        return open_stats_df
+
+    def standardize_pwg_schema(self, pwg_df: DataFrame):
+        pwg_df = pwg_df.dropDuplicates()
+        join_cols = [
+            "colony_id",
+            "marker_accession_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "zygosity",
+        ]
+        original_cols = [
+            col_name for col_name in pwg_df.columns if col_name not in join_cols
+        ]
+        for col_name in original_cols:
+            pwg_df = pwg_df.withColumnRenamed(col_name, f"pwg_{col_name}")
+        pwg_df = pwg_df.withColumn("resource_name", pyspark.sql.functions.lit("pwg"))
+        pwg_df = pwg_df.withColumn(
+            "procedure_stable_id",
+            pyspark.sql.functions.array(
+                pyspark.sql.functions.col("procedure_stable_id")
+            ),
+        )
+        pwg_df = pwg_df.withColumn(
+            "sex",
+            pyspark.sql.functions.when(
+                pyspark.sql.functions.col("sex") == "both",
+                pyspark.sql.functions.lit("not_considered"),
+            ).otherwise(pyspark.sql.functions.lower(pyspark.sql.functions.col("sex"))),
+        )
+        pwg_df = pwg_df.withColumn(
+            "zygosity",
+            pyspark.sql.functions.when(
+                pyspark.sql.functions.col("zygosity") == "homozygous",
+                pyspark.sql.functions.lit("homozygote"),
+            )
+            .when(
+                pyspark.sql.functions.col("zygosity") == "hemizygous",
+                pyspark.sql.functions.lit("hemizygote"),
+            )
+            .otherwise(pyspark.sql.functions.lit("heterozygote")),
+        )
+        pwg_df = pwg_df.withColumn(
+            "pwg_collapsed_mp_term",
+            pyspark.sql.functions.when(
+                (pyspark.sql.functions.col("mp_term") != "NA")
+                & (pyspark.sql.functions.col("mp_term").isNotNull()),
+                pyspark.sql.functions.struct(
+                    pyspark.sql.functions.lit(None).cast(StringType()).alias("event"),
+                    pyspark.sql.functions.lit(None)
+                    .cast(StringType())
+                    .alias("otherPossibilities"),
+                    "sex",
+                    pyspark.sql.functions.col("mp_term").alias("mp_term"),
+                ),
+            ).otherwise(pyspark.sql.functions.lit(None)),
+        )
+        pwg_df = pwg_df.withColumn(
+            "pwg_significant",
+            pyspark.sql.functions.when(
+                pyspark.sql.functions.col("significance") == "significant",
+                pyspark.sql.functions.lit(True),
+            ).otherwise(pyspark.sql.functions.lit(False)),
+        )
+        pwg_df = pwg_df.withColumn(
+            "pwg_classification_tag",
+            pyspark.sql.functions.concat("pwg_classification_tag", "sexual_dimorphism"),
+        )
+        pwg_df = pwg_df.withColumn(
+            "pwg_status", pyspark.sql.functions.lit("Successful")
+        )
+
+        return pwg_df
+
+    def map_pwg(self, open_stats_df):
+        pwg_columns = [
+            "significant",
+            "status",
+            "statistical_method",
+            "p_value",
+            "genotype_effect_p_value",
+            "batch_significant",
+            "variance_significant",
+            "genotype_effect_size",
+            "male_ko_effect_p_value",
+            "female_ko_effect_p_value",
+            "female_percentage_change",
+            "male_percentage_change",
+        ]
+        for col_name in pwg_columns:
+            open_stats_df = open_stats_df.withColumn(
+                col_name,
+                pyspark.sql.functions.when(
+                    pyspark.sql.functions.col(f"pwg_{col_name}").isNotNull(),
+                    pyspark.sql.functions.col(f"pwg_{col_name}"),
+                ).otherwise(pyspark.sql.functions.col(col_name)),
+            )
+            open_stats_df = open_stats_df.drop(f"pwg_{col_name}")
+        open_stats_df = open_stats_df.withColumn(
+            "status",
+            pyspark.sql.functions.when(
+                pyspark.sql.functions.col("status").isNull()
+                & (pyspark.sql.functions.col("resource_name") == "pwg"),
+                pyspark.sql.functions.lit("NotProcessed"),
+            ).otherwise(pyspark.sql.functions.col("status")),
+        )
         return open_stats_df
 
     def _fertility_stats_results(
