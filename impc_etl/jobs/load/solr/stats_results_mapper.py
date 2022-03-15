@@ -1320,7 +1320,7 @@ class StatsResultsMapper(PySparkTask):
         pwg_df = pwg_df.withColumn(
             "pwg_significant",
             pyspark.sql.functions.when(
-                pyspark.sql.functions.col("significance") == "significant",
+                pyspark.sql.functions.col("pwg_significant") == "significant",
                 pyspark.sql.functions.lit(True),
             ).otherwise(pyspark.sql.functions.lit(False)),
         )
