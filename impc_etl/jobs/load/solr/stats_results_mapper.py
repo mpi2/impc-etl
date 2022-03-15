@@ -31,7 +31,6 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
-
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -1306,15 +1305,15 @@ class StatsResultsMapper(PySparkTask):
         pwg_df = pwg_df.withColumn(
             "pwg_collapsed_mp_term",
             pyspark.sql.functions.when(
-                (pyspark.sql.functions.col("mp_term") != "NA")
-                & (pyspark.sql.functions.col("mp_term").isNotNull()),
+                (pyspark.sql.functions.col("pwg_mp_term") != "NA")
+                & (pyspark.sql.functions.col("pwg_mp_term").isNotNull()),
                 pyspark.sql.functions.struct(
                     pyspark.sql.functions.lit(None).cast(StringType()).alias("event"),
                     pyspark.sql.functions.lit(None)
                     .cast(StringType())
                     .alias("otherPossibilities"),
-                    "sex",
-                    pyspark.sql.functions.col("mp_term").alias("mp_term"),
+                    "pwg_sex",
+                    pyspark.sql.functions.col("pwg_mp_term").alias("mp_term"),
                 ),
             ).otherwise(pyspark.sql.functions.lit(None)),
         )
