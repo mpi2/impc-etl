@@ -1365,8 +1365,11 @@ class StatsResultsMapper(PySparkTask):
             "female_ko_effect_p_value",
             "female_percentage_change",
             "male_percentage_change",
-            "sex",
         ]
+        open_stats_df = open_stats_df.withColumn(
+            "sex",
+            pyspark.sql.functions.col("pwg_sex"),
+        )
         for col_name in pwg_columns:
             open_stats_df = open_stats_df.withColumn(
                 col_name,
