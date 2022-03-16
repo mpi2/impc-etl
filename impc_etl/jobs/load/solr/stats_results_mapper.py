@@ -1360,7 +1360,7 @@ class StatsResultsMapper(PySparkTask):
             "genotype_effect_p_value",
             "batch_significant",
             "variance_significant",
-            "genotype_effect_size",
+            # "genotype_effect_size",
             "male_ko_effect_p_value",
             "female_ko_effect_p_value",
             "female_percentage_change",
