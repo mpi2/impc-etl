@@ -1326,6 +1326,20 @@ class StatsResultsMapper(PySparkTask):
             ).otherwise(pyspark.sql.functions.lit(False)),
         )
         pwg_df = pwg_df.withColumn(
+            "pwg_batch_significant",
+            pyspark.sql.functions.when(
+                pyspark.sql.functions.col("pwg_batch_significant") == "TRUE",
+                pyspark.sql.functions.lit(True),
+            ).otherwise(pyspark.sql.functions.lit(False)),
+        )
+        pwg_df = pwg_df.withColumn(
+            "pwg_variance_significant",
+            pyspark.sql.functions.when(
+                pyspark.sql.functions.col("pwg_variance_significant") == "TRUE",
+                pyspark.sql.functions.lit(True),
+            ).otherwise(pyspark.sql.functions.lit(False)),
+        )
+        pwg_df = pwg_df.withColumn(
             "pwg_classification_tag",
             pyspark.sql.functions.concat(
                 "pwg_classification_tag", "pwg_sexual_dimorphism"
