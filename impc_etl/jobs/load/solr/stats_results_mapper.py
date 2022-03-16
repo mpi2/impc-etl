@@ -1327,7 +1327,9 @@ class StatsResultsMapper(PySparkTask):
         )
         pwg_df = pwg_df.withColumn(
             "pwg_classification_tag",
-            pyspark.sql.functions.concat("pwg_classification_tag", "sexual_dimorphism"),
+            pyspark.sql.functions.concat(
+                "pwg_classification_tag", "pwg_sexual_dimorphism"
+            ),
         )
         pwg_df = pwg_df.withColumn(
             "pwg_status", pyspark.sql.functions.lit("Successful")
