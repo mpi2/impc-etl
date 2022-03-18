@@ -357,6 +357,14 @@ class StatsResultsMapper(PySparkTask):
             OBSERVATIONS_STATS_MAP,
             "observation",
         )
+        print("When created IMPC_FOR_001_001 H-GRIA1-DEL588-EM1-B6N")
+        open_stats_df.where(
+            pyspark.sql.functions.col("parameter_stable_id") == "IMPC_FOR_001_001"
+        ).where(
+            pyspark.sql.functions.col("colony_id") == "H-GRIA1-DEL588-EM1-B6N"
+        ).show(
+            vertical=True, truncate=False
+        )
         open_stats_df = open_stats_df.withColumn(
             "pipeline_stable_id",
             pyspark.sql.functions.when(
@@ -490,7 +498,7 @@ class StatsResultsMapper(PySparkTask):
             ).count()
         )
         print("Before map full IMPC_FOR_001_001 H-GRIA1-DEL588-EM1-B6N:")
-        open_stats_df.where(pyspark.sql.functions.col("resource_name") == "pwg").where(
+        open_stats_df.where(
             pyspark.sql.functions.col("parameter_stable_id") == "IMPC_FOR_001_001"
         ).where(
             pyspark.sql.functions.col("colony_id") == "H-GRIA1-DEL588-EM1-B6N"
