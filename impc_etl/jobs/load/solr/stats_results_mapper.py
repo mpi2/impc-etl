@@ -31,6 +31,7 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
+
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -483,7 +484,15 @@ class StatsResultsMapper(PySparkTask):
             ],
             "left_outer",
         )
+        open_stats_df.where(pyspark.sql.functions.col("pwg_p_value").isNotNull()).show(
+            vertical=True, truncate=False
+        )
         open_stats_df = self.map_pwg(open_stats_df)
+        open_stats_df.where(pyspark.sql.functions.col("resource_name") == "pwg").show(
+            vertical=True, truncate=False
+        )
+        raise ValueError
+
         open_stats_df = open_stats_df.withColumn(
             "collapsed_mp_term",
             pyspark.sql.functions.when(
@@ -1347,10 +1356,16 @@ class StatsResultsMapper(PySparkTask):
         pwg_df = pwg_df.withColumn(
             "pwg_status", pyspark.sql.functions.lit("Successful")
         )
+        pwg_df.printSchema()
+        pwg_df.show(vertical=True, truncate=False)
 
         return pwg_df
 
     def map_pwg(self, open_stats_df):
+        open_stats_df = open_stats_df.where(
+            (pyspark.sql.functions.col("resource_name") != "pwg")
+            | (pyspark.sql.functions.col("pwg_status") == "Successful")
+        )
         pwg_columns = [
             "significant",
             "status",
@@ -1368,11 +1383,8 @@ class StatsResultsMapper(PySparkTask):
             "female_mutant_count",
             "male_control_count",
             "male_mutant_count",
+            "collapsed_mp_term",
         ]
-        open_stats_df = open_stats_df.withColumn(
-            "sex",
-            pyspark.sql.functions.col("pwg_sex"),
-        )
         for col_name in pwg_columns:
             open_stats_df = open_stats_df.withColumn(
                 col_name,
@@ -1382,14 +1394,6 @@ class StatsResultsMapper(PySparkTask):
                 ).otherwise(pyspark.sql.functions.col(col_name)),
             )
             open_stats_df = open_stats_df.drop(f"pwg_{col_name}")
-        open_stats_df = open_stats_df.withColumn(
-            "status",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("status").isNull()
-                & (pyspark.sql.functions.col("resource_name") == "pwg"),
-                pyspark.sql.functions.lit("NotProcessed"),
-            ).otherwise(pyspark.sql.functions.col("status")),
-        )
         return open_stats_df
 
     def _fertility_stats_results(
