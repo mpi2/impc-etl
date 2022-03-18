@@ -489,6 +489,14 @@ class StatsResultsMapper(PySparkTask):
                 pyspark.sql.functions.col("resource_name") == "pwg"
             ).count()
         )
+        print("Before map full IMPC_FOR_001_001 H-GRIA1-DEL588-EM1-B6N:")
+        open_stats_df.where(pyspark.sql.functions.col("resource_name") == "pwg").where(
+            pyspark.sql.functions.col("parameter_stable_id") == "IMPC_FOR_001_001"
+        ).where(
+            pyspark.sql.functions.col("colony_id") == "H-GRIA1-DEL588-EM1-B6N"
+        ).show(
+            vertical=True, truncate=False
+        )
         print("Before map join:")
         print(
             open_stats_df.where(
