@@ -483,8 +483,17 @@ class StatsResultsMapper(PySparkTask):
             ],
             "left_outer",
         )
-        open_stats_df.where(pyspark.sql.functions.col("pwg_p_value").isNotNull()).show(
-            vertical=True, truncate=False
+        print("Before map full:")
+        print(
+            open_stats_df.where(
+                pyspark.sql.functions.col("resource_name") == "pwg"
+            ).count()
+        )
+        print("Before map join:")
+        print(
+            open_stats_df.where(
+                pyspark.sql.functions.col("pwg_significant").isNotNull()
+            ).count()
         )
         open_stats_df = self.map_pwg(open_stats_df)
         open_stats_df.where(pyspark.sql.functions.col("resource_name") == "pwg").show(
