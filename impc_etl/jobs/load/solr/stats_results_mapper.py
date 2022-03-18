@@ -31,7 +31,6 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
-
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -1360,11 +1359,15 @@ class StatsResultsMapper(PySparkTask):
             "genotype_effect_p_value",
             "batch_significant",
             "variance_significant",
-            # "genotype_effect_size",
+            "effect_size",
             "male_ko_effect_p_value",
             "female_ko_effect_p_value",
             "female_percentage_change",
             "male_percentage_change",
+            "female_control_count",
+            "female_mutant_count",
+            "male_control_count",
+            "male_mutant_count",
         ]
         open_stats_df = open_stats_df.withColumn(
             "sex",
