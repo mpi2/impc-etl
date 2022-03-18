@@ -1321,7 +1321,7 @@ class StatsResultsMapper(PySparkTask):
                     pyspark.sql.functions.lit(None)
                     .cast(StringType())
                     .alias("otherPossibilities"),
-                    "pwg_sex",
+                    pyspark.sql.functions.col("pwg_sex").alias("sex"),
                     pyspark.sql.functions.col("pwg_mp_term").alias("mp_term"),
                 ),
             ).otherwise(pyspark.sql.functions.lit(None)),
