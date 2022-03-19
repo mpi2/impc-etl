@@ -31,7 +31,6 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
-
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -1141,7 +1140,7 @@ class StatsResultsMapper(PySparkTask):
                 metadata_df, join_columns, "left_outer"
             )
         for column_name, source_column in source_stats_map.items():
-            open_stats_df_ext = open_stats_df_ext.withColumnRenamed(
+            open_stats_df_ext = open_stats_df_ext.withColumn(
                 column_name, pyspark.sql.functions.col(f"{source_name}_{source_column}")
             )
         for source_column in source_stats_map.values():
