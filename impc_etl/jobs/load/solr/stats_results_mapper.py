@@ -1259,7 +1259,7 @@ class StatsResultsMapper(PySparkTask):
             "classification_tag",
             f.concat(
                 "classification_tag",
-                f.lit(" Sexual dimorphism:"),
+                f.lit(" \ Sexual dimorphism: "),
                 "sexual_dimorphism",
             ),
         )
@@ -1290,9 +1290,6 @@ class StatsResultsMapper(PySparkTask):
         pwg_stats_results = pwg_stats_results.select(
             required_stats_columns + pwg_columns
         )
-        pwg_stats_results.printSchema()
-        pwg_stats_results.show(vertical=True, truncate=False)
-        raise ValueError
         return pwg_stats_results
 
     def standardize_pwg_schema(self, pwg_df: DataFrame):
