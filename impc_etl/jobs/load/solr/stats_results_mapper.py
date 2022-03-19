@@ -31,7 +31,6 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
-
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -453,18 +452,6 @@ class StatsResultsMapper(PySparkTask):
             ],
             "left_outer",
         )
-        print("Before map full:")
-        print(open_stats_df.where(f.col("resource_name") == "pwg").count())
-        print("Before map join:")
-        print(open_stats_df.where(f.col("pwg_significant").isNotNull()).count())
-        open_stats_df.where(f.col("pwg_significant").isNotNull()).select(
-            "colony_id", "parameter_stable_id", "zygosity"
-        ).distinct().show(truncate=False)
-        open_stats_df = self.map_pwg(open_stats_df)
-        open_stats_df.where(f.col("resource_name") == "pwg").show(
-            vertical=True, truncate=False
-        )
-        raise ValueError
 
         open_stats_df = open_stats_df.withColumn(
             "collapsed_mp_term",
@@ -1264,6 +1251,7 @@ class StatsResultsMapper(PySparkTask):
             ),
         )
         pwg_stats_results = pwg_stats_results.withColumn("status", f.lit("Successful"))
+        pwg_df = pwg_df.withColumn("resource_name", f.lit("pwg"))
 
         pwg_columns = [
             "sex",
@@ -1285,6 +1273,7 @@ class StatsResultsMapper(PySparkTask):
             "male_mutant_count",
             "collapsed_mp_term",
             "classification_tag",
+            "resource_name",
         ]
 
         pwg_stats_results = pwg_stats_results.select(
