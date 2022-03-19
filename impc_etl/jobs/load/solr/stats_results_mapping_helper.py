@@ -245,4 +245,5 @@ PWG_PROCEDURES = [
     "HRWL_VFR",
     "JAX_VFR",
     "UCD_VFR",
+    "TCP_VFR",
 ]

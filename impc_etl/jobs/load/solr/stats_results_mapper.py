@@ -31,6 +31,7 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
+
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -1196,14 +1197,16 @@ class StatsResultsMapper(PySparkTask):
         )
 
         pwg_stats_results = pwg_stats_results.withColumn(
-            "collapsed_mp_term",
+            "mp_term",
             f.when(
                 (f.col("mp_term") != "NA") & (f.col("mp_term").isNotNull()),
-                f.struct(
-                    f.lit(None).cast(StringType()).alias("event"),
-                    f.lit(None).cast(StringType()).alias("otherPossibilities"),
-                    f.col("sex").alias("sex"),
-                    f.col("mp_term").alias("term_id"),
+                f.array(
+                    f.struct(
+                        f.lit(None).cast(StringType()).alias("event"),
+                        f.lit(None).cast(StringType()).alias("otherPossibilities"),
+                        f.col("sex").alias("sex"),
+                        f.col("mp_term").alias("term_id"),
+                    )
                 ),
             ).otherwise(f.lit(None)),
         )
@@ -1233,7 +1236,7 @@ class StatsResultsMapper(PySparkTask):
             "classification_tag",
             f.concat(
                 "classification_tag",
-                f.lit(" \ Sexual dimorphism: "),
+                f.lit(" | Sexual dimorphism: "),
                 "sexual_dimorphism",
             ),
         )
@@ -1258,7 +1261,7 @@ class StatsResultsMapper(PySparkTask):
             "female_mutant_count",
             "male_control_count",
             "male_mutant_count",
-            "collapsed_mp_term",
+            "mp_term",
             "classification_tag",
             "resource_name",
         ]
