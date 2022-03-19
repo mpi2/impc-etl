@@ -31,7 +31,6 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
-
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -441,19 +440,6 @@ class StatsResultsMapper(PySparkTask):
             "left_outer",
         )
         open_stats_df = self.map_three_i(open_stats_df)
-        open_stats_df = open_stats_df.join(
-            pwg_df,
-            [
-                "resource_name",
-                "colony_id",
-                "marker_accession_id",
-                "procedure_stable_id",
-                "parameter_stable_id",
-                "zygosity",
-            ],
-            "left_outer",
-        )
-
         open_stats_df = open_stats_df.withColumn(
             "collapsed_mp_term",
             f.when(
