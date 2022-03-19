@@ -350,8 +350,16 @@ class StatsResultsMapper(PySparkTask):
         observations_metadata_df = observations_metadata_df.groupBy(
             STATS_OBSERVATIONS_JOIN + ["datasource_name", "production_center"]
         ).agg(*aggregation_expresion)
+
+        open_stats_df = self.map_to_stats(
+            open_stats_df,
+            observations_metadata_df,
+            STATS_OBSERVATIONS_JOIN,
+            OBSERVATIONS_STATS_MAP,
+            "observation",
+        )
         print(
-            "After agg observations_metadata_df IMPC_FOR_001_001 H-GRIA1-DEL588-EM1-B6N"
+            "After map to stats observations_metadata_df IMPC_FOR_001_001 H-GRIA1-DEL588-EM1-B6N"
         )
         observations_metadata_df.where(
             pyspark.sql.functions.col("parameter_stable_id") == "IMPC_FOR_001_001"
@@ -360,13 +368,7 @@ class StatsResultsMapper(PySparkTask):
         ).show(
             vertical=True, truncate=False
         )
-        open_stats_df = self.map_to_stats(
-            open_stats_df,
-            observations_metadata_df,
-            STATS_OBSERVATIONS_JOIN,
-            OBSERVATIONS_STATS_MAP,
-            "observation",
-        )
+        raise ValueError
 
         open_stats_df = open_stats_df.withColumn(
             "pipeline_stable_id",
