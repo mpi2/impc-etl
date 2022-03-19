@@ -236,3 +236,13 @@ WINDOW_COLUMNS = [
     "soft_windowing_doe_note",
     "observations_window_weight",
 ]
+
+PWG_PROCEDURES = [
+    "IMPC_FOR",
+    "JAX_HRG",
+    "UCD_HRG",
+    "TCP_HRG",
+    "HRWL_VFR",
+    "JAX_VFR",
+    "UCD_VFR",
+]
