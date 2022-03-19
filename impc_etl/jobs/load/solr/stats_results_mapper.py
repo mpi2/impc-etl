@@ -31,6 +31,7 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
+
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -1138,11 +1139,11 @@ class StatsResultsMapper(PySparkTask):
         else:
             open_stats_df = open_stats_df.join(metadata_df, join_columns, "left_outer")
         for column_name, source_column in source_stats_map.items():
-            open_stats_df = open_stats_df.withColumn(
-                column_name, pyspark.sql.functions.col(f"{source_name}_{source_column}")
+            open_stats_df = open_stats_df.withColumnRenamed(
+                f"{source_name}_{source_column}", column_name
             )
-        for source_column in source_stats_map.values():
-            open_stats_df = open_stats_df.drop(f"{source_name}_{source_column}")
+        # for source_column in source_stats_map.values():
+        #     open_stats_df = open_stats_df.drop(f"{source_name}_{source_column}")
         return open_stats_df
 
     def standardize_threei_schema(self, threei_df: DataFrame):
