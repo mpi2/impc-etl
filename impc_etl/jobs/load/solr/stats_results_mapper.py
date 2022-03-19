@@ -31,6 +31,7 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
+
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -469,8 +470,8 @@ class StatsResultsMapper(PySparkTask):
         print("Before map join:")
         print(open_stats_df.where(f.col("pwg_significant").isNotNull()).count())
         open_stats_df.where(f.col("pwg_significant").isNotNull()).select(
-            "colony_id", "parameter_stable_id"
-        ).distinct().show()
+            "colony_id", "parameter_stable_id", "zygosity"
+        ).distinct().show(truncate=False)
         open_stats_df = self.map_pwg(open_stats_df)
         open_stats_df.where(f.col("resource_name") == "pwg").show(
             vertical=True, truncate=False
