@@ -166,6 +166,10 @@ class StatsResultsMapper(PySparkTask):
                 stats_results_df = stats_results_df.withColumn(
                     col_name, f.lit(None).astype(StringType())
                 )
+        stats_results_df.where(f.col("resource_name") == "pwg").show(
+            vertical=True, truncate=False
+        )
+        raise ValueError
         stats_results_df.write.parquet(output_path)
         if raw_data_in_output == "include":
             raw_data_df = open_stats_df.select("doc_id", "raw_data")
@@ -703,7 +707,8 @@ class StatsResultsMapper(PySparkTask):
         open_stats_df = open_stats_df.withColumn(
             "significant",
             f.when(
-                f.col("data_type") == "time_series",
+                (f.col("data_type") == "time_series")
+                & (f.col("resouce_name") != "pwg"),
                 f.lit(False),
             ).otherwise(f.col("significant")),
         )
@@ -1347,9 +1352,6 @@ class StatsResultsMapper(PySparkTask):
             f.concat("pwg_classification_tag", "pwg_sexual_dimorphism"),
         )
         pwg_df = pwg_df.withColumn("pwg_status", f.lit("Successful"))
-        pwg_df.printSchema()
-        pwg_df.show(vertical=True, truncate=False)
-
         return pwg_df
 
     def map_pwg(self, open_stats_df):
