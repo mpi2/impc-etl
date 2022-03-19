@@ -165,10 +165,6 @@ class StatsResultsMapper(PySparkTask):
                 stats_results_df = stats_results_df.withColumn(
                     col_name, f.lit(None).astype(StringType())
                 )
-        stats_results_df.where(f.col("resource_name") == "pwg").show(
-            vertical=True, truncate=False
-        )
-        raise ValueError
         stats_results_df.write.parquet(output_path)
         if raw_data_in_output == "include":
             raw_data_df = open_stats_df.select("doc_id", "raw_data")
