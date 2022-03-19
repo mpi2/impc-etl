@@ -1135,16 +1135,18 @@ class StatsResultsMapper(PySparkTask):
                     col_name, f"{source_name}_{col_name}"
                 )
         if source_name == "observations":
-            open_stats_df = open_stats_df.join(metadata_df, join_columns)
+            open_stats_df_ext = open_stats_df.join(metadata_df, join_columns)
         else:
-            open_stats_df = open_stats_df.join(metadata_df, join_columns, "left_outer")
-        for column_name, source_column in source_stats_map.items():
-            open_stats_df = open_stats_df.withColumnRenamed(
-                f"{source_name}_{source_column}", column_name
+            open_stats_df_ext = open_stats_df.join(
+                metadata_df, join_columns, "left_outer"
             )
-        # for source_column in source_stats_map.values():
-        #     open_stats_df = open_stats_df.drop(f"{source_name}_{source_column}")
-        return open_stats_df
+        for column_name, source_column in source_stats_map.items():
+            open_stats_df_ext = open_stats_df_ext.withColumnRenamed(
+                column_name, pyspark.sql.functions.col(f"{source_name}_{source_column}")
+            )
+        for source_column in source_stats_map.values():
+            open_stats_df_ext = open_stats_df_ext.drop(f"{source_name}_{source_column}")
+        return open_stats_df_ext
 
     def standardize_threei_schema(self, threei_df: DataFrame):
         threei_df = threei_df.dropDuplicates()
