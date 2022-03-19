@@ -31,6 +31,7 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
+
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -1258,14 +1259,12 @@ class StatsResultsMapper(PySparkTask):
         pwg_stats_results = pwg_stats_results.withColumn(
             "classification_tag",
             f.concat(
-                "pwg_classification_tag",
+                "classification_tag",
                 f.lit(" Sexual dimorphism:"),
-                "pwg_sexual_dimorphism",
+                "sexual_dimorphism",
             ),
         )
-        pwg_stats_results = pwg_stats_results.withColumn(
-            "pwg_status", f.lit("Successful")
-        )
+        pwg_stats_results = pwg_stats_results.withColumn("status", f.lit("Successful"))
 
         pwg_columns = [
             "sex",
