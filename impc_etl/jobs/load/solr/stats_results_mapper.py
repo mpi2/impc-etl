@@ -466,12 +466,11 @@ class StatsResultsMapper(PySparkTask):
         )
         print("Before map full:")
         print(open_stats_df.where(f.col("resource_name") == "pwg").count())
-        print("Before map full IMPC_FOR_001_001 H-GRIA1-DEL588-EM1-B6N:")
-        open_stats_df.where(f.col("parameter_stable_id") == "IMPC_FOR_001_001").where(
-            f.col("colony_id") == "H-GRIA1-DEL588-EM1-B6N"
-        ).show(vertical=True, truncate=False)
         print("Before map join:")
         print(open_stats_df.where(f.col("pwg_significant").isNotNull()).count())
+        open_stats_df.where(f.col("pwg_significant").isNotNull()).select(
+            "colony_id", "parameter_stable_id"
+        ).distinct().show()
         open_stats_df = self.map_pwg(open_stats_df)
         open_stats_df.where(f.col("resource_name") == "pwg").show(
             vertical=True, truncate=False
