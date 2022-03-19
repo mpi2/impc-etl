@@ -31,6 +31,7 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
+
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -316,6 +317,16 @@ class StatsResultsMapper(PySparkTask):
         observations_metadata_df = observations_df.select(
             STATS_OBSERVATIONS_JOIN + list(set(OBSERVATIONS_STATS_MAP.values()))
         ).dropDuplicates()
+        print(
+            "When created observations_metadata_df IMPC_FOR_001_001 H-GRIA1-DEL588-EM1-B6N"
+        )
+        observations_metadata_df.where(
+            pyspark.sql.functions.col("parameter_stable_id") == "IMPC_FOR_001_001"
+        ).where(
+            pyspark.sql.functions.col("colony_id") == "H-GRIA1-DEL588-EM1-B6N"
+        ).show(
+            vertical=True, truncate=False
+        )
         observations_metadata_df = observations_metadata_df.groupBy(
             *[
                 col_name
@@ -357,14 +368,7 @@ class StatsResultsMapper(PySparkTask):
             OBSERVATIONS_STATS_MAP,
             "observation",
         )
-        print("When created IMPC_FOR_001_001 H-GRIA1-DEL588-EM1-B6N")
-        open_stats_df.where(
-            pyspark.sql.functions.col("parameter_stable_id") == "IMPC_FOR_001_001"
-        ).where(
-            pyspark.sql.functions.col("colony_id") == "H-GRIA1-DEL588-EM1-B6N"
-        ).show(
-            vertical=True, truncate=False
-        )
+
         open_stats_df = open_stats_df.withColumn(
             "pipeline_stable_id",
             pyspark.sql.functions.when(
