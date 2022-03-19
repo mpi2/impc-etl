@@ -31,7 +31,6 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
-
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -1187,7 +1186,6 @@ class StatsResultsMapper(PySparkTask):
         required_stats_columns = STATS_OBSERVATIONS_JOIN + [
             "procedure_stable_id",
             "pipeline_name",
-            "data_point",
             "allele_accession_id",
             "parameter_name",
             "allele_symbol",
@@ -1215,6 +1213,14 @@ class StatsResultsMapper(PySparkTask):
         )
 
         pwg_stats_results = pwg_stats_results.withColumn(
+            "sex",
+            f.when(
+                f.col("sex") == "both",
+                f.lit("not_considered"),
+            ).otherwise(f.lower(f.col("sex"))),
+        )
+
+        pwg_stats_results = pwg_stats_results.withColumn(
             "collapsed_mp_term",
             f.when(
                 (f.col("mp_term") != "NA") & (f.col("mp_term").isNotNull()),
@@ -1225,14 +1231,6 @@ class StatsResultsMapper(PySparkTask):
                     f.col("mp_term").alias("term_id"),
                 ),
             ).otherwise(f.lit(None)),
-        )
-
-        pwg_stats_results = pwg_stats_results.withColumn(
-            "sex",
-            f.when(
-                f.col("sex") == "both",
-                f.lit("not_considered"),
-            ).otherwise(f.lower(f.col("sex"))),
         )
 
         pwg_stats_results = pwg_stats_results.withColumn(
