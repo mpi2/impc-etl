@@ -31,7 +31,6 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
-
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -187,7 +186,6 @@ class StatsResultsMapper(PySparkTask):
         raw_data_in_output="include",
     ):
         threei_df = self.standardize_threei_schema(threei_df)
-        pwg_df = self.standardize_pwg_schema(pwg_df)
 
         embryo_stat_packets = open_stats_complete_df.where(
             (
@@ -223,6 +221,7 @@ class StatsResultsMapper(PySparkTask):
                 | (f.col("procedure_group").contains("IMPC_GPP"))
                 | (f.col("procedure_group").contains("IMPC_GEP"))
                 | (f.col("procedure_group").startswith("ALT"))
+                | (f.col("procedure_group").isin(PWG_PROCEDURES))
             )
         )
 
@@ -238,8 +237,17 @@ class StatsResultsMapper(PySparkTask):
             if col_name not in fertility_stats.columns:
                 fertility_stats = fertility_stats.withColumn(col_name, f.lit(None))
         fertility_stats = fertility_stats.select(open_stats_df.columns)
-
         open_stats_df = open_stats_df.union(fertility_stats)
+
+        pwg_stats = self._pwg_stats(pwg_df, observations_df)
+
+        for col_name in open_stats_df.columns:
+            if col_name not in pwg_stats.columns:
+                pwg_stats = pwg_stats.withColumn(col_name, f.lit(None))
+
+        pwg_stats = pwg_stats.select(open_stats_df.columns)
+
+        open_stats_df = open_stats_df.union(pwg_stats)
 
         viability_stats = self._viability_stats_results(
             manual_hits_observations_df, pipeline_df
@@ -327,27 +335,6 @@ class StatsResultsMapper(PySparkTask):
         observations_metadata_df = observations_metadata_df.groupBy(
             STATS_OBSERVATIONS_JOIN + ["datasource_name", "production_center"]
         ).agg(*aggregation_expresion)
-
-        # REMOVE after DR
-        pwg_metadata_df = observations_metadata_df.where(
-            f.col("datasource_name") == "pwg"
-        ).withColumnRenamed("metadata_group", "pwg_metadata_group")
-        open_stats_df = open_stats_df.join(
-            pwg_metadata_df,
-            [
-                col_name
-                for col_name in STATS_OBSERVATIONS_JOIN
-                if col_name != "metadata_group"
-            ],
-            "left_outer",
-        )
-        open_stats_df = open_stats_df.withColumn(
-            "metadata_group",
-            f.when(
-                f.col("pwg_metadata_group").isNotNull(), f.col("pwg_metadata_group")
-            ).otherwise(f.col("metadata_group")),
-        )
-        open_stats_df = open_stats_df.drop("pwg_metadata_group")
 
         open_stats_df = self.map_to_stats(
             open_stats_df,
@@ -1179,6 +1166,135 @@ class StatsResultsMapper(PySparkTask):
         )
         open_stats_df = open_stats_df.drop("threei_genotype_effect_p_value")
         return open_stats_df
+
+    def _pwg_stats(self, pwg_df: DataFrame, observations_df: DataFrame):
+        pwg_df = pwg_df.withColumn(
+            "zygosity",
+            f.when(
+                f.col("zygosity") == "homozygous",
+                f.lit("homozygote"),
+            )
+            .when(
+                f.col("zygosity") == "hemizygous",
+                f.lit("hemizygote"),
+            )
+            .otherwise(f.lit("heterozygote")),
+        )
+        observations_df = observations_df.where(
+            f.col("procedure_group").isin(PWG_PROCEDURES)
+        )
+        required_stats_columns = STATS_OBSERVATIONS_JOIN + [
+            "procedure_stable_id",
+            "pipeline_name",
+            "data_point",
+            "allele_accession_id",
+            "parameter_name",
+            "allele_symbol",
+            "marker_accession_id",
+            "marker_symbol",
+            "strain_accession_id",
+        ]
+        pwg_stats_results = (
+            observations_df.withColumnRenamed(
+                "gene_accession_id", "marker_accession_id"
+            )
+            .withColumnRenamed("gene_symbol", "marker_symbol")
+            .select(required_stats_columns)
+            .distinct()
+        )
+        pwg_stats_results = pwg_df.join(
+            pwg_stats_results,
+            [
+                "colony_id",
+                "marker_accession_id",
+                "zygosity",
+                "procedure_stable_id",
+                "parameter_stable_id",
+            ],
+        )
+
+        pwg_stats_results = pwg_stats_results.withColumn(
+            "collapsed_mp_term",
+            f.when(
+                (f.col("mp_term") != "NA") & (f.col("mp_term").isNotNull()),
+                f.struct(
+                    f.lit(None).cast(StringType()).alias("event"),
+                    f.lit(None).cast(StringType()).alias("otherPossibilities"),
+                    f.col("sex").alias("sex"),
+                    f.col("mp_term").alias("term_id"),
+                ),
+            ).otherwise(f.lit(None)),
+        )
+
+        pwg_stats_results = pwg_stats_results.withColumn(
+            "sex",
+            f.when(
+                f.col("sex") == "both",
+                f.lit("not_considered"),
+            ).otherwise(f.lower(f.col("sex"))),
+        )
+
+        pwg_stats_results = pwg_stats_results.withColumn(
+            "significant",
+            f.when(
+                f.col("significance") == "significant",
+                f.lit(True),
+            ).otherwise(f.lit(False)),
+        )
+        pwg_stats_results = pwg_stats_results.withColumn(
+            "batch_significant",
+            f.when(
+                f.col("batch_significant") == "TRUE",
+                f.lit(True),
+            ).otherwise(f.lit(False)),
+        )
+        pwg_stats_results = pwg_stats_results.withColumn(
+            "variance_significant",
+            f.when(
+                f.col("variance_significant") == "TRUE",
+                f.lit(True),
+            ).otherwise(f.lit(False)),
+        )
+        pwg_stats_results = pwg_stats_results.withColumn(
+            "classification_tag",
+            f.concat(
+                "pwg_classification_tag",
+                f.lit(" Sexual dimorphism:"),
+                "pwg_sexual_dimorphism",
+            ),
+        )
+        pwg_stats_results = pwg_stats_results.withColumn(
+            "pwg_status", f.lit("Successful")
+        )
+
+        pwg_columns = [
+            "sex",
+            "significant",
+            "status",
+            "statistical_method",
+            "p_value",
+            "genotype_effect_p_value",
+            "batch_significant",
+            "variance_significant",
+            "effect_size",
+            "male_ko_effect_p_value",
+            "female_ko_effect_p_value",
+            "female_percentage_change",
+            "male_percentage_change",
+            "female_control_count",
+            "female_mutant_count",
+            "male_control_count",
+            "male_mutant_count",
+            "collapsed_mp_term",
+        ]
+
+        pwg_stats_results = pwg_stats_results.select(
+            required_stats_columns + pwg_columns
+        )
+        pwg_stats_results.printSchema()
+        pwg_stats_results.show(vertical=True, truncate=False)
+        raise ValueError
+        return pwg_stats_results
 
     def standardize_pwg_schema(self, pwg_df: DataFrame):
         pwg_df = pwg_df.dropDuplicates()
