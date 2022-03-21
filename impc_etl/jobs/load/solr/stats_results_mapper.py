@@ -31,6 +31,7 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
+
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
