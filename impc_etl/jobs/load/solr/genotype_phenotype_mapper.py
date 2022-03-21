@@ -4,7 +4,6 @@
     It takes in the statistical results parquet file and the ontology hierarchy parquet file
     and returns the Genotype Phenotype parquet.
 """
-import sys
 from typing import Any
 
 import luigi
@@ -25,7 +24,7 @@ from pyspark.sql.types import StringType
 from impc_etl.jobs.extract.ontology_hierarchy_extractor import (
     OntologyTermHierarchyExtractor,
 )
-from impc_etl.jobs.extract.open_stats_extractor import StatisticalAnalysisOutputMapper
+from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
 from impc_etl.workflow.config import ImpcConfig
 
 ONTOLOGY_STATS_MAP = {
@@ -112,7 +111,7 @@ class GenotypePhenotypeMapper(PySparkTask):
     output_path = luigi.Parameter()
 
     def requires(self):
-        return [StatisticalAnalysisOutputMapper(), OntologyTermHierarchyExtractor()]
+        return [StatsResultsMapper(), OntologyTermHierarchyExtractor()]
 
     def output(self):
         """
