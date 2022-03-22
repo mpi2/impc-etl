@@ -7,7 +7,8 @@ from typing import Any
 import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
-from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import collect_set
 
 from impc_etl.workflow.config import ImpcConfig
 
@@ -92,20 +93,20 @@ class ExtractGeneRef(PySparkTask):
 
         spark = SparkSession(sc)
 
-        mouse_gene_df = self._get_table_df(
-            spark, db_properties, jdbc_connection_str, "mouse_gene"
-        )
-        mouse_gene_df.select(*gene_ref_cols).write.parquet(output_path)
+        sql_query = """
+        SELECT mouse_gene.*, synonym FROM public.mouse_gene LEFT JOIN public.mouse_gene_synonym_relation ON mouse_gene.id = mouse_gene_synonym_relation.mouse_gene_id LEFT JOIN public.mouse_gene_synonym ON mouse_gene_synonym_relation.mouse_gene_synonym_id = mouse_gene_synonym.id;
+        """
 
-    def _get_table_df(
-        self, spark, db_properties, jdbc_connection_str, table_name
-    ) -> DataFrame:
-        return spark.read.jdbc(
+        mouse_gene_df = spark.read.jdbc(
             jdbc_connection_str,
-            table=f"(SELECT CAST(id AS BIGINT) AS numericId, * FROM {table_name}) AS {table_name}_df",
+            table=f"(SELECT CAST(id AS BIGINT) AS numericId, * FROM ({sql_query})) AS mouse_gene_df",
             properties=db_properties,
             numPartitions=10,
             column="numericId",
             lowerBound=0,
             upperBound=100000,
         )
+        mouse_gene_df = mouse_gene_df.groupBy(
+            [col_name for col_name in mouse_gene_df.columns if col_name != "synonym"]
+        ).agg(collect_set("synonym").alias("synonyms"))
+        mouse_gene_df.select(*gene_ref_cols).write.parquet(output_path)

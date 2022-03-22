@@ -42,6 +42,7 @@ GENE_REF_MAP = {
     "mgi_gene_acc_id": "mgi_accession_id",
     "symbol": "marker_symbol",
     "type": "marker_type",
+    "synonyms": "marker_synonym",
 }
 
 GENE_CORE_COLUMNS = [
