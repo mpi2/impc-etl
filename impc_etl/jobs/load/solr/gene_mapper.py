@@ -266,8 +266,8 @@ class GeneMapper(PySparkTask):
                 ref_col_name, gene_core_col_name
             )
         colonies_report_df = colonies_report_df.select(
-            "mgi_accession_id", "production_centre", "phenotyping_centre"
-        )
+            "mgi_accession_id", "production_centre", "phenotyping_centre", "colony_name"
+        ).distinct()
         colonies_report_df = colonies_report_df.groupBy("mgi_accession_id").agg(
             collect_set("production_centre").alias("production_centre"),
             collect_set("phenotyping_centre").alias("phenotyping_centre"),
