@@ -269,13 +269,13 @@ class GeneMapper(PySparkTask):
         colonies_report_df = colonies_report_df.select(
             "mgi_accession_id", "production_centre", "phenotyping_centre", "colony_name"
         ).distinct()
-        colonies_report_df = colonies_report_df.groupBy("mgi_accession_id").agg(
+        provenance_df = colonies_report_df.groupBy("mgi_accession_id").agg(
             collect_set("production_centre").alias("production_centre"),
             collect_set("phenotyping_centre").alias("phenotyping_centre"),
             first("colony_name").alias("colony_name"),
         )
-        gene_ref_df = gene_ref_df.join(colonies_report_df, "mgi_accession_id", "left")
-        gene_df = gene_ref_df.where(
+        gene_df = gene_ref_df.join(provenance_df, "mgi_accession_id", "left")
+        gene_df = gene_df.where(
             functions.col("subtype").isin(["protein coding gene", "miRNA gene"])
             | (col("colony_name").isNotNull())
         )
