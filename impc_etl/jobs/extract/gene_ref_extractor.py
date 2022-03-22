@@ -94,7 +94,7 @@ class ExtractGeneRef(PySparkTask):
         spark = SparkSession(sc)
 
         sql_query = """
-        SELECT mouse_gene.*, synonym FROM public.mouse_gene LEFT JOIN public.mouse_gene_synonym_relation ON mouse_gene.id = mouse_gene_synonym_relation.mouse_gene_id LEFT JOIN public.mouse_gene_synonym ON mouse_gene_synonym_relation.mouse_gene_synonym_id = mouse_gene_synonym.id;
+        SELECT mouse_gene.*, synonym FROM public.mouse_gene LEFT JOIN public.mouse_gene_synonym_relation ON mouse_gene.id = mouse_gene_synonym_relation.mouse_gene_id LEFT JOIN public.mouse_gene_synonym ON mouse_gene_synonym_relation.mouse_gene_synonym_id = mouse_gene_synonym.id
         """
 
         mouse_gene_df = spark.read.jdbc(
