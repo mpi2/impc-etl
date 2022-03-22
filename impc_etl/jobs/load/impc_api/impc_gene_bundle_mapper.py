@@ -8,11 +8,9 @@ from pyspark.sql.functions import collect_set, struct, lit, col, concat, flatten
 
 from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
 from impc_etl.jobs.load.solr.gene_mapper import GeneLoader
+from impc_etl.jobs.load.solr.genotype_phenotype_mapper import GenotypePhenotypeLoader
+from impc_etl.jobs.load.solr.impc_images_mapper import ImpcImagesLoader
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.load import (
-    GenotypePhenotypeCoreLoader,
-    ImpcImagesCoreLoader,
-)
 
 EXCLUDE_PRODUCT_COLUMNS = [
     "marker_mgi_accession_id",
@@ -46,8 +44,8 @@ class ImpcGeneBundleMapper(PySparkTask):
     def requires(self):
         return [
             ExperimentToObservationMapper(),
-            GenotypePhenotypeCoreLoader(),
-            ImpcImagesCoreLoader(),
+            GenotypePhenotypeLoader(),
+            ImpcImagesLoader(),
             GeneLoader(raw_data_in_output="bundled", compress_data_sets=False),
         ]
 
