@@ -104,7 +104,7 @@ class ExtractGeneRef(PySparkTask):
             jdbc_connection_str,
             table=f"(SELECT CAST(id AS BIGINT) AS numericId, * FROM {table_name}) AS {table_name}_df",
             properties=db_properties,
-            numPartitions=1000,
+            numPartitions=10,
             column="numericId",
             lowerBound=0,
             upperBound=100000,
