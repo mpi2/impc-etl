@@ -1,5 +1,6 @@
 import luigi
 
+from impc_etl.jobs.extract import ProductReportExtractor
 from impc_etl.jobs.load.impc_api.impc_gene_bundle_mapper import ImpcGeneBundleMapper
 from impc_etl.jobs.load.impc_images_mapper import ImagesPipelineInputGenerator
 from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
@@ -32,6 +33,7 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
             GeneLoader(),
             MpLoader(),
             MGIPhenotypeCoreLoader(),
+            ProductReportExtractor(),
         ]
 
 
