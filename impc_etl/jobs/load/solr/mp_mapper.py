@@ -82,7 +82,7 @@ MP_CORE_COLUMNS = [
 
 class MpLoader(PySparkTask):
     #: Name of the Spark task
-    name = "IMPC_MP_Mapper"
+    name = "IMPC_MP_Loader"
 
     #: Path of the output directory where the new parquet file will be generated.
     output_path = luigi.Parameter()
