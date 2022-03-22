@@ -36,15 +36,15 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
 
     def requires(self):
         return [
-            ExperimentToObservationMapper(),
             ImpressToParameterMapper(),
-            StatsResultsMapper(),
             GenotypePhenotypeLoader(),
             GeneLoader(),
             MpLoader(),
             MGIPhenotypeCoreLoader(),
             ProductReportExtractor(),
             ImpcImagesLoader(),
+            ExperimentToObservationMapper(),
+            StatsResultsMapper(),
         ]
 
     def run(self):
@@ -58,7 +58,7 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
                     local_path=self.local_path,
                 )
             )
-            if "stats_results" in dependency.path:
+            if "statistical_results" in dependency.path:
                 tasks.append(
                     ImpcMergeIndex(
                         remote_host=self.remote_host,
