@@ -79,9 +79,9 @@ GENE_CORE_COLUMNS = [
 ]
 
 
-class GeneMapper(PySparkTask):
+class GeneLoader(PySparkTask):
     #: Name of the Spark task
-    name = "IMPC_Gene_Mapper"
+    name = "IMPC_Gene_Loader"
 
     embryo_data_json_path = luigi.Parameter()
 

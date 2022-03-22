@@ -80,7 +80,7 @@ MP_CORE_COLUMNS = [
 ]
 
 
-class MpMapper(PySparkTask):
+class MpLoader(PySparkTask):
     #: Name of the Spark task
     name = "IMPC_MP_Mapper"
 
@@ -101,9 +101,9 @@ class MpMapper(PySparkTask):
     def output(self):
         """
         Returns the full parquet path as an output for the Luigi Task
-        (e.g. impc/dr15.2/output/gene_parquet)
+        (e.g. impc/dr15.2/output/mp_parquet)
         """
-        return ImpcConfig().get_target(f"{self.output_path}gene_parquet")
+        return ImpcConfig().get_target(f"{self.output_path}mp_parquet")
 
     def app_options(self):
         """

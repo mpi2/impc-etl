@@ -7,7 +7,7 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import collect_set, struct, lit, col, concat, flatten
 
 from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
-from impc_etl.jobs.load.solr.gene_mapper import GeneMapper
+from impc_etl.jobs.load.solr.gene_mapper import GeneLoader
 from impc_etl.workflow.config import ImpcConfig
 from impc_etl.workflow.load import (
     GenotypePhenotypeCoreLoader,
@@ -48,7 +48,7 @@ class ImpcGeneBundleMapper(PySparkTask):
             ExperimentToObservationMapper(),
             GenotypePhenotypeCoreLoader(),
             ImpcImagesCoreLoader(),
-            GeneMapper(raw_data_in_output="bundled", compress_data_sets=False),
+            GeneLoader(raw_data_in_output="bundled", compress_data_sets=False),
         ]
 
     def output(self):
