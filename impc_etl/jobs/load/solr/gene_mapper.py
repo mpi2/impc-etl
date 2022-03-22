@@ -1,6 +1,5 @@
 """
-SOLR module
-   Generates the required Solr cores
+    Module to hold the Gene Core parquet generation tasks.
 """
 import base64
 import gzip
