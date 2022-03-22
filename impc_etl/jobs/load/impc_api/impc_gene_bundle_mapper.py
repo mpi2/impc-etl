@@ -1,22 +1,14 @@
+from typing import Any
+
 import luigi
 from luigi.contrib.spark import PySparkTask
+from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import collect_set, struct, lit, col, concat, flatten
 
-from impc_etl.jobs.extract import (
-    OntologyMetadataExtractor,
-    MGIMarkerListReportExtractor,
-    MGIHomologyReportExtractor,
-    ProductReportExtractor,
-)
-from impc_etl.jobs.extract.gene_production_status_extractor import (
-    GeneProductionStatusExtractor,
-)
 from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
-from impc_etl.jobs.load.solr.gene_mapper import get_gene_core_df, IMITS_GENE_COLUMNS
-from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
+from impc_etl.jobs.load.solr.gene_mapper import GeneMapper
 from impc_etl.workflow.config import ImpcConfig
-from impc_etl.workflow.extraction import GeneExtractor, AlleleExtractor
 from impc_etl.workflow.load import (
     GenotypePhenotypeCoreLoader,
     ImpcImagesCoreLoader,
@@ -52,19 +44,11 @@ class ImpcGeneBundleMapper(PySparkTask):
         return super().packages + super(PySparkTask, self).packages
 
     def requires(self):
-        # TODO replace the Gene and Allele deps for MGI or Reference Service Deps
         return [
-            GeneExtractor(),
-            AlleleExtractor(),
-            MGIHomologyReportExtractor(),
-            MGIMarkerListReportExtractor(),
             ExperimentToObservationMapper(),
-            StatsResultsMapper(raw_data_in_output="bundled"),
-            OntologyMetadataExtractor(),
-            GeneProductionStatusExtractor(),
             GenotypePhenotypeCoreLoader(),
             ImpcImagesCoreLoader(),
-            ProductReportExtractor(),
+            GeneMapper(raw_data_in_output="bundled", compress_data_sets=False),
         ]
 
     def output(self):
@@ -77,67 +61,23 @@ class ImpcGeneBundleMapper(PySparkTask):
             self.input()[2].path,
             self.input()[3].path,
             self.embryo_data_json_path,
-            self.input()[4].path,
-            self.input()[5].path,
-            self.input()[6].path,
-            self.input()[7].path,
-            self.input()[8].path,
-            self.input()[9].path,
-            self.input()[10].path,
             self.output().path,
         ]
 
-    def main(self, sc, *argv):
-        imits_gene_parquet_path = argv[0]
-        imits_allele_parquet_path = argv[1]
-        mgi_homologene_report_parquet_path = argv[2]
-        mgi_mrk_list_report_parquet_path = argv[3]
-        embryo_data_json_path = argv[4]
-        observations_parquet_path = argv[5]
-        stats_results_parquet_path = argv[6]
-        ontology_metadata_parquet_path = argv[7]
-        gene_production_status_path = argv[8]
-        genotype_phenotype_parquet_path = argv[9]
-        impc_images_parquet_path = argv[10]
-        product_parquet_path = argv[11]
-        output_path = argv[12]
+    def main(self, sc: SparkContext, *args: Any):
+        observations_parquet_path = args[0]
+        genotype_phenotype_parquet_path = args[1]
+        impc_images_parquet_path = args[2]
+        product_parquet_path = args[3]
+        gene_core_parquet_path = args[4]
+        output_path = args[5]
         spark = SparkSession(sc)
 
-        imits_gene_df = spark.read.parquet(imits_gene_parquet_path).select(
-            IMITS_GENE_COLUMNS
-        )
-        imits_allele_df = spark.read.parquet(imits_allele_parquet_path)
-        mgi_homologene_df = spark.read.parquet(mgi_homologene_report_parquet_path)
-        mgi_mrk_list_df = spark.read.parquet(mgi_mrk_list_report_parquet_path)
-        mgi_mrk_list_df = mgi_mrk_list_df.select(
-            [
-                "mgi_accession_id",
-                "chr",
-                "genome_coordinate_start",
-                "genome_coordinate_end",
-                "strand",
-            ]
-        )
-        embryo_data_df = spark.read.json(embryo_data_json_path, mode="FAILFAST")
         observations_df = spark.read.parquet(observations_parquet_path)
-        stats_results_df = spark.read.parquet(stats_results_parquet_path)
-        ontology_metadata_df = spark.read.parquet(ontology_metadata_parquet_path)
-        gene_production_status_df = spark.read.parquet(gene_production_status_path)
         genotype_phenotype_df = spark.read.parquet(genotype_phenotype_parquet_path)
         impc_images_df = spark.read.parquet(impc_images_parquet_path)
         product_df = spark.read.parquet(product_parquet_path)
-        gene_df: DataFrame = get_gene_core_df(
-            imits_gene_df,
-            imits_allele_df,
-            mgi_homologene_df,
-            mgi_mrk_list_df,
-            embryo_data_df,
-            observations_df,
-            stats_results_df,
-            ontology_metadata_df,
-            gene_production_status_df,
-            False,
-        )
+        gene_df: DataFrame = spark.read.parquet(gene_core_parquet_path)
         gene_df = gene_df.withColumnRenamed(
             "datasets_raw_data", "gene_statistical_results"
         )

@@ -85,6 +85,10 @@ class GeneMapper(PySparkTask):
 
     embryo_data_json_path = luigi.Parameter()
 
+    compress_data_sets = luigi.Parameter(default=True)
+
+    raw_data_in_output = luigi.Parameter(default="include")
+
     #: Path of the output directory where the new parquet file will be generated.
     output_path = luigi.Parameter()
 
@@ -95,7 +99,7 @@ class GeneMapper(PySparkTask):
             MGIHomologyReportExtractor(),
             MGIMarkerListReportExtractor(),
             ExperimentToObservationMapper(),
-            StatsResultsMapper(),
+            StatsResultsMapper(raw_data_in_output=self.raw_data_in_output),
             OntologyMetadataExtractor(),
             GeneProductionStatusExtractor(),
             ColonyCleaner(),
@@ -123,6 +127,7 @@ class GeneMapper(PySparkTask):
             self.input()[7].path,
             self.input()[8].path,
             self.embryo_data_json_path,
+            self.compress_data_sets,
             self.output().path,
         ]
 
@@ -143,7 +148,8 @@ class GeneMapper(PySparkTask):
         gene_production_status_path = args[7]
         colonies_report_parquet_path = args[8]
         embryo_data_json_path = args[9]
-        output_path = args[10]
+        compress_datasets = args[10]
+        output_path = args[11]
 
         spark = SparkSession.builder.getOrCreate()
         gene_ref_df = spark.read.parquet(gene_ref_parquet_path)
@@ -177,6 +183,7 @@ class GeneMapper(PySparkTask):
             ontology_metadata_df,
             gene_production_status_df,
             colonies_report_df,
+            compress_datasets,
         )
         gene_df.distinct().write.parquet(output_path)
 
