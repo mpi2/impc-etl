@@ -814,9 +814,14 @@ class ExperimentToObservationMapper(PySparkTask):
         image_record_observation_df = image_record_observation_df.withColumn(
             "increment_value", col("seriesMediaParameterValue._incrementValue")
         )
-        image_record_observation_df = image_record_observation_df.withColumn(
-            "image_link", col("seriesMediaParameterValue._link")
-        )
+        if has_column(image_record_observation_df, "seriesMediaParameterValue._link"):
+            image_record_observation_df = image_record_observation_df.withColumn(
+                "image_link", col("seriesMediaParameterValue._link")
+            )
+        else:
+            image_record_observation_df = image_record_observation_df.withColumn(
+                "image_link", lit(None)
+            )
         image_record_observation_df = image_record_observation_df.withColumn(
             "observation_type", lit("image_record")
         )

@@ -371,7 +371,15 @@ class ExperimentCleaner(PySparkTask):
             if col_name not in non_unique_columns and not col_name.endswith("Parameter")
         ]
         dcc_experiment_df = dcc_experiment_df.withColumn(
-            "unique_id", md5(concat(*unique_columns))
+            "unique_id",
+            md5(
+                concat(
+                    *[
+                        when(col(col_name).isNull(), lit("")).otherwise(col(col_name))
+                        for col_name in unique_columns
+                    ]
+                )
+            ),
         )
         return dcc_experiment_df
 

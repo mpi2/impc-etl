@@ -660,6 +660,11 @@ class Constants:
             "lifeStageAcc": "IMPCLS:0007",
             "procedures": ["LA_"],
         },
+        {
+            "lifeStage": "NA",
+            "lifeStageAcc": "IMPCLS:0000",
+            "procedures": ["ALT_"],
+        },
     ]
     """
     Maps procedures to specific life stages.
