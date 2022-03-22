@@ -81,7 +81,7 @@ GENE_CORE_COLUMNS = [
 
 class GeneMapper(PySparkTask):
     #: Name of the Spark task
-    name = "IMPC_Genotype_Phenotype_Mapper"
+    name = "IMPC_Gene_Mapper"
 
     embryo_data_json_path = luigi.Parameter()
 
@@ -253,11 +253,11 @@ class GeneMapper(PySparkTask):
             stats_results_df, observations_df, ontology_metadata_df, compress_data_sets
         )
 
-        gene_allele_info_df = allele_ref_df.groupBy("gene_mgi_accession_id").agg(
+        gene_allele_info_df = allele_ref_df.groupBy("mgi_marker_acc_id").agg(
             *[
                 collect_set(col_name).alias(col_name)
                 for col_name in allele_ref_df.columns
-                if col_name != "gene_mgi_accession_id"
+                if col_name != "mgi_marker_acc_id"
             ]
         )
         gene_allele_info_df = gene_allele_info_df.drop("mgi_accession_id")
@@ -284,7 +284,7 @@ class GeneMapper(PySparkTask):
 
         gene_df = gene_df.join(
             gene_allele_info_df,
-            col("mgi_accession_id") == col("gene_mgi_accession_id"),
+            col("mgi_accession_id") == col("mgi_marker_acc_id"),
             "left_outer",
         )
         gene_df = gene_df.withColumnRenamed(
