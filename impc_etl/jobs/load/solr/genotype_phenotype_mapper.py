@@ -103,7 +103,7 @@ STATS_RESULTS_COLUMNS = [
 ]
 
 
-class GenotypePhenotypeMapper(PySparkTask):
+class GenotypePhenotypeLoader(PySparkTask):
     #: Name of the Spark task
     name = "IMPC_Genotype_Phenotype_Mapper"
 

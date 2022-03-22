@@ -4,7 +4,7 @@ from impc_etl.jobs.load.impc_api.impc_gene_bundle_mapper import ImpcGeneBundleMa
 from impc_etl.jobs.load.impc_images_mapper import ImagesPipelineInputGenerator
 from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.gene_mapper import GeneLoader
-from impc_etl.jobs.load.solr.genotype_phenotype_mapper import GenotypePhenotypeMapper
+from impc_etl.jobs.load.solr.genotype_phenotype_mapper import GenotypePhenotypeLoader
 from impc_etl.jobs.load.solr.mp_mapper import MpLoader
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
@@ -25,7 +25,7 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
         return [
             ImpressToParameterMapper(),
             StatsResultsMapper(),
-            GenotypePhenotypeMapper(),
+            GenotypePhenotypeLoader(),
             GeneLoader(),
             MpLoader(),
         ]
