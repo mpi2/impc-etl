@@ -663,7 +663,7 @@ class Constants:
         {
             "lifeStage": "NA",
             "lifeStageAcc": "IMPCLS:0000",
-            "procedures": ["ALT_"],
+            "procedures": ["^ALT.*"],
         },
     ]
     """

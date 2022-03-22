@@ -8,7 +8,7 @@ from impc_etl.workflow.normalization import *
 
 class Parquet2Solr(SparkSubmitTask):
     app = "lib/parquet2solr-03082021.jar"
-    name = "Parquet2Solr"
+    name = "IMPC_Parquet2Solr"
     input_path = luigi.Parameter()
     output_path = luigi.Parameter()
     parquet_name = ""
@@ -80,7 +80,7 @@ class ImpcMergeIndex(LSFExternalJobTask):
     local_path = luigi.Parameter()
     solr_core_name = ""
     n_cpu_flag = 56
-    shared_tmp_dir = "/scratch"
+    shared_tmp_dir = "/tmp"
     memory_flag = "210000"
     resource_flag = "mem=16000"
     extra_bsub_args = "-R span[ptile=14]"
