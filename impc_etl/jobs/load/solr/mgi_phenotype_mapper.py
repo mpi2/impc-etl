@@ -37,7 +37,6 @@ ONTOLOGY_STATS_MAP = {
 class MGIPhenotypeCoreLoader(PySparkTask):
     name = "IMPC_MGI_Phenotype_Loader"
 
-    ontology_input_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     def requires(self):
