@@ -99,7 +99,7 @@ class ExtractGeneRef(PySparkTask):
 
         mouse_gene_df = spark.read.jdbc(
             jdbc_connection_str,
-            table=f"(SELECT CAST(id AS BIGINT) AS numericId, * FROM ({sql_query})) AS mouse_gene_df",
+            table=f"(SELECT CAST(id AS BIGINT) AS numericId, * FROM ({sql_query}) AS mouse_gene_mouse_synonym) AS mouse_gene_df",
             properties=db_properties,
             numPartitions=10,
             column="numericId",
