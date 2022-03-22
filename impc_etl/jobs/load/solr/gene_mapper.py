@@ -348,10 +348,6 @@ class GeneMapper(PySparkTask):
             "ccds_id", functions.split(functions.col("ccds_ids"), ",")
         )
         gene_df = gene_df.withColumn("ncbi_id", functions.col("entrezgene_id"))
-        gene_df = gene_df.withColumn(
-            "marker_synonym",
-            functions.split(functions.col("marker_synonym").getItem(0), r"\|"),
-        )
         gene_df = gene_df.join(
             gene_production_status_df, "mgi_accession_id", "left_outer"
         )
