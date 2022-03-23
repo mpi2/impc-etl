@@ -42,6 +42,7 @@ GENE_REF_MAP = {
     "symbol": "marker_symbol",
     "type": "marker_type",
     "synonyms": "marker_synonym",
+    "name": "marker_name",
 }
 
 GENE_CORE_COLUMNS = [
