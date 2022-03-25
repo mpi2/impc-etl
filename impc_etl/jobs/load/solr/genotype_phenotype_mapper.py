@@ -177,7 +177,8 @@ class GenotypePhenotypeLoader(PySparkTask):
         genotype_phenotype_df = genotype_phenotype_df.withColumn(
             "p_value",
             when(
-                col("statistical_method").isin(["Manual", "Supplied as data"]),
+                col("statistical_method").isin(["Manual", "Supplied as data"])
+                | (col("resource_name") == "pwg"),
                 col("p_value"),
             )
             .when(
@@ -198,8 +199,8 @@ class GenotypePhenotypeLoader(PySparkTask):
                 )
                 .otherwise(
                     least(
-                        "genotype_pvalue_low_normal_vs_high",
-                        "genotype_pvalue_low_vs_normal_high",
+                        col("genotype_pvalue_low_normal_vs_high"),
+                        col("genotype_pvalue_low_vs_normal_high"),
                     )
                 ),
             )
@@ -222,6 +223,7 @@ class GenotypePhenotypeLoader(PySparkTask):
             when(
                 col("statistical_method").isin(["Manual", "Supplied as data"]), lit(1.0)
             )
+            .when(col("resource_name") == "pwg", col("effect_size"))
             .when(
                 ~col("statistical_method").contains("Reference Range Plus"),
                 when(col("sex") == "male", col("male_effect_size"))
