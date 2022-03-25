@@ -6,6 +6,7 @@ IMITS extractor module
     and colonies in the colony report files.
 """
 import sys
+
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import (
     when,
@@ -22,7 +23,6 @@ from pyspark.sql.types import StringType
 
 from impc_etl.shared import utils
 from impc_etl.shared.exceptions import UnsupportedEntityError
-
 
 ALLELE2_MULTIVALUED = [
     "allele_features",
@@ -51,6 +51,9 @@ PRODUCT_MULTIVALUED = [
     "other_links",
     "loa_assays",
     "allele_symbol",
+    "associated_products_colony_names",
+    "associated_products_es_cell_names",
+    "associated_products_vector_names",
 ]
 
 
