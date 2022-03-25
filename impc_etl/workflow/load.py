@@ -7,7 +7,7 @@ from impc_etl.workflow.normalization import *
 
 
 class Parquet2Solr(SparkSubmitTask):
-    app = "lib/parquet2solr-0710-2021.jar"
+    app = "lib/parquet2solr-2503-2022.jar"
     name = "IMPC_Parquet2Solr"
     input_path = luigi.Parameter()
     output_path = luigi.Parameter()
