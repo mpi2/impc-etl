@@ -54,6 +54,9 @@ PRODUCT_MULTIVALUED = [
     "associated_products_colony_names",
     "associated_products_es_cell_names",
     "associated_products_vector_names",
+    "tissue_enquiry_links",
+    "tissue_enquiry_types",
+    "tissue_distribution_centres",
 ]
 
 
