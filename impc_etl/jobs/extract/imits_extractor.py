@@ -100,6 +100,7 @@ def extract_gentar_tsv(
         *[column_name.replace(" ", "_").lower() for column_name in gentar_df.columns]
     )
     if entity_type == "Product":
+        gentar_df = gentar_df.withColumnRenamed("tissue_types", "tissue_enquiry_types")
         for col_name in PRODUCT_MULTIVALUED:
             gentar_df = gentar_df.withColumn(
                 col_name,
