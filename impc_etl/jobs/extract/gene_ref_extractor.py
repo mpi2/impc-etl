@@ -140,7 +140,12 @@ class ExtractGeneRef(PySparkTask):
             upperBound=100000,
         )
         mouse_gene_df = mouse_gene_df.groupBy(
-            [col_name for col_name in mouse_gene_df.columns if col_name != "synonym"]
+            [
+                col_name
+                for col_name in mouse_gene_df.columns
+                if col_name
+                not in ["synonym", "human_gene_symbol", "human_symbol_synonym"]
+            ]
         ).agg(
             collect_set("synonym").alias("synonyms"),
             collect_set("human_gene_symbol").alias("human_gene_symbol"),
