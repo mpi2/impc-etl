@@ -49,6 +49,7 @@ GENE_CORE_COLUMNS = [
     "mgi_accession_id",
     "marker_symbol",
     "human_gene_symbol",
+    "human_symbol_synonym",
     "marker_name",
     "marker_synonym",
     "marker_type",
