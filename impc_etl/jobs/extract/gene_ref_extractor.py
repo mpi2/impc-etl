@@ -36,7 +36,7 @@ gene_ref_cols = [
     "subtype",
     "synonyms",
     "human_gene_symbol",
-    "human_gene_synonym",
+    "human_symbol_synonym",
 ]
 
 
@@ -101,7 +101,7 @@ class ExtractGeneRef(PySparkTask):
             mouse_gene.*,
             mouse_gene_synonym.synonym,
             human_gene.symbol AS human_gene_symbol,
-            human_gene_synonym.synonym AS human_gene_synonym
+            human_gene_synonym.synonym AS human_symbol_synonym
         FROM
             public.mouse_gene
                 LEFT JOIN public.mouse_gene_synonym_relation
@@ -151,6 +151,6 @@ class ExtractGeneRef(PySparkTask):
         ).agg(
             collect_set("synonym").alias("synonyms"),
             collect_set("human_gene_symbol").alias("human_gene_symbol"),
-            collect_set("human_gene_synonym").alias("human_symbol_synonym"),
+            collect_set("human_symbol_synonym").alias("human_symbol_synonym"),
         )
         mouse_gene_df.select(*gene_ref_cols).write.parquet(output_path)
