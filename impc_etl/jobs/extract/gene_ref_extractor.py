@@ -95,7 +95,39 @@ class ExtractGeneRef(PySparkTask):
         spark = SparkSession(sc)
 
         sql_query = """
-        SELECT mouse_gene.*, synonym FROM public.mouse_gene LEFT JOIN public.mouse_gene_synonym_relation ON mouse_gene.id = mouse_gene_synonym_relation.mouse_gene_id LEFT JOIN public.mouse_gene_synonym ON mouse_gene_synonym_relation.mouse_gene_synonym_id = mouse_gene_synonym.id
+        SELECT
+            mouse_gene.*,
+            mouse_gene_synonym.synonym,
+            human_gene.symbol AS human_gene_symbol,
+            human_gene_synonym.synonym AS human_gene_synonym
+        FROM
+            public.mouse_gene
+                LEFT JOIN public.mouse_gene_synonym_relation
+                    ON mouse_gene.id = mouse_gene_synonym_relation.mouse_gene_id
+                LEFT JOIN public.mouse_gene_synonym
+                    ON mouse_gene_synonym_relation.mouse_gene_synonym_id = mouse_gene_synonym.id
+                LEFT JOIN (
+                                        SELECT DISTINCT
+                                            h.id AS human_gene_id, m.id AS mouse_gene_id
+                                        FROM 
+                                            public.human_gene h, public.human_mapping_filter hmf, public.ortholog o, public.mouse_gene m, public.mouse_mapping_filter mmf 
+                                        WHERE 
+                                            h.id=hmf.human_gene_id and 
+                                            hmf.support_count_threshold=5 and
+                                            h.id=o.human_gene_id and
+                                            o.support_count>=5 and
+                                            o.mouse_gene_id=m.id and
+                                            m.id=mmf.mouse_gene_id and
+                                            mmf.support_count_threshold=5
+                            )
+                            AS display_ortholog 
+                    ON mouse_gene.id = display_ortholog.mouse_gene_id
+                LEFT JOIN public.human_gene
+                    ON human_gene.id = display_ortholog.human_gene_id
+                LEFT JOIN public.human_gene_synonym_relation
+                    ON human_gene.id = human_gene_synonym_relation.human_gene_id
+                LEFT JOIN public.human_gene_synonym
+                    ON human_gene_synonym_relation.human_gene_synonym_id = human_gene_synonym.id
         """
 
         mouse_gene_df = spark.read.jdbc(
@@ -109,5 +141,9 @@ class ExtractGeneRef(PySparkTask):
         )
         mouse_gene_df = mouse_gene_df.groupBy(
             [col_name for col_name in mouse_gene_df.columns if col_name != "synonym"]
-        ).agg(collect_set("synonym").alias("synonyms"))
+        ).agg(
+            collect_set("synonym").alias("synonyms"),
+            collect_set("human_gene_symbol").alias("human_gene_symbol"),
+            collect_set("human_gene_synonym").alias("human_symbol_synonym"),
+        )
         mouse_gene_df.select(*gene_ref_cols).write.parquet(output_path)
