@@ -35,6 +35,8 @@ gene_ref_cols = [
     "type",
     "subtype",
     "synonyms",
+    "human_gene_symbol",
+    "human_gene_synonym",
 ]
 
 
