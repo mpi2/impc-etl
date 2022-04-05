@@ -4,7 +4,7 @@ import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import collect_set, struct, lit, col, concat, flatten
+from pyspark.sql.functions import collect_set, struct, lit, col
 
 from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
 from impc_etl.jobs.load.solr.gene_mapper import GeneLoader
@@ -182,16 +182,18 @@ class ImpcGeneBundleMapper(PySparkTask):
             col("not_significant_top_level_mp_terms").alias(
                 "non_significant_phenotype_system"
             ),
-            concat(
+            struct(
                 "gene_phenotype_associations.mp_term_id",
-                flatten("gene_phenotype_associations.intermediate_mp_term_id"),
-                flatten("gene_phenotype_associations.top_level_mp_term_id"),
-            ).alias("significant_mp_term_ids"),
-            concat(
                 "gene_phenotype_associations.mp_term_name",
-                flatten("gene_phenotype_associations.intermediate_mp_term_name"),
-                flatten("gene_phenotype_associations.top_level_mp_term_name"),
-            ).alias("significant_mp_term_names"),
+                "gene_phenotype_associations.intermediate_mp_term_id",
+                "gene_phenotype_associations.intermediate_mp_term_name",
+                col("gene_phenotype_associations.top_level_mp_term_id").alias(
+                    "phenotype_system_mp_term_id"
+                ),
+                col("gene_phenotype_associations.top_level_mp_term_name").alias(
+                    "phenotype_system_mp_term_name"
+                ),
+            ).alias("significant_mp_terms"),
         )
         gene_search_df = gene_search_df.withColumn(
             "_class", lit("org.mousephenotype.api.models.Gene")
