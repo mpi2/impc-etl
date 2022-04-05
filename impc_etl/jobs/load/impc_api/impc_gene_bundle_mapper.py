@@ -6,6 +6,7 @@ from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import collect_set, struct, lit, col
 
+from impc_etl.jobs.extract import ProductReportExtractor
 from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
 from impc_etl.jobs.load.solr.gene_mapper import GeneLoader
 from impc_etl.jobs.load.solr.genotype_phenotype_mapper import GenotypePhenotypeLoader
@@ -46,6 +47,7 @@ class ImpcGeneBundleMapper(PySparkTask):
             ExperimentToObservationMapper(),
             GenotypePhenotypeLoader(),
             ImpcImagesLoader(),
+            ProductReportExtractor(),
             GeneLoader(raw_data_in_output="bundled", compress_data_sets=False),
         ]
 
@@ -58,7 +60,7 @@ class ImpcGeneBundleMapper(PySparkTask):
             self.input()[1].path,
             self.input()[2].path,
             self.input()[3].path,
-            self.embryo_data_json_path,
+            self.input()[4].path,
             self.output().path,
         ]
 
