@@ -181,21 +181,14 @@ class ImpcGeneBundleMapper(PySparkTask):
                     col("top_level_mp_term_id").alias("mp_term_id"),
                     col("top_level_mp_term_name").alias("mp_term_name"),
                 ).alias("top_level_ancestors"),
-            ).alias("significant_mp_terms"),
+            ).alias("significant_mp_term"),
+        )
+        gp_mp_term_structured = gp_mp_term_structured.select(
+            "mgi_accession_id", "significant_mp_term"
         )
         gp_mp_term_structured_gene_df = gp_mp_term_structured.groupBy(
             "mgi_accession_id"
-        ).agg(
-            collect_set(
-                struct(
-                    *[
-                        col_name
-                        for col_name in genotype_phenotype_df.columns
-                        if col_name != "mgi_accession_id"
-                    ]
-                )
-            ).alias("gene_phenotype_associations")
-        )
+        ).agg(collect_set("significant_mp_term").alias("significant_mp_terms"))
 
         gene_search_df = gene_df.join(
             gp_mp_term_structured_gene_df, "mgi_accession_id", "left_outer"
