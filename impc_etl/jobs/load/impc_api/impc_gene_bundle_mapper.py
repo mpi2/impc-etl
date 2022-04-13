@@ -4,7 +4,7 @@ import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import collect_set, struct, lit, col, arrays_zip
+from pyspark.sql.functions import collect_set, struct, lit, col, zip_with
 
 from impc_etl.jobs.extract import ProductReportExtractor
 from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
@@ -173,13 +173,15 @@ class ImpcGeneBundleMapper(PySparkTask):
             struct(
                 "mp_term_id",
                 "mp_term_name",
-                arrays_zip(
-                    col("intermediate_mp_term_id").alias("mp_term_id"),
-                    col("intermediate_mp_term_name").alias("mp_term_name"),
+                zip_with(
+                    "intermediate_mp_term_id",
+                    "intermediate_mp_term_name",
+                    lambda x, y: struct(x.alias("mp_term_id"), y.alias("mp_term_name")),
                 ).alias("intermediate_ancestors"),
-                arrays_zip(
-                    col("top_level_mp_term_id").alias("mp_term_id"),
-                    col("top_level_mp_term_name").alias("mp_term_name"),
+                zip_with(
+                    "top_level_mp_term_id",
+                    "top_level_mp_term_name",
+                    lambda x, y: struct(x.alias("mp_term_id"), y.alias("mp_term_name")),
                 ).alias("top_level_ancestors"),
             ).alias("significant_mp_term"),
         )
