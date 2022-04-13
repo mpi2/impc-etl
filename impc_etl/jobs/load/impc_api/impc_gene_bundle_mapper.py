@@ -84,21 +84,6 @@ class ImpcGeneBundleMapper(PySparkTask):
         gene_df = gene_df.withColumn(
             "_class", lit("org.mousephenotype.api.models.GeneBundle")
         )
-        genotype_phenotype_df = genotype_phenotype_df.withColumnRenamed(
-            "marker_accession_id", "mgi_accession_id"
-        )
-        gp_by_gene_df = genotype_phenotype_df.groupBy("mgi_accession_id").agg(
-            collect_set(
-                struct(
-                    *[
-                        col_name
-                        for col_name in genotype_phenotype_df.columns
-                        if col_name != "mgi_accession_id"
-                    ]
-                )
-            ).alias("gene_phenotype_associations")
-        )
-        gene_df = gene_df.join(gp_by_gene_df, "mgi_accession_id", "left_outer")
 
         impc_images_df = impc_images_df.withColumnRenamed(
             "gene_accession_id", "mgi_accession_id"
@@ -166,8 +151,56 @@ class ImpcGeneBundleMapper(PySparkTask):
             "collection", str(self.mongodb_genes_collection)
         ).save()
 
+        genotype_phenotype_df = genotype_phenotype_df.withColumnRenamed(
+            "marker_accession_id", "mgi_accession_id"
+        )
+        gp_by_gene_df = genotype_phenotype_df.groupBy("mgi_accession_id").agg(
+            collect_set(
+                struct(
+                    *[
+                        col_name
+                        for col_name in genotype_phenotype_df.columns
+                        if col_name != "mgi_accession_id"
+                    ]
+                )
+            ).alias("gene_phenotype_associations")
+        )
+        gene_bundle_df = gene_df.join(gp_by_gene_df, "mgi_accession_id", "left_outer")
+
         ## Create gene search index
-        gene_search_df = gene_df.select(
+        gp_mp_term_structured = genotype_phenotype_df.withColumn(
+            "significant_mp_term",
+            struct(
+                "mp_term_id",
+                "mp_term_name",
+                arrays_zip(
+                    col("intermediate_mp_term_id").alias("mp_term_id"),
+                    col("intermediate_mp_term_name").alias("mp_term_name"),
+                ).alias("intermediate_ancestors"),
+                arrays_zip(
+                    col("top_level_mp_term_id").alias("mp_term_id"),
+                    col("top_level_mp_term_name").alias("mp_term_name"),
+                ).alias("top_level_ancestors"),
+            ).alias("significant_mp_terms"),
+        )
+        gp_mp_term_structured_gene_df = gp_mp_term_structured.groupBy(
+            "mgi_accession_id"
+        ).agg(
+            collect_set(
+                struct(
+                    *[
+                        col_name
+                        for col_name in genotype_phenotype_df.columns
+                        if col_name != "mgi_accession_id"
+                    ]
+                )
+            ).alias("gene_phenotype_associations")
+        )
+
+        gene_search_df = gene_df.join(
+            gp_mp_term_structured_gene_df, "mgi_accession_id", "left_outer"
+        )
+        gene_search_df = gene_search_df.select(
             col("mgi_accession_id").alias("_id"),
             "mgi_accession_id",
             "marker_name",
@@ -184,26 +217,7 @@ class ImpcGeneBundleMapper(PySparkTask):
             col("not_significant_top_level_mp_terms").alias(
                 "non_significant_phenotype_system"
             ),
-            struct(
-                "gene_phenotype_associations.mp_term_id",
-                "gene_phenotype_associations.mp_term_name",
-                arrays_zip(
-                    col("gene_phenotype_associations.intermediate_mp_term_id").alias(
-                        "mp_term_id"
-                    ),
-                    col("gene_phenotype_associations.intermediate_mp_term_name").alias(
-                        "mp_term_name"
-                    ),
-                ).alias("intermediate_ancestors"),
-                arrays_zip(
-                    col("gene_phenotype_associations.top_level_mp_term_id").alias(
-                        "mp_term_id"
-                    ),
-                    col("gene_phenotype_associations.top_level_mp_term_name").alias(
-                        "mp_term_name"
-                    ),
-                ).alias("top_level_ancestors"),
-            ).alias("significant_mp_terms"),
+            "significant_mp_terms",
         )
         gene_search_df = gene_search_df.withColumn(
             "_class", lit("org.mousephenotype.api.models.Gene")
@@ -214,4 +228,4 @@ class ImpcGeneBundleMapper(PySparkTask):
         ).option("database", str(self.mongodb_database)).option(
             "collection", str(self.mongodb_genes_collection) + "_search"
         ).save()
-        gene_df.write.parquet(output_path)
+        gene_bundle_df.write.parquet(output_path)
