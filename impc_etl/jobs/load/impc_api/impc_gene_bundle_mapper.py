@@ -4,7 +4,7 @@ import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import collect_set, struct, lit, col
+from pyspark.sql.functions import collect_set, struct, lit, col, arrays_zip
 
 from impc_etl.jobs.extract import ProductReportExtractor
 from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
@@ -187,14 +187,22 @@ class ImpcGeneBundleMapper(PySparkTask):
             struct(
                 "gene_phenotype_associations.mp_term_id",
                 "gene_phenotype_associations.mp_term_name",
-                "gene_phenotype_associations.intermediate_mp_term_id",
-                "gene_phenotype_associations.intermediate_mp_term_name",
-                col("gene_phenotype_associations.top_level_mp_term_id").alias(
-                    "phenotype_system_mp_term_id"
-                ),
-                col("gene_phenotype_associations.top_level_mp_term_name").alias(
-                    "phenotype_system_mp_term_name"
-                ),
+                arrays_zip(
+                    col("gene_phenotype_associations.intermediate_mp_term_id").alias(
+                        "mp_term_id"
+                    ),
+                    col("gene_phenotype_associations.intermediate_mp_term_name").alias(
+                        "mp_term_name"
+                    ),
+                ).alias("intermediate_ancestors"),
+                arrays_zip(
+                    col("gene_phenotype_associations.top_level_mp_term_id").alias(
+                        "mp_term_id"
+                    ),
+                    col("gene_phenotype_associations.top_level_mp_term_name").alias(
+                        "mp_term_name"
+                    ),
+                ).alias("top_level_ancestors"),
             ).alias("significant_mp_terms"),
         )
         gene_search_df = gene_search_df.withColumn(
