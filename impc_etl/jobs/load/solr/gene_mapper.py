@@ -112,7 +112,9 @@ class GeneLoader(PySparkTask):
         Returns the full parquet path as an output for the Luigi Task
         (e.g. impc/dr15.2/output/gene_parquet)
         """
-        return ImpcConfig().get_target(f"{self.output_path}gene_parquet")
+        return ImpcConfig().get_target(
+            f"{self.output_path}gene_parquet{self.raw_data_in_output}"
+        )
 
     def app_options(self):
         """
