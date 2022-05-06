@@ -154,9 +154,8 @@ class StatsResultsMapper(PySparkTask):
                 for col_name in WINDOW_COLUMNS
                 if col_name != "observations_window_weight"
             ]
-            stats_results_df = open_stats_df.select(*stats_results_column_list)
-        elif raw_data_in_output == "bundled":
-            stats_results_column_list = STATS_RESULTS_COLUMNS + ["raw_data"]
+            if raw_data_in_output == "bundled":
+                stats_results_column_list = stats_results_column_list + ["raw_data"]
             stats_results_df = open_stats_df.select(*stats_results_column_list)
             stats_results_df = stats_results_df.repartition(20000)
         else:

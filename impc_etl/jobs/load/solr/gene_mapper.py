@@ -113,7 +113,7 @@ class GeneLoader(PySparkTask):
         (e.g. impc/dr15.2/output/gene_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}gene_parquet{self.raw_data_in_output}"
+            f"{self.output_path}gene_data_{self.raw_data_in_output}_parquet"
         )
 
     def app_options(self):
