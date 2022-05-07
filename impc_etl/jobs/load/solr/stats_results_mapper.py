@@ -31,7 +31,6 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
-
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -157,7 +156,7 @@ class StatsResultsMapper(PySparkTask):
             if raw_data_in_output == "bundled":
                 stats_results_column_list = stats_results_column_list + ["raw_data"]
             stats_results_df = open_stats_df.select(*stats_results_column_list)
-            stats_results_df = stats_results_df.repartition(20000)
+            stats_results_df = stats_results_df.repartition(50000)
         else:
             stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
         for col_name in stats_results_df.columns:
