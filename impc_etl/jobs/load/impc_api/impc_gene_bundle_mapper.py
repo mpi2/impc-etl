@@ -11,6 +11,7 @@ from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
 from impc_etl.jobs.load.solr.gene_mapper import GeneLoader
 from impc_etl.jobs.load.solr.genotype_phenotype_mapper import GenotypePhenotypeLoader
 from impc_etl.jobs.load.solr.impc_images_mapper import ImpcImagesLoader
+from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
 from impc_etl.workflow.config import ImpcConfig
 
 EXCLUDE_PRODUCT_COLUMNS = [
@@ -48,7 +49,8 @@ class ImpcGeneBundleMapper(PySparkTask):
             GenotypePhenotypeLoader(),
             ImpcImagesLoader(),
             ProductReportExtractor(),
-            GeneLoader(raw_data_in_output="bundled", compress_data_sets=False),
+            StatsResultsMapper(),
+            GeneLoader(),
         ]
 
     def output(self):
@@ -61,15 +63,29 @@ class ImpcGeneBundleMapper(PySparkTask):
             self.input()[2].path,
             self.input()[3].path,
             self.input()[4].path,
+            self.input()[5].path,
             self.output().path,
         ]
 
+    def write_to_mongo(self, df: DataFrame, class_name: str, collection_name: str):
+        df = df.withColumn("_class", lit(class_name))
+        df.write.format("mongo").mode("append").option(
+            "spark.mongodb.output.uri",
+            f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
+        ).option("database", str(self.mongodb_database)).option(
+            "collection", collection_name
+        ).save()
+
     def main(self, sc: SparkContext, *args: Any):
+        # Drop statistical results from the gene bundle
+        # Create an experimental data collection with the observations
         observations_parquet_path = args[0]
         genotype_phenotype_parquet_path = args[1]
         impc_images_parquet_path = args[2]
         product_parquet_path = args[3]
         gene_core_parquet_path = args[4]
+        stats_results_parquet_path = args[5]
+        stats_results_raw_data_parquet_path = f"{stats_results_parquet_path}_raw_data"
         output_path = args[5]
         spark = SparkSession(sc)
 
@@ -78,12 +94,9 @@ class ImpcGeneBundleMapper(PySparkTask):
         impc_images_df = spark.read.parquet(impc_images_parquet_path)
         product_df = spark.read.parquet(product_parquet_path)
         gene_df: DataFrame = spark.read.parquet(gene_core_parquet_path)
-        gene_df = gene_df.withColumnRenamed(
-            "datasets_raw_data", "gene_statistical_results"
-        )
-        gene_df = gene_df.withColumn(
-            "_class", lit("org.mousephenotype.api.models.GeneBundle")
-        )
+        gene_df = gene_df.drop("datasets_raw_data")
+        stats_results_df = spark.read.parquet(stats_results_parquet_path)
+        stats_raw_data_df = spark.read.parquet(stats_results_raw_data_parquet_path)
 
         impc_images_df = impc_images_df.withColumnRenamed(
             "gene_accession_id", "mgi_accession_id"
@@ -144,13 +157,11 @@ class ImpcGeneBundleMapper(PySparkTask):
         gene_df = gene_df.join(parameters_by_gene, "mgi_accession_id", "left_outer")
 
         gene_df = gene_df.withColumn("_id", col("mgi_accession_id"))
-        gene_df.write.format("mongo").mode("append").option(
-            "spark.mongodb.output.uri",
-            f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
-        ).option("database", str(self.mongodb_database)).option(
-            "collection", str(self.mongodb_genes_collection)
-        ).save()
+        self.write_to_mongo(
+            gene_df, "org.mousephenotype.api.models.GeneBundle", "gene_bundles"
+        )
 
+        ## Create gene search index
         genotype_phenotype_df = genotype_phenotype_df.withColumnRenamed(
             "marker_accession_id", "mgi_accession_id"
         )
@@ -165,9 +176,9 @@ class ImpcGeneBundleMapper(PySparkTask):
                 )
             ).alias("gene_phenotype_associations")
         )
-        gene_bundle_df = gene_df.join(gp_by_gene_df, "mgi_accession_id", "left_outer")
-
-        ## Create gene search index
+        gene_vs_phenotypes_df = gene_df.join(
+            gp_by_gene_df, "mgi_accession_id", "left_outer"
+        )
         gp_mp_term_structured = genotype_phenotype_df.withColumn(
             "significant_mp_term",
             struct(
@@ -214,13 +225,22 @@ class ImpcGeneBundleMapper(PySparkTask):
             ),
             "significant_mp_terms",
         )
-        gene_search_df = gene_search_df.withColumn(
-            "_class", lit("org.mousephenotype.api.models.Gene")
+        self.write_to_mongo(
+            gene_search_df, "gene_search", "org.mousephenotype.api.models.Gene"
         )
-        gene_search_df.write.format("mongo").mode("append").option(
-            "spark.mongodb.output.uri",
-            f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
-        ).option("database", str(self.mongodb_database)).option(
-            "collection", str(self.mongodb_genes_collection) + "_search"
-        ).save()
-        gene_bundle_df.write.parquet(output_path)
+        self.write_to_mongo(
+            observations_df,
+            "experimental_data",
+            "org.mousephenotype.api.models.Observation",
+        )
+        self.write_to_mongo(
+            stats_results_df,
+            "statistical_analysis",
+            "org.mousephenotype.api.models.StatisticalResult",
+        )
+        self.write_to_mongo(
+            stats_raw_data_df,
+            "statistical_support_data",
+            "org.mousephenotype.api.models.StatisticalSupportData",
+        )
+        gene_vs_phenotypes_df.write.parquet(output_path)
