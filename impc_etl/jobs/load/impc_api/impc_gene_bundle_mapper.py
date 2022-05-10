@@ -83,10 +83,11 @@ class ImpcGeneBundleMapper(PySparkTask):
         genotype_phenotype_parquet_path = args[1]
         impc_images_parquet_path = args[2]
         product_parquet_path = args[3]
-        gene_core_parquet_path = args[4]
-        stats_results_parquet_path = args[5]
+
+        stats_results_parquet_path = args[4]
         stats_results_raw_data_parquet_path = f"{stats_results_parquet_path}_raw_data"
-        output_path = args[5]
+        gene_core_parquet_path = args[5]
+        output_path = args[6]
         spark = SparkSession(sc)
 
         observations_df = spark.read.parquet(observations_parquet_path)
