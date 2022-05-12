@@ -239,9 +239,9 @@ class ImpcGeneBundleMapper(PySparkTask):
             "org.mousephenotype.api.models.StatisticalResult",
             "statistical_analysis",
         )
-        self.write_to_mongo(
-            stats_raw_data_df,
-            "org.mousephenotype.api.models.StatisticalSupportData",
-            "statistical_support_data",
-        )
+        # self.write_to_mongo(
+        #     stats_raw_data_df,
+        #     "org.mousephenotype.api.models.StatisticalSupportData",
+        #     "statistical_support_data",
+        # )
         gene_vs_phenotypes_df.write.parquet(output_path)
