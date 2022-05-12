@@ -227,7 +227,9 @@ class ImpcGeneBundleMapper(PySparkTask):
             "significant_mp_terms",
         )
         self.write_to_mongo(
-            gene_search_df, "gene_search", "org.mousephenotype.api.models.Gene"
+            gene_search_df,
+            "org.mousephenotype.api.models.Gene",
+            "gene_search",
         )
         self.write_to_mongo(
             observations_df,
