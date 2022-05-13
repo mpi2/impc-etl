@@ -97,7 +97,6 @@ class ImpcGeneBundleMapper(PySparkTask):
         gene_df: DataFrame = spark.read.parquet(gene_core_parquet_path)
         gene_df = gene_df.drop("datasets_raw_data")
         stats_results_df = spark.read.parquet(stats_results_parquet_path)
-        stats_results_df = stats_results_df.drop("metadata")
 
         impc_images_df = impc_images_df.withColumnRenamed(
             "gene_accession_id", "mgi_accession_id"
@@ -116,37 +115,28 @@ class ImpcGeneBundleMapper(PySparkTask):
         )
         gene_df = gene_df.join(images_by_gene_df, "mgi_accession_id", "left_outer")
 
-        stats_results_by_gene_df = stats_results_df.groupBy("marker_accession_id").agg(
+        products_by_gene = product_df.groupBy("mgi_accession_id").agg(
             collect_set(
                 struct(
                     *[
                         col_name
-                        for col_name in stats_results_df.columns
-                        if col_name != "marker_accession_id"
+                        for col_name in product_df.columns
+                        if col_name
+                        not in ["mgi_accession_id"] + EXCLUDE_PRODUCT_COLUMNS
                     ]
                 )
-            ).alias("statistical_results")
+            ).alias("gene_products")
         )
+        gene_df = gene_df.join(products_by_gene, "mgi_accession_id", "left_outer")
 
+        stats_results_by_gene = stats_results_df.groupBy("marker_accession_id").agg(
+            collect_set("doc_id").alias("statistical_result_ids")
+        )
         gene_df = gene_df.join(
-            stats_results_by_gene_df,
+            stats_results_by_gene,
             col("mgi_accession_id") == col("marker_accession_id"),
             "left_outer",
         )
-
-        # products_by_gene = product_df.groupBy("mgi_accession_id").agg(
-        #     collect_set(
-        #         struct(
-        #             *[
-        #                 col_name
-        #                 for col_name in product_df.columns
-        #                 if col_name
-        #                 not in ["mgi_accession_id"] + EXCLUDE_PRODUCT_COLUMNS
-        #             ]
-        #         )
-        #     ).alias("gene_products")
-        # )
-        # gene_df = gene_df.join(products_by_gene, "mgi_accession_id", "left_outer")
 
         parameters_by_gene = observations_df.select(
             "gene_accession_id",
@@ -253,5 +243,14 @@ class ImpcGeneBundleMapper(PySparkTask):
             observations_df,
             "org.mousephenotype.api.models.Observation",
             "experimental_data",
+        )
+        stats_results_df.withColumnRenamed("doc_id", "statistical_result_id")
+        stats_results_df = stats_results_df.withColumn(
+            "_id", col("statistical_result_id")
+        )
+        self.write_to_mongo(
+            stats_results_df,
+            "org.mousephenotype.api.models.StatisticalResult",
+            "statistical_results",
         )
         gene_vs_phenotypes_df.write.parquet(output_path)
