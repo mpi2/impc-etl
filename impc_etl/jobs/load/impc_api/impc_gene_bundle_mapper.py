@@ -134,19 +134,19 @@ class ImpcGeneBundleMapper(PySparkTask):
             "left_outer",
         )
 
-        products_by_gene = product_df.groupBy("mgi_accession_id").agg(
-            collect_set(
-                struct(
-                    *[
-                        col_name
-                        for col_name in product_df.columns
-                        if col_name
-                        not in ["mgi_accession_id"] + EXCLUDE_PRODUCT_COLUMNS
-                    ]
-                )
-            ).alias("gene_products")
-        )
-        gene_df = gene_df.join(products_by_gene, "mgi_accession_id", "left_outer")
+        # products_by_gene = product_df.groupBy("mgi_accession_id").agg(
+        #     collect_set(
+        #         struct(
+        #             *[
+        #                 col_name
+        #                 for col_name in product_df.columns
+        #                 if col_name
+        #                 not in ["mgi_accession_id"] + EXCLUDE_PRODUCT_COLUMNS
+        #             ]
+        #         )
+        #     ).alias("gene_products")
+        # )
+        # gene_df = gene_df.join(products_by_gene, "mgi_accession_id", "left_outer")
 
         parameters_by_gene = observations_df.select(
             "gene_accession_id",
