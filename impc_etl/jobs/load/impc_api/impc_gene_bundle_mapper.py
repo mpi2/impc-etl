@@ -97,7 +97,6 @@ class ImpcGeneBundleMapper(PySparkTask):
         gene_df: DataFrame = spark.read.parquet(gene_core_parquet_path)
         gene_df = gene_df.drop("datasets_raw_data")
         stats_results_df = spark.read.parquet(stats_results_parquet_path)
-        stats_raw_data_df = spark.read.parquet(stats_results_raw_data_parquet_path)
 
         impc_images_df = impc_images_df.withColumnRenamed(
             "gene_accession_id", "mgi_accession_id"
@@ -115,6 +114,24 @@ class ImpcGeneBundleMapper(PySparkTask):
             ).alias("gene_images")
         )
         gene_df = gene_df.join(images_by_gene_df, "mgi_accession_id", "left_outer")
+
+        stats_results_by_gene_df = stats_results_df.groupBy("marker_accession_id").agg(
+            collect_set(
+                struct(
+                    *[
+                        col_name
+                        for col_name in stats_results_df.columns
+                        if col_name != "marker_accession_id"
+                    ]
+                )
+            ).alias("statistical_results")
+        )
+
+        gene_df = gene_df.join(
+            stats_results_by_gene_df,
+            col("mgi_accession_id") == col("marker_accession_id"),
+            "left_outer",
+        )
 
         products_by_gene = product_df.groupBy("mgi_accession_id").agg(
             collect_set(
@@ -236,14 +253,4 @@ class ImpcGeneBundleMapper(PySparkTask):
             "org.mousephenotype.api.models.Observation",
             "experimental_data",
         )
-        self.write_to_mongo(
-            stats_results_df,
-            "org.mousephenotype.api.models.StatisticalResult",
-            "statistical_analysis",
-        )
-        # self.write_to_mongo(
-        #     stats_raw_data_df,
-        #     "org.mousephenotype.api.models.StatisticalSupportData",
-        #     "statistical_support_data",
-        # )
         gene_vs_phenotypes_df.write.parquet(output_path)
