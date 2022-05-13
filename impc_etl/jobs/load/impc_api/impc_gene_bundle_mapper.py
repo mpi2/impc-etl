@@ -97,6 +97,7 @@ class ImpcGeneBundleMapper(PySparkTask):
         gene_df: DataFrame = spark.read.parquet(gene_core_parquet_path)
         gene_df = gene_df.drop("datasets_raw_data")
         stats_results_df = spark.read.parquet(stats_results_parquet_path)
+        stats_results_df = stats_results_df.drop("metadata")
 
         impc_images_df = impc_images_df.withColumnRenamed(
             "gene_accession_id", "mgi_accession_id"
