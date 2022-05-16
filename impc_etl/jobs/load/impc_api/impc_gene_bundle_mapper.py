@@ -70,7 +70,7 @@ class ImpcGeneBundleMapper(PySparkTask):
     def write_to_mongo(self, df: DataFrame, class_name: str, collection_name: str):
         df = df.withColumn("_class", lit(class_name))
         df.write.format("mongodb").mode("overwrite").option(
-            "spark.mongodb.write.uri",
+            "spark.mongodb.write.connection.uri",
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
             "collection", collection_name
