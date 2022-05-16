@@ -166,11 +166,6 @@ class ImpcGeneBundleMapper(PySparkTask):
         gene_df = gene_df.join(parameters_by_gene, "mgi_accession_id", "left_outer")
 
         gene_df = gene_df.withColumn("_id", col("mgi_accession_id"))
-        # self.write_to_mongo(
-        #     gene_df, "org.mousephenotype.api.models.GeneBundle", "gene_bundles"
-        # )
-
-        ## Create gene search index
         genotype_phenotype_df = genotype_phenotype_df.withColumnRenamed(
             "marker_accession_id", "mgi_accession_id"
         )
@@ -185,9 +180,17 @@ class ImpcGeneBundleMapper(PySparkTask):
                 )
             ).alias("gene_phenotype_associations")
         )
+
         gene_vs_phenotypes_df = gene_df.join(
             gp_by_gene_df, "mgi_accession_id", "left_outer"
         )
+        self.write_to_mongo(
+            gene_vs_phenotypes_df,
+            "org.mousephenotype.api.models.GeneBundle",
+            "gene_bundles",
+        )
+
+        # Create search_index
         gp_mp_term_structured = genotype_phenotype_df.withColumn(
             "significant_mp_term",
             struct(
@@ -250,9 +253,9 @@ class ImpcGeneBundleMapper(PySparkTask):
         stats_results_df = stats_results_df.withColumn(
             "_id", col("statistical_result_id")
         )
-        self.write_to_mongo(
-            stats_results_df,
-            "org.mousephenotype.api.models.StatisticalResult",
-            "statistical_results",
-        )
+        # self.write_to_mongo(
+        #     stats_results_df,
+        #     "org.mousephenotype.api.models.StatisticalResult",
+        #     "statistical_results",
+        # )
         gene_vs_phenotypes_df.write.parquet(output_path)
