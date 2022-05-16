@@ -184,11 +184,11 @@ class ImpcGeneBundleMapper(PySparkTask):
         gene_vs_phenotypes_df = gene_df.join(
             gp_by_gene_df, "mgi_accession_id", "left_outer"
         )
-        self.write_to_mongo(
-            gene_vs_phenotypes_df,
-            "org.mousephenotype.api.models.GeneBundle",
-            "gene_bundles",
-        )
+        # self.write_to_mongo(
+        #     gene_vs_phenotypes_df,
+        #     "org.mousephenotype.api.models.GeneBundle",
+        #     "gene_bundles",
+        # )
 
         # Create search_index
         gp_mp_term_structured = genotype_phenotype_df.withColumn(
@@ -237,11 +237,11 @@ class ImpcGeneBundleMapper(PySparkTask):
             ),
             "significant_mp_terms",
         )
-        # self.write_to_mongo(
-        #     gene_search_df,
-        #     "org.mousephenotype.api.models.Gene",
-        #     "gene_search",
-        # )
+        self.write_to_mongo(
+            gene_search_df,
+            "org.mousephenotype.api.models.Gene",
+            "gene_search",
+        )
         # self.write_to_mongo(
         #     observations_df,
         #     "org.mousephenotype.api.models.Observation",
