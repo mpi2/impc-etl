@@ -430,20 +430,20 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
         gp_df.write.partitionBy("geneAccessionId").json(output_path)
 
 
-class ImpcWebApiMapper(luigi.Task):
-    name = "IMPC_Web_Api_Mapper"
-
-    def requires(self):
-        return [
-            ImpcGeneSummaryMapper(),
-            ImpcGeneStatsResultsMapper(),
-            ImpcGenePhenotypeHitsMapper(),
-            # ImpcGeneExpressionMapper(),
-            # ImpcGeneImagesMapper(),
-            # ImpcGeneHistopathologyMapper(),
-            # ImpcGeneDiseasesMapper(),
-            # ImpcGenePublicationsMapper(),
-            # ImpcGeneOrderMapper()
-            # ImpcAlleleMapper(),
-            # ImpcPhenotypeMapper(),
-        ]
+# class ImpcWebApiMapper(luigi.Task):
+#     name = "IMPC_Web_Api_Mapper"
+#
+#     def requires(self):
+#         return [
+#             ImpcGeneSummaryMapper(),
+#             ImpcGeneStatsResultsMapper(),
+#             ImpcGenePhenotypeHitsMapper(),
+#             # ImpcGeneExpressionMapper(),
+#             # ImpcGeneImagesMapper(),
+#             # ImpcGeneHistopathologyMapper(),
+#             # ImpcGeneDiseasesMapper(),
+#             # ImpcGenePublicationsMapper(),
+#             # ImpcGeneOrderMapper()
+#             # ImpcAlleleMapper(),
+#             # ImpcPhenotypeMapper(),
+#         ]
