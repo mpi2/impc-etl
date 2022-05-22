@@ -138,6 +138,7 @@ class ImpcGeneSummaryMapper(PySparkTask):
             "hasImagingData", col("obs_id").isNotNull()
         )
         gene_images_flag = gene_images_flag.withColumnRenamed("gene_accession_id", "id")
+        gene_images_flag = gene_images_flag.drop("obs_id")
         gene_df = gene_df.join(gene_images_flag, "id", "left_outer")
 
         gene_hist_flag = observations_df.where(
@@ -150,6 +151,7 @@ class ImpcGeneSummaryMapper(PySparkTask):
             "hasHistopathologyData", col("obs_id").isNotNull()
         )
         gene_hist_flag = gene_hist_flag.withColumnRenamed("gene_accession_id", "id")
+        gene_hist_flag = gene_hist_flag.drop("obs_id")
 
         gene_df = gene_df.join(gene_hist_flag, "id", "left_outer")
 
@@ -178,6 +180,7 @@ class ImpcGeneSummaryMapper(PySparkTask):
             "hasViabilityData", col("obs_id").isNotNull()
         )
         gene_via_flag = gene_via_flag.withColumnRenamed("gene_accession_id", "id")
+        gene_via_flag = gene_via_flag.drop("obs_id")
         gene_df = gene_df.join(gene_via_flag, "id", "left_outer")
 
         gene_bw_flag = observations_df.where(
@@ -190,6 +193,7 @@ class ImpcGeneSummaryMapper(PySparkTask):
             "hasBodyWeightData", col("obs_id").isNotNull()
         )
         gene_bw_flag = gene_bw_flag.withColumnRenamed("gene_accession_id", "id")
+        gene_bw_flag = gene_bw_flag.drop("obs_id")
         gene_df = gene_df.join(gene_bw_flag, "id", "left_outer")
 
         gene_df.write.partitionBy("id").json(output_path)
@@ -293,6 +297,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
             "project_name",
             "male_mutant_count",
             "female_mutant_count",
+            "life_stage_name",
             "p_value",
             "effect_size",
             "significant",
@@ -399,9 +404,8 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
             "phenotyping_center",
             "sex",
             "project_name",
-            "male_mutant_count",
-            "female_mutant_count",
             "p_value",
+            "life_stage_name",
             "effect_size",
             "significant",
             "mp_term_id",
