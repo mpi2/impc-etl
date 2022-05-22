@@ -79,7 +79,9 @@ class ImpcGeneSummaryMapper(PySparkTask):
         gene_df = spark.read.parquet(gene_parquet_path)
         genotype_phenotype_df = spark.read.parquet(genotype_phenotype_parquet_path)
         observations_df = spark.read.parquet(observations_parquet_path)
-        gene_disease_association_df = spark.read.csv(gene_disease_association_csv_path)
+        gene_disease_association_df = spark.read.csv(
+            gene_disease_association_csv_path, header=True
+        )
 
         gene_df = gene_df.withColumn("id", col("mgi_accession_id"))
         for col_name in GENE_SUMMARY_MAPPINGS.keys():
@@ -270,11 +272,15 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         output_path = args[1]
 
         stats_results_df = spark.read.parquet(stats_results_parquet_path)
+        explode_cols = ["procedure_stable_id", "procedure_name", "project_name"]
+
+        for col_name in explode_cols:
+            stats_results_df = stats_results_df.withColumn(col_name, explode(col_name))
         stats_results_df = stats_results_df.select(
             "marker_accession_id",
             "pipeline_stable_id",
-            explode("procedure_stable_id").alias("procedure_stable_id"),
-            explode("procedure_name").alias("procedure_name"),
+            "procedure_stable_id",
+            "procedure_name",
             "parameter_stable_id",
             "parameter_name",
             "allele_accession_id",
@@ -284,7 +290,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
             "zygosity",
             "phenotyping_center",
             "phenotype_sex",
-            explode("project_name").alias("project_name"),
+            "project_name",
             "male_mutant_count",
             "female_mutant_count",
             "p_value",
@@ -375,11 +381,15 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
         output_path = args[1]
 
         gp_df = spark.read.parquet(gp_parquet_path)
+        explode_cols = ["procedure_stable_id", "procedure_name", "project_name"]
+
+        for col_name in explode_cols:
+            gp_df = gp_df.withColumn(col_name, explode(col_name))
         gp_df = gp_df.select(
             "marker_accession_id",
             "pipeline_stable_id",
-            explode("procedure_stable_id").alias("procedure_stable_id"),
-            explode("procedure_name").alias("procedure_name"),
+            "procedure_stable_id",
+            "procedure_name",
             "parameter_stable_id",
             "parameter_name",
             "allele_accession_id",
@@ -389,7 +399,7 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
             "zygosity",
             "phenotyping_center",
             "sex",
-            explode("project_name"),
+            "project_name",
             "male_mutant_count",
             "female_mutant_count",
             "p_value",
