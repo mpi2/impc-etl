@@ -113,9 +113,7 @@ class ImpcGeneSummaryMapper(PySparkTask):
 
         gene_disease_association_df = gene_disease_association_df.groupBy(
             "marker_id"
-        ).agg(
-            sum(when(col("observation_id").isNotNull(), 1).otherwise(0)).alias("count")
-        )
+        ).agg(sum(when(col("disease_id").isNotNull(), 1).otherwise(0)).alias("count"))
         gene_disease_association_df = gene_disease_association_df.withColumnRenamed(
             "marker_id", "id"
         )
