@@ -5,6 +5,11 @@ from luigi.contrib.hdfs import HdfsTarget
 
 from impc_etl.jobs.extract import ProductReportExtractor
 from impc_etl.jobs.load import ExperimentToObservationMapper
+from impc_etl.jobs.load.impc_api.impc_api_mapper import (
+    ImpcGeneSummaryMapper,
+    ImpcGeneStatsResultsMapper,
+    ImpcGenePhenotypeHitsMapper,
+)
 from impc_etl.jobs.load.impc_api.impc_gene_bundle_mapper import ImpcGeneBundleMapper
 from impc_etl.jobs.load.impc_images_mapper import ImagesPipelineInputGenerator
 from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
@@ -143,3 +148,22 @@ class ImpcCleanDaily(luigi.Task):
             self._delele_target_if_exists(impc_merge_index_task.output())
             self._delele_target_if_exists(impc_copy_index_task.output())
             self._delele_target_if_exists(impc_parquet_to_solr_task.output(), hdfs=True)
+
+
+class ImpcWebApiMapper(luigi.Task):
+    name = "IMPC_Web_Api_Mapper"
+
+    def requires(self):
+        return [
+            ImpcGeneSummaryMapper(),
+            ImpcGeneStatsResultsMapper(),
+            ImpcGenePhenotypeHitsMapper(),
+            # ImpcGeneExpressionMapper(),
+            # ImpcGeneImagesMapper(),
+            # ImpcGeneHistopathologyMapper(),
+            # ImpcGeneDiseasesMapper(),
+            # ImpcGenePublicationsMapper(),
+            # ImpcGeneOrderMapper()
+            # ImpcAlleleMapper(),
+            # ImpcPhenotypeMapper(),
+        ]
