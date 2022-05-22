@@ -575,8 +575,8 @@ class ImpcLacZExpressionMapper(PySparkTask):
         lacz_expression_data = adult_lacz_expression_data.union(
             embryo_lacz_expression_data
         )
-        lacz_expression_data = lacz_expression_data.withColumnRenamed(
-            "id", "gene_accession_id"
+        lacz_expression_data = lacz_expression_data.withColumn(
+            "id", col("gene_accession_id")
         )
         lacz_expression_data.write.partitionBy("id").json(output_path)
 
@@ -636,6 +636,20 @@ class ImpcPublicationsMapper(PySparkTask):
         publications_df = publications_df.drop("journal")
         publications_df = publications_df.withColumnRenamed("gacc", "geneAccessionId")
         publications_df = publications_df.withColumn("id", col("geneAccessionId"))
+        publications_df = publications_df.groupBy("id").agg(
+            collect_set(
+                struct(
+                    "alleleSymbol",
+                    "doi",
+                    "monthOfPublication",
+                    "yearOfPublication",
+                    "journalTitle",
+                    "title",
+                    "pmcid",
+                )
+            ).alias("publications")
+        )
+        publications_df.write.partitionBy("id").json(output_path)
 
 
 # class ImpcWebApiMapper(luigi.Task):
