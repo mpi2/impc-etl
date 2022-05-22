@@ -2,7 +2,7 @@ import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, first, explode, zip_with, struct
+from pyspark.sql.functions import col, first, explode, zip_with, struct, when, sum
 
 from impc_etl.jobs.load import ExperimentToObservationMapper
 from impc_etl.jobs.load.solr.gene_mapper import GeneLoader
@@ -113,7 +113,9 @@ class ImpcGeneSummaryMapper(PySparkTask):
 
         gene_disease_association_df = gene_disease_association_df.groupBy(
             "marker_id"
-        ).count()
+        ).agg(
+            sum(when(col("observation_id").isNotNull(), 1).otherwise(0)).alias("count")
+        )
         gene_disease_association_df = gene_disease_association_df.withColumnRenamed(
             "marker_id", "id"
         )
@@ -196,6 +198,11 @@ class ImpcGeneSummaryMapper(PySparkTask):
         gene_bw_flag = gene_bw_flag.drop("obs_id")
         gene_df = gene_df.join(gene_bw_flag, "id", "left_outer")
 
+        gene_df = gene_df.drop("datasets_raw_data")
+
+        for col_name in gene_df.columns:
+            gene_df = gene_df.withColumnRenamed(col_name, to_camel_case(col_name))
+
         gene_df.write.partitionBy("id").json(output_path)
 
 
@@ -212,7 +219,7 @@ def get_lacz_expression_count(observations_df, lacz_lifestage):
     ).distinct()
     lacz_observations_by_gene = lacz_observations_by_gene.groupBy(
         "gene_accession_id"
-    ).count()
+    ).agg(sum(when(col("observation_id").isNotNull(), 1).otherwise(0)).alias("count"))
     lacz_observations_by_gene = lacz_observations_by_gene.withColumnRenamed(
         "count", f"{lacz_lifestage}ExpressionObservationsCount"
     )
