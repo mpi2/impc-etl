@@ -219,7 +219,7 @@ def get_lacz_expression_count(observations_df, lacz_lifestage):
     ).distinct()
     lacz_observations_by_gene = lacz_observations_by_gene.groupBy(
         "gene_accession_id"
-    ).agg(sum(when(col("observation_id").isNotNull(), 1).otherwise(0)).alias("count"))
+    ).agg(sum(when(col("parameter_name").isNotNull(), 1).otherwise(0)).alias("count"))
     lacz_observations_by_gene = lacz_observations_by_gene.withColumnRenamed(
         "count", f"{lacz_lifestage}ExpressionObservationsCount"
     )
