@@ -407,7 +407,6 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
             "p_value",
             "life_stage_name",
             "effect_size",
-            "significant",
             "mp_term_id",
             "mp_term_name",
             "top_level_mp_term_id",
