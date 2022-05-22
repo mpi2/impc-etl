@@ -132,7 +132,7 @@ class ImpcGeneSummaryMapper(PySparkTask):
             col("observation_type") == "image_record"
         )
         gene_images_flag = gene_images_flag.groupBy("gene_accession_id").agg(
-            first("id").alias("obs_id")
+            first("observation_id").alias("obs_id")
         )
         gene_images_flag = gene_images_flag.withColumn(
             "hasImagingData", col("obs_id").isNotNull()
@@ -144,7 +144,7 @@ class ImpcGeneSummaryMapper(PySparkTask):
             col("procedure_stable_id").contains("HIS")
         )
         gene_hist_flag = gene_hist_flag.groupBy("gene_accession_id").agg(
-            first("id").alias("obs_id")
+            first("observation_id").alias("obs_id")
         )
         gene_hist_flag = gene_hist_flag.withColumn(
             "hasHistopathologyData", col("obs_id").isNotNull()
@@ -172,7 +172,7 @@ class ImpcGeneSummaryMapper(PySparkTask):
             )
         )
         gene_via_flag = gene_via_flag.groupBy("gene_accession_id").agg(
-            first("id").alias("obs_id")
+            first("observation_id").alias("obs_id")
         )
         gene_via_flag = gene_via_flag.withColumn(
             "hasViabilityData", col("obs_id").isNotNull()
@@ -184,7 +184,7 @@ class ImpcGeneSummaryMapper(PySparkTask):
             col("parameter_stable_id") == "IMPC_BWT_008_001"
         )
         gene_bw_flag = gene_bw_flag.groupBy("gene_accession_id").agg(
-            first("id").alias("obs_id")
+            first("observation_id").alias("obs_id")
         )
         gene_bw_flag = gene_bw_flag.withColumn(
             "hasBodyWeightData", col("obs_id").isNotNull()
@@ -395,7 +395,6 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
             "allele_accession_id",
             "allele_name",
             "allele_symbol",
-            "metadata_group",
             "zygosity",
             "phenotyping_center",
             "sex",
