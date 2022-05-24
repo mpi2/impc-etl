@@ -719,7 +719,7 @@ class ImpcProductsMapper(PySparkTask):
         )
         products_df = products_df.withColumn(
             "allele_symbol",
-            concat(col("marker_symbol"), lit("<"), col("allele_name"), col(">")),
+            concat(col("marker_symbol"), lit("<"), col("allele_name"), lit(">")),
         )
         products_df = products_df.groupBy(
             "mgi_accession_id", "allele_symbol", "allele_description"
