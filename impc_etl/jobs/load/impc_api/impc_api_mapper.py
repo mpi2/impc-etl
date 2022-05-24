@@ -412,13 +412,26 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         stats_results_df = stats_results_df.withColumnRenamed(
             "marker_accession_id", "geneAccessionId"
         )
+        stats_results_df = stats_results_df.withColumn("id", col("geneAccessionId"))
 
         for col_name in stats_results_df.columns:
             stats_results_df = stats_results_df.withColumnRenamed(
                 col_name, to_camel_case(col_name)
             )
 
-        stats_results_df.write.partitionBy("geneAccessionId").json(output_path)
+        stats_results_df = stats_results_df.groupBy("id").agg(
+            collect_set(
+                struct(
+                    *[
+                        col_name
+                        for col_name in stats_results_df.columns
+                        if col_name != "id"
+                    ]
+                )
+            ).alias("statisticalResults")
+        )
+
+        stats_results_df.write.partitionBy("id").json(output_path)
 
 
 class ImpcGenePhenotypeHitsMapper(PySparkTask):
@@ -516,11 +529,18 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
         )
 
         gp_df = gp_df.withColumnRenamed("marker_accession_id", "geneAccessionId")
+        gp_df = gp_df.withColumn("id", col("geneAccessionId"))
 
         for col_name in gp_df.columns:
             gp_df = gp_df.withColumnRenamed(col_name, to_camel_case(col_name))
 
-        gp_df.write.partitionBy("geneAccessionId").json(output_path)
+        gp_df = gp_df.groupBy("id").agg(
+            collect_set(
+                struct(*[col_name for col_name in gp_df.columns if col_name != "id"])
+            ).alias("significantPhenotypes")
+        )
+
+        gp_df.write.partitionBy("id").json(output_path)
 
 
 class ImpcLacZExpressionMapper(PySparkTask):
