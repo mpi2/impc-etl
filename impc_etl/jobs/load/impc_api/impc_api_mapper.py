@@ -587,7 +587,11 @@ class ImpcLacZExpressionMapper(PySparkTask):
         lacz_expression_data = lacz_expression_data.groupBy("id").agg(
             collect_set(
                 struct(
-                    *[col_name for col_name in lacz_expression_data if col_name != "id"]
+                    *[
+                        col_name
+                        for col_name in lacz_expression_data.columns
+                        if col_name != "id"
+                    ]
                 )
             ).alias("expressionData")
         )
