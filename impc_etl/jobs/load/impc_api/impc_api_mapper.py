@@ -715,7 +715,7 @@ class ImpcProductsMapper(PySparkTask):
             "marker_symbol",
             "allele_name",
             "allele_description",
-            "es_cell",
+            "type",
         )
         products_df = products_df.withColumn(
             "allele_symbol",
