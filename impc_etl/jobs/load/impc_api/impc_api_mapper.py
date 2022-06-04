@@ -14,6 +14,7 @@ from pyspark.sql.functions import (
     lit,
     concat,
     count,
+    max,
 )
 
 from impc_etl.jobs.extract import ProductReportExtractor
