@@ -998,6 +998,8 @@ class ImpcGeneHistopathologyMapper(PySparkTask):
             gp_df = gp_df.withColumnRenamed(
                 col_name, to_camel_case(col_name)
             )
+        gp_df = gp_df.withColumnRenamed("marker_accession_id", "geneAccessionId")
+        gp_df = gp_df.withColumn("id", col("geneAccessionId"))
 
         gp_df = gp_df.groupBy("id").agg(
             collect_set(
