@@ -314,7 +314,7 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
     lacz_observations_by_gene = lacz_observations_by_gene.join(
         wt_lacz_observations_by_strain,
         ["strain_accession_id", "parameter_stable_id", "parameter_name"],
-        "left_join",
+        "left_outer",
     )
 
     lacz_images_by_gene = observations_df.where(
