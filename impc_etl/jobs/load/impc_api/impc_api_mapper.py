@@ -1013,7 +1013,12 @@ class ImpcGeneHistopathologyMapper(PySparkTask):
         output_path = args[1]
 
         gp_df = spark.read.parquet(gp_parquet_path)
-        explode_cols = ["procedure_stable_id", "procedure_name", "project_name"]
+        explode_cols = [
+            "procedure_stable_id",
+            "procedure_name",
+            "project_name",
+            "life_stage_name",
+        ]
 
         for col_name in explode_cols:
             gp_df = gp_df.withColumn(col_name, explode(col_name))
@@ -1047,7 +1052,7 @@ class ImpcGeneHistopathologyMapper(PySparkTask):
         gp_df = gp_df.groupBy("id").agg(
             collect_set(
                 struct(*[col_name for col_name in gp_df.columns if col_name != "id"])
-            ).alias("gene_diseases")
+            ).alias("gene_histopathology")
         )
 
         gp_df.write.partitionBy("id").json(output_path)
