@@ -246,7 +246,7 @@ def get_lacz_expression_count(observations_df, lacz_lifestage):
 def get_lacz_expression_data(observations_df, lacz_lifestage):
     procedure_name = "Adult LacZ" if lacz_lifestage == "adult" else "Embryo LacZ"
 
-    lacz_observations_by_gene = observations_df.where(
+    lacz_observations = observations_df.where(
         (col("procedure_name") == procedure_name)
         & (col("observation_type") == "categorical")
         & (col("parameter_name") != "LacZ Images Section")
@@ -259,8 +259,12 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
         "imageOnly",
         "ambiguous",
     ]
-    lacz_observations_by_gene = lacz_observations_by_gene.groupBy(
-        "gene_accession_id", "zygosity", "parameter_stable_id", "parameter_name"
+    lacz_observations_by_gene = lacz_observations.groupBy(
+        "strain_accession_id",
+        "gene_accession_id",
+        "zygosity",
+        "parameter_stable_id",
+        "parameter_name",
     ).agg(
         *[
             sum(when(col("category") == category, 1).otherwise(0)).alias(
@@ -268,6 +272,49 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
             )
             for category in categories
         ]
+    )
+    lacz_observations_by_gene = lacz_observations_by_gene.withColumn(
+        "mutantCounts",
+        struct(*[to_camel_case(category.replace(" ", "_")) for category in categories]),
+    )
+
+    lacz_observations_by_gene = lacz_observations_by_gene.select(
+        "strain_accession_id",
+        "gene_accession_id",
+        "zygosity",
+        "parameter_stable_id",
+        "parameter_name",
+        "mutantCounts",
+    )
+
+    wt_lacz_observations_by_strain = lacz_observations.where(
+        col("biological_sample_group") == "control"
+    )
+
+    wt_lacz_observations_by_strain = wt_lacz_observations_by_strain.groupBy(
+        "strain_accession_id", "parameter_stable_id", "parameter_name"
+    ).agg(
+        *[
+            sum(when(col("category") == category, 1).otherwise(0)).alias(
+                to_camel_case(category.replace(" ", "_"))
+            )
+            for category in categories
+        ]
+    )
+
+    wt_lacz_observations_by_strain = wt_lacz_observations_by_strain.withColumn(
+        "controlCounts",
+        struct(*[to_camel_case(category.replace(" ", "_")) for category in categories]),
+    )
+
+    wt_lacz_observations_by_strain = wt_lacz_observations_by_strain.select(
+        "strain_accession_id", "parameter_stable_id", "parameter_name", "controlCounts"
+    )
+
+    lacz_observations_by_gene = lacz_observations_by_gene.join(
+        wt_lacz_observations_by_strain,
+        ["strain_accession_id", "parameter_stable_id", "parameter_name"],
+        "left_join",
     )
 
     lacz_images_by_gene = observations_df.where(
@@ -922,7 +969,6 @@ class ImpcGeneDiseasesMapper(PySparkTask):
         max_disease_df.write.partitionBy("id").json(output_path)
 
 
-
 class ImpcGeneHistopathologyMapper(PySparkTask):
     """
     PySpark Task class to extract GenTar Product report data.
@@ -995,26 +1041,17 @@ class ImpcGeneHistopathologyMapper(PySparkTask):
         )
 
         for col_name in gp_df.columns:
-            gp_df = gp_df.withColumnRenamed(
-                col_name, to_camel_case(col_name)
-            )
+            gp_df = gp_df.withColumnRenamed(col_name, to_camel_case(col_name))
         gp_df = gp_df.withColumnRenamed("markerAccessionId", "geneAccessionId")
         gp_df = gp_df.withColumn("id", col("geneAccessionId"))
 
         gp_df = gp_df.groupBy("id").agg(
             collect_set(
-                struct(
-                    *[
-                        col_name
-                        for col_name in gp_df.columns
-                        if col_name != "id"
-                    ]
-                )
+                struct(*[col_name for col_name in gp_df.columns if col_name != "id"])
             ).alias("gene_diseases")
         )
 
         gp_df.write.partitionBy("id").json(output_path)
-
 
 
 # class ImpcWebApiMapper(luigi.Task):
