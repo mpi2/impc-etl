@@ -279,7 +279,6 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
     )
 
     lacz_observations_by_gene = lacz_observations_by_gene.select(
-        "strain_accession_id",
         "gene_accession_id",
         "zygosity",
         "parameter_stable_id",
@@ -292,7 +291,7 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
     )
 
     wt_lacz_observations_by_strain = wt_lacz_observations_by_strain.groupBy(
-        "strain_accession_id", "parameter_stable_id", "parameter_name"
+        "parameter_stable_id", "parameter_name"
     ).agg(
         *[
             sum(when(col("category") == category, 1).otherwise(0)).alias(
@@ -308,12 +307,12 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
     )
 
     wt_lacz_observations_by_strain = wt_lacz_observations_by_strain.select(
-        "strain_accession_id", "parameter_stable_id", "parameter_name", "controlCounts"
+        "parameter_stable_id", "parameter_name", "controlCounts"
     )
 
     lacz_observations_by_gene = lacz_observations_by_gene.join(
         wt_lacz_observations_by_strain,
-        ["strain_accession_id", "parameter_stable_id", "parameter_name"],
+        ["parameter_stable_id", "parameter_name"],
         "left_outer",
     )
 
