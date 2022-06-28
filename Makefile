@@ -77,6 +77,7 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	cp -r $(input-data-path)/ontologies-data-archive/*  $(staging-path)/$(dr-tag)/ontologies/
 	cp -r $(input-data-path)/3i-data-archive/*.xml $(staging-path)/$(dr-tag)/xml/3i/
 	cp -r $(input-data-path)/pwg-data-archive/*.xml $(staging-path)/$(dr-tag)/xml/pwg/
+	cp -r $(input-data-path)/pwg-data-archive/*.csv $(staging-path)/$(dr-tag)/misc/
 	cp $(input-data-path)/3i-data-archive/flow_results_EBIexport_180119.csv $(staging-path)/$(dr-tag)/misc/
 	cp -r $(input-data-path)/europhenome-data-archive/*.xml $(staging-path)/$(dr-tag)/xml/europhenome/
 	cp -r $(input-data-path)/dcc-data-archive/latest/* $(staging-path)/$(dr-tag)/xml/impc/
