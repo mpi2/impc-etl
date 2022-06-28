@@ -9,3 +9,4 @@ webhdfs
 wheel
 pronto
 pymongo
+fastobo

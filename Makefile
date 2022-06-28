@@ -5,7 +5,7 @@ default: clean devDeps build
 
 # submit-h: clean devDeps build
 submit-h: clean build
-	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' PYSPARK_PYTHON=python36 luigi --module impc_etl.workflow.main $(task) --workers 3
+	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' PYSPARK_PYTHON=./environment/bin/python luigi --module impc_etl.workflow.main $(task) --workers 3
 
 # submit-h: clean devDeps build
 submit-h-daily: clean build createDailyLuigiCfg
@@ -30,15 +30,21 @@ lint:           ##@best_practices Run pylint against the main script and the sha
 	source .venv/bin/activate && pylint -r n impc_etl/main.py impc_etl/shared/ impc_etl/jobs/ tests/
 
 build: clean        ##@deploy Build to the dist package
+#	mkdir ./dist$(env)#
+#	zip -x main.py -r ./dist$(env)/impc_etl.zip impc_etl
+#	cd ./dist$(env) && mkdir libs
+#	source venv/bin/activate && pip install --upgrade pip
+#	source venv/bin/activate && pip install -U -r requirements/common.txt -t ./dist$(env)/libs
+#	source venv/bin/activate && pip install -U -r requirements/prod.txt -t ./dist$(env)/libs
+#	cd ./dist$(env)/libs && zip -r ../libs.zip .
+#	cd ./dist$(env) && rm -rf libs
 	mkdir ./dist$(env)
 	zip -x main.py -r ./dist$(env)/impc_etl.zip impc_etl
-	cd ./dist$(env) && mkdir libs
 	source venv/bin/activate && pip install --upgrade pip
-	source venv/bin/activate && pip install -U -r requirements/common.txt -t ./dist$(env)/libs
-	source venv/bin/activate && pip install -U -r requirements/prod.txt -t ./dist$(env)/libs
-	cd ./dist$(env)/libs && zip -r ../libs.zip .
-	cd ./dist$(env) && rm -rf libs
-
+	source venv/bin/activate && pip install -r requirements/common.txt
+	source venv/bin/activate && pip install -r requirements/prod.txt
+	source venv/bin/activate && pip install venv-pack
+	source venv/bin/activate && venv-pack -o ./dist/pyspark_venv.tar.gz
 
 clean: clean-build clean-pyc clean-test           ##@clean Clean all
 
