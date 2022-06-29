@@ -44,6 +44,7 @@ class OntologyTermHierarchyExtractor(PySparkTask):
         {
             "id": "mp",
             "format": "obo",
+            "url": "",
             "top_level_terms": [
                 "MP:0010768",
                 "MP:0002873",
@@ -76,6 +77,7 @@ class OntologyTermHierarchyExtractor(PySparkTask):
         },
         {
             "id": "ma",
+            "url": "http://ontologies.berkeleybop.org/ma.obo",
             "format": "obo",
             "top_level_terms": [
                 "MA:0000004",
@@ -99,6 +101,7 @@ class OntologyTermHierarchyExtractor(PySparkTask):
         },
         {
             "id": "emapa",
+            "url": "https://raw.githubusercontent.com/obophenotype/mouse-anatomy-ontology/master/emapa.obo",
             "format": "obo",
             "top_level_terms": [
                 "EMAPA:16104",
@@ -204,9 +207,7 @@ class OntologyTermHierarchyExtractor(PySparkTask):
                         BytesIO(bytes(full_ontology_str, encoding="utf-8"))
                     )
             else:
-                ontology: Ontology = pronto.Ontology.from_obo_library(
-                    f"{ontology_desc['id']}.{ontology_desc['format']}"
-                )
+                ontology: Ontology = pronto.Ontology(ontology_desc["url"])
 
             part_of_rel: Relationship = None
 
