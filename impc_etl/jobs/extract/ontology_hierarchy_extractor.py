@@ -44,7 +44,6 @@ class OntologyTermHierarchyExtractor(PySparkTask):
         {
             "id": "mp",
             "format": "obo",
-            "url": "http://www.informatics.jax.org/downloads/reports/MPheno_OBO.ontology",
             "top_level_terms": [
                 "MP:0010768",
                 "MP:0002873",
@@ -77,7 +76,6 @@ class OntologyTermHierarchyExtractor(PySparkTask):
         },
         {
             "id": "ma",
-            "url": "http://ontologies.berkeleybop.org/ma.obo",
             "format": "obo",
             "top_level_terms": [
                 "MA:0000004",
@@ -101,7 +99,6 @@ class OntologyTermHierarchyExtractor(PySparkTask):
         },
         {
             "id": "emapa",
-            "url": "https://raw.githubusercontent.com/obophenotype/mouse-anatomy-ontology/master/emapa.obo",
             "format": "obo",
             "top_level_terms": [
                 "EMAPA:16104",
@@ -196,18 +193,18 @@ class OntologyTermHierarchyExtractor(PySparkTask):
             print(f"Processing {ontology_desc['id']}.{ontology_desc['format']}")
 
             # Get the OBO file from the directory if MPATH otherwise get it from OBO foundry
-            if ontology_desc["id"] == "mpath":
-                if deploy_mode in ["local", "client"]:
-                    ontology: Ontology = Ontology(ontologies_path + "mpath.obo")
-                else:
-                    full_ontology_str = spark_session.sparkContext.wholeTextFiles(
-                        ontologies_path + "mpath.obo"
-                    ).collect()[0][1]
-                    ontology: Ontology = Ontology(
-                        BytesIO(bytes(full_ontology_str, encoding="utf-8"))
-                    )
+
+            if deploy_mode in ["local", "client"]:
+                ontology: Ontology = Ontology(
+                    ontologies_path + f"{ontology_desc['id']}.{ontology_desc['format']}"
+                )
             else:
-                ontology: Ontology = pronto.Ontology(ontology_desc["url"])
+                full_ontology_str = spark_session.sparkContext.wholeTextFiles(
+                    ontologies_path + f"{ontology_desc['id']}.{ontology_desc['format']}"
+                ).collect()[0][1]
+                ontology: Ontology = Ontology(
+                    BytesIO(bytes(full_ontology_str, encoding="utf-8"))
+                )
 
             part_of_rel: Relationship = None
 
