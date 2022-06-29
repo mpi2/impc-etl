@@ -44,7 +44,7 @@ class OntologyTermHierarchyExtractor(PySparkTask):
         {
             "id": "mp",
             "format": "obo",
-            "url": "",
+            "url": "http://www.informatics.jax.org/downloads/reports/MPheno_OBO.ontology",
             "top_level_terms": [
                 "MP:0010768",
                 "MP:0002873",
