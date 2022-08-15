@@ -31,6 +31,7 @@ from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapping_helper import *
 from impc_etl.shared.utils import convert_to_row
+
 # TODO missing strain name and genetic background
 from impc_etl.workflow.config import ImpcConfig
 
@@ -219,7 +220,6 @@ class StatsResultsMapper(PySparkTask):
                 | (f.col("procedure_group").contains("IMPC_GEO"))
                 | (f.col("procedure_group").contains("IMPC_GPP"))
                 | (f.col("procedure_group").contains("IMPC_GEP"))
-                | (f.col("procedure_group").startswith("ALT"))
                 | (f.col("procedure_group").isin(PWG_PROCEDURES))
             )
         )
@@ -647,6 +647,12 @@ class StatsResultsMapper(PySparkTask):
         open_stats_df = self.map_ontology_prefix(open_stats_df, "EMAP:", "anatomy_")
         open_stats_df = self.map_ontology_prefix(open_stats_df, "EMAPA:", "anatomy_")
         open_stats_df = open_stats_df.withColumn(
+            "mp_term_id",
+            f.when(
+                f.col("procedure_stable_id").startswith("ALT"), f.lit(None)
+            ).otherwhise(f.col("mp_term_id")),
+        )
+        open_stats_df = open_stats_df.withColumn(
             "significant",
             f.when(
                 f.col("mp_term_id").isNotNull(),
@@ -709,7 +715,8 @@ class StatsResultsMapper(PySparkTask):
         open_stats_df = open_stats_df.withColumn(
             "status",
             f.when(
-                f.col("data_type") == "time_series",
+                (f.col("data_type") == "time_series")
+                | (f.col("procedure_stable_id").startswith("ALT")),
                 f.lit("NotProcessed"),
             ).otherwise(f.col("status")),
         )

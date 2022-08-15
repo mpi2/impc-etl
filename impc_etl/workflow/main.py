@@ -3,6 +3,7 @@ from typing import Union
 import luigi
 from luigi.contrib.hdfs import HdfsTarget
 
+from impc_etl.jobs.compare.dr_diff import ImpcDrDiffReportGeneration
 from impc_etl.jobs.extract import ProductReportExtractor
 from impc_etl.jobs.load import ExperimentToObservationMapper
 from impc_etl.jobs.load.impc_api.impc_api_mapper import (
@@ -13,7 +14,8 @@ from impc_etl.jobs.load.impc_api.impc_api_mapper import (
     ImpcPublicationsMapper,
     ImpcProductsMapper,
     ImpcGeneImagesMapper,
-    ImpcGeneDiseasesMapper, ImpcGeneHistopathologyMapper,
+    ImpcGeneDiseasesMapper,
+    ImpcGeneHistopathologyMapper,
 )
 from impc_etl.jobs.load.impc_api.impc_gene_bundle_mapper import ImpcGeneBundleMapper
 from impc_etl.jobs.load.impc_images_mapper import ImagesPipelineInputGenerator
@@ -35,6 +37,7 @@ class ImpcPreStatisticalAnalysis(luigi.Task):
             StatsPipelineInputMapper(),
             ImagesPipelineInputGenerator(),
             MPChooserGenerator(),
+            ImpcDrDiffReportGeneration(),
         ]
 
 

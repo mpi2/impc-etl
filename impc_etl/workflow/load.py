@@ -85,6 +85,7 @@ class ImpcMergeIndex(LSFExternalJobTask):
     resource_flag = "mem=16000"
     extra_bsub_args = "-R span[ptile=14]"
     runtime_flag = 240
+    queue_flag = "short"
 
     def init_local(self):
         self.app = (
