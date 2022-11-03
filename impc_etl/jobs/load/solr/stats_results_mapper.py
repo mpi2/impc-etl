@@ -647,10 +647,14 @@ class StatsResultsMapper(PySparkTask):
         open_stats_df = self.map_ontology_prefix(open_stats_df, "EMAP:", "anatomy_")
         open_stats_df = self.map_ontology_prefix(open_stats_df, "EMAPA:", "anatomy_")
         open_stats_df = open_stats_df.withColumn(
+            "procedure_stable_id_str",
+            f.concat_ws(",", "procedure_stable_id"),
+        )
+        open_stats_df = open_stats_df.withColumn(
             "mp_term_id",
             f.when(
-                f.col("procedure_stable_id").startswith("ALT"), f.lit(None)
-            ).otherwhise(f.col("mp_term_id")),
+                f.col("procedure_stable_id_str").startswith("ALT"), f.lit(None)
+            ).otherwise(f.col("mp_term_id")),
         )
         open_stats_df = open_stats_df.withColumn(
             "significant",
@@ -716,15 +720,11 @@ class StatsResultsMapper(PySparkTask):
             "status",
             f.when(
                 (f.col("data_type") == "time_series")
-                | (f.col("procedure_stable_id").startswith("ALT")),
+                | (f.col("procedure_stable_id_str").startswith("ALT")),
                 f.lit("NotProcessed"),
             ).otherwise(f.col("status")),
         )
 
-        open_stats_df = open_stats_df.withColumn(
-            "procedure_stable_id_str",
-            f.concat_ws(",", "procedure_stable_id"),
-        )
         identifying_cols = [
             "colony_id",
             "pipeline_stable_id",
