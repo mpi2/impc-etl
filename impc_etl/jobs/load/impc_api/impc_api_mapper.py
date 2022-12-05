@@ -26,13 +26,19 @@ from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
 from impc_etl.workflow.config import ImpcConfig
 
 GENE_SUMMARY_MAPPINGS = {
-    "mgi_accession_id": "geneAccessionId",
+    "mgi_accession_id": "mgiGeneAccessionId",
     "marker_symbol": "geneSymbol",
     "marker_name": "geneName",
     "marker_synonym": "synonyms",
     "significant_top_level_mp_terms": "significantTopLevelPhenotypes",
     "not_significant_top_level_mp_terms": "notSignificantTopLevelPhenotypes",
     "embryo_data_available": "hasEmbryoImagingData",
+    "human_gene_symbol": "human_gene_symbols",
+    "human_symbol_synonym": "human_symbol_synonyms",
+    "production_centre": "production_centres",
+    "phenotyping_centre": "phenotyping_centres",
+    "allele_name": "allele_names",
+    "ensembl_gene_id": "ensembl_gene_ids",
 }
 
 
@@ -103,6 +109,8 @@ class ImpcGeneSummaryMapper(PySparkTask):
             gene_df = gene_df.withColumnRenamed(
                 col_name, GENE_SUMMARY_MAPPINGS[col_name]
             )
+        gene_df = gene_df.drop("ccds_ids")
+        gene_df = gene_df.withColumnRenamed("ccds_id", "ccds_ids")
         genotype_phenotype_df = genotype_phenotype_df.withColumnRenamed(
             "marker_accession_id", "id"
         )
