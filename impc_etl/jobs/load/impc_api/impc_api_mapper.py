@@ -2,7 +2,7 @@ import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
-from pyspark.sql.types import DoubleType
+from pyspark.sql.types import DoubleType, IntegerType
 from pyspark.sql.functions import (
     col,
     first,
@@ -415,7 +415,12 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         output_path = args[1]
 
         stats_results_df = spark.read.parquet(stats_results_parquet_path)
-        explode_cols = ["procedure_stable_id", "procedure_name", "project_name"]
+        explode_cols = [
+            "procedure_stable_id",
+            "procedure_name",
+            "project_name",
+            "life_stage_name",
+        ]
 
         for col_name in explode_cols:
             stats_results_df = stats_results_df.withColumn(col_name, explode(col_name))
@@ -452,7 +457,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         )
 
         stats_results_df = stats_results_df.withColumn(
-            "topLevelPhenotype",
+            "topLevelPhenotypes",
             zip_with(
                 "top_level_mp_term_id",
                 "top_level_mp_term_name",
@@ -468,27 +473,28 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         )
 
         stats_results_df = stats_results_df.withColumnRenamed(
-            "marker_accession_id", "geneAccessionId"
+            "marker_accession_id", "mgiGeneAccessionId"
         )
-        stats_results_df = stats_results_df.withColumn("id", col("geneAccessionId"))
+        stats_results_df = stats_results_df.withColumn("id", col("mgiGeneAccessionId"))
 
         for col_name in stats_results_df.columns:
             stats_results_df = stats_results_df.withColumnRenamed(
                 col_name, to_camel_case(col_name)
             )
 
-        stats_results_df = stats_results_df.groupBy("id").agg(
-            collect_set(
-                struct(
-                    *[
-                        col_name
-                        for col_name in stats_results_df.columns
-                        if col_name != "id"
-                    ]
-                )
-            ).alias("statisticalResults")
+        stats_results_df = stats_results_df.withColumnRenamed(
+            "phenotypingCenter", "phenotypingCentre"
+        )
+        stats_results_df = stats_results_df.withColumnRenamed(
+            "phenotypeSex", "phenotypeSexes"
         )
 
+        stats_results_df = stats_results_df.withColumn(
+            "maleMutantCount", col("maleMutantCount").astype(IntegerType())
+        )
+        stats_results_df = stats_results_df.withColumn(
+            "femaleMutantCount", col("femaleMutantCount").astype(IntegerType())
+        )
         stats_results_df.write.partitionBy("id").json(output_path)
 
 
