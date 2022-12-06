@@ -2,6 +2,7 @@ import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
+from pyspark.sql.types import DoubleType
 from pyspark.sql.functions import (
     col,
     first,
@@ -585,19 +586,18 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
             "top_level_mp_term_name",
         )
 
-        gp_df = gp_df.withColumnRenamed("marker_accession_id", "geneAccessionId")
-        gp_df = gp_df.withColumn("id", col("geneAccessionId"))
+        gp_df = gp_df.withColumnRenamed("marker_accession_id", "mgiGeneAccessionId")
+        gp_df = gp_df.withColumn("id", col("mgiGeneAccessionId"))
 
         for col_name in gp_df.columns:
             gp_df = gp_df.withColumnRenamed(col_name, to_camel_case(col_name))
 
-        gp_df = gp_df.groupBy("id").agg(
-            collect_set(
-                struct(*[col_name for col_name in gp_df.columns if col_name != "id"])
-            ).alias("significantPhenotypes")
-        )
-
-        gp_df.write.partitionBy("id").json(output_path)
+        gp_df = gp_df.withColumn("lifeStageName", explode("lifeStageName"))
+        gp_df = gp_df.withColumnRenamed("topLevelPhenotype", "topLevelPhenotypes")
+        gp_df = gp_df.withColumnRenamed("phenotypingCenter", "phenotypingCentre")
+        gp_df = gp_df.withColumn("pValue", col("pValue").astype(DoubleType()))
+        gp_df = gp_df.withColumn("effectSize", col("effectSize").astype(DoubleType()))
+        gp_df.write.json(output_path)
 
 
 class ImpcLacZExpressionMapper(PySparkTask):
