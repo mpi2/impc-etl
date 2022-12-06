@@ -225,7 +225,7 @@ class ImpcGeneSummaryMapper(PySparkTask):
         for col_name in gene_df.columns:
             gene_df = gene_df.withColumnRenamed(col_name, to_camel_case(col_name))
 
-        gene_df.write.json(output_path)
+        gene_df.repartition(100).write.json(output_path)
 
 
 def get_lacz_expression_count(observations_df, lacz_lifestage):
