@@ -16,6 +16,7 @@ from pyspark.sql.functions import (
     concat,
     count,
     max,
+    avg,
 )
 
 from impc_etl.jobs.extract import ProductReportExtractor
@@ -222,9 +223,20 @@ class ImpcGeneSummaryMapper(PySparkTask):
 
         gene_df = gene_df.drop("datasets_raw_data")
 
+        gene_avg_df = gene_df.where(col("phenotypingDataAvailable") == True).select(
+            avg("significantPhenotypesCount").alias("significantPhenotypesAverage"),
+            avg("associatedDiseasesCount").alias("associatedDiseasesAverage"),
+            avg("adultExpressionObservationsCount").alias(
+                "adultExpressionObservationsAverage"
+            ),
+            avg("embryoExpressionObservationsCount").alias(
+                "embryoExpressionObservationsAverage"
+            ),
+        )
+
         for col_name in gene_df.columns:
             gene_df = gene_df.withColumnRenamed(col_name, to_camel_case(col_name))
-
+        gene_avg_df.write.json(output_path + "_avgs")
         gene_df.repartition(100).write.json(output_path)
 
 
