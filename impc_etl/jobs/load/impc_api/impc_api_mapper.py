@@ -236,7 +236,7 @@ class ImpcGeneSummaryMapper(PySparkTask):
                 "embryoExpressionObservationsAverage"
             ),
         )
-        gene_avg_df.write.option("ignoreNullFields", "false").json(
+        gene_avg_df.repartition(1).write.option("ignoreNullFields", "false").json(
             output_path + "_avgs"
         )
         gene_df.repartition(100).write.option("ignoreNullFields", "false").json(
@@ -511,7 +511,9 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         stats_results_df = stats_results_df.withColumn(
             "femaleMutantCount", col("femaleMutantCount").astype(IntegerType())
         )
-        stats_results_df.write.partitionBy("id").json(output_path)
+        stats_results_df.repartition(1000).write.option(
+            "ignoreNullFields", "false"
+        ).json(output_path)
 
 
 class ImpcGenePhenotypeHitsMapper(PySparkTask):
@@ -619,7 +621,9 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
         gp_df = gp_df.withColumnRenamed("phenotypingCenter", "phenotypingCentre")
         gp_df = gp_df.withColumn("pValue", col("pValue").astype(DoubleType()))
         gp_df = gp_df.withColumn("effectSize", col("effectSize").astype(DoubleType()))
-        gp_df.write.option("ignoreNullFields", "false").json(output_path)
+        gp_df.repartition(100).write.option("ignoreNullFields", "false").json(
+            output_path
+        )
 
 
 class ImpcLacZExpressionMapper(PySparkTask):
@@ -686,7 +690,7 @@ class ImpcLacZExpressionMapper(PySparkTask):
         lacz_expression_data = lacz_expression_data.withColumnRenamed(
             "geneAccessionId", "mgiGeneAccessionId"
         )
-        lacz_expression_data.repartition(1000).write.option(
+        lacz_expression_data.repartition(100).write.option(
             "ignoreNullFields", "false"
         ).json(output_path)
 
@@ -747,7 +751,9 @@ class ImpcPublicationsMapper(PySparkTask):
         publications_df = publications_df.withColumnRenamed(
             "gacc", "mgiGeneAccessionId"
         )
-        publications_df.write.option("ignoreNullFields", "false").json(output_path)
+        publications_df.repartition(100).write.option("ignoreNullFields", "false").json(
+            output_path
+        )
 
 
 class ImpcProductsMapper(PySparkTask):
@@ -813,7 +819,9 @@ class ImpcProductsMapper(PySparkTask):
                 col_name, to_camel_case(col_name)
             )
 
-        products_df.write.option("ignoreNullFields", "false").json(output_path)
+        products_df.repartition(100).write.option("ignoreNullFields", "false").json(
+            output_path
+        )
 
 
 class ImpcGeneImagesMapper(PySparkTask):
@@ -882,7 +890,9 @@ class ImpcGeneImagesMapper(PySparkTask):
                 col_name, to_camel_case(col_name)
             )
 
-        impc_images_df.write.option("ignoreNullFields", "false").json(output_path)
+        impc_images_df.repartition(500).write.option("ignoreNullFields", "false").json(
+            output_path
+        )
 
 
 class ImpcGeneDiseasesMapper(PySparkTask):
@@ -967,7 +977,9 @@ class ImpcGeneDiseasesMapper(PySparkTask):
             "associationCurated", col("associationCurated").astype(BooleanType())
         )
 
-        max_disease_df.write.option("ignoreNullFields", "false").json(output_path)
+        max_disease_df.repartition(500).write.option("ignoreNullFields", "false").json(
+            output_path
+        )
 
 
 class ImpcGeneHistopathologyMapper(PySparkTask):
@@ -1050,7 +1062,9 @@ class ImpcGeneHistopathologyMapper(PySparkTask):
             gp_df = gp_df.withColumnRenamed(col_name, to_camel_case(col_name))
         gp_df = gp_df.withColumnRenamed("markerAccessionId", "mgiGeneAccessionId")
 
-        gp_df.write.option("ignoreNullFields", "false").json(output_path)
+        gp_df.repartition(500).write.option("ignoreNullFields", "false").json(
+            output_path
+        )
 
 
 # class ImpcWebApiMapper(luigi.Task):
@@ -1059,14 +1073,12 @@ class ImpcGeneHistopathologyMapper(PySparkTask):
 #     def requires(self):
 #         return [
 #             ImpcGeneSummaryMapper(),
-#             ImpcGeneStatsResultsMapper(),
 #             ImpcGenePhenotypeHitsMapper(),
-#             # ImpcGeneExpressionMapper(),
-#             # ImpcGeneImagesMapper(),
-#             # ImpcGeneHistopathologyMapper(),
-#             # ImpcGeneDiseasesMapper(),
-#             # ImpcGenePublicationsMapper(),
-#             # ImpcGeneOrderMapper()
-#             # ImpcAlleleMapper(),
-#             # ImpcPhenotypeMapper(),
+#             ImpcGeneStatsResultsMapper(),
+#             ImpcLacZExpressionMapper(),
+#             ImpcGeneImagesMapper(),
+#             ImpcGeneHistopathologyMapper(),
+#             ImpcGeneDiseasesMapper(),
+#             ImpcPublicationsMapper(),
+#             ImpcProductsMapper(),
 #         ]

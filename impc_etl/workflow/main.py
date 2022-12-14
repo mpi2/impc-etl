@@ -164,20 +164,12 @@ class ImpcWebApiMapper(luigi.Task):
     def requires(self):
         return [
             ImpcGeneSummaryMapper(),
-            ImpcGeneStatsResultsMapper(),
             ImpcGenePhenotypeHitsMapper(),
+            ImpcGeneStatsResultsMapper(),
             ImpcLacZExpressionMapper(),
+            ImpcGeneImagesMapper(),
+            ImpcGeneHistopathologyMapper(),
+            ImpcGeneDiseasesMapper(),
             ImpcPublicationsMapper(),
             ImpcProductsMapper(),
-            ImpcGeneImagesMapper(),
-            ImpcGeneDiseasesMapper(),
-            ImpcGeneHistopathologyMapper()
-            # ImpcGeneExpressionMapper(),
-            # ImpcGeneImagesMapper(),
-            # ImpcGeneHistopathologyMapper(),
-            # ImpcGeneDiseasesMapper(),
-            # ImpcGenePublicationsMapper(),
-            # ImpcGeneOrderMapper()
-            # ImpcAlleleMapper(),
-            # ImpcPhenotypeMapper(),
         ]
