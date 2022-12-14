@@ -679,18 +679,10 @@ class ImpcLacZExpressionMapper(PySparkTask):
             lacz_expression_data = lacz_expression_data.withColumnRenamed(
                 col_name, to_camel_case(col_name)
             )
-        lacz_expression_data = lacz_expression_data.groupBy("id").agg(
-            collect_set(
-                struct(
-                    *[
-                        col_name
-                        for col_name in lacz_expression_data.columns
-                        if col_name != "id"
-                    ]
-                )
-            ).alias("expressionData")
+        lacz_expression_data = lacz_expression_data.withColumnRenamed(
+            "geneAccessionId", "mgiGeneAccessionId"
         )
-        lacz_expression_data.write.partitionBy("id").json(output_path)
+        lacz_expression_data.repartition(1000).write.json(output_path)
 
 
 class ImpcPublicationsMapper(PySparkTask):
