@@ -71,7 +71,7 @@ class ImpcGeneSummaryMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/gene_summary_json"
+            f"{self.output_path}/impc_web_api/gene_summary_service_json"
         )
 
     def app_options(self):
@@ -408,7 +408,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/gene_stats_results_json"
+            f"{self.output_path}/impc_web_api/gene_statistical_results_service_json"
         )
 
     def app_options(self):
@@ -537,7 +537,7 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/gene_significant_phenotypes_json)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/gene_significant_phenotypes_json"
+            f"{self.output_path}/impc_web_api/gene_phenotype_hits_service_json"
         )
 
     def app_options(self):
@@ -644,7 +644,7 @@ class ImpcLacZExpressionMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/lacz_expression_json"
+            f"{self.output_path}/impc_web_api/gene_expression_service_json"
         )
 
     def app_options(self):
@@ -711,7 +711,7 @@ class ImpcPublicationsMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/publications_json"
+            f"{self.output_path}/impc_web_api/gene_publications_service_json"
         )
 
     def app_options(self):
@@ -781,7 +781,9 @@ class ImpcProductsMapper(PySparkTask):
         Returns the full parquet path as an output for the Luigi Task
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
-        return ImpcConfig().get_target(f"{self.output_path}/impc_web_api/order_json")
+        return ImpcConfig().get_target(
+            f"{self.output_path}/impc_web_api/gene_order_json"
+        )
 
     def app_options(self):
         """
@@ -855,7 +857,7 @@ class ImpcGeneImagesMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/gene_images_json"
+            f"{self.output_path}/impc_web_api/gene_images_service_json"
         )
 
     def app_options(self):
@@ -892,26 +894,16 @@ class ImpcGeneImagesMapper(PySparkTask):
             first("file_type").alias("file_type"),
         )
 
-        impc_images_df = impc_images_df.withColumnRenamed("gene_accession_id", "id")
+        impc_images_df = impc_images_df.withColumnRenamed(
+            "gene_accession_id", "mgiGeneAccessionId"
+        )
 
         for col_name in impc_images_df.columns:
             impc_images_df = impc_images_df.withColumnRenamed(
                 col_name, to_camel_case(col_name)
             )
 
-        impc_images_df = impc_images_df.groupBy("id").agg(
-            collect_set(
-                struct(
-                    *[
-                        col_name
-                        for col_name in impc_images_df.columns
-                        if col_name != "id"
-                    ]
-                )
-            ).alias("gene_images")
-        )
-
-        impc_images_df.write.partitionBy("id").json(output_path)
+        impc_images_df.write.option("ignoreNullFields", "false").json(output_path)
 
 
 class ImpcGeneDiseasesMapper(PySparkTask):
@@ -934,7 +926,7 @@ class ImpcGeneDiseasesMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/gene_diseases_json"
+            f"{self.output_path}/impc_web_api/gene_diseases_service_json"
         )
 
     def app_options(self):
