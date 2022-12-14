@@ -2,7 +2,7 @@ import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
-from pyspark.sql.types import DoubleType, IntegerType
+from pyspark.sql.types import DoubleType, IntegerType, BooleanType
 from pyspark.sql.functions import (
     col,
     first,
@@ -969,19 +969,26 @@ class ImpcGeneDiseasesMapper(PySparkTask):
                 col_name, to_camel_case(col_name)
             )
 
-        max_disease_df = max_disease_df.groupBy("id").agg(
-            collect_set(
-                struct(
-                    *[
-                        col_name
-                        for col_name in max_disease_df.columns
-                        if col_name != "id"
-                    ]
-                )
-            ).alias("gene_diseases")
+        double_cols = [
+            "diseaseModelAvgNorm",
+            "diseaseModelAvgRaw",
+            "diseaseModelMaxRaw",
+            "diseaseModelMaxNorm",
+        ]
+
+        for col_name in double_cols:
+            max_disease_df = max_disease_df.withColumn(
+                col_name, col(col_name).astype(DoubleType())
+            )
+
+        max_disease_df = max_disease_df.withColumn(
+            "markerNumModels", col("markerNumModels").astype(IntegerType())
+        )
+        max_disease_df = max_disease_df.withColumn(
+            "associationCurated", col("associationCurated").astype(BooleanType())
         )
 
-        max_disease_df.write.partitionBy("id").json(output_path)
+        max_disease_df.write.option("ignoreNullFields", "false").json(output_path)
 
 
 class ImpcGeneHistopathologyMapper(PySparkTask):
