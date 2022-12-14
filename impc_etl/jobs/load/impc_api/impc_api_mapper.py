@@ -744,22 +744,10 @@ class ImpcPublicationsMapper(PySparkTask):
             "journalTitle", col("journal.title")
         )
         publications_df = publications_df.drop("journal")
-        publications_df = publications_df.withColumnRenamed("gacc", "geneAccessionId")
-        publications_df = publications_df.withColumn("id", col("geneAccessionId"))
-        publications_df = publications_df.groupBy("id").agg(
-            collect_set(
-                struct(
-                    "alleleSymbol",
-                    "doi",
-                    "monthOfPublication",
-                    "yearOfPublication",
-                    "journalTitle",
-                    "title",
-                    "pmcid",
-                )
-            ).alias("publications")
+        publications_df = publications_df.withColumnRenamed(
+            "gacc", "mgiGeneAccessionId"
         )
-        publications_df.write.partitionBy("id").json(output_path)
+        publications_df.write.option("ignoreNullFields", "false").json(output_path)
 
 
 class ImpcProductsMapper(PySparkTask):
@@ -782,7 +770,7 @@ class ImpcProductsMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/gene_order_json"
+            f"{self.output_path}/impc_web_api/gene_order_service_json"
         )
 
     def app_options(self):
@@ -820,21 +808,12 @@ class ImpcProductsMapper(PySparkTask):
             "mgi_accession_id", "allele_symbol", "allele_description"
         ).agg(collect_set("type").alias("product_types"))
 
-        products_df = products_df.withColumnRenamed("mgi_accession_id", "id")
         for col_name in products_df.columns:
             products_df = products_df.withColumnRenamed(
                 col_name, to_camel_case(col_name)
             )
 
-        products_df = products_df.groupBy("id").agg(
-            collect_set(
-                struct(
-                    *[col_name for col_name in products_df.columns if col_name != "id"]
-                )
-            ).alias("order")
-        )
-
-        products_df.write.partitionBy("id").json(output_path)
+        products_df.write.option("ignoreNullFields", "false").json(output_path)
 
 
 class ImpcGeneImagesMapper(PySparkTask):
@@ -1013,7 +992,7 @@ class ImpcGeneHistopathologyMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/gene_histopath_json)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/gene_histopath_json"
+            f"{self.output_path}/impc_web_api/gene_histopathology_service_json"
         )
 
     def app_options(self):
@@ -1069,16 +1048,9 @@ class ImpcGeneHistopathologyMapper(PySparkTask):
 
         for col_name in gp_df.columns:
             gp_df = gp_df.withColumnRenamed(col_name, to_camel_case(col_name))
-        gp_df = gp_df.withColumnRenamed("markerAccessionId", "geneAccessionId")
-        gp_df = gp_df.withColumn("id", col("geneAccessionId"))
+        gp_df = gp_df.withColumnRenamed("markerAccessionId", "mgiGeneAccessionId")
 
-        gp_df = gp_df.groupBy("id").agg(
-            collect_set(
-                struct(*[col_name for col_name in gp_df.columns if col_name != "id"])
-            ).alias("gene_histopathology")
-        )
-
-        gp_df.write.partitionBy("id").json(output_path)
+        gp_df.write.option("ignoreNullFields", "false").json(output_path)
 
 
 # class ImpcWebApiMapper(luigi.Task):
