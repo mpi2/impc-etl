@@ -236,8 +236,12 @@ class ImpcGeneSummaryMapper(PySparkTask):
                 "embryoExpressionObservationsAverage"
             ),
         )
-        gene_avg_df.write.json(output_path + "_avgs")
-        gene_df.repartition(100).write.json(output_path)
+        gene_avg_df.write.option("ignoreNullFields", "false").json(
+            output_path + "_avgs"
+        )
+        gene_df.repartition(100).write.option("ignoreNullFields", "false").json(
+            output_path
+        )
 
 
 def get_lacz_expression_count(observations_df, lacz_lifestage):
@@ -615,7 +619,7 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
         gp_df = gp_df.withColumnRenamed("phenotypingCenter", "phenotypingCentre")
         gp_df = gp_df.withColumn("pValue", col("pValue").astype(DoubleType()))
         gp_df = gp_df.withColumn("effectSize", col("effectSize").astype(DoubleType()))
-        gp_df.write.json(output_path)
+        gp_df.write.option("ignoreNullFields", "false").json(output_path)
 
 
 class ImpcLacZExpressionMapper(PySparkTask):
@@ -682,7 +686,9 @@ class ImpcLacZExpressionMapper(PySparkTask):
         lacz_expression_data = lacz_expression_data.withColumnRenamed(
             "geneAccessionId", "mgiGeneAccessionId"
         )
-        lacz_expression_data.repartition(1000).write.json(output_path)
+        lacz_expression_data.repartition(1000).write.option(
+            "ignoreNullFields", "false"
+        ).json(output_path)
 
 
 class ImpcPublicationsMapper(PySparkTask):
