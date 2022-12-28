@@ -5,7 +5,7 @@ default: clean devDeps build
 
 # submit-h: clean devDeps build
 submit-h: clean build
-	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' PYSPARK_PYTHON=./environment/bin/python luigi --module impc_etl.workflow.main $(task) --workers 3
+	source venv/bin/activate && LUIGI_CONFIG_PATH='luigi-prod.cfg'  PYTHONPATH='.' PYSPARK_PYTHON=python luigi --module impc_etl.workflow.main $(task) --workers 3
 
 # submit-h: clean devDeps build
 submit-h-daily: clean build createDailyLuigiCfg
