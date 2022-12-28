@@ -45,9 +45,9 @@ from impc_etl.jobs.extract import (
     OntologyMetadataExtractor,
 )
 from impc_etl.jobs.transform import ExperimentBWAgeCalculator
-from impc_etl.jobs.transform.experiment_parameter_derivator import (
-    LineLevelExperimentParameterDerivator,
-)
+#from impc_etl.jobs.transform.experiment_parameter_derivator import (
+#    LineLevelExperimentParameterDerivator,
+#)
 from impc_etl.jobs.transform.specimen_cross_ref import (
     MouseSpecimenCrossRef,
     EmbryoSpecimenCrossRef,
@@ -88,7 +88,6 @@ class ExperimentToObservationMapper(PySparkTask):
         """
         return [
             ExperimentBWAgeCalculator(),
-            LineLevelExperimentParameterDerivator(),
             MouseSpecimenCrossRef(),
             EmbryoSpecimenCrossRef(),
             MGIPhenotypicAlleleExtractor(),

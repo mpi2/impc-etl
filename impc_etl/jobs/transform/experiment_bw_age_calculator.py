@@ -32,9 +32,9 @@ from pyspark.sql.types import (
 )
 
 from impc_etl.jobs.extract import ImpressExtractor
-from impc_etl.jobs.transform.experiment_parameter_derivator import (
-    SpecimenLevelExperimentParameterDerivator,
-)
+#from impc_etl.jobs.transform.experiment_parameter_derivator import (
+#    SpecimenLevelExperimentParameterDerivator,
+#)
 from impc_etl.jobs.transform.specimen_cross_ref import MouseSpecimenCrossRef
 from impc_etl.shared.utils import (
     unix_time_millis,
@@ -63,7 +63,6 @@ class ExperimentBWAgeCalculator(PySparkTask):
         Defines the luigi  task dependencies
         """
         return [
-            SpecimenLevelExperimentParameterDerivator(),
             MouseSpecimenCrossRef(),
             ImpressExtractor(),
         ]
