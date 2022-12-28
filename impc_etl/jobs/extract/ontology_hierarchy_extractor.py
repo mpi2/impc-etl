@@ -76,7 +76,7 @@ class OntologyTermHierarchyExtractor(PySparkTask):
         },
         {
             "id": "ma",
-            "format": "obo",
+            "format": "owl",
             "top_level_terms": [
                 "MA:0000004",
                 "MA:0000007",
