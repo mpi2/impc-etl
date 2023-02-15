@@ -1087,7 +1087,7 @@ class ImpcSupportingDataMapper(PySparkTask):
 
     def requires(self):
         return [
-            StatsResultsMapper(raw_data_in_output="bundled"),
+            StatsResultsMapper(),
         ]
 
     def output(self):
@@ -1353,7 +1353,7 @@ class ImpcSupportingDataMapper(PySparkTask):
         stats_results_df = stats_results_df.withColumn(
             "femaleMutantCount", col("femaleMutantCount").astype(IntegerType())
         )
-        stats_results_df.repartition(1000).write.option(
+        stats_results_df.limit(100).repartition(1000).write.option(
             "ignoreNullFields", "false"
         ).json(output_path)
 
