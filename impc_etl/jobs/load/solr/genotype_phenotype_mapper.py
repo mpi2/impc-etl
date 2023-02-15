@@ -45,6 +45,8 @@ BAD_MP_MAP = {
 }
 
 GENOTYPE_PHENOTYPE_COLUMNS = [
+    "statistical_result_id",
+    "data_type",
     "mpath_term_id",
     "mpath_term_name",
     "marker_symbol",
@@ -142,6 +144,9 @@ class GenotypePhenotypeLoader(PySparkTask):
         stats_results_df = spark.read.parquet(stats_results_parquet_path)
         ontology_df = spark.read.parquet(ontology_parquet_path)
 
+        stats_results_df = stats_results_df.withColumnRenamed(
+            "doc_id", "statistical_result_id"
+        )
         genotype_phenotype_df = stats_results_df.where(
             col("significant") == True
         ).select(GENOTYPE_PHENOTYPE_COLUMNS + STATS_RESULTS_COLUMNS)
