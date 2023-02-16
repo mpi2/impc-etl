@@ -1165,9 +1165,6 @@ class ImpcSupportingDataMapper(PySparkTask):
                 "male_mutant_count",
                 "male_mutant_mean",
                 "male_mutant_sd",
-                "both_control_count",
-                "both_control_mean",
-                "both_control_sd",
                 "both_mutant_count",
                 "both_mutant_mean",
                 "both_mutant_sd",
@@ -1213,7 +1210,6 @@ class ImpcSupportingDataMapper(PySparkTask):
         int_columns = [
             "female_control_count",
             "male_control_count",
-            "both_control_count",
             "female_mutant_count",
             "male_mutant_count",
             "both_mutant_count",
@@ -1284,9 +1280,6 @@ class ImpcSupportingDataMapper(PySparkTask):
             "male_mutant_count",  # group under summaryStatistics
             "male_mutant_mean",  # group under summaryStatistics
             "male_mutant_sd",  # group under summaryStatistics
-            "both_control_count",  # group under summaryStatistics
-            "both_control_mean",  # group under summaryStatistics
-            "both_control_sd",  # group under summaryStatistics
             "both_mutant_count",  # group under summaryStatistics
             "both_mutant_mean",  # group under summaryStatistics
             "both_mutant_sd",  # group under summaryStatistics
