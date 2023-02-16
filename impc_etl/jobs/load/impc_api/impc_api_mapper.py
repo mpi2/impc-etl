@@ -1425,13 +1425,6 @@ class ImpcSupportingDataMapper(PySparkTask):
                 if col_name in col_name_map
                 else to_camel_case(col_name),
             )
-
-        stats_results_df = stats_results_df.withColumn(
-            "maleMutantCount", col("maleMutantCount").astype(IntegerType())
-        )
-        stats_results_df = stats_results_df.withColumn(
-            "femaleMutantCount", col("femaleMutantCount").astype(IntegerType())
-        )
         stats_results_df.limit(100).repartition(1000).write.option(
             "ignoreNullFields", "false"
         ).json(output_path)
