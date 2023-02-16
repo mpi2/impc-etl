@@ -1248,7 +1248,7 @@ class ImpcSupportingDataMapper(PySparkTask):
             "female_ko_parameter_estimate",  # group under statisticalMethod.attributes
             "female_percentage_change",  # group under statisticalMethod.attributes
             "genotype_effect_p_value",  # group under statisticalMethod.attributes
-            "genotypeEffectStderrEstimate",  # group under statisticalMethod.attributes
+            "genotype_effect_stderr_estimate",  # group under statisticalMethod.attributes
             "group_1_genotype",  # group under statisticalMethod.attributes
             "group_1_residuals_normality_test",  # group under statisticalMethod.attributes
             "group_2_genotype",  # group under statisticalMethod.attributes
