@@ -1335,17 +1335,17 @@ class ImpcSupportingDataMapper(PySparkTask):
             for column in columns:
                 if type(column) == str:
                     fields.append(
-                        col_name_map[column]
+                        col(column).alias(col_name_map[column])
                         if column in col_name_map
-                        else to_camel_case(column)
+                        else col(column).alias(to_camel_case(column))
                     )
                 else:
                     fields.append(
                         struct(
                             *[
-                                col_name_map[sub_column]
+                                col(sub_column).alias(col_name_map[sub_column])
                                 if sub_column in col_name_map
-                                else to_camel_case(sub_column)
+                                else col(sub_column).alias(to_camel_case(sub_column))
                                 for sub_column in column.keys()
                             ]
                         ).alias(column)
