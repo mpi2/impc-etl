@@ -1340,16 +1340,19 @@ class ImpcSupportingDataMapper(PySparkTask):
                         else col(column).alias(to_camel_case(column))
                     )
                 else:
-                    fields.append(
-                        struct(
-                            *[
-                                col(sub_column).alias(col_name_map[sub_column])
-                                if sub_column in col_name_map
-                                else col(sub_column).alias(to_camel_case(sub_column))
-                                for sub_column in column.keys()
-                            ]
-                        ).alias(column)
-                    )
+                    for sub_field_name in column.keys():
+                        fields.append(
+                            struct(
+                                *[
+                                    col(sub_column).alias(col_name_map[sub_column])
+                                    if sub_column in col_name_map
+                                    else col(sub_column).alias(
+                                        to_camel_case(sub_column)
+                                    )
+                                    for sub_column in column[sub_field_name]
+                                ]
+                            ).alias(sub_field_name)
+                        )
 
             stats_results_df = stats_results_df.withColumn(
                 struct_col_name,
