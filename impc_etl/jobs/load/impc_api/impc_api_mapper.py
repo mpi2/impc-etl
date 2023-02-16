@@ -1372,6 +1372,8 @@ class ImpcSupportingDataMapper(PySparkTask):
             "top_level_mp_term_name",
             "intermediate_mp_term_id",
             "intermediate_mp_term_name",
+            "mp_term_id_options",
+            "mp_term_name_options",
         )
 
         stats_results_df = stats_results_df.withColumnRenamed(
