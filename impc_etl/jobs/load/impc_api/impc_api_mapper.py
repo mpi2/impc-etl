@@ -1171,7 +1171,7 @@ class ImpcSupportingDataMapper(PySparkTask):
                         "female_ko_parameter_estimate",
                         "female_percentage_change",
                         "genotype_effect_p_value",
-                        "genotypeEffectStderrEstimate",
+                        "genotype_effect_stderr_estimate",
                         "group_1_genotype",
                         "group_1_residuals_normality_test",
                         "group_2_genotype",
