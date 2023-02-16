@@ -2,7 +2,7 @@ import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
-from pyspark.sql.types import DoubleType, IntegerType, BooleanType
+from pyspark.sql.types import DoubleType, IntegerType, BooleanType, ArrayType
 from pyspark.sql.functions import (
     col,
     first,
@@ -17,6 +17,8 @@ from pyspark.sql.functions import (
     count,
     max,
     avg,
+    regexp_replace,
+    split,
 )
 
 from impc_etl.jobs.extract import ProductReportExtractor
@@ -1145,6 +1147,8 @@ class ImpcSupportingDataMapper(PySparkTask):
             "soft_windowing_threshold": "threshold",
             "soft_windowing_number_of_doe": "numberOfDoe",
             "soft_windowing_doe_note": "doeNote",
+            "effect_size": "reportedEffectSize",
+            "p_value": "reportedPValue",
         }
 
         new_structs_dict = {
@@ -1161,6 +1165,9 @@ class ImpcSupportingDataMapper(PySparkTask):
                 "male_mutant_count",
                 "male_mutant_mean",
                 "male_mutant_sd",
+                "both_mutant_count",
+                "both_mutant_mean",
+                "both_mutant_sd",
             ],
             "statisticalMethod": [
                 "statistical_method",
@@ -1188,7 +1195,46 @@ class ImpcSupportingDataMapper(PySparkTask):
                     ]
                 },
             ],
+            "softWindowing": [
+                "soft_windowing_bandwidth",
+                "soft_windowing_shape",
+                "soft_windowing_peaks",
+                "soft_windowing_min_obs_required",
+                "soft_windowing_total_obs_or_weight",
+                "soft_windowing_threshold",
+                "soft_windowing_number_of_doe",
+                "soft_windowing_doe_note",
+            ],
         }
+
+        int_columns = [
+            "female_control_count",
+            "male_control_count",
+            "both_control_count",
+            "female_mutant_count",
+            "male_mutant_count",
+            "both_mutant_count",
+        ]
+        double_columns = [
+            "p_value",
+            "effect_size",
+            "female_ko_effect_p_value",
+            "female_ko_parameter_estimate",
+            "female_percentage_change",
+            "genotype_effect_p_value",
+            "male_ko_effect_p_value",
+            "male_ko_parameter_estimate",
+            "male_percentage_change",
+        ]
+
+        for col_name in int_columns:
+            stats_results_df = stats_results_df.withColumn(
+                col_name, col(col_name).astype(IntegerType())
+            )
+        for col_name in double_columns:
+            stats_results_df = stats_results_df.withColumn(
+                col_name, col(col_name).astype(DoubleType())
+            )
 
         for col_name in explode_cols:
             stats_results_df = stats_results_df.withColumn(col_name, explode(col_name))
@@ -1235,6 +1281,9 @@ class ImpcSupportingDataMapper(PySparkTask):
             "male_mutant_count",  # group under summaryStatistics
             "male_mutant_mean",  # group under summaryStatistics
             "male_mutant_sd",  # group under summaryStatistics
+            "both_mutant_count",  # group under summaryStatistics
+            "both_mutant_mean",  # group under summaryStatistics
+            "both_mutant_sd",  # group under summaryStatistics
             "status",
             "sex",  # phenotypeSex
             "phenotype_sex",  # testedSexes
@@ -1277,10 +1326,15 @@ class ImpcSupportingDataMapper(PySparkTask):
             "top_level_mp_term_id",
             "top_level_mp_term_name",
             "mp_term_id_options",
-            "mp_term_name_options"
-            ## mp_terms. intermediate_mp_terms, top_level_mp_terms mapped to new structure
+            "mp_term_name_options",
         )
 
+        stats_results_df = stats_results_df.withColumn(
+            "soft_windowing_peaks",
+            split(regexp_replace("soft_windowing_peaks", "[|]", ""), ",").cast(
+                "array<int>"
+            ),
+        )
         stats_results_df = stats_results_df.withColumn(
             "significantPhenotype",
             struct(col("mp_term_id").alias("id"), col("mp_term_name").alias("name")),
@@ -1329,6 +1383,7 @@ class ImpcSupportingDataMapper(PySparkTask):
         )
         stats_results_df = stats_results_df.withColumn("id", col("mgiGeneAccessionId"))
 
+        drop_list = []
         for struct_col_name in new_structs_dict.keys():
             columns = new_structs_dict[struct_col_name]
             fields = []
@@ -1339,6 +1394,7 @@ class ImpcSupportingDataMapper(PySparkTask):
                         if column in col_name_map
                         else col(column).alias(to_camel_case(column))
                     )
+                    drop_list.append(column)
                 else:
                     for sub_field_name in column.keys():
                         fields.append(
@@ -1353,11 +1409,15 @@ class ImpcSupportingDataMapper(PySparkTask):
                                 ]
                             ).alias(sub_field_name)
                         )
+                        for sub_column in column[sub_field_name]:
+                            drop_list.append(sub_column)
 
             stats_results_df = stats_results_df.withColumn(
                 struct_col_name,
                 struct(*fields),
             )
+
+        stats_results_df = stats_results_df.drop(*drop_list)
 
         for col_name in stats_results_df.columns:
             stats_results_df = stats_results_df.withColumnRenamed(
