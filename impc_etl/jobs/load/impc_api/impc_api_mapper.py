@@ -1270,6 +1270,14 @@ class ImpcSupportingDataMapper(PySparkTask):
             "soft_windowing_threshold",  # threshold, group under softWindowing
             "soft_windowing_number_of_doe",  # numberOfDoe, group under softWindowing
             "soft_windowing_doe_note",  # doeNote, group under softWindowing
+            "mp_term_id",
+            "mp_term_name",
+            "intermediate_mp_term_id",
+            "intermediate_mp_term_name",
+            "top_level_mp_term_id",
+            "top_level_mp_term_name",
+            "mp_term_id_options",
+            "mp_term_name_options"
             ## mp_terms. intermediate_mp_terms, top_level_mp_terms mapped to new structure
         )
 
@@ -1291,6 +1299,15 @@ class ImpcSupportingDataMapper(PySparkTask):
             zip_with(
                 "top_level_mp_term_id",
                 "top_level_mp_term_name",
+                lambda x, y: struct(x.alias("id"), y.alias("name")),
+            ),
+        )
+
+        stats_results_df = stats_results_df.withColumn(
+            "potentialPhenotypes",
+            zip_with(
+                "mp_term_id_options",
+                "mp_term_name_options",
                 lambda x, y: struct(x.alias("id"), y.alias("name")),
             ),
         )
