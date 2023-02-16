@@ -1425,7 +1425,7 @@ class ImpcSupportingDataMapper(PySparkTask):
                 if col_name in col_name_map
                 else to_camel_case(col_name),
             )
-        stats_results_df.limit(100).repartition(1000).write.option(
+        stats_results_df.limit(1000).repartition(1000).write.option(
             "ignoreNullFields", "false"
         ).json(output_path)
 
