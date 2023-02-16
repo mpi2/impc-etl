@@ -1163,7 +1163,7 @@ class ImpcSupportingDataMapper(PySparkTask):
                 "male_mutant_sd",
             ],
             "statisticalMethod": [
-                "name",
+                "statistical_method",
                 {
                     "attributes": [
                         "female_ko_effect_p_value",
