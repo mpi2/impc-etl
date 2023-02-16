@@ -16,6 +16,7 @@ from impc_etl.jobs.load.impc_api.impc_api_mapper import (
     ImpcGeneImagesMapper,
     ImpcGeneDiseasesMapper,
     ImpcGeneHistopathologyMapper,
+    ImpcSupportingDataMapper,
 )
 from impc_etl.jobs.load.impc_api.impc_gene_bundle_mapper import ImpcGeneBundleMapper
 from impc_etl.jobs.load.impc_images_mapper import ImagesPipelineInputGenerator
@@ -172,4 +173,5 @@ class ImpcWebApiMapper(luigi.Task):
             ImpcGeneDiseasesMapper(),
             ImpcPublicationsMapper(),
             ImpcProductsMapper(),
+            ImpcSupportingDataMapper(),
         ]
