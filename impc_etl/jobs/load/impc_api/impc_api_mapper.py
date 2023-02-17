@@ -1330,7 +1330,7 @@ class ImpcSupportingDataMapper(PySparkTask):
 
         stats_results_df = stats_results_df.withColumn(
             "soft_windowing_peaks",
-            split(regexp_replace("soft_windowing_peaks", "[|]", ""), ",").cast(
+            split(regexp_replace("soft_windowing_peaks", "\[|\]", ""), ",").cast(
                 "array<int>"
             ),
         )
