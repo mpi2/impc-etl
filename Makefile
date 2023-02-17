@@ -87,8 +87,8 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	cd $(staging-path) && mkdir $(dr-tag)
 	cd $(staging-path)/$(dr-tag) && mkdir tracking mgi ontologies xml parquet solr misc
 	cd $(staging-path)/$(dr-tag)/xml && mkdir impc 3i europhenome pwg
-	curl https://www.gentar.org/tracker-api/api/reports/gene_interest > $(staging-path)/$(dr-tag)/tracking/gene_interest.csv
-	curl https://www.gentar.org/tracker-api/api/reports/phenotyping_colonies > $(staging-path)/$(dr-tag)/tracking/phenotyping_colonies.csv
+	curl https://www.gentar.org/tracker-api/api/reports/gene_interest > $(staging-path)/$(dr-tag)/tracking/gene_interest.tsv
+	curl https://www.gentar.org/tracker-api/api/reports/phenotyping_colonies > $(staging-path)/$(dr-tag)/tracking/phenotyping_colonies.tsv
 	cp $(raw-data-path)/prep-area/gentar-products-latest.tsv $(staging-path)/$(dr-tag)/tracking/gentar-products-latest.tsv
 	cp -r $(ontologies-path)/*  $(staging-path)/$(dr-tag)/ontologies/
 	cp -r $(input-data-path)/ontologies-to-keep/* $(staging-path)/$(dr-tag)/ontologies/
