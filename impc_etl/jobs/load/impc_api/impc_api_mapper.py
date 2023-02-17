@@ -388,7 +388,6 @@ def to_camel_case(snake_str):
 
 
 class ImpcGeneStatsResultsMapper(PySparkTask):
-
     """
     PySpark Task class to extract GenTar Product report data.
     """
@@ -524,7 +523,6 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
 
 
 class ImpcGenePhenotypeHitsMapper(PySparkTask):
-
     """
     PySpark Task class to extract GenTar Product report data.
     """
@@ -1076,7 +1074,6 @@ class ImpcGeneHistopathologyMapper(PySparkTask):
 
 
 class ImpcSupportingDataMapper(PySparkTask):
-
     """
     PySpark Task class to extract GenTar Product report data.
     """
@@ -1334,16 +1331,28 @@ class ImpcSupportingDataMapper(PySparkTask):
                 "array<int>"
             ),
         )
+
         stats_results_df = stats_results_df.withColumn(
             "significantPhenotype",
-            struct(col("mp_term_id").alias("id"), col("mp_term_name").alias("name")),
+            when(
+                col("mp_term_id").isNotNull(),
+                struct(
+                    col("mp_term_id").alias("id"), col("mp_term_name").alias("name")
+                ),
+            ).otherwise(lit(None)),
         )
+
+        def phenotype_term_zip_udf(x, y):
+            return when(
+                x.isNotNull(), struct(x.alias("id"), y.alias("name"))
+            ).otherwise(lit(None))
+
         stats_results_df = stats_results_df.withColumn(
             "intermediatePhenotypes",
             zip_with(
                 "intermediate_mp_term_id",
                 "intermediate_mp_term_name",
-                lambda x, y: struct(x.alias("id"), y.alias("name")),
+                phenotype_term_zip_udf,
             ),
         )
 
@@ -1352,7 +1361,7 @@ class ImpcSupportingDataMapper(PySparkTask):
             zip_with(
                 "top_level_mp_term_id",
                 "top_level_mp_term_name",
-                lambda x, y: struct(x.alias("id"), y.alias("name")),
+                phenotype_term_zip_udf,
             ),
         )
 
@@ -1361,7 +1370,7 @@ class ImpcSupportingDataMapper(PySparkTask):
             zip_with(
                 "mp_term_id_options",
                 "mp_term_name_options",
-                lambda x, y: struct(x.alias("id"), y.alias("name")),
+                phenotype_term_zip_udf,
             ),
         )
 
@@ -1382,7 +1391,9 @@ class ImpcSupportingDataMapper(PySparkTask):
         stats_results_df = stats_results_df.withColumnRenamed(
             "doc_id", "statistical_result_id"
         )
-        stats_results_df = stats_results_df.withColumn("id", col("mgiGeneAccessionId"))
+        stats_results_df = stats_results_df.withColumn(
+            "id", col("statistical_result_id")
+        )
 
         drop_list = []
         for struct_col_name in new_structs_dict.keys():
