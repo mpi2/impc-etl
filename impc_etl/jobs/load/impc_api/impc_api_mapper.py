@@ -625,6 +625,7 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
         gp_df = gp_df.withColumn("lifeStageName", explode("lifeStageName"))
         gp_df = gp_df.withColumnRenamed("topLevelPhenotype", "topLevelPhenotypes")
         gp_df = gp_df.withColumnRenamed("phenotypingCenter", "phenotypingCentre")
+        gp_df = gp_df.withColumnRenamed("statisticalResultId", "datasetId")
         gp_df = gp_df.withColumn("pValue", col("pValue").astype(DoubleType()))
         gp_df = gp_df.withColumn("effectSize", col("effectSize").astype(DoubleType()))
         gp_df.repartition(100).write.option("ignoreNullFields", "false").json(
@@ -1095,7 +1096,7 @@ class ImpcSupportingDataMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/supporting_data_service_json"
+            f"{self.output_path}/impc_web_api/datasets_metadata_service_json"
         )
 
     def app_options(self):
@@ -1128,7 +1129,7 @@ class ImpcSupportingDataMapper(PySparkTask):
             "life_stage_acc",
         ]
         col_name_map = {
-            "doc_id": "statisticalResultId",
+            "doc_id": "datasetId",
             "marker_accession_id": "mgiGeneAccessionId",
             "marker_symbol": "geneSymbol",
             "metadata": "metadataValues",
