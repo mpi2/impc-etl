@@ -154,8 +154,6 @@ class StatsResultsMapper(PySparkTask):
                 for col_name in WINDOW_COLUMNS
                 if col_name != "observations_window_weight"
             ]
-            if raw_data_in_output == "bundled":
-                stats_results_column_list = stats_results_column_list + ["raw_data"]
             stats_results_df = open_stats_df.select(*stats_results_column_list)
             stats_results_df = stats_results_df.repartition(50000)
         else:
@@ -169,6 +167,11 @@ class StatsResultsMapper(PySparkTask):
         if raw_data_in_output == "include":
             raw_data_df = open_stats_df.select("doc_id", "raw_data")
             raw_data_df.distinct().write.parquet(output_path + "_raw_data")
+        if raw_data_in_output == "bundled":
+            raw_data_df = open_stats_df.select(
+                "doc_id", "observation_id", "window_weight"
+            )
+            raw_data_df.distinct().write.parquet(output_path + "_raw_data_ids")
 
     def get_stats_results_core(
         self,
@@ -759,12 +762,15 @@ class StatsResultsMapper(PySparkTask):
                 row["external_sample_id"]: row["date_of_birth"]
                 for row in specimen_dob_dict
             }
-            open_stats_df = self._parse_raw_data(
-                open_stats_df,
-                extract_windowed_data,
-                specimen_dob_dict,
-                raw_data_in_output != "bundled",
-            )
+            if raw_data_in_output == "bundled":
+                open_stats_df = self._parse_raw_data_id_only(open_stats_df)
+            else:
+                open_stats_df = self._parse_raw_data(
+                    open_stats_df,
+                    extract_windowed_data,
+                    specimen_dob_dict,
+                    raw_data_in_output != "bundled",
+                )
         open_stats_df = open_stats_df.withColumn(
             "data_type",
             f.when(
@@ -795,6 +801,15 @@ class StatsResultsMapper(PySparkTask):
             return str(
                 base64.b64encode(gzip.compress(bytes(json_text, "utf-8"))), "utf-8"
             )
+
+    def _parse_raw_data_id_only(self, open_stats_df):
+        open_stats_df = open_stats_df.withColumnRenamed(
+            "observations_id", "observation_id"
+        )
+        open_stats_df = open_stats_df.withColumnRenamed(
+            "observations_window_weight", "window_weight"
+        )
+        return open_stats_df
 
     def _parse_raw_data(
         self, open_stats_df, extract_windowed_data, specimen_dob_dict, compress=True
