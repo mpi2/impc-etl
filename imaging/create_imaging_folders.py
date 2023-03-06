@@ -45,7 +45,7 @@ def main(dataFile, outFolder):
             siteData[el['pipelineKey']] = pipelineData
             masterData[site] = siteData
 
-    mode = 0o666
+    mode = 0o766
     for site in masterData:
         siteFolder = join(outFolder, site)
         siteData = masterData[site]
