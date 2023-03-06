@@ -126,11 +126,6 @@ imaging-data-media: ## Create folder structure for the imaging data
 	[ -f $(staging-path)/$(dr-tag)-imaging/media-json/data.json ] && echo "Media data successfully retrieved." || exit
 
 
-prep-imaging-env:
-	ssh mi_adm@komp-jenkins "cd /nfs/public/rw/komp/hx_migration/komp2/web/images/holding_area/impc && mkdir $(dr-tag)"
-	ssh mi_adm@komp-jenkins "cd /nfs/public/rw/komp/hx_migration/komp2/web/images/holding_area/impc/$(dr-tag) && git clone https://github.com/mpi2/impc-etl.git"
-
-
 createProdLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
 	sed 's/%DR_TAG%/$(dr-tag)/' luigi.cfg.template > luigi-prod.cfg
 
