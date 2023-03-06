@@ -130,7 +130,7 @@ imaging-data-download:
 	cd $(staging-path)/$(dr-tag) && mkdir artefacts images logs
 	scp mi_adm@codon-login:$(codon-staging)/$(dr-tag)-imaging/media-json/data.json $(staging-path)/$(dr-tag)/artefacts/data.json
 	python3 imaging/create_imaging_folders.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/
-	python3 imaging/download_images.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/ &
+	python3 imaging/download_images.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag).out &
 
 
 createProdLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
