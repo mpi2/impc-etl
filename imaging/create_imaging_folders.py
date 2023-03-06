@@ -3,20 +3,21 @@ import os
 import sys
 from os.path import join
 
-SITES = [
-    ('bcm', 'BCM',),
-    ('gmc', 'HMGU',),
-    ('h', 'MRC Harwell'),
-    ('ics', 'ICS',),
-    ('j', 'JAX',),
-    ('tcp', 'TCP'),
-    ('ning', 'NING',),
-    ('rbrc', 'RBRC',),
-    ('ucd', 'UC Davis',),
-    ('wtsi', 'WTSI',),
-    ('kmpc', 'KMPC',),
-    ('ccpcz', 'CCP-IMG',),
-]
+SITES = {
+    'bcm': 'BCM',
+    'gmc': 'HMGU',
+    'h': 'MRC Harwell',
+    'ics': 'ICS',
+    'j': 'JAX',
+    'tcp': 'TCP',
+    'ning': 'NING',
+    'rbrc': 'RBRC',
+    'ucd': 'UC Davis',
+    'wtsi': 'WTSI',
+    'kmpc': 'KMPC',
+    'ccpcz': 'CCP-IMG'
+}
+
 
 def main(dataFile, outFolder):
     masterData = {}
