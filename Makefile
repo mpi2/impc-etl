@@ -121,9 +121,15 @@ imaging-data-media: ## Create folder structure for the imaging data
 	cd $(staging-path) && mkdir $(dr-tag)-imaging
 	cd $(staging-path)/$(dr-tag)-imaging && mkdir media-json
 	chgrp phenomics $(staging-path)/$(dr-tag)-imaging
-	chmod -R g+sw $(staging-path)/$(dr-tag)-imaging
+	chmod -R g+srw $(staging-path)/$(dr-tag)-imaging
 	python3 imaging/retrieve_media_updates.py $(target-date) $(staging-path)/$(dr-tag)-imaging/media-json/
 	[ -f $(staging-path)/$(dr-tag)-imaging/media-json/data.json ] && echo "Media data successfully retrieved." || exit
+
+
+imaging-data-download:
+	cd $(staging-path)/$(dr-tag) && mkdir artefacts images logs
+	scp mi_adm@codon-login:$(codon-staging)/$(dr-tag)-imaging/media-json/data.json $(staging-path)/$(dr-tag)/artefacts/data.json
+	python3 imaging/create_imaging_folders.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/
 
 
 createProdLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
