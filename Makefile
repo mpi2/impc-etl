@@ -112,6 +112,14 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	cd $(staging-path)/$(dr-tag)/misc/ && rm embryo_data_og.json
 	scp -r $(staging-path)/$(dr-tag) $(etl-host):$(etl-dir)/
 
+
+imaging-data: ## Create folder structure for the imaging data
+	cd $(staging-path) && mkdir $(dr-tag)-imaging
+	cd $(staging-path)/$(dr-tag)-imaging && mkdir media-json
+	chmod -R g+w $(staging-path)/$(dr-tag)-imaging
+	python3 imaging/retrieve_media_updates.py $(target-date) $(staging-path)/$(dr-tag)-imaging/media-json/
+
+
 createProdLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
 	sed 's/%DR_TAG%/$(dr-tag)/' luigi.cfg.template > luigi-prod.cfg
 
