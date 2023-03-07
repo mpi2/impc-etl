@@ -83,13 +83,17 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	cp $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile) $(input-data-path)/dcc-data-archive/$(dr-tag)
 	tar xzvf  $(input-data-path)/dcc-data-archive/$(dr-tag)/$(zipFile) --directory $(input-data-path)/dcc-data-archive/$(dr-tag)/
 	cd $(raw-data-path)
-	chmod -R g+w $(raw-data-path)/$(dr-tag)
+	chgrp phenomics $(raw-data-path)/$(dr-tag)
+	chmod -R g+sw $(raw-data-path)/$(dr-tag)
 	cd $(staging-path) && mkdir $(dr-tag)
 	cd $(staging-path)/$(dr-tag) && mkdir tracking mgi ontologies xml parquet solr misc
 	cd $(staging-path)/$(dr-tag)/xml && mkdir impc 3i europhenome pwg
+	chgrp phenomics $(staging-path)/$(dr-tag)
+	chmod -R g+sw $(staging-path)/$(dr-tag)
 	curl https://www.gentar.org/tracker-api/api/reports/gene_interest > $(staging-path)/$(dr-tag)/tracking/gene_interest.tsv
 	curl https://www.gentar.org/tracker-api/api/reports/phenotyping_colonies > $(staging-path)/$(dr-tag)/tracking/phenotyping_colonies.tsv
-	cp $(raw-data-path)/prep-area/gentar-products-latest.tsv $(staging-path)/$(dr-tag)/tracking/gentar-products-latest.tsv
+	cp -r $(input-data-path)/gentar-data-archive/product_reports/gentar-products-latest.tsv $(staging-path)/$(dr-tag)/tracking/gentar-products-latest.tsv
+#	cp $(raw-data-path)/prep-area/gentar-products-latest.tsv $(staging-path)/$(dr-tag)/tracking/gentar-products-latest.tsv
 	cp -r $(ontologies-path)/*  $(staging-path)/$(dr-tag)/ontologies/
 	cp -r $(input-data-path)/ontologies-to-keep/* $(staging-path)/$(dr-tag)/ontologies/
 	curl https://raw.githubusercontent.com/obophenotype/mouse-anatomy-ontology/master/emapa.obo > $(staging-path)/$(dr-tag)/ontologies/emapa.obo
@@ -111,6 +115,27 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	cd $(staging-path)/$(dr-tag)/misc/ && tr -d '\n' < embryo_data_og.json > embryo_data.json
 	cd $(staging-path)/$(dr-tag)/misc/ && rm embryo_data_og.json
 	scp -r $(staging-path)/$(dr-tag) $(etl-host):$(etl-dir)/
+
+
+imaging-data-media: ## Create folder structure for the imaging data
+	@if [ ! -d "$(staging-path)/$(dr-tag)-imaging" ]; then mkdir $(staging-path)/$(dr-tag)-imaging; fi
+	@if [ ! -d "$(staging-path)/$(dr-tag)-imaging/media-json" ]; then mkdir $(staging-path)/$(dr-tag)-imaging/media-json; fi
+	@chgrp phenomics $(staging-path)/$(dr-tag)-imaging
+	@chmod -R g+srw $(staging-path)/$(dr-tag)-imaging
+	@if [ -f "$(staging-path)/$(dr-tag)-imaging/media-json/data.json" ]; then rm -rf $(staging-path)/$(dr-tag)-imaging/media-json/data.json; fi
+	@python3 imaging/retrieve_media_updates.py $(target-date) $(staging-path)/$(dr-tag)-imaging/media-json/
+	@if [ -f "$(staging-path)/$(dr-tag)-imaging/media-json/data.json" ]; then echo "Media data successfully retrieved."; else "Unable to retrieve media data"; fi
+
+
+imaging-data-download:
+	@if [ ! -d "$(staging-path)/$(dr-tag)/artefacts" ]; then mkdir $(staging-path)/$(dr-tag)/artefacts; fi
+	@if [ ! -d "$(staging-path)/$(dr-tag)/images" ]; then mkdir $(staging-path)/$(dr-tag)/images; fi
+	@if [ ! -d "$(staging-path)/$(dr-tag)/logs" ]; then mkdir $(staging-path)/$(dr-tag)/logs; fi
+	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/data.json" ]; then rm -rf $(staging-path)/$(dr-tag)/artefacts/data.json; fi
+	@scp mi_adm@codon-login:$(codon-staging)/$(dr-tag)-imaging/media-json/data.json $(staging-path)/$(dr-tag)/artefacts/data.json
+	@python3 imaging/create_imaging_folders.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/
+	@python3 imaging/download_images.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag).out
+
 
 createProdLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
 	sed 's/%DR_TAG%/$(dr-tag)/' luigi.cfg.template > luigi-prod.cfg
