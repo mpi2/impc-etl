@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 
 import requests
@@ -23,6 +24,9 @@ def main(targetDate, outFolder):
         offset += 1
 
     print('- Retrieved {} entries ...'.format(total))
+
+    if os.path.isfile(outFolder + 'data.json'):
+        os.remove(outFolder + 'data.json')
 
     with open(outFolder + 'data.json', 'w') as filehandle:
         json.dump(all_data, filehandle, sort_keys=True, indent=4)

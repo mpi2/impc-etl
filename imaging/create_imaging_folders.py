@@ -49,12 +49,15 @@ def main(dataFile, outFolder):
     for site in masterData:
         siteFolder = join(outFolder, site)
         siteData = masterData[site]
-        os.mkdir(siteFolder, mode=mode)
+
+        if not os.path.isdir(siteFolder):
+            os.mkdir(siteFolder, mode=mode)
 
         for pipelineKey in siteData:
             pipelineFolder = join(siteFolder, pipelineKey)
             pipelineData = siteData[pipelineKey]
-            os.mkdir(pipelineFolder, mode=mode)
+            if not os.path.isdir(pipelineFolder):
+                os.mkdir(pipelineFolder, mode=mode)
 
             for procedureKey in pipelineData:
                 procedureFolder = join(pipelineFolder, procedureKey)
@@ -63,7 +66,8 @@ def main(dataFile, outFolder):
 
                 for paramKey in procedureData:
                     paramFolder = join(procedureFolder, paramKey)
-                    os.mkdir(paramFolder, mode=mode)
+                    if not os.path.isdir(paramFolder):
+                        os.mkdir(paramFolder, mode=mode)
 
 
 if __name__ == "__main__":
