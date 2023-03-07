@@ -1535,7 +1535,7 @@ class ImpcDatasetsMapper(PySparkTask):
         datasets_col_map = {
             "doc_id": "datasetId",
             "biological_sample_group": "sampleGroup",
-            "specimen_sex": "specimenSex",
+            "sex": "specimenSex",
             "date_of_birth": "specimenDateOfBirth",
             "date_of_experiment": "dateOfExperiment",
             "external_sample_id": "specimenId",
