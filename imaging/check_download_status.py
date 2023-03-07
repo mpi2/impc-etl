@@ -47,7 +47,7 @@ def main(jsonFile, logFile):
 
     print(' - Total data entries: {}'.format(len(jsonData)))
     print(' - Total downloaded so far: {} (Success: {} | Failed: {})'.format(total, success, failed))
-    if len(jsonData) == total:
+    if success == total:
         print(' - Download completed!')
         if failed != 0:
             for center in failedData:
