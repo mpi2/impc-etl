@@ -1496,13 +1496,14 @@ class ImpcDatasetsMapper(PySparkTask):
         dataset_observation_index_df = spark.read.parquet(
             dataset_observation_index_parquet_path
         )
+        observations_df = spark.read.parquet(observations_parquet_path)
         dataset_observation_index_df = dataset_observation_index_df.withColumn(
             "obs_id_ww",
             arrays_zip(
                 "observation_id",
-                when(col("window_weight").isNotNull(), col("window_weight")).otherwise(
-                    expr("transform(observation_id, id -> NULL)")
-                ),
+                when(col("window_weight").isNotNull(), col("window_weight"))
+                .otherwise(expr("transform(observation_id, id -> NULL)"))
+                .alias("window_weight"),
             ),
         )
         dataset_observation_index_df = dataset_observation_index_df.drop(
@@ -1514,5 +1515,58 @@ class ImpcDatasetsMapper(PySparkTask):
         dataset_observation_index_df = dataset_observation_index_df.select(
             "doc_id", "obs_id_ww.*"
         )
-        dataset_observation_index_df.show(100, truncate=False)
-        raise EOFError
+        observations_df = observations_df.select(
+            "observation_id",
+            "biological_sample_group",
+            "date_of_experiment",
+            "external_sample_id",
+            "specimen_sex",
+            "body_weight",
+            "data_point",
+            "category",
+            "time_point",
+            "discrete_point",
+            "date_of_birth",
+        ).distinct()
+
+        datasets_df = dataset_observation_index_df.join(
+            observations_df, "observation_id"
+        )
+        datasets_col_map = {
+            "doc_id": "datasetId",
+            "biological_sample_group": "sampleGroup",
+            "specimen_sex": "specimenSex",
+            "date_of_birth": "specimenDateOfBirth",
+            "date_of_experiment": "dateOfExperiment",
+            "external_sample_id": "specimenId",
+            "body_weight": "bodyWeight",
+            "window_weight": "windowWeight",
+            "category": "category",
+            "data_point": "dataPoint",
+            "time_point": "timePoint",
+            "discrete_point": "discretePoint",
+        }
+        for column_name, new_column_name in datasets_col_map.items():
+            datasets_df = datasets_df.withColumnRenamed(column_name, new_column_name)
+
+        datasets_df = datasets_df.groupBy(
+            "datasetId", "sampleGroup", "specimenSex"
+        ).agg(
+            collect_set(
+                struct(
+                    "specimenDateOfBirth",
+                    "dateOfExperiment",
+                    "specimenId",
+                    "bodyWeight",
+                    "windowWeight",
+                    "category",
+                    "dataPoint",
+                    "timePoint",
+                    "discretePoint",
+                )
+            )
+        )
+
+        datasets_df.limit(1000).repartition("datasetId").write.partitionBy(
+            "datasetId"
+        ).option("ignoreNullFields", "false").json(output_path)
