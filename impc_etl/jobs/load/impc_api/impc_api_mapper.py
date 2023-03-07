@@ -1520,7 +1520,7 @@ class ImpcDatasetsMapper(PySparkTask):
             "biological_sample_group",
             "date_of_experiment",
             "external_sample_id",
-            "specimen_sex",
+            "sex",
             "body_weight",
             "data_point",
             "category",
