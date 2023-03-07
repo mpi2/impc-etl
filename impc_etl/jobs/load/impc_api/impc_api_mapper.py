@@ -19,6 +19,8 @@ from pyspark.sql.functions import (
     avg,
     regexp_replace,
     split,
+    arrays_zip,
+    expr,
 )
 
 from impc_etl.jobs.extract import ProductReportExtractor
@@ -1458,6 +1460,7 @@ class ImpcDatasetsMapper(PySparkTask):
     def requires(self):
         return [
             StatsResultsMapper(raw_data_in_output="bundled"),
+            ExperimentToObservationMapper(),
         ]
 
     def output(self):
@@ -1475,6 +1478,7 @@ class ImpcDatasetsMapper(PySparkTask):
         """
         return [
             self.input()[0].path,
+            self.input()[1].path,
             self.output().path,
         ]
 
@@ -1485,11 +1489,30 @@ class ImpcDatasetsMapper(PySparkTask):
         spark = SparkSession(sc)
 
         # Parsing app options
-        stats_results_parquet_path = args[0]
-        output_path = args[1]
+        dataset_observation_index_parquet_path = args[0] + "_raw_data_ids"
+        observations_parquet_path = args[1]
+        output_path = args[2]
 
-        stats_results_df = spark.read.parquet(stats_results_parquet_path)
-        stats_results_df = stats_results_df.select("doc_id", "raw_data")
-        stats_results_df = stats_results_df.withColumnRenamed("doc_id", "datasetId")
-        stats_results_df.printSchema()
+        dataset_observation_index_df = spark.read.parquet(
+            dataset_observation_index_parquet_path
+        )
+        dataset_observation_index_df = dataset_observation_index_df.withColumn(
+            "obs_id_ww",
+            arrays_zip(
+                "observation_id",
+                when(col("window_weight").isNotNull(), col("window_weight")).otherwise(
+                    expr("transform(observation_id, id -> NULL)")
+                ),
+            ),
+        )
+        dataset_observation_index_df = dataset_observation_index_df.drop(
+            "observation_id", "window_weight"
+        )
+        dataset_observation_index_df = dataset_observation_index_df.withColumn(
+            "obs_id_ww", explode("obs_id_ww")
+        )
+        dataset_observation_index_df = dataset_observation_index_df.select(
+            "doc_id", "obs_id_ww.*"
+        )
+        dataset_observation_index_df.show(100, truncate=False)
         raise EOFError
