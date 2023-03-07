@@ -1498,12 +1498,16 @@ class ImpcDatasetsMapper(PySparkTask):
         )
         observations_df = spark.read.parquet(observations_parquet_path)
         dataset_observation_index_df = dataset_observation_index_df.withColumn(
+            "window_weight",
+            when(col("window_weight").isNotNull(), col("window_weight")).otherwise(
+                expr("transform(observation_id, id -> NULL)")
+            ),
+        )
+        dataset_observation_index_df = dataset_observation_index_df.withColumn(
             "obs_id_ww",
             arrays_zip(
                 "observation_id",
-                when(col("window_weight").isNotNull(), col("window_weight"))
-                .otherwise(expr("transform(observation_id, id -> NULL)"))
-                .alias("window_weight"),
+                "window_weight",
             ),
         )
         dataset_observation_index_df = dataset_observation_index_df.drop(
@@ -1532,6 +1536,7 @@ class ImpcDatasetsMapper(PySparkTask):
         datasets_df = dataset_observation_index_df.join(
             observations_df, "observation_id"
         )
+        datasets_df = datasets_df.drop("observation_id")
         datasets_col_map = {
             "doc_id": "datasetId",
             "biological_sample_group": "sampleGroup",
