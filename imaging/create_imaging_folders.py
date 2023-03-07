@@ -62,7 +62,8 @@ def main(dataFile, outFolder):
             for procedureKey in pipelineData:
                 procedureFolder = join(pipelineFolder, procedureKey)
                 procedureData = pipelineData[procedureKey]
-                os.mkdir(procedureFolder, mode=mode)
+                if not os.path.isdir(procedureFolder):
+                    os.mkdir(procedureFolder, mode=mode)
 
                 for paramKey in procedureData:
                     paramFolder = join(procedureFolder, paramKey)
