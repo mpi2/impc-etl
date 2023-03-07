@@ -118,22 +118,23 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 
 
 imaging-data-media: ## Create folder structure for the imaging data
-	cd $(staging-path) && [ ! -d  $(dr-tag)-imaging ] && mkdir $(dr-tag)-imaging
-	cd $(staging-path)/$(dr-tag)-imaging && [ ! -d  media-json ] && mkdir media-json
-	chgrp phenomics $(staging-path)/$(dr-tag)-imaging
-	chmod -R g+srw $(staging-path)/$(dr-tag)-imaging
-	python3 imaging/retrieve_media_updates.py $(target-date) $(staging-path)/$(dr-tag)-imaging/media-json/
-	[ -f $(staging-path)/$(dr-tag)-imaging/media-json/data.json ] && echo "Media data successfully retrieved." || exit
+	@if [ ! -d "$(staging-path)/$(dr-tag)-imaging" ]; then mkdir $(staging-path)/$(dr-tag)-imaging; fi
+	@if [ ! -d "$(staging-path)/$(dr-tag)-imaging/media-json" ]; then mkdir $(staging-path)/$(dr-tag)-imaging/media-json; fi
+	@chgrp phenomics $(staging-path)/$(dr-tag)-imaging
+	@chmod -R g+srw $(staging-path)/$(dr-tag)-imaging
+	@if [ -f "$(staging-path)/$(dr-tag)-imaging/media-json/data.json" ]; then rm -rf $(staging-path)/$(dr-tag)-imaging/media-json/data.json; fi
+	@python3 imaging/retrieve_media_updates.py $(target-date) $(staging-path)/$(dr-tag)-imaging/media-json/
+	@if [ -f "$(staging-path)/$(dr-tag)-imaging/media-json/data.json" ]; then echo "Media data successfully retrieved."; else "Unable to retrieve media data"; fi
 
 
 imaging-data-download:
-	cd $(staging-path)/$(dr-tag) && [ ! -d  artefacts ] && mkdir artefacts
-	cd $(staging-path)/$(dr-tag) && [ ! -d  images ] && mkdir images
-	cd $(staging-path)/$(dr-tag) && [ ! -d  logs ] && mkdir logs
-	[ -f $(staging-path)/$(dr-tag)/artefacts/data.json ] && rm -rf $(staging-path)/$(dr-tag)/artefacts/data.json
-	scp mi_adm@codon-login:$(codon-staging)/$(dr-tag)-imaging/media-json/data.json $(staging-path)/$(dr-tag)/artefacts/data.json
-	python3 imaging/create_imaging_folders.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/
-	python3 imaging/download_images.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag).out
+	@if [ ! -d "$(staging-path)/$(dr-tag)/artefacts" ]; then mkdir $(staging-path)/$(dr-tag)/artefacts; fi
+	@if [ ! -d "$(staging-path)/$(dr-tag)/images" ]; then mkdir $(staging-path)/$(dr-tag)/images; fi
+	@if [ ! -d "$(staging-path)/$(dr-tag)/logs" ]; then mkdir $(staging-path)/$(dr-tag)/logs; fi
+	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/data.json" ]; then rm -rf $(staging-path)/$(dr-tag)/artefacts/data.json; fi
+	@scp mi_adm@codon-login:$(codon-staging)/$(dr-tag)-imaging/media-json/data.json $(staging-path)/$(dr-tag)/artefacts/data.json
+	@python3 imaging/create_imaging_folders.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/
+	@python3 imaging/download_images.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag).out
 
 
 createProdLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
