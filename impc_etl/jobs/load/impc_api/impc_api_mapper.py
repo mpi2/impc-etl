@@ -1569,9 +1569,9 @@ class ImpcDatasetsMapper(PySparkTask):
                     "timePoint",
                     "discretePoint",
                 )
-            )
+            ).alias("observations")
         )
 
         datasets_df.limit(1000).repartition("datasetId").write.partitionBy(
             "datasetId"
-        ).option("ignoreNullFields", "false").json(output_path)
+        ).json(output_path)
