@@ -51,13 +51,18 @@ def insertNewDataset(newDatasouceId, dataset, parentId, newEventId_DS, newEventI
                             port=omeroProperties[OmeroConstants.OMERO_DB_PORT])
     cur = conn.cursor()
 
-    insertDatasetQuery = "INSERT INTO dataset(id, permissions, name, group_id, owner_id, creation_id, update_id)" \
-                         "VALUES (" + str(newDatasouceId) + ", -56, \'" + dataset + "\', 3, 0, " + str(newEventId_DS) + ", " + str(newEventId_DS) + ");"
+    insertDatasetQuery = "BEGIN;" \
+                         "INSERT INTO dataset(id, permissions, name, group_id, owner_id, creation_id, update_id)" \
+                         "VALUES (" + str(newDatasouceId) + ", -56, \'" + dataset + "\', 3, 0, " + str(
+        newEventId_DS) + ", " + str(newEventId_DS) + ");" \
+                                                     "COMMIT;"
     cur.execute(insertDatasetQuery)
 
-    insertParentLinkQuery = 'INSERT INTO projectdatasetlink(id, permissions, child, parent, group_id, owner_id, creation_id, update_id)' \
+    insertParentLinkQuery = 'BEGIN;' \
+                            'INSERT INTO projectdatasetlink(id, permissions, child, parent, group_id, owner_id, creation_id, update_id)' \
                             'VALUES (' + str(newDatasouceId) + ', -56, ' + str(newDatasouceId) + ', ' + str(
-        parentId) + ', 0, 0, ' + str(newEventId_DS_LINK) + ', ' + str(newEventId_DS_LINK) + ');'
+        parentId) + ', 0, 0, ' + str(newEventId_DS_LINK) + ', ' + str(newEventId_DS_LINK) + ');' \
+                                                                                            'COMMIT;'
     cur.execute(insertParentLinkQuery)
     conn.close()
 
@@ -79,17 +84,12 @@ def createNewDataset(dataset, parent, newDatasouceId, omeroProperties):
         return False
 
     lastEventId = retrieveLatestEventId(omeroProperties)
-    print(lastEventId)
     newEventId_DS = insertNewEvent(omeroProperties, lastEventId)
-    print(newEventId_DS)
 
     lastEventId = retrieveLatestEventId(omeroProperties)
-    print(lastEventId)
     newEventId_DS_LINK = insertNewEvent(omeroProperties, lastEventId)
-    print(newEventId_DS_LINK)
 
-    return False
-#    return insertNewDataset(newDatasouceId, dataset, parentId, newEventId_DS, newEventId_DS_LINK, omeroProperties)
+    return insertNewDataset(newDatasouceId, dataset, parentId, newEventId_DS, newEventId_DS_LINK, omeroProperties)
 
 
 def processPhenoCenter(inputFolder, site, dsData):
@@ -153,6 +153,7 @@ def main(inputFolder, omeroDevPropetiesFile):
         print(' - ' + el)
     if len(totalNewEntries) > 0:
         print(' - ERROR: Something went wrong since there still are new data sources ...')
+
 
 if __name__ == "__main__":
     main(sys.argv[1], sys.argv[2])
