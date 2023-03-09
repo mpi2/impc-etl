@@ -15,10 +15,13 @@ def retrieveLatestEventId(omeroProperties):
                             host=omeroProperties[OmeroConstants.OMERO_DB_HOST],
                             port=omeroProperties[OmeroConstants.OMERO_DB_PORT])
     cur = conn.cursor()
-    query = 'SELECT id FROM event ORDER BY id DESC limit 10'
+    query = 'SELECT id FROM event ORDER BY id DESC limit 1'
     cur.execute(query)
-    for res in cur.fetchall():
-        print(res)
+    last = int(cur.fetchall())
+    print(last)
+
+    query = 'INSERT INTO event(id, permissions, time, experimenter, experimentergroup, session, type)' \
+            'SELECT ' + str() + ', permissions, time, experimenter, experimentergroup, session, type from event where id=130775809;'
     conn.close()
 
 
@@ -63,6 +66,7 @@ def main(inputFolder, omeroDevPropetiesFile):
     dsData = retrieveDatasourcesFromDB(omeroProperties)
 
     retrieveLatestEventId(omeroProperties)
+
 
 #    for folder in os.listdir(inputFolder):
 #        processPhenoCenter(inputFolder, folder, dsData)
