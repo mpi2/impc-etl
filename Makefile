@@ -118,6 +118,7 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 
 
 imaging-data-media: ## Create folder structure for the imaging data
+	@if [ ! -d "$(input-data-path)/imaging-data-archive/$(dr-tag)" ]; then mkdir $(input-data-path)/imaging-data-archive/$(dr-tag); fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)-imaging" ]; then mkdir $(staging-path)/$(dr-tag)-imaging; fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)-imaging/media-json" ]; then mkdir $(staging-path)/$(dr-tag)-imaging/media-json; fi
 	@chgrp phenomics $(staging-path)/$(dr-tag)-imaging
@@ -135,6 +136,12 @@ imaging-data-download:
 	@scp mi_adm@codon-login:$(codon-staging)/$(dr-tag)-imaging/media-json/data.json $(staging-path)/$(dr-tag)/artefacts/data.json
 	@python3 imaging/create_imaging_folders.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/
 	@python3 imaging/download_images.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag).out
+
+
+imaging-omero-upload-prep:
+	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/datasources.json" ]; then rm -rf $(staging-path)/$(dr-tag)/artefacts/datasources.json; fi
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/$(prev-dr-tag)/datasources.json $(staging-path)/$(dr-tag)/artefacts/datasources.json
+	@python3 imaging/check_missing_datasources.py $(staging-path)/$(dr-tag)/images $(staging-path)/$(dr-tag)/artefacts/datasources.json
 
 
 createProdLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
