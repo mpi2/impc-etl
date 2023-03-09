@@ -17,11 +17,13 @@ def retrieveDatasourcesFromDB(omeroProperties):
                             port=omeroProperties[OmeroConstants.OMERO_DB_PORT])
     for dsId in OmeroConstants.DATASOURCE_LIST:
         cur = conn.cursor()
-        query = 'Select ds.id, ds.name from dataset ds inner join projectdatasetlink pdsl on ds.id=pdsl.child where pdsl.parent=' + str(
+        query = 'SELECT ds.id, ds.name, pdsl.parent FROM dataset ds INNER JOIN projectdatasetlink pdsl ON ds.id=pdsl.child WHERE pdsl.parent=' + str(
             dsId)
         cur.execute(query)
-        for (id, name) in cur.fetchall():
-            dsData[name] = int(id)
+        for res in cur.fetchall():
+            print(res)
+#        for (id, name) in cur.fetchall():
+#            dsData[name] = int(id)
     conn.close()
     return dsData
 
@@ -39,15 +41,12 @@ def processPhenoCenter(inputFolder, site, dsData):
             for parameterKey in os.listdir(procedureFolder):
                 entries.append(site + '-' + pipelineKey + '-' + procedureKey + '-' + parameterKey)
 
-    for entry in entries:
-        if not entry in dsData:
-            print(entry)
+#    for entry in entries:
+#        if not entry in dsData:
+#            print(entry)
 
 
-def main(inputFolder, jsonDatasourceFile, omeroDevPropetiesFile):
-    #    with open(jsonDatasourceFile, 'r') as fh:
-    #        dsData = json.load(fh)
-
+def main(inputFolder, omeroDevPropetiesFile):
     omeroProperties = OmeroProperties(omeroDevPropetiesFile).getProperties()
     dsData = retrieveDatasourcesFromDB(omeroProperties)
 
@@ -56,4 +55,4 @@ def main(inputFolder, jsonDatasourceFile, omeroDevPropetiesFile):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], sys.argv[3])
+    main(sys.argv[1], sys.argv[2])
