@@ -15,7 +15,7 @@ def retrieveLatestEventId(omeroProperties):
                             host=omeroProperties[OmeroConstants.OMERO_DB_HOST],
                             port=omeroProperties[OmeroConstants.OMERO_DB_PORT])
     cur = conn.cursor()
-    query = 'SELECT id FROM event ORDER BY id DESC limit 1'
+    query = 'SELECT id, type FROM event ORDER BY id DESC limit 1'
     cur.execute(query)
     for (x, y) in cur.fetchall():
         last = int(x)
