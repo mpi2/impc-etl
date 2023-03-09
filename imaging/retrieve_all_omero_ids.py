@@ -1,4 +1,5 @@
 import sys
+import psycopg2
 
 from imaging import OmeroConstants
 from imaging.omero_util import retrieveDatasourcesFromDB
