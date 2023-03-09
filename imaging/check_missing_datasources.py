@@ -15,14 +15,23 @@ def retrieveLatestEventId(omeroProperties):
                             host=omeroProperties[OmeroConstants.OMERO_DB_HOST],
                             port=omeroProperties[OmeroConstants.OMERO_DB_PORT])
     cur = conn.cursor()
-    query = 'SELECT id, type FROM event ORDER BY id DESC limit 1'
-    cur.execute(query)
+    selectLastIdQuery = 'SELECT id, type FROM event ORDER BY id DESC limit 1'
+    cur.execute(selectLastIdQuery)
+    for (x, y) in cur.fetchall():
+        last = int(x)
+    print(last)
+    newEventId = last + 1
+
+    insertNewEventQuery = 'INSERT INTO event(id, permissions, time, experimenter, experimentergroup, session, type)' \
+            'SELECT ' + str(newEventId) + ', permissions, time, experimenter, experimentergroup, session, type from event where id=130775809;'
+    cur.execute(insertNewEventQuery)
+
+    selectLastIdQuery = 'SELECT id, type FROM event ORDER BY id DESC limit 1'
+    cur.execute(selectLastIdQuery)
     for (x, y) in cur.fetchall():
         last = int(x)
     print(last)
 
-    query = 'INSERT INTO event(id, permissions, time, experimenter, experimentergroup, session, type)' \
-            'SELECT ' + str() + ', permissions, time, experimenter, experimentergroup, session, type from event where id=130775809;'
     conn.close()
 
 
