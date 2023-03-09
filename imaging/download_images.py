@@ -5,20 +5,7 @@ from os.path import join
 
 import requests
 
-SITES = {
-    'bcm': 'BCM',
-    'gmc': 'HMGU',
-    'h': 'MRC Harwell',
-    'ics': 'ICS',
-    'j': 'JAX',
-    'tcp': 'TCP',
-    'ning': 'NING',
-    'rbrc': 'RBRC',
-    'ucd': 'UC Davis',
-    'wtsi': 'WTSI',
-    'kmpc': 'KMPC',
-    'ccpcz': 'CCP-IMG'
-}
+from imaging import OmeroConstants
 
 
 def main(inFile, outFolder, outLog):
@@ -27,7 +14,7 @@ def main(inFile, outFolder, outLog):
             data = json.load(fh)
             count = 1
             for el in data:
-                site = SITES[el['centre'].lower()]
+                site = OmeroConstants.SITES[el['centre'].lower()]
                 imgFolder = outFolder + site + '/' + el['pipelineKey'] + '/' + el['procedureKey'] + '/' + el[
                     'parameterKey']
                 toDownload = el['dccUrl']
@@ -41,10 +28,10 @@ def main(inFile, outFolder, outLog):
                 if response.status_code == 200:
                     with open(outFile, 'wb') as outFileFh:
                         outFileFh.write(response.content)
-                    logFh.write(SITES[el['centre'].lower()] + ' :: ' + el['checksum'] + ' :: Y\n')
+                    logFh.write(OmeroConstants.SITES[el['centre'].lower()] + ' :: ' + el['checksum'] + ' :: Y\n')
                     logFh.flush()
                 else:
-                    logFh.write(SITES[el['centre'].lower()] + ' :: ' + el['checksum'] + ' :: N\n')
+                    logFh.write(OmeroConstants.SITES[el['centre'].lower()] + ' :: ' + el['checksum'] + ' :: N\n')
                     logFh.flush()
 
                 count += 1
