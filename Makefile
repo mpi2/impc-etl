@@ -141,7 +141,7 @@ imaging-data-download:
 imaging-omero-upload-prep:
 	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/datasources.json" ]; then rm -rf $(staging-path)/$(dr-tag)/artefacts/datasources.json; fi
 	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/$(prev-dr-tag)/datasources.json $(staging-path)/$(dr-tag)/artefacts/datasources.json
-	@python3 imaging/check_missing_datasources.py $(staging-path)/$(dr-tag)/images $(staging-path)/$(dr-tag)/artefacts/datasources.json
+	@python imaging/check_missing_datasources.py $(staging-path)/$(dr-tag)/images $(staging-path)/$(dr-tag)/artefacts/datasources.json
 
 
 createProdLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
