@@ -33,9 +33,11 @@ def insertNewEvent(omeroProperties, lastEventId):
                             port=omeroProperties[OmeroConstants.OMERO_DB_PORT])
     cur = conn.cursor()
     newEventId = lastEventId + 1
-    insertNewEventQuery = 'INSERT INTO event(id, permissions, time, experimenter, experimentergroup, session, type)' \
+    insertNewEventQuery = 'BEGIN;' \
+                          'INSERT INTO event(id, permissions, time, experimenter, experimentergroup, session, type)' \
                           'SELECT ' + str(
-        newEventId) + ', permissions, time, experimenter, experimentergroup, session, type from event where id=130775809;'
+        newEventId) + ', permissions, time, experimenter, experimentergroup, session, type from event where id=130775809;' \
+                      'COMMIT;'
     cur.execute(insertNewEventQuery)
     conn.close()
     return newEventId
@@ -138,7 +140,7 @@ def main(inputFolder, omeroDevPropetiesFile):
                 break
             newDatasourceId += 1
 
-    print(' - Running final checks ...')
+    print('Running final checks ...')
     dsData = retrieveDatasourcesFromDB(omeroProperties)
     totalNewEntries = {}
     for folder in os.listdir(inputFolder):

@@ -6,6 +6,7 @@ from imaging import OmeroConstants
 
 
 def main(imagesFolder, jsonDataFile, drTag, outputFolder):
+    print('Creating CSV file to upload images to Omero ...')
     with open(jsonDataFile, 'r') as fh:
         jsonData = json.load(fh)
 
@@ -26,6 +27,7 @@ def main(imagesFolder, jsonDataFile, drTag, outputFolder):
 
     with open(outputFolder + drTag + '.csv', 'w') as fh:
         fh.write('\n'.join(lines))
+    print(' - File created: ' + outputFolder + drTag + '.csv')
 
 
 if __name__ == "__main__":
