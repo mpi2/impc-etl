@@ -77,12 +77,17 @@ def createNewDataset(dataset, parent, newDatasouceId, omeroProperties):
         return False
 
     lastEventId = retrieveLatestEventId(omeroProperties)
+    print(lastEventId)
     newEventId_DS = insertNewEvent(omeroProperties, lastEventId)
+    print(newEventId_DS)
 
     lastEventId = retrieveLatestEventId(omeroProperties)
+    print(lastEventId)
     newEventId_DS_LINK = insertNewEvent(omeroProperties, lastEventId)
+    print(newEventId_DS_LINK)
 
-    return insertNewDataset(newDatasouceId, dataset, parentId, newEventId_DS, newEventId_DS_LINK, omeroProperties)
+    return False
+#    return insertNewDataset(newDatasouceId, dataset, parentId, newEventId_DS, newEventId_DS_LINK, omeroProperties)
 
 
 def processPhenoCenter(inputFolder, site, dsData):
