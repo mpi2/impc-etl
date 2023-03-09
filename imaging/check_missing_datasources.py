@@ -17,7 +17,7 @@ def retrieveLatestEventId(omeroProperties):
     cur = conn.cursor()
     query = 'SELECT id FROM event ORDER BY id DESC limit 1'
     cur.execute(query)
-    last = int(cur.fetchall())
+    last = int(cur.fetchall()[0])
     print(last)
 
     query = 'INSERT INTO event(id, permissions, time, experimenter, experimentergroup, session, type)' \
