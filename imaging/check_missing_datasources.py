@@ -49,9 +49,8 @@ def insertNewDataset(newDatasouceId, dataset, parentId, newEventId_DS, newEventI
                             port=omeroProperties[OmeroConstants.OMERO_DB_PORT])
     cur = conn.cursor()
 
-    insertDatasetQuery = 'INSERT INTO dataset(id, permissions, name, group_id, owner_id, creation_id, update_id)' \
-                         'VALUES (' + str(newDatasouceId) + ', -56, ' + dataset + ', 3, 0, ' + str(
-        newEventId_DS) + ', ' + str(newEventId_DS) + ');'
+    insertDatasetQuery = "INSERT INTO dataset(id, permissions, name, group_id, owner_id, creation_id, update_id)" \
+                         "VALUES (" + str(newDatasouceId) + ", -56, \'" + dataset + "\', 3, 0, " + str(newEventId_DS) + ", " + str(newEventId_DS) + ");"
     cur.execute(insertDatasetQuery)
 
     insertParentLinkQuery = 'INSERT INTO projectdatasetlink(id, permissions, child, parent, group_id, owner_id, creation_id, update_id)' \
