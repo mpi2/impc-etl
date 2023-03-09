@@ -41,7 +41,7 @@ def processPhenoCenter(inputFolder, site, dsData):
 
     for entry in entries:
         if not entry in dsData:
-            print('{}'.format(entry))
+            print(entry)
 
 
 def main(inputFolder, jsonDatasourceFile, omeroDevPropetiesFile):
