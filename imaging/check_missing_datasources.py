@@ -20,8 +20,8 @@ def retrieveDatasourcesFromDB(omeroProperties):
         query = 'Select ds.id, ds.name from dataset ds inner join projectdatasetlink pdsl on ds.id=pdsl.child where pdsl.parent=' + str(
             dsId)
         cur.execute(query)
-        for res in cur.fetchall():
-            print(res)
+        for (id, name) in cur.fetchall():
+            print(str(id) + ' - ' + name)
     conn.close()
 
 
