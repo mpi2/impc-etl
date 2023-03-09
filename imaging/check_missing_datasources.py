@@ -8,6 +8,20 @@ from imaging import OmeroConstants
 from imaging.read_omero_properties import OmeroProperties
 
 
+def retrieveLatestEventId(omeroProperties):
+    conn = psycopg2.connect(database=omeroProperties[OmeroConstants.OMERO_DB_NAME],
+                            user=omeroProperties[OmeroConstants.OMERO_DB_USER],
+                            password=omeroProperties[OmeroConstants.OMERO_DB_PASS],
+                            host=omeroProperties[OmeroConstants.OMERO_DB_HOST],
+                            port=omeroProperties[OmeroConstants.OMERO_DB_PORT])
+    cur = conn.cursor()
+    query = 'SELECT id FROM event ORDER BY id DESC limit 10'
+    cur.execute(query)
+    for res in cur.fetchall():
+        print(res)
+    conn.close()
+
+
 def retrieveDatasourcesFromDB(omeroProperties):
     dsData = {}
     conn = psycopg2.connect(database=omeroProperties[OmeroConstants.OMERO_DB_NAME],
@@ -17,13 +31,11 @@ def retrieveDatasourcesFromDB(omeroProperties):
                             port=omeroProperties[OmeroConstants.OMERO_DB_PORT])
     for dsId in OmeroConstants.DATASOURCE_LIST:
         cur = conn.cursor()
-        query = 'SELECT ds.id, ds.name, pdsl.parent FROM dataset ds INNER JOIN projectdatasetlink pdsl ON ds.id=pdsl.child WHERE pdsl.parent=' + str(
+        query = 'SELECT ds.id, ds.name FROM dataset ds INNER JOIN projectdatasetlink pdsl ON ds.id=pdsl.child WHERE pdsl.parent=' + str(
             dsId)
         cur.execute(query)
-        for res in cur.fetchall():
-            print(res)
-#        for (id, name) in cur.fetchall():
-#            dsData[name] = int(id)
+        for (id, name) in cur.fetchall():
+            dsData[name] = int(id)
     conn.close()
     return dsData
 
@@ -41,17 +53,19 @@ def processPhenoCenter(inputFolder, site, dsData):
             for parameterKey in os.listdir(procedureFolder):
                 entries.append(site + '-' + pipelineKey + '-' + procedureKey + '-' + parameterKey)
 
-#    for entry in entries:
-#        if not entry in dsData:
-#            print(entry)
+    for entry in entries:
+        if not entry in dsData:
+            print(entry)
 
 
 def main(inputFolder, omeroDevPropetiesFile):
     omeroProperties = OmeroProperties(omeroDevPropetiesFile).getProperties()
     dsData = retrieveDatasourcesFromDB(omeroProperties)
 
-    for folder in os.listdir(inputFolder):
-        processPhenoCenter(inputFolder, folder, dsData)
+    retrieveLatestEventId(omeroProperties)
+
+#    for folder in os.listdir(inputFolder):
+#        processPhenoCenter(inputFolder, folder, dsData)
 
 
 if __name__ == "__main__":
