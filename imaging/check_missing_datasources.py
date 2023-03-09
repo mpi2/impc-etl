@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 from os.path import join
@@ -10,6 +9,7 @@ from imaging.read_omero_properties import OmeroProperties
 
 
 def retrieveDatasourcesFromDB(omeroProperties):
+    dsData = {}
     conn = psycopg2.connect(database=omeroProperties[OmeroConstants.OMERO_DB_NAME],
                             user=omeroProperties[OmeroConstants.OMERO_DB_USER],
                             password=omeroProperties[OmeroConstants.OMERO_DB_PASS],
@@ -21,8 +21,9 @@ def retrieveDatasourcesFromDB(omeroProperties):
             dsId)
         cur.execute(query)
         for (id, name) in cur.fetchall():
-            print(str(id) + ' - ' + name)
+            dsData[name] = int(id)
     conn.close()
+    return dsData
 
 
 def processPhenoCenter(inputFolder, site, dsData):
@@ -44,14 +45,14 @@ def processPhenoCenter(inputFolder, site, dsData):
 
 
 def main(inputFolder, jsonDatasourceFile, omeroDevPropetiesFile):
-    with open(jsonDatasourceFile, 'r') as fh:
-        dsData = json.load(fh)
+    #    with open(jsonDatasourceFile, 'r') as fh:
+    #        dsData = json.load(fh)
 
     omeroProperties = OmeroProperties(omeroDevPropetiesFile).getProperties()
-    omeroDatasources = retrieveDatasourcesFromDB(omeroProperties)
+    dsData = retrieveDatasourcesFromDB(omeroProperties)
 
-#    for folder in os.listdir(inputFolder):
-#        processPhenoCenter(inputFolder, folder, dsData)
+    for folder in os.listdir(inputFolder):
+        processPhenoCenter(inputFolder, folder, dsData)
 
 
 if __name__ == "__main__":
