@@ -49,7 +49,7 @@ def retrieveAnnotationsFromOmero(omeroProperties, dsList):
                 'path': path,
                 'type': 'annotation'
             })
-        print(path + ' - ' + name)
+            print(path + ' - ' + name)
     conn.close()
     return fileData
 
