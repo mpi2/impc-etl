@@ -105,8 +105,8 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
     logger.info('Found ' + str(n_from_csv_file) + ' records to be uploaded to Omero.')
 
     omeroProperties = OmeroProperties(omeroDevPropetiesFile)
-    omeroFileService = OmeroFileService(omeroProperties)
-    omeroService = OmeroService(omeroProperties)
+    omeroFileService = OmeroFileService(omeroProperties.getProperties())
+    omeroService = OmeroService(omeroProperties.getProperties())
 
     logger.info('Retrieving image list from Omero ...')
     omero_file_list = omeroFileService.processToList(omeroFileService.retrieveImagesFromOmero())
