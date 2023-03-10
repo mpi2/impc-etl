@@ -8,6 +8,7 @@ import sys
 import time
 
 from imaging.OmeroFileService import OmeroFileService
+from imaging.OmeroProperties import OmeroProperties
 from imaging.OmeroService import OmeroService
 
 
@@ -103,8 +104,9 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
 
     logger.info('Found ' + str(n_from_csv_file) + ' records to be uploaded to Omero.')
 
-    omeroFileService = OmeroFileService(omeroDevPropetiesFile)
-    omeroService = OmeroService(omeroDevPropetiesFile)
+    omeroProperties = OmeroProperties(omeroDevPropetiesFile)
+    omeroFileService = OmeroFileService(omeroProperties)
+    omeroService = OmeroService(omeroProperties)
 
     logger.info('Retrieving image list from Omero ...')
     omero_file_list = omeroFileService.processToList(omeroFileService.retrieveImagesFromOmero())
