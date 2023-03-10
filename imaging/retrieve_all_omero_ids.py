@@ -49,6 +49,7 @@ def retrieveAnnotationsFromOmero(omeroProperties, dsList):
                 'path': path,
                 'type': 'annotation'
             })
+        print(path + ' - ' + name)
     conn.close()
     return fileData
 
@@ -79,8 +80,8 @@ def retrieveImagesFromOmero(omeroProperties, dsList):
 
 def retrieveFileListFromOmero(omeroProperties):
     dsList = consolidateDatasources(omeroProperties)
-#    annotFileData = retrieveAnnotationsFromOmero(omeroProperties, dsList)
-    imageFileData = retrieveImagesFromOmero(omeroProperties, dsList)
+    annotFileData = retrieveAnnotationsFromOmero(omeroProperties, dsList)
+#    imageFileData = retrieveImagesFromOmero(omeroProperties, dsList)
 #    print(str(len(annotFileData)))
 #    print(str(len(imageFileData)))
 
