@@ -37,19 +37,51 @@ def retrieveAnnotationsFromOmero(omeroProperties, dsList):
                             host=omeroProperties[OmeroConstants.OMERO_DB_HOST],
                             port=omeroProperties[OmeroConstants.OMERO_DB_PORT])
     cur = conn.cursor()
-    fileData = {}
+    fileData = []
     for ds in dsList:
         query = 'SELECT a.id,of.name,of.path FROM annotation a INNER JOIN datasetannotationlink dsal ON a.id=dsal.child INNER JOIN originalfile of ON a.file=of.id WHERE dsal.parent=' + str(
             ds)
         cur.execute(query)
         for (id, name, path) in cur.fetchall():
-            print(str(id) + ' - ' + name + ' - ' + path)
+            fileData.append({
+                'id': id,
+                'name': name,
+                'path': path,
+                'type': 'annotation'
+            })
     conn.close()
+    return fileData
+
+
+def retrieveImagesFromOmero(omeroProperties, dsList):
+    conn = psycopg2.connect(database=omeroProperties[OmeroConstants.OMERO_DB_NAME],
+                            user=omeroProperties[OmeroConstants.OMERO_DB_USER],
+                            password=omeroProperties[OmeroConstants.OMERO_DB_PASS],
+                            host=omeroProperties[OmeroConstants.OMERO_DB_HOST],
+                            port=omeroProperties[OmeroConstants.OMERO_DB_PORT])
+    cur = conn.cursor()
+    fileData = []
+    for ds in dsList:
+        query = 'SELECT i.id,i.name,fse.clientpath FROM image i INNER JOIN datasetimagelink dsil ON i.id=dsil.child INNER JOIN filesetentry fse ON i.fileset=fse.fileset WHERE dsil.parent=' + str(
+            ds)
+        cur.execute(query)
+        for (id, name, clientpath) in cur.fetchall():
+            fileData.append({
+                'id': id,
+                'name': name,
+                'path': clientpath,
+                'type': 'image'
+            })
+    conn.close()
+    return fileData
 
 
 def retrieveFileListFromOmero(omeroProperties):
     dsList = consolidateDatasources(omeroProperties)
-    retrieveAnnotationsFromOmero(omeroProperties, dsList)
+    annotFileData = retrieveAnnotationsFromOmero(omeroProperties, dsList)
+    imageFileData = retrieveImagesFromOmero(omeroProperties, dsList)
+    print(str(len(annotFileData)))
+    print(str(len(imageFileData)))
 
 
 def consolidateDatasources(omeroProperties):
