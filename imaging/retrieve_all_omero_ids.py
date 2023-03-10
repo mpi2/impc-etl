@@ -1,4 +1,5 @@
 import sys
+
 import psycopg2
 
 from imaging import OmeroConstants
@@ -29,6 +30,28 @@ def retrieveLEI_LIFIds(omeroProperties):
     return fileData
 
 
+def retrieveAnnotationsFromOmero(omeroProperties, dsList):
+    conn = psycopg2.connect(database=omeroProperties[OmeroConstants.OMERO_DB_NAME],
+                            user=omeroProperties[OmeroConstants.OMERO_DB_USER],
+                            password=omeroProperties[OmeroConstants.OMERO_DB_PASS],
+                            host=omeroProperties[OmeroConstants.OMERO_DB_HOST],
+                            port=omeroProperties[OmeroConstants.OMERO_DB_PORT])
+    cur = conn.cursor()
+    fileData = {}
+    for ds in dsList:
+        query = 'SELECT a.id,of.name,of.path FROM annotation a INNER JOIN datasetannotationlink dsal ON a.id=dsal.child INNER JOIN originalfile of ON a.file=of.id WHERE dsal.parent=' + str(
+            ds)
+        cur.execute(query)
+        for (id, name, path) in cur.fetchall():
+            print(id + ' - ' + name + ' - ' + path)
+    conn.close()
+
+
+def retrieveFileListFromOmero(omeroProperties):
+    dsList = consolidateDatasources(omeroProperties)
+    retrieveAnnotationsFromOmero(omeroProperties, dsList)
+
+
 def consolidateDatasources(omeroProperties):
     dsData = retrieveDatasourcesFromDB(omeroProperties)
     dsList = []
@@ -41,11 +64,7 @@ def consolidateDatasources(omeroProperties):
 
 def main(omeroDevPropetiesFile):
     omeroProperties = OmeroProperties(omeroDevPropetiesFile).getProperties()
-    leiLifFileData = retrieveLEI_LIFIds(omeroProperties)
-    print(len(leiLifFileData))
-
-    dsList = consolidateDatasources(omeroProperties)
-    print(dsList)
+    retrieveFileListFromOmero(omeroProperties)
 
 
 if __name__ == "__main__":

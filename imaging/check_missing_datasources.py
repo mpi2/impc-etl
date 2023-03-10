@@ -117,10 +117,14 @@ def computeLastDatasourceId(dsData):
     return max
 
 
-def main(inputFolder, omeroDevPropetiesFile):
+def main(inputFolder, outputFolder, omeroDevPropetiesFile):
     omeroProperties = OmeroProperties(omeroDevPropetiesFile).getProperties()
     dsData = retrieveDatasourcesFromDB(omeroProperties)
     lastDatasourceId = computeLastDatasourceId(dsData)
+
+    missingDSFile = outputFolder + 'missing_datasources.list'
+    if os.path.isfile(missingDSFile):
+        os.remove(missingDSFile)
 
     totalNewEntries = {}
     for folder in os.listdir(inputFolder):
@@ -129,8 +133,14 @@ def main(inputFolder, omeroDevPropetiesFile):
             totalNewEntries[el] = newEntries[el]
 
     print('Found ' + str(len(totalNewEntries)) + ' new data sources.')
+    lines = []
     for el in totalNewEntries:
         print(' - ' + el)
+        lines.append(el)
+
+    if len(lines) > 0:
+        with open(missingDSFile, 'w') as fh:
+            fh.write('\n'.join(lines))
 
     if len(totalNewEntries) > 0:
         newDatasourceId = lastDatasourceId + 1
@@ -149,11 +159,18 @@ def main(inputFolder, omeroDevPropetiesFile):
             totalNewEntries[el] = newEntries[el]
 
     print('Found ' + str(len(totalNewEntries)) + ' new data sources.')
+    lines = []
     for el in totalNewEntries:
         print(' - ' + el)
+        lines.append(el)
     if len(totalNewEntries) > 0:
         print(' - ERROR: Something went wrong since there still are new data sources ...')
+        with open(missingDSFile, 'w') as fh:
+            fh.write('\n'.join(lines))
+    else:
+        if os.path.isfile(missingDSFile):
+            os.remove(missingDSFile)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2], sys.argv[3])
