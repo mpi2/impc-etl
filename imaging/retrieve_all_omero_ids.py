@@ -49,7 +49,7 @@ def retrieveAnnotationsFromOmero(omeroProperties, dsList):
                 'path': path,
                 'type': 'annotation'
             })
-            print(path.split('impc/')[-1] + name)
+            print(path.split('impc/')[-1] + '/' + name)
     conn.close()
     return fileData
 
@@ -88,7 +88,7 @@ def retrieveFileListFromOmero(omeroProperties):
 #    print(str(len(imageFileData)))
 
 ## For images do: el['path'].split('impc/')[-1]
-## For annotations do: el['path'].split('impc/')[-1] + el['name']
+## For annotations do: el['path'].split('impc/')[-1] + '/' + el['name']
 
 def consolidateDatasources(omeroProperties):
     dsData = retrieveDatasourcesFromDB(omeroProperties)
