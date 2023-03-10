@@ -72,16 +72,17 @@ def retrieveImagesFromOmero(omeroProperties, dsList):
                 'path': clientpath,
                 'type': 'image'
             })
+            print(clientpath + ' - ' + clientpath.split('impc/')[-1])
     conn.close()
     return fileData
 
 
 def retrieveFileListFromOmero(omeroProperties):
     dsList = consolidateDatasources(omeroProperties)
-    annotFileData = retrieveAnnotationsFromOmero(omeroProperties, dsList)
+#    annotFileData = retrieveAnnotationsFromOmero(omeroProperties, dsList)
     imageFileData = retrieveImagesFromOmero(omeroProperties, dsList)
-    print(str(len(annotFileData)))
-    print(str(len(imageFileData)))
+#    print(str(len(annotFileData)))
+#    print(str(len(imageFileData)))
 
 
 def consolidateDatasources(omeroProperties):
