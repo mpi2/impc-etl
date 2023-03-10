@@ -6,7 +6,7 @@ import psycopg2
 
 from imaging import OmeroConstants
 from imaging.omero_util import retrieveDatasourcesFromDB
-from imaging.read_omero_properties import OmeroProperties
+from imaging.OmeroProperties import OmeroProperties
 
 
 def retrieveLatestEventId(omeroProperties):

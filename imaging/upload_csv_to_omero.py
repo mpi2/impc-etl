@@ -1,13 +1,22 @@
-import os.path
-import sys
-import os
+import csv
+import datetime
 import glob
 import logging
-import csv
+import os
+import os.path
+import sys
 import time
-import datetime
 
-import psycopg2
+from imaging.OmeroFileService import OmeroFileService
+from imaging.OmeroService import OmeroService
+
+
+def add_to_list(L, dirname, names):
+    for n in names:
+        fullname = os.path.join(dirname, n)
+        if os.path.isfile(fullname):
+            L.append(fullname)
+
 
 def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile):
     csvFile = artefactsFolder + drTag + '.csv'
@@ -93,71 +102,27 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
             n_from_csv_file += 1
 
     logger.info('Found ' + str(n_from_csv_file) + ' records to be uploaded to Omero.')
-    logger.info('Retrieving file list from Omero ...')
 
+    omeroFileService = OmeroFileService(omeroDevPropetiesFile)
+    omeroService = OmeroService(omeroDevPropetiesFile)
 
+    logger.info('Retrieving image list from Omero ...')
+    omero_file_list = omeroFileService.processToList(omeroFileService.retrieveImagesFromOmero())
+    logger.info('Found ' + str(len(omero_file_list)) + ' images in Omero.')
 
-    # Get images from Omero
-    # Sometimes omero on the server throws an ICE memory limit exception. In that case go directly
-    # via postgres. This may return more records than going via omero, but that should not
-    # be a problem.
-    omeroS = OmeroService(omeroHost, omeroPort, omeroUsername, omeroPass, group)
-    try:
-        omero_file_list = omeroS.getImagesAlreadyInOmero()
-    except Exception as e:  # TODO: Use exact exception here. It's something like ::Ice::MemoryLimitException
-        logger.warn("Problem attempting to get images from omero. Attempting via Postgres")
-        logger.warn("Exception message was " + str(e))
-        omero_file_list = omeroS.getImagesAlreadyInOmeroViaPostgres(omeroProps)
-    logger.info("Number of files from omero = " + str(len(omero_file_list)))
+    logger.info('Retrieving annotations list from Omero ...')
+    omero_annotation_list = omeroFileService.processToList(omeroFileService.retrieveAnnotationsFromOmero())
+    logger.info('Found ' + str(len(omero_annotation_list)) + ' annotations in Omero.')
 
-    # Don't use OmeroService to get annotations as we are having a out of
-    # memory error when it is running on the server. Query omero directly
-    # to get annotations
-    try:
-        logger.info("Attempting to get annotations directly from Postgres DB")
-        omeroDbUser = args.omeroDbUser if args.omeroDbUser is not None else omeroProps['omerodbuser']
-        omeroDbPass = args.omeroDbPass if args.omeroDbPass is not None else omeroProps['omerodbpass']
-        omeroDbName = args.omeroDbName if args.omeroDbName is not None else omeroProps['omerodbname']
-        omeroDbHost = args.omeroDbHost if args.omeroDbHost is not None else omeroProps['omerodbhost']
-        if args.omeroDbPort is not None:
-            omeroDbPort = args.omeroDbPort
-        elif 'omerodbport' in omeroProps:
-            omeroDbPort = omeroProps['omerodbport']
-        else:
-            omeroDbPort = '5432'
-
-        conn = psycopg2.connect(database=omeroDbName, user=omeroDbUser,
-                                password=omeroDbPass, host=omeroDbHost,
-                                port=omeroDbPort)
-        cur = conn.cursor()
-        query = 'SELECT ds.name, (SELECT o.name FROM originalfile o ' + \
-                'WHERE o.id=a.file) AS filename FROM datasetannotationlink ' + \
-                'dsal INNER JOIN dataset ds ON dsal.parent=ds.id ' + \
-                'INNER JOIN annotation a ON dsal.child= a.id'
-        cur.execute(query)
-        omero_annotation_list = []
-        for ann in cur.fetchall():
-            dir_parts = ann[0].split('-')
-            if len(dir_parts) == 4:
-                dir_parts.append(ann[1])
-                omero_annotation_list.append("/".join(dir_parts))
-        conn.close()
-    except KeyError as e:
-        logger.error("Could not connect to omero postgres database. Key " + str(e) + \
-                     " not present in omero properties file. Attempting to use " + \
-                     " OmeroService.getAnnotationsAlreadyInOmero")
-        conn.close()
-        omero_annotation_list = omeroS.getAnnotationsAlreadyInOmero()
-
-    # omero_annotation_list = omeroS.getAnnotationsAlreadyInOmero()
-    logger.info("Number of annotations from omero = " + str(len(omero_annotation_list)))
     omero_file_list.extend(omero_annotation_list)
     omero_dir_list = list(set([os.path.split(f)[0] for f in omero_file_list]))
+
     # Get the files in NFS
     list_nfs_filenames = []
-    os.path.walk(root_dir, add_to_list, list_nfs_filenames)
-    list_nfs_filenames = [f.split(root_dir)[-1] for f in list_nfs_filenames]
-    logger.info("Number of files from NFS = " + str(len(list_nfs_filenames)))
+    os.path.walk(imagesFolder, add_to_list, list_nfs_filenames)
+    list_nfs_filenames = [f.split(imagesFolder)[-1] for f in list_nfs_filenames]
+    logger.info('Found ' + str(len(list_nfs_filenames)) + ' files on disk.')
+
     # Modified to carry out case-insensitive comparisons.
     set_csv_filenames = set([k.lower() for k in csv_directory_to_filenames_map.keys()])
     set_omero_filenames = set([f.lower() for f in omero_file_list])
@@ -172,8 +137,8 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
     files_to_upload_available = files_to_upload.intersection(set_nfs_filenames)
     files_to_upload_unavailable = files_to_upload - files_to_upload_available
 
-    logger.info("Number of files to upload = " + str(len(files_to_upload)))
-    logger.info("Number of files to available = " + str(len(files_to_upload_available)))
+    logger.info('Number of files to upload: ' + str(len(files_to_upload)))
+    logger.info('Number of files to available: ' + str(len(files_to_upload_available)))
 
     # Create a dictionary for the files to upload with the directory as the
     # key and the original nfs filenames as the values, so each dir can be passed to
@@ -191,20 +156,18 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
     for index, directory in zip(range(n_dirs_to_upload), dict_files_to_upload.keys()):
         filenames = dict_files_to_upload[directory]
         n_files_to_upload = len(filenames)
-        logger.info("About to upload directory " + str(index + 1) + " of " + \
-                    str(n_dirs_to_upload) + ". Dir name: " + directory + \
-                    " with " + str(n_files_to_upload) + " files")
+        logger.info('Uploading: [' + str(index + 1) + ' of ' + str(n_dirs_to_upload) + ']: ' + directory)
         dir_structure = directory.split('/')
         project = dir_structure[0]
         # Below we assume dir_structure is list with elements:
         # [project, pipeline, procedure, parameter]
         dataset = "-".join(dir_structure)
-        fullpath = os.path.join(root_dir, directory)
+        fullpath = os.path.join(imagesFolder, directory)
 
         # if dir contains pdf file we cannot load whole directory
         if len(glob.glob(os.path.join(fullpath, '*.pdf'))) > 0:
-            logger.info("##### Dir contains pdfs - loading file by file #####")
-            omeroS.loadFileOrDir(fullpath, project=project, dataset=dataset, filenames=filenames)
+            logger.info(' -- Uploading PDFs ...')
+        # omeroS.loadFileOrDir(fullpath, project=project, dataset=dataset, filenames=filenames)
         else:
             # Check if the dir is in omero.
             # If not we can import the whole dir irrespective of number of files
@@ -214,28 +177,16 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
                     dir_not_in_omero = False
             except ValueError:
                 pass
+            logger.info(' -- Uploading images ...')
 
-            if dir_not_in_omero or n_files_to_upload > load_whole_dir_threshold:
-                logger.info("##### Loading whole directory #####")
-                omeroS.loadFileOrDir(fullpath, project=project, dataset=dataset, filenames=None)
-            else:
-                logger.info("##### Loading file by file #####")
-                omeroS.loadFileOrDir(fullpath, project=project, dataset=dataset, filenames=filenames)
+    #            if dir_not_in_omero or n_files_to_upload > load_whole_dir_threshold:
+    #               omeroS.loadFileOrDir(fullpath, project=project, dataset=dataset, filenames=None)
+    #            else:
+    #               omeroS.loadFileOrDir(fullpath, project=project, dataset=dataset, filenames=filenames)
 
     n_files_to_upload_unavailable = len(files_to_upload_unavailable)
-    logger.warning("Number of files unavailable for upload (not in NFS): " + \
-                   str(n_files_to_upload_unavailable))
-    if n_files_to_upload_unavailable > 0:
-        file_list = ""
-        for i, f in zip(range(n_files_to_upload_unavailable), files_to_upload_unavailable):
-            file_list += '\n' + f
-            if i > 99:
-                break
-        message = "The following files (converted to lower case and " + \
-                  "truncated at 100) were present in Solr but absent in NFS:" + \
-                  file_list
-        logger.warning(message)
+    logger.warning('Number of files unavailable for upload: ' + str(n_files_to_upload_unavailable))
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], sys.argv[3])
+    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])

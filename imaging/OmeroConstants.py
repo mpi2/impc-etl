@@ -4,6 +4,12 @@ OMERO_DB_PASS = 'omero.omerodbpass'
 OMERO_DB_HOST = 'omero.omerodbhost'
 OMERO_DB_PORT = 'omero.omerodbport'
 
+OMERO_APP_HOST = 'omero.omerohost'
+OMERO_APP_PORT = 'omero.omeroport'
+OMERO_APP_USER = 'omero.omerouser'
+OMERO_APP_PASS = 'omero.omeropass'
+OMERO_APP_GROUP = 'omero.omerogroup'
+
 SITES = {
     'bcm': 'BCM',
     'gmc': 'HMGU',
