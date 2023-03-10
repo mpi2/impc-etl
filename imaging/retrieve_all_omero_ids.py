@@ -43,7 +43,7 @@ def retrieveAnnotationsFromOmero(omeroProperties, dsList):
             ds)
         cur.execute(query)
         for (id, name, path) in cur.fetchall():
-            print(id + ' - ' + name + ' - ' + path)
+            print(str(id) + ' - ' + name + ' - ' + path)
     conn.close()
 
 
