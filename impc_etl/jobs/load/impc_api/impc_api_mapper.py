@@ -1572,8 +1572,9 @@ class ImpcDatasetsMapper(PySparkTask):
             ).alias("observations")
         )
 
-        datasets_df = datasets_df.withColumn("_datasetId", col("datasetId"))
-
-        datasets_df.repartition("_datasetId").limit(100000).write.partitionBy(
-            "_datasetId"
-        ).json(output_path)
+        datasets_df = datasets_df.groupBy("datasetId").agg(
+            collect_set(struct("sampleGroup", "specimenSex", "observations")).alias(
+                "series"
+            )
+        )
+        datasets_df.write.parquet(output_path)
