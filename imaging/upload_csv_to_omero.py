@@ -10,6 +10,7 @@ import time
 from imaging.OmeroFileService import OmeroFileService
 from imaging.OmeroProperties import OmeroProperties
 from imaging.OmeroService import OmeroService
+from imaging.omero_util import writeImageDataToDisk
 
 
 def add_to_list(L, dirname, names):
@@ -109,11 +110,15 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
     omeroService = OmeroService(omeroProperties.getProperties())
 
     logger.info('Retrieving image list from Omero ...')
-    omero_file_list = omeroFileService.processToList(omeroFileService.retrieveImagesFromOmero())
+    imageFileData = omeroFileService.retrieveImagesFromOmero()
+    writeImageDataToDisk(artefactsFolder + drTag + '_imagelist.tsv', imageFileData)
+    omero_file_list = omeroFileService.processToList(imageFileData)
     logger.info('Found ' + str(len(omero_file_list)) + ' images in Omero.')
 
     logger.info('Retrieving annotations list from Omero ...')
-    omero_annotation_list = omeroFileService.processToList(omeroFileService.retrieveAnnotationsFromOmero())
+    annotationFileData = omeroFileService.retrieveAnnotationsFromOmero()
+    writeImageDataToDisk(artefactsFolder + drTag + '_annotationslist.tsv', annotationFileData)
+    omero_annotation_list = omeroFileService.processToList(annotationFileData)
     logger.info('Found ' + str(len(omero_annotation_list)) + ' annotations in Omero.')
 
     omero_file_list.extend(omero_annotation_list)

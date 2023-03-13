@@ -1,3 +1,5 @@
+import os.path
+
 import psycopg2
 
 from imaging import OmeroConstants
@@ -19,3 +21,15 @@ def retrieveDatasourcesFromDB(omeroProperties):
             dsData[name] = int(id)
     conn.close()
     return dsData
+
+
+def writeImageDataToDisk(fileOut, imageData):
+    if os.path.isfile(fileOut):
+        os.remove(fileOut)
+
+    lines = []
+    for entry in imageData:
+        lines.append(entry['id'] + '\t' + entry['name'] + '\t' + entry['path'] + '\t' + entry['type'])
+
+    with open(fileOut, 'w') as fh:
+        fh.write('\n'.join(lines))
