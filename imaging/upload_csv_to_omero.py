@@ -111,13 +111,13 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
 
     logger.info('Retrieving image list from Omero ...')
     imageFileData = omeroFileService.retrieveImagesFromOmero()
-    writeImageDataToDisk(artefactsFolder + drTag + '_imagelist.tsv', imageFileData)
+    writeImageDataToDisk(artefactsFolder + drTag + '_imagelist.json', imageFileData)
     omero_file_list = omeroFileService.processToList(imageFileData)
     logger.info('Found ' + str(len(omero_file_list)) + ' images in Omero.')
 
     logger.info('Retrieving annotations list from Omero ...')
     annotationFileData = omeroFileService.retrieveAnnotationsFromOmero()
-    writeImageDataToDisk(artefactsFolder + drTag + '_annotationslist.tsv', annotationFileData)
+    writeImageDataToDisk(artefactsFolder + drTag + '_annotationslist.json', annotationFileData)
     omero_annotation_list = omeroFileService.processToList(annotationFileData)
     logger.info('Found ' + str(len(omero_annotation_list)) + ' annotations in Omero.')
 

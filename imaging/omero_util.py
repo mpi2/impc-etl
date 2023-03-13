@@ -1,3 +1,4 @@
+import json
 import os.path
 
 import psycopg2
@@ -27,9 +28,5 @@ def writeImageDataToDisk(fileOut, imageData):
     if os.path.isfile(fileOut):
         os.remove(fileOut)
 
-    lines = []
-    for entry in imageData:
-        lines.append(entry['id'] + '\t' + entry['name'] + '\t' + entry['path'] + '\t' + entry['type'])
-
-    with open(fileOut, 'w') as fh:
-        fh.write('\n'.join(lines))
+    with open(fileOut, 'w') as filehandle:
+        json.dump(imageData, filehandle, sort_keys=True, indent=4)

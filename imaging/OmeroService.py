@@ -51,20 +51,20 @@ class OmeroService:
             for filename in filenames:
                 fullPath = directory + "/" + filename
                 self.logger.info(' --- Loading files: ' + fullPath)
-        #                try:
-        #                    self.load(fullPath, project, dataset)
-        #                except Exception as e:
-        #                    self.logger.warning("OmeroService Unexpected error loading file:" + str(e))
-        #                    self.logger.warning("Skipping " + fullPath + " and continuing")
-        #                    continue
+                try:
+                    self.load(fullPath, project, dataset)
+                except Exception as e:
+                    self.logger.error(' --- Error loading file [' + fullPath + ']:' + str(e))
+                    self.logger.error(' --- Skipping file: ' + fullPath)
+                    continue
 
         else:
             self.logger.info(' --- Loading directory: ' + directory)
-
-    #            try:
-    #                self.load(directory, project, dataset)
-    #            except Exception as e:
-    #                self.logger.exception("OmeroService Unexpected error loading directory:" + str(e))
+            try:
+                self.load(directory, project, dataset)
+            except Exception as e:
+                self.logger.error(' --- Error loading directory [' + directory + ']:' + str(e))
+                self.logger.error(' --- Skipping: ' + directory)
 
     def load(self, path, project=None, dataset=None):
         self.logger.info("-" * 10)
