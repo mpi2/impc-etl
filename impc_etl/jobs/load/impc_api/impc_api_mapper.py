@@ -1577,4 +1577,4 @@ class ImpcDatasetsMapper(PySparkTask):
                 "series"
             )
         )
-        datasets_df.write.parquet(output_path)
+        datasets_df.repartition(10000).write.parquet(output_path)
