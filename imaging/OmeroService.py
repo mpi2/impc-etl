@@ -43,29 +43,28 @@ class OmeroService:
         else:
             str_n_files = "0"
 
-        self.logger.info(
-            "loadFileOrDir with: Directory=" + directory + ", project=" + str(project) + ", dataset=" + str(
-                dataset) + ", # of files=" + str_n_files)
+        self.logger.info(' -- Loading [' + directory + '] in [' + project + ' | ' + str(dataset) + ' ]: ' + str_n_files)
         # chop dir to get project and dataset
 
         # if filenames is non then load the entire dir
         if filenames is not None:
             for filename in filenames:
                 fullPath = directory + "/" + filename
-                self.logger.info("loading file=" + fullPath)
-                try:
-                    self.load(fullPath, project, dataset)
-                except Exception as e:
-                    self.logger.warning("OmeroService Unexpected error loading file:" + str(e))
-                    self.logger.warning("Skipping " + fullPath + " and continuing")
-                    continue
+                self.logger.info(' --- Loading files: ' + fullPath)
+        #                try:
+        #                    self.load(fullPath, project, dataset)
+        #                except Exception as e:
+        #                    self.logger.warning("OmeroService Unexpected error loading file:" + str(e))
+        #                    self.logger.warning("Skipping " + fullPath + " and continuing")
+        #                    continue
 
         else:
-            self.logger.info("loading directory")
-            try:
-                self.load(directory, project, dataset)
-            except Exception as e:
-                self.logger.exception("OmeroService Unexpected error loading directory:" + str(e))
+            self.logger.info(' --- Loading directory: ' + directory)
+
+    #            try:
+    #                self.load(directory, project, dataset)
+    #            except Exception as e:
+    #                self.logger.exception("OmeroService Unexpected error loading directory:" + str(e))
 
     def load(self, path, project=None, dataset=None):
         self.logger.info("-" * 10)
