@@ -118,6 +118,7 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 
 
 imaging-data-media: ## Create folder structure for the imaging data
+	@if [ ! -d "$(input-data-path)/imaging-data-archive/$(dr-tag)" ]; then mkdir $(input-data-path)/imaging-data-archive/$(dr-tag); fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)-imaging" ]; then mkdir $(staging-path)/$(dr-tag)-imaging; fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)-imaging/media-json" ]; then mkdir $(staging-path)/$(dr-tag)-imaging/media-json; fi
 	@chgrp phenomics $(staging-path)/$(dr-tag)-imaging
@@ -135,6 +136,16 @@ imaging-data-download:
 	@scp mi_adm@codon-login:$(codon-staging)/$(dr-tag)-imaging/media-json/data.json $(staging-path)/$(dr-tag)/artefacts/data.json
 	@python3 imaging/create_imaging_folders.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/
 	@python3 imaging/download_images.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag).out
+
+
+imaging-omero-upload-prep:
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/omero_dev.properties $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
+	@python imaging/check_missing_datasources.py $(staging-path)/$(dr-tag)/images $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
+	@python imaging/create_csv_for_upload_to_omero.py $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/artefacts/data.json $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/
+
+
+imaging-omero-upload:
+	@python imaging/upload_csv_to_omero.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties 2>&1 &
 
 
 createProdLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
