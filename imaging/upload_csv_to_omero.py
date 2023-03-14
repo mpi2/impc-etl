@@ -174,7 +174,7 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
         # if dir contains pdf file we cannot load whole directory
         if len(glob.glob(os.path.join(fullpath, '*.pdf'))) > 0:
             logger.info(' -- Uploading PDFs ...')
-            omeroService.loadFileOrDir(fullpath, project=project, dataset=dataset, filenames=filenames)
+            omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=filenames)
         else:
             # Check if the dir is in omero.
             # If not we can import the whole dir irrespective of number of files
@@ -186,9 +186,9 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
                 pass
             logger.info(' -- Uploading images ...')
             if dir_not_in_omero or n_files_to_upload > load_whole_dir_threshold:
-                omeroService.loadFileOrDir(fullpath, project=project, dataset=dataset, filenames=None)
+                omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=None)
             else:
-                omeroService.loadFileOrDir(fullpath, project=project, dataset=dataset, filenames=filenames)
+                omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=filenames)
 
     n_files_to_upload_unavailable = len(files_to_upload_unavailable)
     logger.warning('Number of files unavailable for upload: ' + str(n_files_to_upload_unavailable))

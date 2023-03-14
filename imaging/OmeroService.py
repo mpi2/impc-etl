@@ -37,13 +37,13 @@ class OmeroService:
         except Exception, e:
             self.logger.exception(e)
 
-    def loadFileOrDir(self, directory, project=None, dataset=None, filenames=None):
+    def loadFileOrDir(self, directory, dataset=None, filenames=None):
         if filenames is not None:
             str_n_files = str(len(filenames))
         else:
             str_n_files = "0"
 
-        self.logger.info(' -- Loading [' + directory + '] in [' + project + ' | ' + str(dataset) + ' ]: ' + str_n_files)
+        self.logger.info(' -- Loading [' + directory + '] in [' + str(dataset) + ' ]: ' + str_n_files)
         # chop dir to get project and dataset
 
         # if filenames is non then load the entire dir
@@ -52,72 +52,45 @@ class OmeroService:
                 fullPath = directory + "/" + filename
                 self.logger.info(' --- Loading files: ' + fullPath)
                 try:
-                    self.load(fullPath, project, dataset)
+                    self.load(fullPath, dataset)
                 except Exception as e:
-                    self.logger.error(' --- Error loading file [' + fullPath + ']:' + str(e))
-                    self.logger.error(' --- Skipping file: ' + fullPath)
+                    self.logger.error(' --- ERROR: Error loading file [' + fullPath + ']:' + str(e))
+                    self.logger.error(' --- ERROR: Skipping file: ' + fullPath)
                     continue
 
         else:
             self.logger.info(' --- Loading directory: ' + directory)
             try:
-                self.load(directory, project, dataset)
+                self.load(directory, dataset)
             except Exception as e:
-                self.logger.error(' --- Error loading directory [' + directory + ']:' + str(e))
-                self.logger.error(' --- Skipping: ' + directory)
+                self.logger.error(' --- ERROR: Error loading directory [' + directory + ']:' + str(e))
+                self.logger.error(' --- ERROR: Skipping: ' + directory)
 
-    def load(self, path, project=None, dataset=None):
-        self.logger.info("-" * 10)
-        self.logger.info("path=" + path)
-        self.logger.info("project=" + str(project))
-        self.logger.info("dataset=" + str(dataset))
-        # if self.cli is None or self.conn is None:
-        # print "cli is none!!!!!"
+    def load(self, path, dataset=None):
         self.getConnection()
 
         import_args = ["import"]
-        if project is not None:
-            self.logger.info("project in load is not None. Project name: " + project)
-            # project=project.replace(" ","-")
-        if dataset is not None:
-            self.logger.info("dataset in load is not None. Dataset name: " + dataset)
+        if not dataset:
+            self.logger.error(' -- ERROR: Dataset not provided!')
+            return
 
-            ## Introducing a hack to see if the actual upload works
-            dsId = self.dsData[dataset]
-            self.logger.info("DatasetId (first try) =" + str(dsId))
+        dsId = self.dsData[dataset]
+        if not dsId:
+            dsId = self.dsData[dataset.upper()]
             if not dsId:
-                dsId = self.dsData[dataset.upper()]
-                self.logger.info("DatasetId (second try) =" + str(dsId))
-                if not dsId:
-                    return
+                self.logger.error(' -- ERROR: Cannot find ID for dataset: ' + dataset)
+                return
 
-            self.logger.info("datasetId=" + str(dsId))
-            import_args.extend(
-                ["--", "-d", str(dsId), "--exclude", "filename"])  # "--no_thumbnails",,"--debug", "ALL"])
-            # import_args.extend(["--","--transfer","ln_s","-d", str(dsId), "--exclude","filename"])#"--no_thumbnails",,"--debug", "ALL"])
-            # import_args.extend(["--", "-d", str(dsId)])#"--no_thumbnails",,"--debug", "ALL"])
-        else:
-            self.logger.warning("dataset is None!!!!!!!!!!!!!!!!!!!!")
-
-        self.logger.info('importing project=' + str(project) + ', dataset=' + str(dataset) + ', filename=' + str(path))
+        import_args.extend(["--", "-d", str(dsId), "--exclude", "filename"])
 
         if (path.endswith('.pdf')):
-            self.logger.info(
-                "We have a pdf document- loading as attachment " + str(path))  # we need to upload as an attachment
             namespace = "imperial.training.demo"
             fileAnn = self.conn.createFileAnnfromLocalFile(str(path), mimetype=None, ns=namespace, desc=None)
-            self.logger.info("fileAnn=" + str(fileAnn))
             datasetForAnnotation = self.conn.getObject("Dataset", dsId)
-            self.logger.info("Attaching FileAnnotation to Dataset: " + str(datasetForAnnotation) + ", File ID: " + str(
-                fileAnn.getId()) + ", File Name: " + fileAnn.getFile().getName() + ", Size:" + str(
-                fileAnn.getFile().getSize()))
-            self.logger.info("Dataset=" + str(datasetForAnnotation))
             datasetForAnnotation.linkAnnotation(fileAnn)
-            self.logger.info("linked annotation!")
+            self.logger.info(' --- Loaded: ' + path)
         else:
             import_args.append(path)
-            # print " import args="
-            # print import_args
             self.cli.invoke(import_args, strict=True)
+            self.logger.info(' --- Loaded: ' + path)
         self.conn._closeSession()
-        # print "-" * 100
