@@ -1,3 +1,5 @@
+import json
+
 import psycopg2
 
 from imaging import OmeroConstants
@@ -41,6 +43,11 @@ class OmeroFileService:
             fileData[id] = name
 
         conn.close()
+        return fileData
+
+    def loadDataFromFile(self, dataFile):
+        with open(dataFile, 'r') as fh:
+            fileData = json.load(fh)
         return fileData
 
     def retrieveAnnotationsFromOmero(self):
