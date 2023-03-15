@@ -48,23 +48,30 @@ class OmeroService:
 
         # if filenames is non then load the entire dir
         if filenames is not None:
+            to_return = []
             for filename in filenames:
                 fullPath = directory + "/" + filename
-                self.logger.info(' --- Loading files: ' + fullPath)
-                try:
-                    self.load(fullPath, dataset)
-                except Exception as e:
-                    self.logger.error(' --- ERROR: Error loading file [' + fullPath + ']:' + str(e))
-                    self.logger.error(' --- ERROR: Skipping file: ' + fullPath)
-                    continue
-
+                self.logger.info(' --- Loading file: ' + fullPath)
+                to_return.append(fullPath)
+#                try:
+#                    self.load(fullPath, dataset)
+#                    to_return.append(fullPath)
+#                except Exception as e:
+#                    self.logger.error(' --- ERROR: Error loading file [' + fullPath + ']:' + str(e))
+#                    self.logger.error(' --- ERROR: Skipping file: ' + fullPath)
+#                    continue
+            self.logger.info(' -- [TRUE] Returning: ' + to_return)
+            return True, to_return
         else:
             self.logger.info(' --- Loading directory: ' + directory)
-            try:
-                self.load(directory, dataset)
-            except Exception as e:
-                self.logger.error(' --- ERROR: Error loading directory [' + directory + ']:' + str(e))
-                self.logger.error(' --- ERROR: Skipping: ' + directory)
+            self.logger.info(' -- [FALSE] Returning: ' + directory)
+            return False, directory
+#            try:
+#                self.load(directory, dataset)
+#            except Exception as e:
+#                self.logger.error(' --- ERROR: Error loading directory [' + directory + ']:' + str(e))
+#                self.logger.error(' --- ERROR: Skipping: ' + directory)
+        return False, None
 
     def load(self, path, dataset=None):
         self.getConnection()

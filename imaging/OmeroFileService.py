@@ -46,7 +46,7 @@ class OmeroFileService:
         conn.close()
         return fileData
 
-    def retrieveAnnotationsFromOmero(self):
+    def retrieveAnnotationsFromOmeroAndSerialize(self, annotationDataFile):
         conn = psycopg2.connect(database=self.omeroProperties[OmeroConstants.OMERO_DB_NAME],
                                 user=self.omeroProperties[OmeroConstants.OMERO_DB_USER],
                                 password=self.omeroProperties[OmeroConstants.OMERO_DB_PASS],
@@ -59,14 +59,18 @@ class OmeroFileService:
                 ds)
             cur.execute(query)
             for (id, name, path) in cur.fetchall():
+                clientPath = path
+                if clientPath.startswith('/'):
+                    clientPath = clientPath[1:]
                 fileData.append({
                     'id': id,
                     'name': name,
-                    'path': path,
+                    'path': clientPath,
                     'type': 'annotation'
                 })
         conn.close()
-        return fileData
+        with open(annotationDataFile, 'w') as filehandle:
+            json.dump(fileData, filehandle, sort_keys=True, indent=4)
 
     def retrieveImagesFromOmeroAndSerialize(self, imagesDataFolder, filePrefix):
         if not os.path.exists(imagesDataFolder):
@@ -105,18 +109,25 @@ class OmeroFileService:
         with open(os.path.join(imagesDataFolder, filePrefix + str(masterCount) + '.json'), 'w') as fh:
             json.dump(fileData, fh, sort_keys=True, indent=4)
 
-    def processToList(self, fileData):
-        fileList = []
-        for el in fileData:
-            if el['type'] == 'image':
-                fileList.append(el['path'].split('impc/')[-1])
-            else:
-                fileList.append(el['path'].split('impc/')[-1] + '/' + el['name'])
-        return fileList
-
-    def checkImageDataOnDisk(self, imagesFolder):
-        if os.path.exists(imagesFolder):
-            noFiles = len(os.listdir(imagesFolder))
+    def checkImageDataOnDisk(self, imageDataFolder):
+        if os.path.exists(imageDataFolder):
+            noFiles = len(os.listdir(imageDataFolder))
             return noFiles != 0
         else:
             return False
+
+    def checkAnnotationDataOnDisk(self, annotationDataFile):
+        return os.path.exists(annotationDataFile)
+
+    def loadImageData(self, imageDataFolder):
+        fileList = []
+        for file in os.listdir(imageDataFolder):
+            with open(os.path.join(imageDataFolder, file), 'r') as fh:
+                jsonData = json.load(fh)
+            for el in jsonData:
+                fileList.append(el['path'].split('impc/')[-1])
+        return fileList
+
+    def loadAnnotationData(self, annotationDataFile):
+        with open(annotationDataFile, 'r') as fh:
+            return json.load(fh)

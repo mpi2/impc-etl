@@ -11,7 +11,7 @@ from imaging import OmeroConstants
 from imaging.OmeroFileService import OmeroFileService
 from imaging.OmeroProperties import OmeroProperties
 from imaging.OmeroService import OmeroService
-from imaging.omero_util import writeImageDataToDiskInSegments, writeImageDataToDiskAsFile
+from imaging.omero_util import writeImageDataToDiskAsFile
 
 
 def add_to_list(L, dirname, names):
@@ -117,16 +117,18 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
             artefactsFolder + drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX,
             OmeroConstants.FILE_OMERO_IMAGES_DATA_PREFIX)
 
-    omero_file_list = omeroFileService.retrieveImagesFromOmero(artefactsFolder + drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX,
-                                   OmeroConstants.FILE_OMERO_IMAGES_DATA_PREFIX)
-#    writeImageDataToDiskInSegments(artefactsFolder + drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX, OmeroConstants.FILE_OMERO_IMAGES_DATA_PREFIX, imageFileData)
-#    omero_file_list = omeroFileService.processToList(imageFileData)
+    annotationDataExists = omeroFileService.checkAnnotationDataOnDisk(artefactsFolder + drTag + OmeroConstants.FILE_OMERO_ANNOTATIONS_DATA)
+    logger.info('Omero annotation data on disk: ' + str(annotationDataExists))
+    if not annotationDataExists:
+        logger.info('Retrieving annotations list from Omero and serialising it on disk ...')
+        omeroFileService.retrieveAnnotationsFromOmeroAndSerialize(artefactsFolder + drTag + OmeroConstants.FILE_OMERO_ANNOTATIONS_DATA)
+
+    logger.info('Loading Omero image data from disk ...')
+    omero_file_list = omeroFileService.loadImageData(artefactsFolder + drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX)
     logger.info('Found ' + str(len(omero_file_list)) + ' images in Omero.')
 
-    logger.info('Retrieving annotations list from Omero ...')
-    annotationFileData = omeroFileService.retrieveAnnotationsFromOmero()
-    writeImageDataToDiskAsFile(artefactsFolder + drTag + OmeroConstants.FILE_OMERO_ANNOTATIONS_DATA, annotationFileData)
-    omero_annotation_list = omeroFileService.processToList(annotationFileData)
+    logger.info('Loading Omero annotations data from disk ...')
+    omero_annotation_list = omeroFileService.loadAnnotationData(artefactsFolder + drTag + OmeroConstants.FILE_OMERO_ANNOTATIONS_DATA)
     logger.info('Found ' + str(len(omero_annotation_list)) + ' annotations in Omero.')
 
     omero_file_list.extend(omero_annotation_list)
@@ -183,7 +185,7 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
         # if dir contains pdf file we cannot load whole directory
         if len(glob.glob(os.path.join(fullpath, '*.pdf'))) > 0:
             logger.info(' -- Uploading PDFs ...')
-            omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=filenames)
+            isFile, fileData = omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=filenames)
         else:
             # Check if the dir is in omero.
             # If not we can import the whole dir irrespective of number of files
@@ -195,9 +197,9 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
                 pass
             logger.info(' -- Uploading images ...')
             if dir_not_in_omero or n_files_to_upload > load_whole_dir_threshold:
-                omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=None)
+                isFile, fileData = omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=None)
             else:
-                omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=filenames)
+                isFile, fileData = omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=filenames)
 
     n_files_to_upload_unavailable = len(files_to_upload_unavailable)
     logger.warning('Number of files unavailable for upload: ' + str(n_files_to_upload_unavailable))
