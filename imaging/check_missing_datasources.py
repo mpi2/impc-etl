@@ -5,8 +5,8 @@ from os.path import join
 import psycopg2
 
 from imaging import OmeroConstants
-from imaging.omero_util import retrieveDatasourcesFromDB
 from imaging.OmeroProperties import OmeroProperties
+from imaging.omero_util import retrieveDatasourcesFromDB
 
 
 def retrieveLatestEventId(omeroProperties):
@@ -122,7 +122,7 @@ def main(inputFolder, outputFolder, omeroDevPropetiesFile):
     dsData = retrieveDatasourcesFromDB(omeroProperties)
     lastDatasourceId = computeLastDatasourceId(dsData)
 
-    missingDSFile = outputFolder + 'missing_datasources.list'
+    missingDSFile = outputFolder + OmeroConstants.FILE_MISSING_DATASOURCES
     if os.path.isfile(missingDSFile):
         os.remove(missingDSFile)
 

@@ -24,9 +24,39 @@ def retrieveDatasourcesFromDB(omeroProperties):
     return dsData
 
 
-def writeImageDataToDisk(fileOut, imageData):
+def writeImageDataToDiskAsFile(fileOut, imageData):
     if os.path.isfile(fileOut):
         os.remove(fileOut)
 
     with open(fileOut, 'w') as filehandle:
         json.dump(imageData, filehandle, sort_keys=True, indent=4)
+
+
+def writeImageDataToDiskInSegments(folderOut, filePrefix, imageData):
+    if not os.path.exists(folderOut):
+        os.mkdir(folderOut, mode=0o766)
+    else:
+        for file in os.listdir(folderOut):
+            os.remove(os.path.join(folderOut, file))
+
+    count = 0
+    masterCount = 1
+    newData = []
+    for el in imageData:
+        if count % 500000 == 0:
+            with open(folderOut + filePrefix + str(masterCount) + '.json', 'w') as fh:
+                json.dump(newData, fh, sort_keys=True, indent=4)
+            masterCount += 1
+            newData = []
+
+        count += 1
+        newData.append(el)
+
+    with open(folderOut + filePrefix + str(masterCount) + '.json', 'w') as fh:
+        json.dump(newData, fh, sort_keys=True, indent=4)
+
+
+def loadDataFromFile(dataFile):
+    with open(dataFile, 'r') as fh:
+        fileData = json.load(fh)
+    return fileData

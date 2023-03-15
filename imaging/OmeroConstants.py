@@ -1,3 +1,8 @@
+FILE_OMERO_ANNOTATIONS_DATA = '_annotationslist.json'
+FILE_OMERO_IMAGES_DATA_PREFIX = 'imagelist_'
+FOLDER_OMERO_IMAGES_DATA_SUFFIX = '_images'
+FILE_MISSING_DATASOURCES = 'missing_datasources.list'
+
 OMERO_DB_NAME = 'omero.omerodbname'
 OMERO_DB_USER = 'omero.omerodbuser'
 OMERO_DB_PASS = 'omero.omerodbpass'

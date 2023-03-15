@@ -7,10 +7,11 @@ import os.path
 import sys
 import time
 
+from imaging import OmeroConstants
 from imaging.OmeroFileService import OmeroFileService
 from imaging.OmeroProperties import OmeroProperties
 from imaging.OmeroService import OmeroService
-from imaging.omero_util import writeImageDataToDisk
+from imaging.omero_util import writeImageDataToDiskInSegments, writeImageDataToDiskAsFile
 
 
 def add_to_list(L, dirname, names):
@@ -22,7 +23,7 @@ def add_to_list(L, dirname, names):
 
 def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile):
     csvFile = artefactsFolder + drTag + '.csv'
-    missingDSFile = artefactsFolder + 'missing_datasources.list'
+    missingDSFile = artefactsFolder + OmeroConstants.FILE_MISSING_DATASOURCES
 
     if os.path.isfile(missingDSFile):
         print('ERROR: Unable to start the upload process as there still are missing datasources: ' + missingDSFile)
@@ -35,16 +36,14 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
 
     log_formatter = logging.Formatter(log_format)
     logger = logging.getLogger('OmeroUploadMainMethod')
-    root_logger = logging.getLogger()
+    #    root_logger = logging.getLogger()
 
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(log_formatter)
-    root_logger.addHandler(console_handler)
+    #    console_handler = logging.StreamHandler()
+    #    console_handler.setFormatter(log_formatter)
+    #    root_logger.addHandler(console_handler)
 
     # Other values needed within this script.
     splitString = 'impc/'
-    # Assuming files to exclude is taken care of in solrquery
-    files_to_exclude = ['.fcs', '.mov', '.bz2', '.nrrd']
     # Upload whole dir if it contains more than this number of files
     load_whole_dir_threshold = 300
 
@@ -110,16 +109,15 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
     omeroService = OmeroService(omeroProperties.getProperties())
 
     logger.info('Retrieving image list from Omero ...')
-#    imageFileData = omeroFileService.retrieveImagesFromOmero()
-#    writeImageDataToDisk(artefactsFolder + drTag + '_imagelist.json', imageFileData)
-    imageFileData = omeroFileService.loadDataFromFile(artefactsFolder + drTag + '_imagelist.json')
+    imageFileData = omeroFileService.retrieveImagesFromOmero()
+    writeImageDataToDiskInSegments(artefactsFolder + drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX,
+                                   OmeroConstants.FILE_OMERO_IMAGES_DATA_PREFIX, imageFileData)
     omero_file_list = omeroFileService.processToList(imageFileData)
     logger.info('Found ' + str(len(omero_file_list)) + ' images in Omero.')
 
     logger.info('Retrieving annotations list from Omero ...')
-#    annotationFileData = omeroFileService.retrieveAnnotationsFromOmero()
-#    writeImageDataToDisk(artefactsFolder + drTag + '_annotationslist.json', annotationFileData)
-    annotationFileData = omeroFileService.loadDataFromFile(artefactsFolder + drTag + '_annotationslist.json')
+    annotationFileData = omeroFileService.retrieveAnnotationsFromOmero()
+    writeImageDataToDiskAsFile(artefactsFolder + drTag + OmeroConstants.FILE_OMERO_ANNOTATIONS_DATA, annotationFileData)
     omero_annotation_list = omeroFileService.processToList(annotationFileData)
     logger.info('Found ' + str(len(omero_annotation_list)) + ' annotations in Omero.')
 
@@ -128,6 +126,7 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
 
     # Get the files in NFS
     list_nfs_filenames = []
+    logger.info('Retrieving list of files on disk ...')
     os.path.walk(imagesFolder, add_to_list, list_nfs_filenames)
     list_nfs_filenames = [f.split(imagesFolder)[-1] for f in list_nfs_filenames]
     logger.info('Found ' + str(len(list_nfs_filenames)) + ' files on disk.')

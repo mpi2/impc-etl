@@ -145,7 +145,7 @@ imaging-omero-upload-prep:
 
 
 imaging-omero-upload:
-	@source /net/isilonP/public/rw/homes/mi_adm/.bash_profile | python imaging/upload_csv_to_omero.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties 2>&1 &
+	@source /net/isilonP/public/rw/homes/mi_adm/.bash_profile && python imaging/upload_csv_to_omero.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties 2>&1 &
 
 
 createProdLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)
