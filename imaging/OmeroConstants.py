@@ -1,3 +1,4 @@
+FILE_OMERO_IMAGE_DATA_LIST = 'image_data.list'
 FILE_OMERO_ANNOTATIONS_DATA = '_annotationslist.json'
 FILE_OMERO_IMAGES_DATA_PREFIX = 'imagelist_'
 FOLDER_OMERO_IMAGES_DATA_SUFFIX = '_images'

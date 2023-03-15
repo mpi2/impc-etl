@@ -124,7 +124,8 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
         omeroFileService.retrieveAnnotationsFromOmeroAndSerialize(artefactsFolder + drTag + OmeroConstants.FILE_OMERO_ANNOTATIONS_DATA)
 
     logger.info('Loading Omero image data from disk ...')
-    omero_file_list = omeroFileService.loadImageData(artefactsFolder + drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX)
+#    omero_file_list = omeroFileService.loadImageData(artefactsFolder + drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX)
+    omero_file_list = omeroFileService.loadImageDataFromFile(artefactsFolder + OmeroConstants.FILE_OMERO_IMAGE_DATA_LIST)
     logger.info('Found ' + str(len(omero_file_list)) + ' images in Omero.')
 
     logger.info('Loading Omero annotations data from disk ...')

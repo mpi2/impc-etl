@@ -128,6 +128,16 @@ class OmeroFileService:
                 fileList.append(el['path'].split('impc/')[-1])
         return fileList
 
+    def loadImageDataFromFile(self, imageDataFile):
+        fileList = []
+        with open(imageDataFile, 'r') as fh:
+            lines = fh.readlines()
+        for line in lines:
+            line = line.strip()
+            if line:
+                fileList.append(line)
+        return fileList
+
     def loadAnnotationData(self, annotationDataFile):
         with open(annotationDataFile, 'r') as fh:
             return json.load(fh)
