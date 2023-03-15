@@ -88,7 +88,7 @@ class OmeroFileService:
             cur.execute(query)
             for (id, name, clientpath) in cur.fetchall():
                 if count % 500000 == 0:
-                    with open(imagesDataFolder + filePrefix + str(masterCount) + '.json', 'w') as fh:
+                    with open(os.path.join(imagesDataFolder, filePrefix + str(masterCount) + '.json'), 'w') as fh:
                         json.dump(fileData, fh, sort_keys=True, indent=4)
                     masterCount += 1
                     fileData = []
@@ -102,7 +102,7 @@ class OmeroFileService:
                 })
         conn.close()
 
-        with open(imagesDataFolder + filePrefix + str(masterCount) + '.json', 'w') as fh:
+        with open(os.path.join(imagesDataFolder, filePrefix + str(masterCount) + '.json'), 'w') as fh:
             json.dump(fileData, fh, sort_keys=True, indent=4)
 
     def processToList(self, fileData):
