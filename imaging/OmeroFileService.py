@@ -70,7 +70,7 @@ class OmeroFileService:
 
     def retrieveImagesFromOmeroAndSerialize(self, imagesDataFolder, filePrefix):
         if not os.path.exists(imagesDataFolder):
-            os.mkdir(imagesDataFolder, mode=0o766)
+            os.mkdir(imagesDataFolder, 0o766)
 
         conn = psycopg2.connect(database=self.omeroProperties[OmeroConstants.OMERO_DB_NAME],
                                 user=self.omeroProperties[OmeroConstants.OMERO_DB_USER],
