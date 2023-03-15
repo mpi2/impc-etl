@@ -1,3 +1,6 @@
+import json
+import os
+
 import psycopg2
 
 from imaging import OmeroConstants
@@ -65,7 +68,10 @@ class OmeroFileService:
         conn.close()
         return fileData
 
-    def retrieveImagesFromOmero(self):
+    def retrieveImagesFromOmeroAndSerialize(self, imagesDataFolder, filePrefix):
+        if not os.path.exists(imagesDataFolder):
+            os.mkdir(imagesDataFolder, mode=0o766)
+
         conn = psycopg2.connect(database=self.omeroProperties[OmeroConstants.OMERO_DB_NAME],
                                 user=self.omeroProperties[OmeroConstants.OMERO_DB_USER],
                                 password=self.omeroProperties[OmeroConstants.OMERO_DB_PASS],
@@ -73,11 +79,21 @@ class OmeroFileService:
                                 port=self.omeroProperties[OmeroConstants.OMERO_DB_PORT])
         cur = conn.cursor()
         fileData = []
+        count = 1
+        masterCount = 1
+
         for ds in self.dsList:
             query = 'SELECT i.id,i.name,fse.clientpath FROM image i INNER JOIN datasetimagelink dsil ON i.id=dsil.child INNER JOIN filesetentry fse ON i.fileset=fse.fileset WHERE dsil.parent=' + str(
                 ds)
             cur.execute(query)
             for (id, name, clientpath) in cur.fetchall():
+                if count % 500000 == 0:
+                    with open(imagesDataFolder + filePrefix + str(masterCount) + '.json', 'w') as fh:
+                        json.dump(fileData, fh, sort_keys=True, indent=4)
+                    masterCount += 1
+                    fileData = []
+
+                count += 1
                 fileData.append({
                     'id': id,
                     'name': name,
@@ -85,7 +101,9 @@ class OmeroFileService:
                     'type': 'image'
                 })
         conn.close()
-        return fileData
+
+        with open(imagesDataFolder + filePrefix + str(masterCount) + '.json', 'w') as fh:
+            json.dump(fileData, fh, sort_keys=True, indent=4)
 
     def processToList(self, fileData):
         fileList = []
@@ -95,3 +113,10 @@ class OmeroFileService:
             else:
                 fileList.append(el['path'].split('impc/')[-1] + '/' + el['name'])
         return fileList
+
+    def checkImageDataOnDisk(self, imagesFolder):
+        if os.path.exists(imagesFolder):
+            noFiles = len(os.listdir(imagesFolder))
+            return noFiles != 0
+        else:
+            return False

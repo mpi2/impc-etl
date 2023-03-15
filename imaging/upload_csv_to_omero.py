@@ -108,92 +108,18 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
     omeroFileService = OmeroFileService(omeroProperties.getProperties())
     omeroService = OmeroService(omeroProperties.getProperties())
 
-    logger.info('Retrieving image list from Omero ...')
-    imageFileData = omeroFileService.retrieveImagesFromOmero()
-    writeImageDataToDiskInSegments(artefactsFolder + drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX,
-                                   OmeroConstants.FILE_OMERO_IMAGES_DATA_PREFIX, imageFileData)
-    omero_file_list = omeroFileService.processToList(imageFileData)
-    logger.info('Found ' + str(len(omero_file_list)) + ' images in Omero.')
+    imageDataExists = omeroFileService.checkImageDataOnDisk(
+        artefactsFolder + drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX)
+    logger.info('Omero image data on disk: ' + str(imageDataExists))
+    if not imageDataExists:
+        logger.info('Retrieving image list from Omero and serialising it on disk ...')
+        omeroFileService.retrieveImagesFromOmeroAndSerialize(
+            artefactsFolder + drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX,
+            OmeroConstants.FILE_OMERO_IMAGES_DATA_PREFIX)
 
     logger.info('Retrieving annotations list from Omero ...')
     annotationFileData = omeroFileService.retrieveAnnotationsFromOmero()
     writeImageDataToDiskAsFile(artefactsFolder + drTag + OmeroConstants.FILE_OMERO_ANNOTATIONS_DATA, annotationFileData)
-    omero_annotation_list = omeroFileService.processToList(annotationFileData)
-    logger.info('Found ' + str(len(omero_annotation_list)) + ' annotations in Omero.')
-
-    omero_file_list.extend(omero_annotation_list)
-    omero_dir_list = list(set([os.path.split(f)[0] for f in omero_file_list]))
-
-    # Get the files in NFS
-    list_nfs_filenames = []
-    logger.info('Retrieving list of files on disk ...')
-    os.path.walk(imagesFolder, add_to_list, list_nfs_filenames)
-    list_nfs_filenames = [f.split(imagesFolder)[-1] for f in list_nfs_filenames]
-    logger.info('Found ' + str(len(list_nfs_filenames)) + ' files on disk.')
-
-    # Modified to carry out case-insensitive comparisons.
-    set_csv_filenames = set([k.lower() for k in csv_directory_to_filenames_map.keys()])
-    set_omero_filenames = set([f.lower() for f in omero_file_list])
-    dict_nfs_filenames = {}
-    for f in list_nfs_filenames:
-        # Note that if more than one file maps to the same case insensitive value
-        # only the last one encountered will be used
-        dict_nfs_filenames[f.lower()] = f
-    set_nfs_filenames = set(dict_nfs_filenames.keys())
-
-    files_to_upload = set_csv_filenames - set_omero_filenames
-    files_to_upload_available = files_to_upload.intersection(set_nfs_filenames)
-    files_to_upload_unavailable = files_to_upload - files_to_upload_available
-
-    logger.info('Number of files to upload: ' + str(len(files_to_upload)))
-    logger.info('Number of files to available: ' + str(len(files_to_upload_available)))
-
-    # Create a dictionary for the files to upload with the directory as the
-    # key and the original nfs filenames as the values, so each dir can be passed to
-    # omero with associated files
-    dict_files_to_upload = {}
-    for f in files_to_upload_available:
-        dirname, filename = os.path.split(dict_nfs_filenames[f])
-        if dict_files_to_upload.has_key(dirname):
-            dict_files_to_upload[dirname].append(filename)
-        else:
-            dict_files_to_upload[dirname] = [filename]
-
-    # Upload files
-    n_dirs_to_upload = len(dict_files_to_upload)
-    for index, directory in zip(range(n_dirs_to_upload), dict_files_to_upload.keys()):
-        filenames = dict_files_to_upload[directory]
-        n_files_to_upload = len(filenames)
-        logger.info('Uploading: [' + str(index + 1) + ' of ' + str(n_dirs_to_upload) + ']: ' + directory)
-        dir_structure = directory.split('/')
-        project = dir_structure[0]
-        # Below we assume dir_structure is list with elements:
-        # [project, pipeline, procedure, parameter]
-        dataset = "-".join(dir_structure)
-        fullpath = os.path.join(imagesFolder, directory)
-
-        # if dir contains pdf file we cannot load whole directory
-        if len(glob.glob(os.path.join(fullpath, '*.pdf'))) > 0:
-            logger.info(' -- Uploading PDFs ...')
-            omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=filenames)
-        else:
-            # Check if the dir is in omero.
-            # If not we can import the whole dir irrespective of number of files
-            dir_not_in_omero = True
-            try:
-                if omero_dir_list.index(directory) >= 0:
-                    dir_not_in_omero = False
-            except ValueError:
-                pass
-            logger.info(' -- Uploading images ...')
-            if dir_not_in_omero or n_files_to_upload > load_whole_dir_threshold:
-                omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=None)
-            else:
-                omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=filenames)
-
-    n_files_to_upload_unavailable = len(files_to_upload_unavailable)
-    logger.warning('Number of files unavailable for upload: ' + str(n_files_to_upload_unavailable))
-
 
 if __name__ == "__main__":
     main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
