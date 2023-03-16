@@ -1,5 +1,6 @@
 import json
 import os.path
+import sys
 
 import psycopg2
 
@@ -36,3 +37,13 @@ def loadDataFromFile(dataFile):
     with open(dataFile, 'r') as fh:
         fileData = json.load(fh)
     return fileData
+
+
+def main(omeroProperties, outFile):
+    dsData = retrieveDatasourcesFromDB(omeroProperties)
+    with open(outFile, 'w') as fh:
+        json.dump(dsData, fh, sort_keys=True, indent=4)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1], sys.argv[2])
