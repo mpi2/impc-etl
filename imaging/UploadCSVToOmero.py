@@ -74,7 +74,7 @@ class UploadCSVToOmero:
     def doInitialChecksAndMoveDataAlreadyUploaded(self, drTag, artefactsFolder, imagesFolder):
         self.logger.info('Checking ' + drTag + ' files for entries already uploaded ...')
         baseImagesFolder = os.path.join(artefactsFolder, OmeroConstants.FOLDER_OMERO_IMAGES_DATA)
-        drDataFile = os.path.join(baseImagesFolder + drTag + OmeroConstants.FILE_OMERO_IMAGES_DATA)
+        drDataFile = os.path.join(baseImagesFolder, drTag + OmeroConstants.FILE_OMERO_IMAGES_DATA)
 
         toBeRemovedFromCSV = []
         if os.path.exists(drDataFile):
