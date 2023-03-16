@@ -5,6 +5,7 @@ import sys
 import psycopg2
 
 from imaging import OmeroConstants
+from imaging.OmeroProperties import OmeroProperties
 
 
 def retrieveDatasourcesFromDB(omeroProperties):
@@ -39,7 +40,8 @@ def loadDataFromFile(dataFile):
     return fileData
 
 
-def main(omeroProperties, outFile):
+def main(omeroDevPropetiesFile, outFile):
+    omeroProperties = OmeroProperties(omeroDevPropetiesFile)
     dsData = retrieveDatasourcesFromDB(omeroProperties)
     with open(outFile, 'w') as fh:
         json.dump(dsData, fh, sort_keys=True, indent=4)
