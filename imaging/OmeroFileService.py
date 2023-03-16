@@ -139,5 +139,9 @@ class OmeroFileService:
         return fileList
 
     def loadAnnotationData(self, annotationDataFile):
+        fileList = []
         with open(annotationDataFile, 'r') as fh:
-            return json.load(fh)
+            jsonData = json.load(fh)
+        for el in jsonData:
+            fileList.append(el['path'])
+        return fileList
