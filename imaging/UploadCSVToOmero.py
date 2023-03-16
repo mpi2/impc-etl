@@ -7,7 +7,6 @@ import os
 import os.path
 import sys
 import time
-import shutil
 
 from imaging import OmeroConstants
 from imaging.OmeroFileService import OmeroFileService
@@ -40,9 +39,45 @@ class UploadCSVToOmero:
             return False
         return True
 
+    def createFoldersInClean(self, drTag, artefactsFolder, imagingCleanPath):
+        csvFile = artefactsFolder + drTag + '.csv'
+        mode = 0o766
+
+        with open(csvFile, 'r') as fh:
+            lines = fh.readlines()
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith('observation_id'):
+                continue
+
+            segs = line.split(',')
+            phenotyping_center = segs[3]
+            pipeline_stable_id = segs[4]
+            procedure_stable_id = segs[5]
+            parameter_stable_id = segs[7]
+
+            siteFolder = os.path.join(imagingCleanPath, phenotyping_center)
+            if not os.path.isdir(siteFolder):
+                self.logger.info('Creating folder: ' + siteFolder)
+#                os.mkdir(siteFolder, mode)
+            pipelineFolder = os.path.join(siteFolder, pipeline_stable_id)
+            if not os.path.isdir(pipelineFolder):
+                self.logger.info('Creating folder: ' + pipelineFolder)
+#                os.mkdir(pipelineFolder, mode)
+            procedureFolder = os.path.join(pipelineFolder, procedure_stable_id)
+            if not os.path.isdir(procedureFolder):
+                self.logger.info('Creating folder: ' + procedureFolder)
+#                os.mkdir(procedureFolder, mode)
+            parameterFolder = os.path.join(procedureFolder, parameter_stable_id)
+            if not os.path.isdir(parameterFolder):
+                self.logger.info('Creating folder: ' + parameterFolder)
+#                os.mkdir(parameterFolder, mode)
+
     # Reading CSV file and looking for files that won't be uploaded anyway and move them to clean:
     # ['.mov', '.bin', '.fcs', '.nrrd', '.bz2', '.arf']
-    def cleanUpCSV(self, drTag, artefactsFolder, imagesFolder):
+    def cleanUpCSV(self, drTag, artefactsFolder, imagesFolder, imagingCleanPath):
         undesired_extensions = ['mov', 'bin', 'fcs', 'nrrd', 'bz2', 'arf']
         csvFile = artefactsFolder + drTag + '.csv'
 
@@ -67,9 +102,17 @@ class UploadCSVToOmero:
             extension = fileName.split('.')[-1]
             key = os.path.join(phenotyping_center, pipeline_stable_id, procedure_stable_id, parameter_stable_id,
                                fileName)
+            cleanFolderPath = os.path.join(imagingCleanPath, phenotyping_center, pipeline_stable_id,
+                                           procedure_stable_id, parameter_stable_id)
 
             if extension in undesired_extensions:
-                self.logger.info(' - To move: ' + key)
+                fullFilePath = os.path.join(imagesFolder, key)
+                if os.path.exists(fullFilePath):
+                    self.logger.info(' - To move: ' + fullFilePath)
+                    if not os.path.isdir(cleanFolderPath):
+                        self.logger.warning(' -- Cannot move file. Folder [' + cleanFolderPath + '] does not exist!')
+                else:
+                    self.logger.warning('File [' + fullFilePath + '] does not exist!')
 
     def doInitialChecksAndMoveDataAlreadyUploaded(self, drTag, artefactsFolder, imagesFolder):
         self.logger.info('Checking ' + drTag + ' files for entries already uploaded ...')
@@ -283,14 +326,15 @@ class UploadCSVToOmero:
         pass
 
 
-def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile):
+def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile, imagingCleanPath):
     t = time.time()
     tstamp = datetime.datetime.fromtimestamp(t).strftime('%Y%m%d')
     log_format = '%(asctime)s - %(name)s - %(levelname)s: %(message)s'
     logging.basicConfig(format=log_format, filename=logsFolder + drTag + '_' + tstamp + '.log', level=logging.INFO)
 
     uploadCSVToOmero = UploadCSVToOmero(artefactsFolder, omeroDevPropetiesFile)
-    uploadCSVToOmero.cleanUpCSV(drTag, artefactsFolder, imagesFolder)
+    uploadCSVToOmero.createFoldersInClean(drTag, artefactsFolder, imagingCleanPath)
+    uploadCSVToOmero.cleanUpCSV(drTag, artefactsFolder, imagesFolder, imagingCleanPath)
     uploadCSVToOmero.doInitialChecksAndMoveDataAlreadyUploaded(drTag, artefactsFolder, imagesFolder)
     uploadCSVToOmero.prepareData(drTag, artefactsFolder, imagesFolder)
     uploadCSVToOmero.doUpload(drTag, imagesFolder)
@@ -298,4 +342,4 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
