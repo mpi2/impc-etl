@@ -60,11 +60,11 @@ class OmeroService:
 #                    self.logger.error(' --- ERROR: Error loading file [' + fullPath + ']:' + str(e))
 #                    self.logger.error(' --- ERROR: Skipping file: ' + fullPath)
 #                    continue
-            self.logger.info(' -- [TRUE] Returning: ' + to_return)
+            self.logger.info(' -- [TRUE] Returning: ' + str(to_return))
             return True, to_return
         else:
-            self.logger.info(' --- Loading directory: ' + directory)
-            self.logger.info(' -- [FALSE] Returning: ' + directory)
+            self.logger.info(' --- Loading directory: ' + str(directory))
+            self.logger.info(' -- [FALSE] Returning: ' + str(directory))
             return False, directory
 #            try:
 #                self.load(directory, dataset)
