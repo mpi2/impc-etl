@@ -148,7 +148,7 @@ imaging-omero-upload-prep:
 
 
 imaging-omero-upload:
-	@source /net/isilonP/public/rw/homes/mi_adm/.bash_profile && python imaging/UploadCSVToOmero.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties $(clean-path)/ 2>&1
+	@source /net/isilonP/public/rw/homes/mi_adm/.bash_profile && python imaging/UploadCSVToOmero.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties $(clean-path) 2>&1
 
 
 imaging-omero-upload-check-pid:

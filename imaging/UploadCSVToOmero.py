@@ -7,6 +7,7 @@ import os
 import os.path
 import sys
 import time
+import shutil
 
 from imaging import OmeroConstants
 from imaging.OmeroFileService import OmeroFileService
@@ -43,6 +44,7 @@ class UploadCSVToOmero:
         csvFile = artefactsFolder + drTag + '.csv'
         mode = 0o766
 
+        self.logger.info('Checking if additional folders have to be created in clean ...')
         with open(csvFile, 'r') as fh:
             lines = fh.readlines()
         for line in lines:
@@ -61,19 +63,19 @@ class UploadCSVToOmero:
             siteFolder = os.path.join(imagingCleanPath, phenotyping_center)
             if not os.path.isdir(siteFolder):
                 self.logger.info('Creating folder: ' + siteFolder)
-#                os.mkdir(siteFolder, mode)
+                os.mkdir(siteFolder, mode)
             pipelineFolder = os.path.join(siteFolder, pipeline_stable_id)
             if not os.path.isdir(pipelineFolder):
                 self.logger.info('Creating folder: ' + pipelineFolder)
-#                os.mkdir(pipelineFolder, mode)
+                os.mkdir(pipelineFolder, mode)
             procedureFolder = os.path.join(pipelineFolder, procedure_stable_id)
             if not os.path.isdir(procedureFolder):
                 self.logger.info('Creating folder: ' + procedureFolder)
-#                os.mkdir(procedureFolder, mode)
+                os.mkdir(procedureFolder, mode)
             parameterFolder = os.path.join(procedureFolder, parameter_stable_id)
             if not os.path.isdir(parameterFolder):
                 self.logger.info('Creating folder: ' + parameterFolder)
-#                os.mkdir(parameterFolder, mode)
+                os.mkdir(parameterFolder, mode)
 
     # Reading CSV file and looking for files that won't be uploaded anyway and move them to clean:
     # ['.mov', '.bin', '.fcs', '.nrrd', '.bz2', '.arf']
@@ -81,6 +83,7 @@ class UploadCSVToOmero:
         undesired_extensions = ['mov', 'bin', 'fcs', 'nrrd', 'bz2', 'arf']
         csvFile = artefactsFolder + drTag + '.csv'
 
+        self.logger.info('Removing files that won\'t be uploaded from the CSV file ...')
         toKeep = []
         with open(csvFile, 'r') as fh:
             lines = fh.readlines()
@@ -108,11 +111,20 @@ class UploadCSVToOmero:
             if extension in undesired_extensions:
                 fullFilePath = os.path.join(imagesFolder, key)
                 if os.path.exists(fullFilePath):
-                    self.logger.info(' - To move: ' + fullFilePath)
+                    self.logger.info('Moving: ' + fullFilePath)
                     if not os.path.isdir(cleanFolderPath):
                         self.logger.warning(' -- Cannot move file. Folder [' + cleanFolderPath + '] does not exist!')
+                    else:
+                        finalFilePath = os.path.join(cleanFolderPath, fileName)
+                        shutil.move(fullFilePath, finalFilePath)
                 else:
                     self.logger.warning('File [' + fullFilePath + '] does not exist!')
+            else:
+                toKeep.append(line)
+
+        os.remove(csvFile)
+        with open(csvFile, 'w') as fh:
+            fh.write('\n'.join(toKeep))
 
     def doInitialChecksAndMoveDataAlreadyUploaded(self, drTag, artefactsFolder, imagesFolder):
         self.logger.info('Checking ' + drTag + ' files for entries already uploaded ...')
@@ -126,21 +138,25 @@ class UploadCSVToOmero:
 
                 for el in jsonData:
                     localPath = os.path.join(imagesFolder, el['path'].split('impc/')[-1])
-                    self.logger.info(' -- ' + localPath)
-
                     cleanPath = '/' + el['path']
                     if os.path.exists(localPath):
                         self.logger.info('Moving: ' + localPath + ' to: ' + cleanPath)
+                        cleanFolder = cleanPath[:cleanPath.rfind('/')]
+                        if not os.path.isdir(cleanFolder):
+                            self.logger.warning(
+                                'Unable to move [' + localPath + ']. Folder [' + cleanFolder + '] does not exist!')
+                        else:
+                            toBeRemovedFromCSV.append(el['path'].split('impc/')[-1])
+
                     else:
                         self.logger.info('NOT exists: ' + localPath)
 
-                    toBeRemovedFromCSV.append(el['path'].split('impc/')[-1])
-
+        self.logger.info(' - To be removed:')
+        for el in toBeRemovedFromCSV:
+            self.logger.info(' -- ' + el)
         # TODO: parse existing DR file
         # move files already uploaded
         # update CSV file
-
-        pass
 
     def prepareData(self, drTag, artefactsFolder, imagesFolder):
         csv_directory_to_filenames_map = self.loadCSVFile(artefactsFolder + drTag + '.csv')
