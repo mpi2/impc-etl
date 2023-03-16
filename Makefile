@@ -152,11 +152,11 @@ imaging-omero-upload:
 
 
 imaging-omero-upload-check-pid:
-	@python imaging/CheckUploadProcessStatus.py $(staging-path)/$(dr-tag)/artefacts/
+	@python imaging/CheckUploadProcessStatus.py
 
 
 imaging-omero-upload-check-status:
-	@python3 imaging/CheckOmeroUploadStatus.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/
+	@python3 imaging/CheckOmeroUploadStatus.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/
 
 
 createProdLuigiCfg:       ##@build Generates a new luigi-prod.cfg file from the luigi.cfg.template a using a new dr-tag, remember to create luigi.cfg.template file first, parameter: dr-tag (e.g. dr15.0)

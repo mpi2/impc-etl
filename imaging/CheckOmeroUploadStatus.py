@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 
@@ -12,54 +13,54 @@ class CheckOmeroUploadStatus:
     valid = False
     diskImageData = {}
 
-    def __init__(self, drTag, artefactsFolder, imagesFolder, logsFolder):
+    def __init__(self, drTag, artefactsFolder):
         self.drTag = drTag
         self.artefactsFolder = artefactsFolder
-        self.imagesFolder = imagesFolder
-        self.logsFolder = logsFolder
-        imageDataFileSet = self.checkDataAvailable()
-        if not self.valid:
-            print(' - Unable to find data required to check upload status')
+        self.checkExistingData()
 
-    def readImagesOnDisk(self):
-        print(' -- Reading images available on disk ...')
-        self.diskImageData = {}
-        for site in os.listdir(self.imagesFolder):
-            siteFolder = os.path.join(self.imagesFolder, site)
-            for pipeline in os.listdir(siteFolder):
-                pipelineFolder = os.path.join(siteFolder, pipeline)
-                for procedure in os.listdir(pipelineFolder):
-                    procedureFolder = os.path.join(pipelineFolder, procedure)
-                    for parameter in os.listdir(procedureFolder):
-                        parameterFolder = os.path.join(procedureFolder, parameter)
-                        for imgFile in os.listdir(parameterFolder):
-                            fileExtension = imgFile.rfind('.')
-                            self.diskImageData[os.path.join(parameterFolder, imgFile)] = imgFile[fileExtension + 1:]
-        print(' -- Found images: ' + str(len(self.diskImageData)))
+    def checkExistingData(self):
+        csvFile = self.artefactsFolder + self.drTag + '.csv'
+        csvExists = False
+        if os.path.exists(csvFile):
+            csvExists = True
+        else:
+            print('ERROR: Cannot find CSV file: ' + csvFile)
 
-    def checkDataAvailable(self):
-        annotationsDataExists = False
+        drDataFileExists = False
+        baseImagesFolder = os.path.join(self.artefactsFolder, OmeroConstants.FOLDER_OMERO_IMAGES_DATA)
+        drDataFile = os.path.join(baseImagesFolder, self.drTag + OmeroConstants.FILE_OMERO_IMAGES_DATA)
+        if os.path.exists(drDataFile):
+            drDataFileExists = True
+        else:
+            print('ERROR: Cannot find DR file: ' + drDataFile)
+        self.valid = csvExists and drDataFileExists
 
-        if os.path.exists(self.artefactsFolder + OmeroConstants.FILE_OMERO_ANNOTATIONS_DATA):
-            annotationsDataExists = True
+    def isValid(self):
+        return self.valid
 
-        imageDataFileSet = []
-        if os.path.exists(self.artefactsFolder + self.drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX):
-            for file in os.listdir(self.artefactsFolder + self.drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX):
-                imageDataFileSet.append(
-                    os.path.join(self.artefactsFolder + self.drTag + OmeroConstants.FOLDER_OMERO_IMAGES_DATA_SUFFIX,
-                                 file))
+    def checkProgress(self):
+        csvFile = self.artefactsFolder + self.drTag + '.csv'
+        with open(csvFile, 'r') as fh:
+            lines = fh.readlines()
+        csvEntries = len(lines) - 1
 
-        self.valid = annotationsDataExists and (len(imageDataFileSet) != 0)
-        return imageDataFileSet
+        baseImagesFolder = os.path.join(self.artefactsFolder, OmeroConstants.FOLDER_OMERO_IMAGES_DATA)
+        drDataFile = os.path.join(baseImagesFolder, self.drTag + OmeroConstants.FILE_OMERO_IMAGES_DATA)
+        with open(drDataFile, 'r') as fh:
+            jsonData = json.load(fh)
+        jsonEntries = len(jsonData)
+
+        print('- Current status: ' + str(jsonEntries) + ' of ' + str(csvEntries))
 
 
-def main(drTag, artefactsFolder, imagesFolder, logsFolder):
+def main(drTag, artefactsFolder):
     print(' -- [' + drTag + '] Using artefacts from: ' + artefactsFolder)
-    print(' -- [' + drTag + '] Using images from: ' + imagesFolder)
-    print(' -- [' + drTag + '] Using logs from: ' + logsFolder)
-    checkOmeroUploadStatus = CheckOmeroUploadStatus(drTag, artefactsFolder, imagesFolder, logsFolder)
+    checkOmeroUploadStatus = CheckOmeroUploadStatus(drTag, artefactsFolder)
+    if not checkOmeroUploadStatus.isValid():
+        print('ERROR: Unable to find relevant data!')
+    else:
+        checkOmeroUploadStatus.checkProgress()
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    main(sys.argv[1], sys.argv[2])

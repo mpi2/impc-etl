@@ -1,49 +1,34 @@
 import os
-import sys
 
 
-class CheckUploadProcessStatus:
-    artefactsFolder = None
+def main():
+    psOutput = os.popen('ps x | grep imaging').read()
+    lines = psOutput.split('\n')
 
-    def __init__(self, artefactsFolder):
-        self.artefactsFolder = artefactsFolder
+    psPid = None
 
-    def checkIfProcessIsStillRunning(self):
-        psOutput = os.popen('ps x | grep imaging').read()
-        lines = psOutput.split('\n')
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
 
-        psPid = None
+        segments = line.split(' ')
+        actualSegments = []
+        for seg in segments:
+            seg = seg.strip()
+            if seg:
+                actualSegments.append(seg)
 
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-
-            segments = line.split(' ')
-            actualSegments = []
-            for seg in segments:
-                seg = seg.strip()
-                if seg:
-                    actualSegments.append(seg)
-
-            if not actualSegments:
-                continue
-            pid = actualSegments[0]
-            for seg in actualSegments:
-                if seg == 'imaging/UploadCSVToOmero.py':
-                    psPid = pid
-                    break
-            if psPid:
+        if not actualSegments:
+            continue
+        pid = actualSegments[0]
+        for seg in actualSegments:
+            if seg == 'imaging/UploadCSVToOmero.py':
+                psPid = pid
                 break
+        if psPid:
+            break
 
-        return psPid
-
-
-def main(artefactsFolder):
-    print(' -- Using artefacts from: ' + artefactsFolder)
-
-    checkUploadProcessStatus = CheckUploadProcessStatus(artefactsFolder)
-    psPid = checkUploadProcessStatus.checkIfProcessIsStillRunning()
     if not psPid:
         print(' -- Upload process is no longer running!')
     else:
@@ -51,4 +36,4 @@ def main(artefactsFolder):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main()
