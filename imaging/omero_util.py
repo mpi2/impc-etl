@@ -42,7 +42,7 @@ def loadDataFromFile(dataFile):
 
 def main(omeroDevPropetiesFile, outFile):
     omeroProperties = OmeroProperties(omeroDevPropetiesFile)
-    dsData = retrieveDatasourcesFromDB(omeroProperties)
+    dsData = retrieveDatasourcesFromDB(omeroProperties.getProperties())
     with open(outFile, 'w') as fh:
         json.dump(dsData, fh, sort_keys=True, indent=4)
 
