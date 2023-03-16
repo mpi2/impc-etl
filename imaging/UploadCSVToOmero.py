@@ -7,6 +7,7 @@ import os
 import os.path
 import sys
 import time
+import shutil
 
 from imaging import OmeroConstants
 from imaging.OmeroFileService import OmeroFileService
@@ -39,10 +40,61 @@ class UploadCSVToOmero:
             return False
         return True
 
-    def doInitialChecksAndMoveDataAlreadyUploaded(self):
+    # Reading CSV file and looking for files that won't be uploaded anyway and move them to clean:
+    # ['.mov', '.bin', '.fcs', '.nrrd', '.bz2', '.arf']
+    def cleanUpCSV(self, drTag, artefactsFolder, imagesFolder):
+        undesired_extensions = ['.mov', '.bin', '.fcs', '.nrrd', '.bz2', '.arf']
+        csvFile = artefactsFolder + drTag + '.csv'
+
+        toKeep = []
+        with open(csvFile, 'r') as fh:
+            lines = fh.readlines()
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith('observation_id'):
+                toKeep.append(line)
+                continue
+
+            segs = line.split(',')
+            downloadUrl = segs[2]
+            phenotyping_center = segs[3]
+            pipeline_stable_id = segs[4]
+            procedure_stable_id = segs[5]
+            parameter_stable_id = segs[7]
+            fileName = os.path.split(downloadUrl)[-1]
+            extension = fileName.split('.')[-1]
+            key = os.path.join(phenotyping_center, pipeline_stable_id, procedure_stable_id, parameter_stable_id,
+                               fileName)
+
+            if extension in undesired_extensions:
+                self.logger.info(' - To move: ' + key)
+
+    def doInitialChecksAndMoveDataAlreadyUploaded(self, drTag, artefactsFolder, imagesFolder):
+        self.logger.info('Checking ' + drTag + ' files for entries already uploaded ...')
+        baseImagesFolder = os.path.join(artefactsFolder, OmeroConstants.FOLDER_OMERO_IMAGES_DATA)
+        drDataFile = os.path.join(baseImagesFolder + drTag + OmeroConstants.FILE_OMERO_IMAGES_DATA)
+
+        toBeRemovedFromCSV = []
+        if os.path.exists(drDataFile):
+            with open(drDataFile, 'r') as fh:
+                jsonData = json.load(fh)
+
+                for el in jsonData:
+                    localPath = os.path.join(imagesFolder, el['path'].split('impc/')[-1])
+                    cleanPath = '/' + el['path']
+                    if os.path.exists(localPath):
+                        self.logger.info('Moving: ' + localPath + ' to: ' + cleanPath)
+                    else:
+                        self.logger.info('NOT exists: ' + localPath)
+
+                    toBeRemovedFromCSV.append(el['path'].split('impc/')[-1])
+
         # TODO: parse existing DR file
         # move files already uploaded
         # update CSV file
+
         pass
 
     def prepareData(self, drTag, artefactsFolder, imagesFolder):
@@ -59,7 +111,6 @@ class UploadCSVToOmero:
         n_from_csv_file = 0
         with open(csvFile, 'r') as fid:
             csv_reader = csv.reader(fid)
-
             header_row = csv_reader.next()
             try:
                 download_file_path_idx = header_row.index("download_file_path")
@@ -201,7 +252,7 @@ class UploadCSVToOmero:
             # if dir contains pdf file we cannot load whole directory
             if len(glob.glob(os.path.join(fullpath, '*.pdf'))) > 0:
                 self.logger.info(' -- Uploading PDFs ...')
-                isFile, fileData = self.omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=filenames)
+                self.omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=filenames)
             else:
                 # Check if the dir is in omero.
                 # If not we can import the whole dir irrespective of number of files
@@ -213,15 +264,15 @@ class UploadCSVToOmero:
                     pass
                 self.logger.info(' -- Uploading images ...')
                 if dir_not_in_omero or n_files_to_upload > LOAD_WHOLE_DIR_THRESHOLD:
-                    isFile, fileData = self.omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=None)
+                    self.omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=None)
                 else:
-                    isFile, fileData = self.omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=filenames)
+                    self.omeroService.loadFileOrDir(fullpath, dataset=dataset, filenames=filenames)
 
             # TODO:
             # 1. Query for IDs
             # 3. Run update query
             # 2. Update DR record of IDs
-#            self.omeroFileService.runUpdate(drTag)
+        # self.omeroFileService.runUpdate(drTag)
 
     def cleanUp(self):
         # TODO:
@@ -237,6 +288,7 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
     logging.basicConfig(format=log_format, filename=logsFolder + drTag + '_' + tstamp + '.log', level=logging.INFO)
 
     uploadCSVToOmero = UploadCSVToOmero(artefactsFolder, omeroDevPropetiesFile)
+    uploadCSVToOmero.cleanUpCSV(drTag, artefactsFolder, imagesFolder)
     uploadCSVToOmero.doInitialChecksAndMoveDataAlreadyUploaded()
     uploadCSVToOmero.prepareData(drTag, artefactsFolder, imagesFolder)
     uploadCSVToOmero.doUpload(drTag, imagesFolder)

@@ -116,10 +116,7 @@ class OmeroFileService:
                                 host=self.omeroProperties[OmeroConstants.OMERO_DB_HOST],
                                 port=self.omeroProperties[OmeroConstants.OMERO_DB_PORT])
         cur = conn.cursor()
-        query = "BEGIN; " \
-                "UPDATE filesetentry SET clientpath=REPLACE(clientpath,'holding_area/impc/" + drTag + "/images','clean/impc') WHERE clientpath LIKE '%holding_area/impc/" + drTag + "%'; " \
-                                                                                                                                                                                    "UPDATE originalfile SET path=REPLACE(path,'holding_area/impc/" + drTag + "/images','clean/impc') WHERE path LIKE '%holding_area/impc/" + drTag + "%'; " \
-                                                                                                                                                                                                                                                                                                                                      "END;"
+        query = "BEGIN; UPDATE filesetentry SET clientpath=REPLACE(clientpath,'holding_area/impc/" + drTag + "/images','clean/impc') WHERE clientpath LIKE '%holding_area/impc/" + drTag + "%'; UPDATE originalfile SET path=REPLACE(path,'holding_area/impc/" + drTag + "/images','clean/impc') WHERE path LIKE '%holding_area/impc/" + drTag + "%'; COMMIT;"
         cur.execute(query)
         conn.close()
 

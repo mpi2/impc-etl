@@ -44,15 +44,12 @@ class OmeroService:
             str_n_files = "0"
 
         self.logger.info(' -- Loading [' + directory + '] in [' + str(dataset) + ' ]: ' + str_n_files)
-        # chop dir to get project and dataset
 
         # if filenames is non then load the entire dir
         if filenames is not None:
-            to_return = []
             for filename in filenames:
                 fullPath = directory + "/" + filename
                 self.logger.info(' --- Loading file: ' + fullPath)
-                to_return.append(fullPath)
 #                try:
 #                    self.load(fullPath, dataset)
 #                    to_return.append(fullPath)
@@ -60,18 +57,13 @@ class OmeroService:
 #                    self.logger.error(' --- ERROR: Error loading file [' + fullPath + ']:' + str(e))
 #                    self.logger.error(' --- ERROR: Skipping file: ' + fullPath)
 #                    continue
-            self.logger.info(' -- [TRUE] Returning: ' + str(to_return))
-            return True, to_return
         else:
             self.logger.info(' --- Loading directory: ' + str(directory))
-            self.logger.info(' -- [FALSE] Returning: ' + str(directory))
-            return False, directory
 #            try:
 #                self.load(directory, dataset)
 #            except Exception as e:
 #                self.logger.error(' --- ERROR: Error loading directory [' + directory + ']:' + str(e))
 #                self.logger.error(' --- ERROR: Skipping: ' + directory)
-        return False, None
 
     def load(self, path, dataset=None):
         self.getConnection()
