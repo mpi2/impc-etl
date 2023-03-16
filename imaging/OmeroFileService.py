@@ -109,24 +109,26 @@ class OmeroFileService:
         with open(os.path.join(imagesDataFolder, filePrefix + str(masterCount) + '.json'), 'w') as fh:
             json.dump(fileData, fh, sort_keys=True, indent=4)
 
-    def checkImageDataOnDisk(self, imageDataFolder):
+    def runUpdate(self, drTag):
+        conn = psycopg2.connect(database=self.omeroProperties[OmeroConstants.OMERO_DB_NAME],
+                                user=self.omeroProperties[OmeroConstants.OMERO_DB_USER],
+                                password=self.omeroProperties[OmeroConstants.OMERO_DB_PASS],
+                                host=self.omeroProperties[OmeroConstants.OMERO_DB_HOST],
+                                port=self.omeroProperties[OmeroConstants.OMERO_DB_PORT])
+        cur = conn.cursor()
+        query = "BEGIN; " \
+                "UPDATE filesetentry SET clientpath=REPLACE(clientpath,'holding_area/impc/" + drTag + "/images','clean/impc') WHERE clientpath LIKE '%holding_area/impc/" + drTag + "%'; " \
+                                                                                                                                                                                    "UPDATE originalfile SET path=REPLACE(path,'holding_area/impc/" + drTag + "/images','clean/impc') WHERE path LIKE '%holding_area/impc/" + drTag + "%'; " \
+                                                                                                                                                                                                                                                                                                                                      "END;"
+        cur.execute(query)
+        conn.close()
+
+    def checkImageDataOnDisk(self, imageDataFolder, imageDataListFile):
         if os.path.exists(imageDataFolder):
             noFiles = len(os.listdir(imageDataFolder))
-            return noFiles != 0
+            return noFiles != 0 and os.path.exists(imageDataListFile)
         else:
             return False
-
-    def checkAnnotationDataOnDisk(self, annotationDataFile):
-        return os.path.exists(annotationDataFile)
-
-    def loadImageData(self, imageDataFolder):
-        fileList = []
-        for file in os.listdir(imageDataFolder):
-            with open(os.path.join(imageDataFolder, file), 'r') as fh:
-                jsonData = json.load(fh)
-            for el in jsonData:
-                fileList.append(el['path'].split('impc/')[-1])
-        return fileList
 
     def loadImageDataFromFile(self, imageDataFile):
         fileList = []
@@ -136,12 +138,4 @@ class OmeroFileService:
             line = line.strip()
             if line:
                 fileList.append(line)
-        return fileList
-
-    def loadAnnotationData(self, annotationDataFile):
-        fileList = []
-        with open(annotationDataFile, 'r') as fh:
-            jsonData = json.load(fh)
-        for el in jsonData:
-            fileList.append(el['path'])
         return fileList

@@ -130,6 +130,7 @@ imaging-data-media: ## Create folder structure for the imaging data
 
 imaging-data-download:
 	@if [ ! -d "$(staging-path)/$(dr-tag)/artefacts" ]; then mkdir $(staging-path)/$(dr-tag)/artefacts; fi
+	@if [ ! -d "$(staging-path)/$(dr-tag)/artefacts/images_data" ]; then mkdir $(staging-path)/$(dr-tag)/artefacts/images_data; fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)/images" ]; then mkdir $(staging-path)/$(dr-tag)/images; fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)/logs" ]; then mkdir $(staging-path)/$(dr-tag)/logs; fi
 	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/data.json" ]; then rm -rf $(staging-path)/$(dr-tag)/artefacts/data.json; fi
@@ -140,12 +141,14 @@ imaging-data-download:
 
 imaging-omero-upload-prep:
 	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/omero_dev.properties $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/image_data.list $(staging-path)/$(dr-tag)/artefacts/image_data.list
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/images_data/* $(staging-path)/$(dr-tag)/artefacts/images_data/
 	@python imaging/check_missing_datasources.py $(staging-path)/$(dr-tag)/images $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
 	@python imaging/create_csv_for_upload_to_omero.py $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/artefacts/data.json $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/
 
 
 imaging-omero-upload:
-	@source /net/isilonP/public/rw/homes/mi_adm/.bash_profile && python imaging/upload_csv_to_omero.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties 2>&1
+	@source /net/isilonP/public/rw/homes/mi_adm/.bash_profile && python imaging/UploadCSVToOmero.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties 2>&1
 
 
 imaging-omero-upload-check-pid:

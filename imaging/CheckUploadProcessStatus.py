@@ -30,7 +30,7 @@ class CheckUploadProcessStatus:
                 continue
             pid = actualSegments[0]
             for seg in actualSegments:
-                if seg == 'imaging/upload_csv_to_omero.py':
+                if seg == 'imaging/UploadCSVToOmero.py':
                     psPid = pid
                     break
             if psPid:

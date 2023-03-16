@@ -32,7 +32,6 @@ def writeImageDataToDiskAsFile(fileOut, imageData):
         json.dump(imageData, filehandle, sort_keys=True, indent=4)
 
 
-
 def loadDataFromFile(dataFile):
     with open(dataFile, 'r') as fh:
         fileData = json.load(fh)
