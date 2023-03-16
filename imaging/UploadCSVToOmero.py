@@ -43,7 +43,7 @@ class UploadCSVToOmero:
     # Reading CSV file and looking for files that won't be uploaded anyway and move them to clean:
     # ['.mov', '.bin', '.fcs', '.nrrd', '.bz2', '.arf']
     def cleanUpCSV(self, drTag, artefactsFolder, imagesFolder):
-        undesired_extensions = ['.mov', '.bin', '.fcs', '.nrrd', '.bz2', '.arf']
+        undesired_extensions = ['mov', 'bin', 'fcs', 'nrrd', 'bz2', 'arf']
         csvFile = artefactsFolder + drTag + '.csv'
 
         toKeep = []
@@ -83,6 +83,8 @@ class UploadCSVToOmero:
 
                 for el in jsonData:
                     localPath = os.path.join(imagesFolder, el['path'].split('impc/')[-1])
+                    self.logger.info(' -- ' + localPath)
+
                     cleanPath = '/' + el['path']
                     if os.path.exists(localPath):
                         self.logger.info('Moving: ' + localPath + ' to: ' + cleanPath)
@@ -284,7 +286,7 @@ class UploadCSVToOmero:
 def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile):
     t = time.time()
     tstamp = datetime.datetime.fromtimestamp(t).strftime('%Y%m%d')
-    log_format = '%(asctime)s - %(name)s - %(levelname)s:%(message)s'
+    log_format = '%(asctime)s - %(name)s - %(levelname)s: %(message)s'
     logging.basicConfig(format=log_format, filename=logsFolder + drTag + '_' + tstamp + '.log', level=logging.INFO)
 
     uploadCSVToOmero = UploadCSVToOmero(artefactsFolder, omeroDevPropetiesFile)
