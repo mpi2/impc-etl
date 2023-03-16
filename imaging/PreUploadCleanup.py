@@ -131,8 +131,6 @@ class PreUploadCleanup:
                             shutil.move(localPath, cleanPath)
                             entry = el['path'].split('impc/')[-1]
                             toBeRemovedFromCSV.append(entry.lower())
-                    else:
-                        self.logger.info('NOT exists: ' + localPath)
 
         self.logger.info('Found ' + str(len(toBeRemovedFromCSV)) + ' to be removed from the CSV.')
         self.removeEmptyFolders()
@@ -171,23 +169,23 @@ class PreUploadCleanup:
             centerFolder = os.path.join(self.imagesFolder, folder)
             if len(os.listdir(centerFolder)) == 0:
                 self.logger.info('- Folder [' + centerFolder + '] is empty. Removing folder ...')
-                os.remove(centerFolder)
+                os.rmdir(centerFolder)
             else:
                 for pipeline in os.listdir(centerFolder):
                     pipelineFolder = os.path.join(centerFolder, pipeline)
                     if len(os.listdir(pipelineFolder)) == 0:
                         self.logger.info('- Folder [' + pipelineFolder + '] is empty. Removing folder ...')
-                        os.remove(pipelineFolder)
+                        os.rmdir(pipelineFolder)
                     else:
                         for procedure in os.listdir(pipelineFolder):
                             procedureFolder = os.path.join(pipelineFolder, procedure)
                             if len(os.listdir(procedureFolder)) == 0:
                                 self.logger.info('- Folder [' + procedureFolder + '] is empty. Removing folder ...')
-                                os.remove(procedureFolder)
+                                os.rmdir(procedureFolder)
                             else:
                                 for parameter in os.listdir(procedureFolder):
                                     parameterFolder = os.path.join(procedureFolder, parameter)
                                     if len(os.listdir(parameterFolder)) == 0:
                                         self.logger.info(
                                             '- Folder [' + parameterFolder + '] is empty. Removing folder ...')
-                                        os.remove(parameterFolder)
+                                        os.rmdir(parameterFolder)
