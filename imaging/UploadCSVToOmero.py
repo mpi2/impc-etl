@@ -289,7 +289,7 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
 
     uploadCSVToOmero = UploadCSVToOmero(artefactsFolder, omeroDevPropetiesFile)
     uploadCSVToOmero.cleanUpCSV(drTag, artefactsFolder, imagesFolder)
-    uploadCSVToOmero.doInitialChecksAndMoveDataAlreadyUploaded()
+    uploadCSVToOmero.doInitialChecksAndMoveDataAlreadyUploaded(drTag, artefactsFolder, imagesFolder)
     uploadCSVToOmero.prepareData(drTag, artefactsFolder, imagesFolder)
     uploadCSVToOmero.doUpload(drTag, imagesFolder)
     uploadCSVToOmero.cleanUp()
