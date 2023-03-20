@@ -4,8 +4,7 @@ import omero
 import omero.cli
 from omero.gateway import *
 
-from imaging import OmeroConstants
-from imaging.omero_util import retrieveDatasourcesFromDB
+from imaging import OmeroConstants, OmeroUtil
 
 
 class OmeroService:
@@ -15,7 +14,7 @@ class OmeroService:
     def __init__(self, omeroProperties):
         self.logger = logging.getLogger(__name__)
         self.omeroProperties = omeroProperties
-        self.dsData = retrieveDatasourcesFromDB(omeroProperties)
+        self.dsData = OmeroUtil.retrieveDatasourcesFromDB(omeroProperties)
 
         self.conn = self.getConnection()
 

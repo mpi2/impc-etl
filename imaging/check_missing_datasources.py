@@ -4,9 +4,9 @@ from os.path import join
 
 import psycopg2
 
-from imaging import OmeroConstants
+from imaging import OmeroConstants, OmeroUtil
 from imaging.OmeroProperties import OmeroProperties
-from imaging.omero_util import retrieveDatasourcesFromDB
+from imaging.OmeroUtil import retrieveDatasourcesFromDB
 
 
 def retrieveLatestEventId(omeroProperties):
@@ -66,7 +66,7 @@ def insertNewDataset(newDatasouceId, dataset, parentId, newEventId_DS, newEventI
     cur.execute(insertParentLinkQuery)
     conn.close()
 
-    dsData = retrieveDatasourcesFromDB(omeroProperties)
+    dsData = OmeroUtil.retrieveDatasourcesFromDB(omeroProperties)
     found = False
     if dataset in dsData:
         if dsData[dataset] == newDatasouceId:
