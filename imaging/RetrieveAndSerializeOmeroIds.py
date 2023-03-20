@@ -4,7 +4,7 @@ import sys
 
 import psycopg2
 
-from imaging import OmeroConstants
+from imaging import OmeroConstants, OmeroUtil
 from imaging.OmeroProperties import OmeroProperties
 
 
@@ -12,11 +12,22 @@ class RetrieveAndSerializeOmeroIds:
     omeroProperties = None
     outFolder = None
     drTag = None
+    dsList = None
 
     def __init__(self, omeroDevPropetiesFile, outFolder, drTag):
         self.omeroProperties = OmeroProperties(omeroDevPropetiesFile).getProperties()
         self.outFolder = outFolder
         self.drTag = drTag
+        self.dsList = self.consolidateDatasources()
+
+    def consolidateDatasources(self):
+        dsData = OmeroUtil.retrieveDatasourcesFromDB(self.omeroProperties)
+        dsList = []
+        for ds in dsData:
+            dsList.append(dsData[ds])
+        for ds in OmeroConstants.DATASOURCE_LIST:
+            dsList.append(ds)
+        return dsList
 
     def retrieveAnnotationsAndSerialize(self):
         conn = psycopg2.connect(database=self.omeroProperties[OmeroConstants.OMERO_DB_NAME],
