@@ -17,8 +17,8 @@ class OmeroFileService:
     def consolidateDatasources(self):
         dsData = OmeroUtil.retrieveDatasourcesFromDB(self.omeroProperties)
         dsList = []
-        for ds in dsData:
-            dsList.append(dsData[ds])
+        for dsId in dsData:
+            dsList.append(dsId)
         for ds in OmeroConstants.DATASOURCE_LIST:
             dsList.append(ds)
         return dsList

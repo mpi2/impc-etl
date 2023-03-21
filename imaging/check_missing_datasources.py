@@ -68,8 +68,8 @@ def insertNewDataset(newDatasouceId, dataset, parentId, newEventId_DS, newEventI
 
     dsData = OmeroUtil.retrieveDatasourcesFromDB(omeroProperties)
     found = False
-    if dataset in dsData:
-        if dsData[dataset] == newDatasouceId:
+    for dsId in dsData:
+        if dataset.lower() == dsData[dsId] and newDatasouceId == dsId:
             print(' - Datasource <' + dataset + '> successfully created: ' + str(newDatasouceId))
             found = True
     if not found:
@@ -104,16 +104,21 @@ def processPhenoCenter(inputFolder, site, dsData):
 
             for parameterKey in os.listdir(procedureFolder):
                 entryValue = site + '-' + pipelineKey + '-' + procedureKey + '-' + parameterKey
-                if not entryValue in dsData:
+                found = False
+                for dsId in dsData:
+                    if dsData[dsId] == entryValue:
+                        found = True
+                        break
+                if not found:
                     newEntries[entryValue] = site
     return newEntries
 
 
 def computeLastDatasourceId(dsData):
     max = 0
-    for ds in dsData:
-        if dsData[ds] > max:
-            max = dsData[ds]
+    for dsId in dsData:
+        if dsId > max:
+            max = dsId
     return max
 
 

@@ -71,12 +71,14 @@ class OmeroService:
             self.logger.error(' -- ERROR: Dataset not provided!')
             return
 
-        dsId = self.dsData[dataset]
+        dsId = None
+        for idid in self.dsData:
+            if self.dsData[idid] == dataset or self.dsData[idid].lower() == dataset.lower():
+                dsId = idid
+                break
         if not dsId:
-            dsId = self.dsData[dataset.upper()]
-            if not dsId:
-                self.logger.error(' -- ERROR: Cannot find ID for dataset: ' + dataset)
-                return
+            self.logger.error(' -- ERROR: Cannot find ID for dataset: ' + dataset)
+            return
 
         import_args.extend(["--", "-d", str(dsId), "--exclude", "filename"])
 
