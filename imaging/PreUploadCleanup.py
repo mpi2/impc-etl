@@ -189,3 +189,13 @@ class PreUploadCleanup:
                                         self.logger.info(
                                             '- Folder [' + parameterFolder + '] is empty. Removing folder ...')
                                         os.rmdir(parameterFolder)
+                                if len(os.listdir(procedureFolder)) == 0:
+                                    self.logger.info('- Folder [' + procedureFolder + '] is empty. Removing folder ...')
+                                    os.rmdir(procedureFolder)
+                        if len(os.listdir(pipelineFolder)) == 0:
+                            self.logger.info('- Folder [' + pipelineFolder + '] is empty. Removing folder ...')
+                            os.rmdir(pipelineFolder)
+                if len(os.listdir(centerFolder)) == 0:
+                    self.logger.info('- Folder [' + centerFolder + '] is empty. Removing folder ...')
+                    os.rmdir(centerFolder)
+
