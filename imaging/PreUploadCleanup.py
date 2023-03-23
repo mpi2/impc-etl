@@ -57,7 +57,7 @@ class PreUploadCleanup:
                 os.mkdir(parameterFolder, mode)
 
     # Reading CSV file and looking for files that won't be uploaded anyway and move them to clean:
-    # ['.mov', '.bin', '.fcs', '.nrrd', '.bz2', '.arf']
+    # ['.mov', '.bin', '.fcs', '.nrrd', '.bz2', '.arf', '.qt']
     def cleanUpCSV(self):
         undesired_extensions = ['mov', 'bin', 'fcs', 'nrrd', 'bz2', 'arf', 'qt']
         csvFile = self.artefactsFolder + self.drTag + '.csv'
