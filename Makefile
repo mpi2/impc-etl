@@ -152,6 +152,17 @@ imaging-omero-upload:
 	@source /net/isilonP/public/rw/homes/mi_adm/.bash_profile && python imaging/UploadCSVToOmero.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties $(clean-path) 2>&1
 
 
+imaging-data-csv-check:
+	@scp $(etl-host):$(etl-dir)/$(dr-tag)/output/images_pipeline_input_csv/part-*.csv $(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_wo_omero_ids.csv
+	@if [ -f "$(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_wo_omero_ids.csv" ]; then echo "CSV file successfully retrieved"; else "ERROR: The Pre-statistical analysis task did not produce a CSV file!"; fi
+
+
+imaging-data-csv-process:
+#	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/dr18.0/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv
+	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv" ]; then echo "CSV file successfully copied across for processing"; else "ERROR: Cannot find CSV file!" && exit -1; fi
+
+
 imaging-omero-upload-check-pid:
 	@python imaging/CheckUploadProcessStatus.py
 
