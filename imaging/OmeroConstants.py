@@ -1,3 +1,4 @@
+FILE_BASE_MEDIA = 'base_media_data.json'
 FILE_OMERO_IMAGE_DATA_LIST = 'image_data.list'
 FILE_OMERO_IMAGES_DATA = '_imagedata.json'
 FILE_OMERO_ANNOTATIONS_DATA = '_annotationslist.json'

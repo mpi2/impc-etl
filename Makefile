@@ -119,13 +119,8 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 
 imaging-data-media: ## Create folder structure for the imaging data
 	@if [ ! -d "$(input-data-path)/imaging-data-archive/$(dr-tag)" ]; then mkdir $(input-data-path)/imaging-data-archive/$(dr-tag); fi
-	@if [ ! -d "$(staging-path)/$(dr-tag)-imaging" ]; then mkdir $(staging-path)/$(dr-tag)-imaging; fi
-	@if [ ! -d "$(staging-path)/$(dr-tag)-imaging/media-json" ]; then mkdir $(staging-path)/$(dr-tag)-imaging/media-json; fi
-	@chgrp phenomics $(staging-path)/$(dr-tag)-imaging
-	@chmod -R g+srw $(staging-path)/$(dr-tag)-imaging
-	@if [ -f "$(staging-path)/$(dr-tag)-imaging/media-json/data.json" ]; then rm -rf $(staging-path)/$(dr-tag)-imaging/media-json/data.json; fi
-	@python3 imaging/retrieve_media_updates.py $(target-date) $(staging-path)/$(dr-tag)-imaging/media-json/
-	@if [ -f "$(staging-path)/$(dr-tag)-imaging/media-json/data.json" ]; then echo "Media data successfully retrieved."; else "Unable to retrieve media data"; fi
+	@python3 imaging/retrieve_media_updates.py $(dr-tag) $(input-data-path)/imaging-data-archive/media_data
+	@if [ -f "$(input-data-path)/imaging-data-archive/media_data/$(dr-tag)_media_data.json" ]; then echo "Media data successfully retrieved."; else "Unable to retrieve media data"; fi
 
 
 imaging-data-download:
@@ -133,17 +128,19 @@ imaging-data-download:
 	@if [ ! -d "$(staging-path)/$(dr-tag)/artefacts/images_data" ]; then mkdir $(staging-path)/$(dr-tag)/artefacts/images_data; fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)/images" ]; then mkdir $(staging-path)/$(dr-tag)/images; fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)/logs" ]; then mkdir $(staging-path)/$(dr-tag)/logs; fi
-	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/data.json" ]; then rm -rf $(staging-path)/$(dr-tag)/artefacts/data.json; fi
-	@scp mi_adm@codon-login:$(codon-staging)/$(dr-tag)-imaging/media-json/data.json $(staging-path)/$(dr-tag)/artefacts/data.json
+	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json" ]; then rm -rf $(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json; fi
+
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/media_data/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/omero_dev.properties $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/image_data.list $(staging-path)/$(dr-tag)/artefacts/image_data.list
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/images_data/* $(staging-path)/$(dr-tag)/artefacts/images_data/
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/dr_omero_image_data/* $(staging-path)/$(dr-tag)/artefacts/images_data/
+
 	@python3 imaging/create_imaging_folders.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/
 	@python3 imaging/download_images.py $(staging-path)/$(dr-tag)/artefacts/data.json $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag).out
 
 
 imaging-omero-upload-prep:
-	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/omero_dev.properties $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
-	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/image_data.list $(staging-path)/$(dr-tag)/artefacts/image_data.list
-	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/images_data/* $(staging-path)/$(dr-tag)/artefacts/images_data/
-	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/previous_data_releases/* $(staging-path)/$(dr-tag)/artefacts/images_data/
 	@python imaging/check_missing_datasources.py $(staging-path)/$(dr-tag)/images $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
 	@python imaging/create_csv_for_upload_to_omero.py $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/artefacts/data.json $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/
 
