@@ -3,29 +3,13 @@ import os
 import sys
 from os.path import join
 
-SITES = {
-    'bcm': 'BCM',
-    'gmc': 'HMGU',
-    'h': 'MRC Harwell',
-    'ics': 'ICS',
-    'j': 'JAX',
-    'tcp': 'TCP',
-    'ning': 'NING',
-    'rbrc': 'RBRC',
-    'ucd': 'UC Davis',
-    'wtsi': 'WTSI',
-    'kmpc': 'KMPC',
-    'ccpcz': 'CCP-IMG'
-}
-
-
 def main(dataFile, outFolder):
     masterData = {}
 
     with open(dataFile, 'r') as fh:
         data = json.load(fh)
         for el in data:
-            site = SITES[el['centre'].lower()]
+            site = el['centre'].lower()
             siteData = {}
             if site in masterData:
                 siteData = masterData[site]

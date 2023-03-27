@@ -5,20 +5,7 @@ from datetime import datetime
 
 import requests
 
-SITES = {
-    'bcm': 'BCM',
-    'gmc': 'HMGU',
-    'h': 'MRC Harwell',
-    'ics': 'ICS',
-    'j': 'JAX',
-    'tcp': 'TCP',
-    'ning': 'NING',
-    'rbrc': 'RBRC',
-    'ucd': 'UC Davis',
-    'wtsi': 'WTSI',
-    'kmpc': 'KMPC',
-    'ccpcz': 'CCP-IMG'
-}
+from imaging import OmeroConstants
 
 
 def main(drTag, inOutFolder):
@@ -50,11 +37,12 @@ def main(drTag, inOutFolder):
         v = json.loads(requests.get(query_string).text)
         for el in v:
             newEl = {
-                'centre': SITES[el['centre'].lower()],
+                'centre': OmeroConstants.SITES[el['centre'].lower()],
                 'checksum': el['checksum'],
                 'pipeline': el['pipelineKey'],
                 'procedure': el['procedureKey'],
                 'parameter': el['parameterKey'],
+                'dccUrl': el['dccUrl'],
                 'fileName': str(el['id']) + '.' + el['extension']
             }
             if not newEl['checksum'] in all_media_data:
