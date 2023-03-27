@@ -124,8 +124,9 @@ class GeneProductionStatusExtractor(PySparkTask):
         allele_mouse_prod_status_map = {
             "Chimeras obtained": "Assigned for Mouse Production and Phenotyping",
             "Micro-injection in progress": "Assigned for Mouse Production and Phenotyping",
-            "Cre Excision Complete": "Mice Produced",
-            "Cre Excision Started": "Mice Produced",
+            "Mouse Allele Modification Genotype Confirmed": "Mice Produced",
+            "Cre Excision Started": "Started",
+            "Cre Excision Complete": "Started",
             "Genotype confirmed": "Mice Produced",
             "Phenotype Attempt Registered": "Mice Produced",
             "Rederivation Complete": "Mice Produced",
