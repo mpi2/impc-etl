@@ -138,7 +138,7 @@ imaging-data-download:
 	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/dr_omero_image_data/* $(staging-path)/$(dr-tag)/artefacts/images_data/
 
 	@python3 imaging/CreateImagingFolders.py $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/images/
-	@python3 imaging/DownloadImages.py $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/artefacts/images_data $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag).out
+	@python3 imaging/DownloadImages.py $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/artefacts/images_data $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag)_imagedownload.out
 
 
 imaging-omero-upload-prep:

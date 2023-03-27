@@ -17,10 +17,12 @@ class DownloadImages:
         self.loadOmeroData(existingOmeroDataFolder)
 
     def loadMediaData(self, inFile):
+        print('Loading media file: {}'.format(inFile))
         with open(inFile, 'r') as fh:
             self.mediaData = json.load(fh)
 
     def loadOmeroData(self, existingOmeroDataFolder):
+        print('Loading existing omero data from: {}'.format(existingOmeroDataFolder))
         for file in os.listdir(existingOmeroDataFolder):
             with open(os.path.join(existingOmeroDataFolder, file), 'r') as fh:
                 jsonData = json.load(fh)
@@ -35,23 +37,26 @@ class DownloadImages:
                     self.existingOmeroData[key.lower()] = newEl
 
     def downloadImages(self, outFolder, outLog):
+        missingImageElements = []
+        for el in self.mediaData:
+            site = el['centre'].lower()
+            key = site + '/' + el['pipeline'] + '/' + el['procedure'] + '/' + el['parameter']
+            fileKey = key + '/' + el['fileName'].lower()
+            if fileKey in self.existingOmeroData:
+                continue
+            missingImageElements.append(el)
+
+        print('Found {} images to download.'.format(len(missingImageElements)))
         with open(outLog, 'w') as logFh:
-            count = 1
-            for el in self.mediaData:
+            for el in missingImageElements:
                 site = el['centre'].lower()
                 key = site + '/' + el['pipeline'] + '/' + el['procedure'] + '/' + el['parameter']
-                imgFolder = outFolder + key
-                toDownload = el['dccUrl']
-                fileKey = key + '/' + el['fileName'].lower()
-                if fileKey in self.existingOmeroData:
-                    continue
 
-                outFile = join(imgFolder, el['fileName'])
+                outFile = join(outFolder + key, el['fileName'])
                 if os.path.isfile(outFile):
-                    count += 1
                     continue
 
-                response = requests.get(toDownload)
+                response = requests.get(el['dccUrl'])
                 if response.status_code == 200:
                     with open(outFile, 'wb') as outFileFh:
                         outFileFh.write(response.content)
@@ -60,8 +65,6 @@ class DownloadImages:
                 else:
                     logFh.write(el['centre'].lower() + ' :: ' + el['checksum'] + ' :: N\n')
                     logFh.flush()
-
-                count += 1
 
     def removeEmptyFolders(self, imagesFolder):
         print('Looking for empty folders to remove ...')
