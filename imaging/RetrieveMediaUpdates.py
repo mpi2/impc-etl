@@ -5,7 +5,7 @@ from datetime import datetime
 
 import requests
 
-from imaging import OmeroConstants
+import OmeroConstants
 
 
 class RetrieveMediaUpdates:
