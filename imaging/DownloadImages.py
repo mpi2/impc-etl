@@ -39,16 +39,14 @@ class DownloadImages:
             count = 1
             for el in self.mediaData:
                 site = el['centre'].lower()
-                key = site + '/' + el['pipelineKey'] + '/' + el['procedureKey'] + '/' + el[
-                    'parameterKey']
+                key = site + '/' + el['pipeline'] + '/' + el['procedure'] + '/' + el['parameter']
                 imgFolder = outFolder + key
                 toDownload = el['dccUrl']
-                fileName = str(el['id']) + '.' + el['extension']
-                fileKey = key + '/' + fileName
+                fileKey = key + '/' + el['fileName'].lower()
                 if fileKey in self.existingOmeroData:
                     continue
 
-                outFile = join(imgFolder, fileName)
+                outFile = join(imgFolder, el['fileName'])
                 if os.path.isfile(outFile):
                     count += 1
                     continue

@@ -119,25 +119,26 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 
 imaging-data-media: ## Create folder structure for the imaging data
 	@if [ ! -d "$(input-data-path)/imaging-data-archive/$(dr-tag)" ]; then mkdir $(input-data-path)/imaging-data-archive/$(dr-tag); fi
-	@python3 imaging/retrieve_media_updates.py $(dr-tag) $(input-data-path)/imaging-data-archive/media_data
+	@python3 imaging/RetrieveMediaUpdates.py $(dr-tag) $(input-data-path)/imaging-data-archive/media_data
 	@if [ -f "$(input-data-path)/imaging-data-archive/media_data/$(dr-tag)_media_data.json" ]; then echo "Media data successfully retrieved."; else "Unable to retrieve media data"; fi
 
 
 imaging-data-download:
 	@if [ ! -d "$(staging-path)/$(dr-tag)/artefacts" ]; then mkdir $(staging-path)/$(dr-tag)/artefacts; fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)/artefacts/images_data" ]; then mkdir $(staging-path)/$(dr-tag)/artefacts/images_data; fi
+	@if [ ! -d "$(staging-path)/$(dr-tag)/artefacts/media_data" ]; then mkdir $(staging-path)/$(dr-tag)/artefacts/media_data; fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)/images" ]; then mkdir $(staging-path)/$(dr-tag)/images; fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)/logs" ]; then mkdir $(staging-path)/$(dr-tag)/logs; fi
 	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json" ]; then rm -rf $(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json; fi
 
-	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/media_data/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/media_data/* $(staging-path)/$(dr-tag)/artefacts/media_data/
 #	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/omero_dev.properties $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
 #	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/image_data.list $(staging-path)/$(dr-tag)/artefacts/image_data.list
 #	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/images_data/* $(staging-path)/$(dr-tag)/artefacts/images_data/
 	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/dr_omero_image_data/* $(staging-path)/$(dr-tag)/artefacts/images_data/
 
 	@python3 imaging/create_imaging_folders.py $(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/images/
-	@python3 imaging/download_images.py $(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/artefacts/images_data $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag).out
+	@python3 imaging/DownloadImages.py $(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/artefacts/images_data $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag).out
 
 
 imaging-omero-upload-prep:
@@ -157,7 +158,9 @@ imaging-data-csv-check:
 
 imaging-data-csv-process:
 	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv
+
 	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv" ]; then echo "CSV file successfully copied across for processing"; else "ERROR: Cannot find CSV file!" && exit -1; fi
+	@python3 imaging/CheckForMissingImagesInPipelineCSV.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/media_data
 
 
 imaging-omero-upload-check-pid:

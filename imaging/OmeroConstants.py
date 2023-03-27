@@ -1,4 +1,5 @@
-FILE_BASE_MEDIA = 'base_media_data.json'
+FILE_MEDIA_DATA_SUFFIX = '_media_data.json'
+FILE_BASE_MEDIA = 'base' + FILE_MEDIA_DATA_SUFFIX
 FILE_OMERO_IMAGE_DATA_LIST = 'image_data.list'
 FILE_OMERO_IMAGES_DATA = '_imagedata.json'
 FILE_OMERO_ANNOTATIONS_DATA = '_annotationslist.json'
