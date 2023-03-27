@@ -129,7 +129,7 @@ imaging-data-download:
 	@if [ ! -d "$(staging-path)/$(dr-tag)/artefacts/media_data" ]; then mkdir $(staging-path)/$(dr-tag)/artefacts/media_data; fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)/images" ]; then mkdir $(staging-path)/$(dr-tag)/images; fi
 	@if [ ! -d "$(staging-path)/$(dr-tag)/logs" ]; then mkdir $(staging-path)/$(dr-tag)/logs; fi
-	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json" ]; then rm -rf $(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json; fi
+	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json" ]; then rm -rf $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json; fi
 
 	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/media_data/* $(staging-path)/$(dr-tag)/artefacts/media_data/
 #	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/omero_dev.properties $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
@@ -137,8 +137,8 @@ imaging-data-download:
 #	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/images_data/* $(staging-path)/$(dr-tag)/artefacts/images_data/
 	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/dr_omero_image_data/* $(staging-path)/$(dr-tag)/artefacts/images_data/
 
-	@python3 imaging/create_imaging_folders.py $(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/images/
-	@python3 imaging/DownloadImages.py $(staging-path)/$(dr-tag)/artefacts/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/artefacts/images_data $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag).out
+	@python3 imaging/create_imaging_folders.py $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/images/
+	@python3 imaging/DownloadImages.py $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/artefacts/images_data $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/logs/$(dr-tag).out
 
 
 imaging-omero-upload-prep:
