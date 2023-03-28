@@ -34,7 +34,6 @@ class DownloadImages:
                         'folderPath': folderPath[:idx]
                     }
                     key = newEl['folderPath'] + '/' + newEl['fileName']
-                    print(key.lower())
                     self.existingOmeroData[key.lower()] = newEl
 
     def downloadImages(self, outFolder, outLog):
