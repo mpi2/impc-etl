@@ -34,6 +34,7 @@ class DownloadImages:
                         'folderPath': folderPath[:idx]
                     }
                     key = newEl['folderPath'] + '/' + newEl['fileName']
+                    print(key.lower())
                     self.existingOmeroData[key.lower()] = newEl
 
     def downloadImages(self, outFolder, outLog):
@@ -41,8 +42,8 @@ class DownloadImages:
         for el in self.mediaData:
             site = el['centre'].lower()
             key = site + '/' + el['pipeline'] + '/' + el['procedure'] + '/' + el['parameter']
-            fileKey = key + '/' + el['fileName'].lower()
-            if fileKey in self.existingOmeroData:
+            fileKey = key + '/' + el['fileName']
+            if fileKey.lower() in self.existingOmeroData:
                 continue
             missingImageElements.append(el)
 
