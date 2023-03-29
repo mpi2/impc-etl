@@ -15,7 +15,7 @@ class AddOmeroIdsToCSVFile:
         self.loadOmeroData(omeroDataFolder)
 
     def loadMediaData(self, mediaDataFolder):
-        print('Loading media data from: {}'.format(mediaDataFolder))
+        print('Loading media data from: ' + mediaDataFolder)
         for file in os.listdir(mediaDataFolder):
             with open(os.path.join(mediaDataFolder, file), 'r') as fh:
                 jsonData = json.load(fh)
@@ -24,7 +24,7 @@ class AddOmeroIdsToCSVFile:
                 self.mediaData[el['checksum']] = el
 
     def loadOmeroData(self, omeroDataFolder):
-        print('Loading existing omero data from: {}'.format(omeroDataFolder))
+        print('Loading existing omero data from: ' + omeroDataFolder)
         for file in os.listdir(omeroDataFolder):
             with open(os.path.join(omeroDataFolder, file), 'r') as fh:
                 jsonData = json.load(fh)
@@ -73,7 +73,7 @@ class AddOmeroIdsToCSVFile:
         with open(outCsvFile, 'w') as fh:
             fh.write('\n'.join(outLines))
 
-        print('Found {} missing image entries in the CSV [Total: {}].'.format(notFound, totalEntries))
+        print('Found ' + str(notFound) + ' missing image entries in the CSV [Total: ' + str(totalEntries) + '].')
 
 
 def main(inCsvFile, outCsvFile, mediaDataFolder, omeroDataFolder):
