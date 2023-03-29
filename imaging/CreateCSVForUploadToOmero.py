@@ -81,7 +81,7 @@ class CreateCSVForUploadToOmero:
 
 def main(imagesFolder, jsonDataFile, drTag, outputFolder):
     print('Creating CSV file to upload images to Omero ...')
-    createCSVForUploadToOmero = CreateCSVForUploadToOmero(imagesFolder, jsonDataFile, drTag)
+    createCSVForUploadToOmero = CreateCSVForUploadToOmero(imagesFolder, jsonDataFile)
     createCSVForUploadToOmero.createCSV(drTag, outputFolder)
 
 

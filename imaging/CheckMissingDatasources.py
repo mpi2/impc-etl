@@ -105,6 +105,7 @@ class CheckMissingDatasources:
 
                 for parameterKey in os.listdir(procedureFolder):
                     entryValue = site + '-' + pipelineKey + '-' + procedureKey + '-' + parameterKey
+                    entryValue = entryValue.upper()
                     found = False
                     for dsId in dsData:
                         if dsData[dsId] == entryValue:
