@@ -19,7 +19,7 @@ def retrieveDatasourcesFromDB(omeroProperties):
             dsId)
         cur.execute(query)
         for (id, name) in cur.fetchall():
-            dsData[int(id)] = int(id)
+            dsData[int(id)] = name
     conn.close()
     return dsData
 
