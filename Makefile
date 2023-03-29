@@ -142,8 +142,8 @@ imaging-data-download:
 
 
 imaging-omero-upload-prep:
-	@python imaging/check_missing_datasources.py $(staging-path)/$(dr-tag)/images $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
-	@python imaging/create_csv_for_upload_to_omero.py $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/artefacts/data.json $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/
+	@python imaging/CheckMissingDatasources.py $(staging-path)/$(dr-tag)/images $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
+	@python imaging/CreateCSVForUploadToOmero.py $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/
 
 
 imaging-omero-upload:
@@ -158,9 +158,17 @@ imaging-data-csv-check:
 
 imaging-data-csv-process:
 	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv
-
 	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv" ]; then echo "CSV file successfully copied across for processing"; else "ERROR: Cannot find CSV file!" && exit -1; fi
 	@python3 imaging/CheckForMissingImagesInPipelineCSV.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/media_data
+# if extra images: create folders + download images + upload to omero ==> copy the media file back + create CSV with omero IDs + move dr image file to archive
+# if no extra images: create CSV with omero IDS + move dr image file to archive
+
+
+imaging-data-add-omero-ids-and-wrapup:
+	@python3 imaging/AddOmeroIdsToCSVFile.py $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/impc_images_input_with_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/media_data $(staging-path)/$(dr-tag)/artefacts/images_data
+	@scp $(staging-path)/$(dr-tag)/artefacts/impc_images_input_with_omero_ids.csv mi_adm@codon-login:$(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_with_omero_ids.csv
+	@scp $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json mi_adm@codon-login:$(input-data-path)/imaging-data-archive/media_data/$(dr-tag)_media_data.json
+	@scp $(staging-path)/$(dr-tag)/artefacts/images_data/$(dr-tag)_imagedata.json mi_adm@codon-login:$(input-data-path)/imaging-data-archive/dr_omero_image_data/$(dr-tag)_imagedata.json
 
 
 imaging-omero-upload-check-pid:
