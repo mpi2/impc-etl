@@ -15,7 +15,7 @@ class CreateImagingFolders:
         with open(dataFile, 'r') as fh:
             data = json.load(fh)
             for el in data:
-                site = el['centre'].lower()
+                site = el['centre']
                 siteData = {}
                 if site in self.masterData:
                     siteData = self.masterData[site]

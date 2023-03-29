@@ -105,7 +105,7 @@ class CheckMissingDatasources:
 
                 for parameterKey in os.listdir(procedureFolder):
                     entryValue = site + '-' + pipelineKey + '-' + procedureKey + '-' + parameterKey
-                    entryValue = entryValue.upper()
+                    entryValue = entryValue
                     found = False
                     for dsId in dsData:
                         if dsData[dsId] == entryValue:
@@ -124,8 +124,6 @@ class CheckMissingDatasources:
 
     def runChecks(self, inputFolder, outputFolder):
         dsData = OmeroUtil.retrieveDatasourcesFromDB(self.omeroProperties)
-        print(dsData)
-
         lastDatasourceId = self.computeLastDatasourceId(dsData)
 
         missingDSFile = outputFolder + OmeroConstants.FILE_MISSING_DATASOURCES

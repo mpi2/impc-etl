@@ -143,7 +143,7 @@ imaging-data-download:
 
 imaging-omero-upload-prep:
 	@python imaging/CheckMissingDatasources.py $(staging-path)/$(dr-tag)/images $(staging-path)/$(dr-tag)/artefacts/ $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
-#	@python imaging/CreateCSVForUploadToOmero.py $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/
+	@python imaging/CreateCSVForUploadToOmero.py $(staging-path)/$(dr-tag)/images/ $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/
 
 
 imaging-omero-upload:
