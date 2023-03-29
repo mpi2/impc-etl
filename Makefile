@@ -132,9 +132,9 @@ imaging-data-download:
 	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json" ]; then rm -rf $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json; fi
 
 	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/media_data/* $(staging-path)/$(dr-tag)/artefacts/media_data/
-#	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/omero_dev.properties $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
-#	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/image_data.list $(staging-path)/$(dr-tag)/artefacts/image_data.list
-#	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/images_data/* $(staging-path)/$(dr-tag)/artefacts/images_data/
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/omero_dev.properties $(staging-path)/$(dr-tag)/artefacts/omero_dev.properties
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/image_data.list $(staging-path)/$(dr-tag)/artefacts/image_data.list
+	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/base_omero_image_data/images_data/* $(staging-path)/$(dr-tag)/artefacts/images_data/
 	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/dr_omero_image_data/* $(staging-path)/$(dr-tag)/artefacts/images_data/
 
 	@python3 imaging/CreateImagingFolders.py $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json $(staging-path)/$(dr-tag)/images/
