@@ -38,10 +38,10 @@ class CreateCSVForUploadToOmero:
 
                         for imageFile in os.listdir(parameterFolder):
                             self.availableImages.append({
-                                'centre': centre.upper(),
-                                'pipeline': pipeline.upper(),
-                                'procedure': procedure.upper(),
-                                'parameter': parameter.upper(),
+                                'centre': centre,
+                                'pipeline': pipeline,
+                                'procedure': procedure,
+                                'parameter': parameter,
                                 'fileName': imageFile
                             })
 
