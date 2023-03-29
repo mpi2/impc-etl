@@ -124,6 +124,8 @@ class CheckMissingDatasources:
 
     def runChecks(self, inputFolder, outputFolder):
         dsData = OmeroUtil.retrieveDatasourcesFromDB(self.omeroProperties)
+        print(dsData)
+
         lastDatasourceId = self.computeLastDatasourceId(dsData)
 
         missingDSFile = outputFolder + OmeroConstants.FILE_MISSING_DATASOURCES
