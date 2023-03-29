@@ -57,6 +57,7 @@ class CheckForMissingImagesInPipelineCSV:
 
     def consolidateMissingData(self):
         if len(self.missingData) == 0:
+            print('All good. Please run the <Add Omero IDs to CSV> step.')
             return
 
         self.retrieveMediaUpdates.retrieveMediaData()
@@ -84,6 +85,7 @@ class CheckForMissingImagesInPipelineCSV:
                                                                                           el['parameter'],
                                                                                           el['checksum']))
         print('Found {} entries to download.'.format(len(keepInMediaData)))
+        print('Please run again the <Download data> and <Upload to Omero> steps and then skip to <Add Omero IDs to CSV>.')
         self.retrieveMediaUpdates.writeToDisk(mediaData=keepInMediaData)
 
 

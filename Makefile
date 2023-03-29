@@ -160,8 +160,6 @@ imaging-data-csv-process:
 	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv
 	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv" ]; then echo "CSV file successfully copied across for processing"; else "ERROR: Cannot find CSV file!" && exit -1; fi
 	@python3 imaging/CheckForMissingImagesInPipelineCSV.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/media_data
-# if extra images: create folders + download images + upload to omero ==> copy the media file back + create CSV with omero IDs + move dr image file to archive
-# if no extra images: create CSV with omero IDS + move dr image file to archive
 
 
 imaging-data-add-omero-ids-and-wrapup:
