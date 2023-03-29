@@ -169,6 +169,11 @@ imaging-data-add-omero-ids-and-wrapup:
 	@scp $(staging-path)/$(dr-tag)/artefacts/images_data/$(dr-tag)_imagedata.json mi_adm@codon-login:$(input-data-path)/imaging-data-archive/dr_omero_image_data/$(dr-tag)_imagedata.json
 
 
+imaging-data-move-csv-to-hadoop:
+	@if [ -f "$(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_with_omero_ids.csv" ]; then echo "Moving file to Hadoop"; else "ERROR: CSV file missing!" && exit -1; fi
+	@scp $(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_with_omero_ids.csv $(etl-host):$(etl-dir)/$(dr-tag)/misc/impc_images_input_with_omero_ids.csv
+
+
 imaging-omero-upload-check-pid:
 	@python imaging/CheckUploadProcessStatus.py
 
