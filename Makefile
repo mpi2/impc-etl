@@ -77,7 +77,8 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	cd $(raw-data-path) && mkdir $(dr-tag)
 	cd $(raw-data-path)/$(dr-tag) && mkdir raw-data && mkdir solr
 	cd $(raw-data-path)/$(dr-tag)/raw-data
-	curl -u "ebi-exportdownloader:$(pass)" -X GET https://cloud.mousephenotype.org/remote.php/dav/files/ebi-exportdownloader/Exports/$(zipFile) --output $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile)
+#	curl -u "ebi-exportdownloader:$(pass)" -X GET https://cloud.mousephenotype.org/remote.php/dav/files/ebi-exportdownloader/Exports/$(zipFile) --output $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile)
+	curl -u "ebi-exportdownloader:BbK'1JJI+Qb7GCR" -X GET https://cloud.mousephenotype.org/remote.php/dav/files/ebi-exportdownloader/Exports/$(zipFile) --output $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile)
 	[ -f $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile) ] && echo "$(zipFile) successfully downloaded." || echo "Unable to locate $(zipFile) provided!" && exit
 	cd $(input-data-path)/dcc-data-archive && mkdir $(dr-tag)
 	cp $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile) $(input-data-path)/dcc-data-archive/$(dr-tag)
