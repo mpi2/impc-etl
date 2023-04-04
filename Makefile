@@ -77,8 +77,8 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	cd $(raw-data-path) && mkdir $(dr-tag)
 	cd $(raw-data-path)/$(dr-tag) && mkdir raw-data && mkdir solr
 	cd $(raw-data-path)/$(dr-tag)/raw-data
-	curl -u ebi:$(pass) ftp://ftp.har.mrc.ac.uk/$(zipFile) > $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile)
-	[ -f $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile) ] && echo "$(zipFile) successfully downloaded." || exit
+	curl -u "ebi-exportdownloader:$(pass)" -X GET https://cloud.mousephenotype.org/remote.php/dav/files/ebi-exportdownloader/Exports/$(zipFile) --output $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile)
+	[ -f $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile) ] && echo "$(zipFile) successfully downloaded." || echo "Unable to locate $(zipFile) provided!" && exit
 	cd $(input-data-path)/dcc-data-archive && mkdir $(dr-tag)
 	cp $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile) $(input-data-path)/dcc-data-archive/$(dr-tag)
 	tar xzvf  $(input-data-path)/dcc-data-archive/$(dr-tag)/$(zipFile) --directory $(input-data-path)/dcc-data-archive/$(dr-tag)/
@@ -118,7 +118,7 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 
 
 imaging-data-media: ## Create folder structure for the imaging data
-	@if [ ! -d "$(input-data-path)/imaging-data-archive/$(dr-tag)" ]; then mkdir $(input-data-path)/imaging-data-archive/$(dr-tag); fi
+	@if [ ! -d "$(input-data-path)/imaging-data-archive/$(dr-tag)" ]; then mkdir $(input-data-path)/imaging-data-archive/$(dr-tag) && chgrp phenomics $(input-data-path)/imaging-data-archive/$(dr-tag) && chmod -R g+sw $(input-data-path)/imaging-data-archive/$(dr-tag); fi
 	@python3 imaging/RetrieveMediaUpdates.py $(dr-tag) $(input-data-path)/imaging-data-archive/media_data
 	@if [ -f "$(input-data-path)/imaging-data-archive/media_data/$(dr-tag)_media_data.json" ]; then echo "Media data successfully retrieved."; else "Unable to retrieve media data"; fi
 
@@ -163,7 +163,7 @@ imaging-data-csv-process:
 
 
 imaging-data-add-omero-ids-and-wrapup:
-	@python imaging/AddOmeroIdsToCSVFile.py $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/impc_images_input_with_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/media_data $(staging-path)/$(dr-tag)/artefacts/images_data
+	@python3 imaging/AddOmeroIdsToCSVFile.py $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/impc_images_input_with_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/media_data $(staging-path)/$(dr-tag)/artefacts/images_data
 	@scp $(staging-path)/$(dr-tag)/artefacts/impc_images_input_with_omero_ids.csv mi_adm@codon-login:$(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_with_omero_ids.csv
 	@scp $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json mi_adm@codon-login:$(input-data-path)/imaging-data-archive/media_data/$(dr-tag)_media_data.json
 	@scp $(staging-path)/$(dr-tag)/artefacts/images_data/$(dr-tag)_imagedata.json mi_adm@codon-login:$(input-data-path)/imaging-data-archive/dr_omero_image_data/$(dr-tag)_imagedata.json
