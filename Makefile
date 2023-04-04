@@ -74,10 +74,10 @@ devEnv: .venv devDeps
 ##	source .venv/bin/activate && pre-commit install --install-hooks
 
 data:            ##@data Download and structure input data for the ETL. Parameters: staging-path (e.g. /nobackup/staging), dr-tag (e.g. dr15.0), input-data-path (e.g. /impc/), etl-host (e.g. hadoop-host), etl-dir (e.g. /user/impc/)
-#	cd $(raw-data-path) && mkdir $(dr-tag)
-#	cd $(raw-data-path)/$(dr-tag) && mkdir raw-data && mkdir solr
-#	cd $(raw-data-path)/$(dr-tag)/raw-data
-#	curl -u "ebi-exportdownloader:$(pass)" -X GET https://cloud.mousephenotype.org/remote.php/dav/files/ebi-exportdownloader/Exports/$(zipFile) --output $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile)
+	cd $(raw-data-path) && mkdir $(dr-tag)
+	cd $(raw-data-path)/$(dr-tag) && mkdir raw-data && mkdir solr
+	cd $(raw-data-path)/$(dr-tag)/raw-data
+	curl -u "ebi-exportdownloader:$(pass)" -X GET https://cloud.mousephenotype.org/remote.php/dav/files/ebi-exportdownloader/Exports/$(zipFile) --output $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile)
 	[ -f $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile) ] && echo "$(zipFile) successfully downloaded." || echo "Unable to locate $(zipFile) provided!" && exit
 	cd $(input-data-path)/dcc-data-archive && mkdir $(dr-tag)
 	cp $(raw-data-path)/$(dr-tag)/raw-data/$(zipFile) $(input-data-path)/dcc-data-archive/$(dr-tag)
