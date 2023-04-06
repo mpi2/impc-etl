@@ -205,6 +205,8 @@ class Constants:
         "ccp": "CCP-IMG",
         "monterotondo": "Monterotondo",
         "narlabs": "NARLabs",
+        "cmsu": "CAM-SU GRC",
+        "cam-su grc": "CAM-SU GRC"
     }
     """
     This map is used to translate the centre IDs coming in the XML files to the ones we use on the website. 
