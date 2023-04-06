@@ -243,6 +243,9 @@ class Constants:
         "ccp": "CCP-IMG",
         "tobeloadedfromimits": "tobeloadedfromimits",
         "pwg": "PWG",
+        "cmsu": "CAM-SU GRC",
+        "kribb": "KRIBB",
+        "cam-su grc": "CAM-SU GRC"
     }
     """
     This map is used to translate the project IDs coming in the XML files to the ones we use on the website. 
