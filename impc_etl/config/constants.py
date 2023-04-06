@@ -194,6 +194,7 @@ class Constants:
         "wtsi": "WTSI",
         "wsi": "WTSI",
         "kmpc": "KMPC",
+        "kribb": "KRIBB",
         "biat": "BIAT",
         "ph": "PH",
         "cdta": "CDTA",
