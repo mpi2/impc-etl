@@ -2,7 +2,7 @@ import json
 import os
 import sys
 
-import RetrieveMediaUpdates
+from imaging.RetrieveMediaUpdates import RetrieveMediaUpdates
 
 
 class CheckForMissingImagesInPipelineCSV:
@@ -85,7 +85,8 @@ class CheckForMissingImagesInPipelineCSV:
                                                                                           el['parameter'],
                                                                                           el['checksum']))
         print('Found {} entries to download.'.format(len(keepInMediaData)))
-        print('Please run again the <Download data> and <Upload to Omero> steps and then skip to <Add Omero IDs to CSV>.')
+        print(
+            'Please run again the <Download data> and <Upload to Omero> steps and then skip to <Add Omero IDs to CSV>.')
         self.retrieveMediaUpdates.writeToDisk(mediaData=keepInMediaData)
 
 
