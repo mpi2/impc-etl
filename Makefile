@@ -164,10 +164,12 @@ imaging-data-csv-process:
 
 
 imaging-data-add-omero-ids-and-wrapup:
+	@PYTHONPATH=$(pwd):$PYTHONPATH
+	@export PYTHONPATH
 	@python3 imaging/AddOmeroIdsToCSVFile.py $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/impc_images_input_with_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/media_data $(staging-path)/$(dr-tag)/artefacts/images_data
-	@scp $(staging-path)/$(dr-tag)/artefacts/impc_images_input_with_omero_ids.csv mi_adm@codon-login:$(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_with_omero_ids.csv
-	@scp $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json mi_adm@codon-login:$(input-data-path)/imaging-data-archive/media_data/$(dr-tag)_media_data.json
-	@scp $(staging-path)/$(dr-tag)/artefacts/images_data/$(dr-tag)_imagedata.json mi_adm@codon-login:$(input-data-path)/imaging-data-archive/dr_omero_image_data/$(dr-tag)_imagedata.json
+#	@scp $(staging-path)/$(dr-tag)/artefacts/impc_images_input_with_omero_ids.csv mi_adm@codon-login:$(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_with_omero_ids.csv
+#	@scp $(staging-path)/$(dr-tag)/artefacts/media_data/$(dr-tag)_media_data.json mi_adm@codon-login:$(input-data-path)/imaging-data-archive/media_data/$(dr-tag)_media_data.json
+#	@scp $(staging-path)/$(dr-tag)/artefacts/images_data/$(dr-tag)_imagedata.json mi_adm@codon-login:$(input-data-path)/imaging-data-archive/dr_omero_image_data/$(dr-tag)_imagedata.json
 
 
 imaging-data-move-csv-to-hadoop:
