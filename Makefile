@@ -158,6 +158,8 @@ imaging-data-csv-check:
 imaging-data-csv-process:
 	@scp mi_adm@codon-login:$(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv
 	@if [ -f "$(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv" ]; then echo "CSV file successfully copied across for processing"; else "ERROR: Cannot find CSV file!" && exit -1; fi
+	@PYTHONPATH=$(pwd):$PYTHONPATH
+	@export PYTHONPATH
 	@python3 imaging/CheckForMissingImagesInPipelineCSV.py $(dr-tag) $(staging-path)/$(dr-tag)/artefacts/impc_images_input_wo_omero_ids.csv $(staging-path)/$(dr-tag)/artefacts/media_data
 
 
