@@ -2,7 +2,7 @@ import json
 import os
 import sys
 
-from .RetrieveMediaUpdates import RetrieveMediaUpdates
+import RetrieveMediaUpdates
 
 
 class CheckForMissingImagesInPipelineCSV:
