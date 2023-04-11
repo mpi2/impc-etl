@@ -13,8 +13,8 @@ PREV_DR = '<PREV_DR>'
 def main(drTag, prevDr, emailsFolder, etlDir):
     with open(os.path.join(emailsFolder, STATS_DATA_EMAIL_FILE), 'r') as fh:
         content = fh.read()
-    newContent = content.replace('CURRENT_DR', drTag)
-    newContent = newContent.replace('OBS_PARQUET_LOCATION',
+    newContent = content.replace(CURRENT_DR, drTag)
+    newContent = newContent.replace(OBS_PARQUET_LOCATION,
                                     os.path.join(etlDir, drTag) + '/output/flatten_observations_parquet')
 
     mpChooserFileName = ''
@@ -22,7 +22,7 @@ def main(drTag, prevDr, emailsFolder, etlDir):
         if file.startswith('part') and file.endswith('.txt'):
             mpChooserFileName = file
             break
-    newContent = newContent.replace('MP_CHOOSER_LOCATION',
+    newContent = newContent.replace(MP_CHOOSER_LOCATION,
                                     os.path.join(etlDir, drTag) + '/output/mp_chooser_json/' + mpChooserFileName)
 
     with open(os.path.join(emailsFolder, STATS_DATA_EMAIL_FILE), 'w') as fh:
@@ -30,8 +30,8 @@ def main(drTag, prevDr, emailsFolder, etlDir):
 
     with open(os.path.join(emailsFolder, DIFF_REPORT_EMAIL_FILE), 'r') as fh:
         content = fh.read()
-    newContent = content.replace('CURRENT_DR', drTag)
-    newContent = newContent.replace('PREV_DR', prevDr)
+    newContent = content.replace(CURRENT_DR, drTag)
+    newContent = newContent.replace(PREV_DR, prevDr)
     with open(os.path.join(emailsFolder, DIFF_REPORT_EMAIL_FILE), 'w') as fh:
         fh.write(newContent)
 
