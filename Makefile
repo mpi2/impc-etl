@@ -117,6 +117,18 @@ data:            ##@data Download and structure input data for the ETL. Paramete
 	scp -r $(staging-path)/$(dr-tag) $(etl-host):$(etl-dir)/
 
 
+data-reports:
+	@scp $(etl-host):$(etl-dir)/$(dr-tag)/output/drdr18.0_diff_csv/part-*.csv $(input-data-path)/$(dr-tag)/$(dr-tag)-$(prev-dr)-diff-report.csv
+	@scp $(etl-host):$(etl-dir)/$(dr-tag)/output/mp_chooser_json/part-*.txt $(input-data-path)/$(dr-tag)/
+
+
+email-data-reports:
+	@scp mi_adm@codon-login:$(input-data-path)/$(dr-tag)/$(dr-tag)-$(prev-dr)-diff-report.csv $(staging-path)/$(dr-tag)/artefacts/$(dr-tag)-$(prev-dr)-diff-report.csv
+	@scp mi_adm@codon-login:$(input-data-path)/$(dr-tag)/part-*.txt $(staging-path)/$(dr-tag)/artefacts/
+	@scp mi_adm@codon-login:$(input-data-path)/data-archive/emails/* $(staging-path)/$(dr-tag)/artefacts/
+	@python3 util/fill_in_dr_report_emails.py $(dr-tag) $(prev-dr) $(staging-path)/$(dr-tag)/artefacts/ $(etl-dir)
+
+
 imaging-data-media: ## Create folder structure for the imaging data
 	@if [ ! -d "$(input-data-path)/imaging-data-archive/$(dr-tag)" ]; then mkdir $(input-data-path)/imaging-data-archive/$(dr-tag) && chgrp phenomics $(input-data-path)/imaging-data-archive/$(dr-tag) && chmod -R g+sw $(input-data-path)/imaging-data-archive/$(dr-tag); fi
 	@python3 imaging/RetrieveMediaUpdates.py $(dr-tag) $(input-data-path)/imaging-data-archive/media_data
