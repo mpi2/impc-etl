@@ -14,7 +14,7 @@ class DownloadImages:
         self.mediaData = {}
         self.existingOmeroData = {}
         self.loadMediaData(inFile)
-        self.loadOmeroData(existingOmeroDataFolder)
+#        self.loadOmeroData(existingOmeroDataFolder)
 
     def loadMediaData(self, inFile):
         print('Loading media file: {}'.format(inFile))
@@ -56,7 +56,9 @@ class DownloadImages:
                 if os.path.isfile(outFile):
                     continue
 
-                response = requests.get(el['dccUrl'])
+#                response = requests.get(el['dccUrl'])
+                response = requests.get('https://api.mousephenotype.org/tracker/media/getfile/' + el['checksum'])
+
                 if response.status_code == 200:
                     with open(outFile, 'wb') as outFileFh:
                         outFileFh.write(response.content)
