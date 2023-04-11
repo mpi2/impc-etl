@@ -85,6 +85,8 @@ class CheckForMissingImagesInPipelineCSV:
                                                                                           el['parameter'],
                                                                                           el['checksum']))
         print('Found {} entries to download.'.format(len(keepInMediaData)))
+        for el in keepInMediaData:
+            print(str(el))
         print(
             'Please run again the <Download data> and <Upload to Omero> steps and then skip to <Add Omero IDs to CSV>.')
         self.retrieveMediaUpdates.writeToDisk(mediaData=keepInMediaData)
