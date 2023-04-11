@@ -39,7 +39,7 @@ class DownloadImages:
     def downloadImages(self, outFolder, outLog):
         missingImageElements = []
         for el in self.mediaData:
-            site = el['centre'].lower()
+            site = el['centre']
             key = site + '/' + el['pipeline'] + '/' + el['procedure'] + '/' + el['parameter']
             fileKey = key + '/' + el['fileName']
             if fileKey.lower() in self.existingOmeroData:
@@ -49,7 +49,7 @@ class DownloadImages:
         print('Found {} images to download.'.format(len(missingImageElements)))
         with open(outLog, 'w') as logFh:
             for el in missingImageElements:
-                site = el['centre'].lower()
+                site = el['centre']
                 key = site + '/' + el['pipeline'] + '/' + el['procedure'] + '/' + el['parameter']
 
                 outFile = join(outFolder + key, el['fileName'])
@@ -62,10 +62,10 @@ class DownloadImages:
                 if response.status_code == 200:
                     with open(outFile, 'wb') as outFileFh:
                         outFileFh.write(response.content)
-                    logFh.write(el['centre'].lower() + ' :: ' + el['checksum'] + ' :: Y\n')
+                    logFh.write(el['centre'] + ' :: ' + el['checksum'] + ' :: Y\n')
                     logFh.flush()
                 else:
-                    logFh.write(el['centre'].lower() + ' :: ' + el['checksum'] + ' :: N\n')
+                    logFh.write(el['centre'] + ' :: ' + el['checksum'] + ' :: N\n')
                     logFh.flush()
 
     def removeEmptyFolders(self, imagesFolder):
