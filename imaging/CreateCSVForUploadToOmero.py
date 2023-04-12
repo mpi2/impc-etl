@@ -60,7 +60,6 @@ class CreateCSVForUploadToOmero:
             'observation_id,increment_value,download_file_path,phenotyping_center,pipeline_stable_id,procedure_stable_id,datasource_name,parameter_stable_id')
 
         for entry in self.availableImages:
-            print(entry)
             checkSum = self.findChecksum(entry)
             if not checkSum:
                 print('ERROR: Unable to find checksum for: {} - {} - {} - {} - {}'.format(entry['centre'],

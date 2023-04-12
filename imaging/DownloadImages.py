@@ -56,8 +56,7 @@ class DownloadImages:
                 if os.path.isfile(outFile):
                     continue
 
-#                response = requests.get(el['dccUrl'])
-                response = requests.get('https://api.mousephenotype.org/tracker/media/getfile/' + el['checksum'])
+                response = requests.get(el['dccUrl'])
 
                 if response.status_code == 200:
                     with open(outFile, 'wb') as outFileFh:
