@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 
 
 class AddOmeroIdsToCSVFile:
@@ -31,13 +32,12 @@ class AddOmeroIdsToCSVFile:
                     folderPath = el['path'].split('impc/')[-1]
                     self.omeroData[folderPath.lower()] = el['id']
 
-    def compileAndWriteToDisk(self, inCsvFile, outCsvFile, notFoundFile):
+    def compileAndWriteToDisk(self, inCsvFile, outCsvFile):
         outLines = []
         undesired_extensions = ['mov', 'bin', 'fcs', 'nrrd', 'bz2', 'arf', 'qt']
         target_extensions = ['jpeg', 'jpg', 'tiff', 'tif']
 
         notFound = 0
-        notFoundList = []
         totalEntries = 1
         with open(inCsvFile, 'r') as fh:
             lines = fh.readlines()
@@ -76,7 +76,6 @@ class AddOmeroIdsToCSVFile:
                 if not fileNameExt in target_extensions:
                     outLines.append(line + ',-1,')
                     notFound += 1
-                    notFoundList.append(cksum + ' << ' + path)
                     continue
 
                 fileFound = True
@@ -111,27 +110,18 @@ class AddOmeroIdsToCSVFile:
                 if not fileFound:
                     outLines.append(line + ',-1,')
                     notFound += 1
-                    notFoundList.append(cksum + ' << ' + path)
                     continue
 
         with open(outCsvFile, 'w') as fh:
             fh.write('\n'.join(outLines))
 
-        with open(notFoundFile, 'w') as fh:
-            fh.write('\n'.join(notFoundList))
-
         print('Found ' + str(notFound) + ' missing image entries in the CSV [Total: ' + str(totalEntries) + '].')
 
 
-def main(inCsvFile, outCsvFile, notFoundFile, mediaDataFolder, omeroDataFolder):
+def main(inCsvFile, outCsvFile, mediaDataFolder, omeroDataFolder):
     addOmeroIdsToCSVFile = AddOmeroIdsToCSVFile(mediaDataFolder, omeroDataFolder)
-    addOmeroIdsToCSVFile.compileAndWriteToDisk(inCsvFile, outCsvFile, notFoundFile)
+    addOmeroIdsToCSVFile.compileAndWriteToDisk(inCsvFile, outCsvFile)
 
 
 if __name__ == '__main__':
-    #    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
-    main('/home/tudor/__data__/dr19/omero_ids_population/impc_images_input_wo_omero_ids.csv',
-         '/home/tudor/__data__/dr19/omero_ids_population/out.csv',
-         '/home/tudor/__data__/dr19/omero_ids_population/not_found.list',
-         '/home/tudor/__data__/dr19/omero_ids_population/media_data/',
-         '/home/tudor/__data__/dr19/omero_ids_population/images_data/')
+    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

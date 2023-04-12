@@ -239,10 +239,10 @@ def main(drTag, artefactsFolder, imagesFolder, logsFolder, omeroDevPropetiesFile
     preUploadCleanup.cleanUpCSV()
     preUploadCleanup.moveDataAlreadyUploaded()
 
-#    uploadCSVToOmero = UploadCSVToOmero(artefactsFolder, omeroDevPropetiesFile)
-#    uploadCSVToOmero.prepareData(drTag, artefactsFolder, imagesFolder)
-#    uploadCSVToOmero.doUpload(drTag, artefactsFolder, imagesFolder)
-#    preUploadCleanup.moveDataAlreadyUploaded()
+    uploadCSVToOmero = UploadCSVToOmero(artefactsFolder, omeroDevPropetiesFile)
+    uploadCSVToOmero.prepareData(drTag, artefactsFolder, imagesFolder)
+    uploadCSVToOmero.doUpload(drTag, artefactsFolder, imagesFolder)
+    preUploadCleanup.moveDataAlreadyUploaded()
 
 
 if __name__ == "__main__":
