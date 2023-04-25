@@ -147,12 +147,8 @@ class ParameterDerivator(PySparkTask):
 
             dataCollect = experiment_df.rdd.toLocalIterator()
             europhenomeList = []
-            count = 1
-            for row in dataCollect:
-                if count % 100000 == 0:
-                    print(' - Count: {} of {}'.format(count, experiment_df.count()))
-                count += 1
 
+            for row in dataCollect:
                 rowHash = self.computeHash(row)
                 if not rowHash:
                     continue
