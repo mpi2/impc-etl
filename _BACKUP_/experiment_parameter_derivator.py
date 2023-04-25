@@ -151,6 +151,7 @@ class ParameterDerivator(PySparkTask):
             for row in dataCollect:
                 rowHash = self.computeHash(row)
                 if not rowHash:
+                    europhenomeList.append(row)
                     continue
 
                 if rowHash in hashedData:
@@ -168,31 +169,13 @@ class ParameterDerivator(PySparkTask):
                     dataDict['simpleParameter'] = euroList
                     newRow = Row(**dataDict)
                     europhenomeList.append(newRow)
-
-                    experiment_df = experiment_df.filter(
-                        (~(
-                                (experiment_df['_pipeline'] == europhenomeData['_pipeline']) &
-                                (experiment_df['_procedureID'] == europhenomeData['_procedureID']) &
-                                (experiment_df['_project'] == europhenomeData['_project']) &
-                                (experiment_df['_sequenceID'] == europhenomeData['_sequenceID']) &
-                                (experiment_df['specimenID'] == europhenomeData['specimenID']) &
-                                (experiment_df['_experimentID'] == europhenomeData['_experimentID']) &
-                                (experiment_df['_dataSource'] == europhenomeData['_dataSource']) &
-                                (experiment_df['_centreID'] == europhenomeData['_centreID'])
-                        ))
-                    )
+                else:
+                    europhenomeList.append(row)
 
             europhenome_df = spark.createDataFrame(europhenomeList, schema=_schema)
-
-            print('Experiment after [COUNT]: {}'.format(experiment_df.count()))
-            print('Experiment after [COLS]: {}'.format(len(experiment_df.columns)))
             print('EUROPHENOME after [COUNT]: {}'.format(europhenome_df.count()))
             print('EUROPHENOME after [COUNT]: {}'.format(len(europhenome_df.columns)))
-            experiment_df = experiment_df.union(europhenome_df)
-            print('---')
-            print('Experiment merge [COUNT]: {}'.format(experiment_df.count()))
-            print('Experiment merge [COLS]: {}'.format(len(experiment_df.columns)))
-            experiment_df.write.parquet(output_path)
+            europhenome_df.write.parquet(output_path)
 
 
 class SpecimenLevelExperimentParameterDerivator(ParameterDerivator):
