@@ -175,7 +175,7 @@ class ParameterDerivator(PySparkTask):
             print('Removing from main DF ... ')
             count = 1
             for rowHash in euroPhenomeHashes:
-                print(' - Count: {}'.format(count))
+                print(' - Count [{}]: {}'.format(rowHash, count))
                 segs = rowHash.split('#')
                 experiment_df = experiment_df.filter(
                     (
