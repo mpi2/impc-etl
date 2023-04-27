@@ -148,7 +148,9 @@ class ParameterDerivator(PySparkTask):
             dataCollect = experiment_df.rdd.toLocalIterator()
             europhenomeList = []
 
+            count = 1
             for row in dataCollect:
+                print(' - Count: {}'.format(count))
                 rowHash = self.computeHash(row)
                 if not rowHash:
                     europhenomeList.append(row)
@@ -171,7 +173,9 @@ class ParameterDerivator(PySparkTask):
                     europhenomeList.append(newRow)
                 else:
                     europhenomeList.append(row)
+                count += 1
 
+            print(' -- BEFORE')
             europhenome_df = spark.createDataFrame(europhenomeList, schema=_schema)
             print('EUROPHENOME after [COUNT]: {}'.format(europhenome_df.count()))
             print('EUROPHENOME after [COUNT]: {}'.format(len(europhenome_df.columns)))
