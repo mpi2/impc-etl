@@ -147,16 +147,22 @@ class ParameterDerivator(PySparkTask):
 
             dataCollect = experiment_df.rdd.toLocalIterator()
             europhenomeList = []
+            euroPhenomeHashes = {}
+            restHashes = {}
 
-            count = 1
             for row in dataCollect:
-                print(' - Count: {}'.format(count))
                 rowHash = self.computeHash(row)
                 if not rowHash:
-                    europhenomeList.append(row)
+                    #                    europhenomeList.append(row)
                     continue
 
                 if rowHash in hashedData:
+                    count = 0
+                    if rowHash in euroPhenomeHashes:
+                        count = euroPhenomeHashes[rowHash]
+                    count += 1
+                    euroPhenomeHashes[rowHash] = count
+
                     dataDict = row.asDict()
                     europhenomeData = hashedData[rowHash]
                     euroList = []
@@ -172,13 +178,29 @@ class ParameterDerivator(PySparkTask):
                     newRow = Row(**dataDict)
                     europhenomeList.append(newRow)
                 else:
-                    europhenomeList.append(row)
-                count += 1
+                    count = 0
+                    if rowHash in restHashes:
+                        count = restHashes[rowHash]
+                    count += 1
+                    restHashes[rowHash] = count
+            #                    europhenomeList.append(row)
 
-            print(' -- BEFORE')
+            count = 0
+            for rowHash in euroPhenomeHashes:
+                if rowHash in restHashes:
+                    count += 1
+            print(' - Duplicate hashes across: {}'.format(count))
+            count = 0
+            for rowHash in euroPhenomeHashes:
+                if euroPhenomeHashes[rowHash] != 1:
+                    count += 1
+            print(' - Duplicate hashes inside: {}'.format(count))
+
+            print(' -- BEFORE: {}'.format(len(europhenomeList)))
             europhenome_df = spark.createDataFrame(europhenomeList, schema=_schema)
             print('EUROPHENOME after [COUNT]: {}'.format(europhenome_df.count()))
             print('EUROPHENOME after [COUNT]: {}'.format(len(europhenome_df.columns)))
+
             europhenome_df.write.parquet(output_path)
 
 
