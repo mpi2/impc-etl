@@ -147,14 +147,16 @@ class ParameterDerivator(PySparkTask):
 
             dataCollect = experiment_df.rdd.toLocalIterator()
             europhenomeList = []
+            euroPhenomeHashes = {}
 
             for row in dataCollect:
                 rowHash = self.computeHash(row)
                 if not rowHash:
-                    europhenomeList.append(row)
                     continue
 
                 if rowHash in hashedData:
+                    euroPhenomeHashes[rowHash] = ''
+
                     dataDict = row.asDict()
                     europhenomeData = hashedData[rowHash]
                     euroList = []
@@ -169,13 +171,33 @@ class ParameterDerivator(PySparkTask):
                     dataDict['simpleParameter'] = euroList
                     newRow = Row(**dataDict)
                     europhenomeList.append(newRow)
-                else:
-                    europhenomeList.append(row)
 
-            europhenome_df = spark.createDataFrame(europhenomeList, schema=_schema)
-            print('EUROPHENOME after [COUNT]: {}'.format(europhenome_df.count()))
-            print('EUROPHENOME after [COUNT]: {}'.format(len(europhenome_df.columns)))
-            europhenome_df.write.parquet(output_path)
+            print('Removing from main DF ... ')
+            count = 1
+            for rowHash in euroPhenomeHashes:
+                print(' - Count [{}]: {}'.format(rowHash, count))
+                segs = rowHash.split('#')
+                experiment_df = experiment_df.filter(
+                    (
+                            (experiment_df['_pipeline'] != segs[0]) &
+                            (experiment_df['_procedureID'] != segs[1]) &
+                            (experiment_df['_project'] != segs[2]) &
+                            (experiment_df['_sequenceID'] != segs[3]) &
+                            (experiment_df['specimenID'] != segs[4]) &
+                            (experiment_df['_experimentID'] != segs[5]) &
+                            (experiment_df['_dataSource'] != segs[6]) &
+                            (experiment_df['_centreID'] != segs[7])
+                    )
+                )
+                count += 1
+
+        print('Experiment after [COUNT]: {}'.format(experiment_df.count()))
+        print('Experiment after [COLS]: {}'.format(len(experiment_df.columns)))
+        europhenome_df = spark.createDataFrame(europhenomeList, schema=_schema)
+        print('EUROPHENOME after [COUNT]: {}'.format(europhenome_df.count()))
+        print('EUROPHENOME after [COUNT]: {}'.format(len(europhenome_df.columns)))
+
+        europhenome_df.write.parquet(output_path)
 
 
 class SpecimenLevelExperimentParameterDerivator(ParameterDerivator):
