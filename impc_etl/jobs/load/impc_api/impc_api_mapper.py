@@ -1552,7 +1552,7 @@ class ImpcDatasetsMapper(PySparkTask):
             "time_point": "timePoint",
             "discrete_point": "discretePoint",
         }
-        double_type_cols = ["data_point", "discrete_point", "weight"]
+        double_type_cols = ["data_point", "discrete_point", "weight", "window_weight"]
         for double_col in double_type_cols:
             datasets_df = datasets_df.withColumn(
                 double_col, col(double_col).astype(DoubleType())
