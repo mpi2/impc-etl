@@ -1285,6 +1285,7 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
             "both_mutant_sd",  # group under summaryStatistics
             "status",
             "sex",  # phenotypeSex
+            "zygosity",
             "phenotype_sex",  # testedSexes
             "significant",
             "classification_tag",
