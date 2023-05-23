@@ -19,14 +19,20 @@ def retrieveDatasourcesFromDB(omeroProperties):
             dsId)
         cur.execute(query)
         for (id, name) in cur.fetchall():
-            dsData[name] = int(id)
+            dsData[int(id)] = name
     conn.close()
     return dsData
 
 
-def writeImageDataToDisk(fileOut, imageData):
+def writeImageDataToDiskAsFile(fileOut, imageData):
     if os.path.isfile(fileOut):
         os.remove(fileOut)
 
     with open(fileOut, 'w') as filehandle:
         json.dump(imageData, filehandle, sort_keys=True, indent=4)
+
+
+def loadDataFromFile(dataFile):
+    with open(dataFile, 'r') as fh:
+        fileData = json.load(fh)
+    return fileData

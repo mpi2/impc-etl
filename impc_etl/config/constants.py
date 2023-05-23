@@ -194,6 +194,7 @@ class Constants:
         "wtsi": "WTSI",
         "wsi": "WTSI",
         "kmpc": "KMPC",
+        "kribb": "KRIBB",
         "biat": "BIAT",
         "ph": "PH",
         "cdta": "CDTA",
@@ -204,6 +205,8 @@ class Constants:
         "ccp": "CCP-IMG",
         "monterotondo": "Monterotondo",
         "narlabs": "NARLabs",
+        "cmsu": "CAM-SU GRC",
+        "cam-su grc": "CAM-SU GRC"
     }
     """
     This map is used to translate the centre IDs coming in the XML files to the ones we use on the website. 
@@ -240,6 +243,9 @@ class Constants:
         "ccp": "CCP-IMG",
         "tobeloadedfromimits": "tobeloadedfromimits",
         "pwg": "PWG",
+        "cmsu": "CAM-SU GRC",
+        "kribb": "KRIBB",
+        "cam-su grc": "CAM-SU GRC"
     }
     """
     This map is used to translate the project IDs coming in the XML files to the ones we use on the website. 
