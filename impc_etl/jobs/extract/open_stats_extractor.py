@@ -131,13 +131,6 @@ class StatisticalAnalysisOutputMapper(PySparkTask):
         stats_result["data_type"] = stats_packet_detail["Observation type"]
         stats_result.update(self.get_raw_data_details(stats_packet_detail))
 
-        # TODO remove especial rule for EYE_003
-        if (
-            "EYE_003" in stats_result["procedure_stable_id"]
-            and "EYE_092_002" in stats_result["parameter_stable_id"]
-        ):
-            stats_result["status"] = "NotProcessed"
-
         if stats_result["status"] == "Successful":
             try:
                 if (
