@@ -856,7 +856,7 @@ class ExperimentToObservationMapper(PySparkTask):
             "paramValue",
             when(col("data_point").isNotNull(), col("data_point")).otherwise(
                 when(col("category").isNotNull(), col("category")).otherwise(
-                    when(col("sub_term_id").isNotNull(), "sub_term_id").otherwise(
+                    when(col("sub_term_id").isNotNull(), col("sub_term_id")).otherwise(
                         col("text_value")
                     )
                 )
