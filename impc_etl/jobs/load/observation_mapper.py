@@ -34,6 +34,7 @@ from pyspark.sql.functions import (
     substring,
     upper,
     concat_ws,
+    explode_outer,
 )
 from pyspark.sql.types import DoubleType, StringType, IntegerType, LongType
 
@@ -852,9 +853,9 @@ class ExperimentToObservationMapper(PySparkTask):
             "paramValue",
             when(col("data_point").isNotNull(), col("data_point")).otherwise(
                 when(col("category").isNotNull(), col("category")).otherwise(
-                    when(
-                        col("sub_term_id").isNotNull(), explode("sub_term_id")
-                    ).otherwise(col("text_value"))
+                    when(col("sub_term_id").isNotNull(), "sub_term_id").otherwise(
+                        col("text_value")
+                    )
                 )
             ),
         )
@@ -1331,9 +1332,12 @@ class ExperimentToObservationMapper(PySparkTask):
         image_record_observation_df = self.resolve_image_record_value(
             image_record_observation_df
         )
+        simple_ontological_obs_df = ontological_observation_df.withColumn(
+            "sub_term_id", explode("sub_term_id")
+        )
         image_record_observation_df = self.resolve_image_record_parameter_association(
             image_record_observation_df,
-            simple_observation_df.union(ontological_observation_df),
+            simple_observation_df.union(simple_ontological_obs_df),
         )
         image_record_observation_df = self.unify_schema(
             image_record_observation_df
