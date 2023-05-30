@@ -832,6 +832,9 @@ class ExperimentToObservationMapper(PySparkTask):
     def resolve_image_record_parameter_association(
         self, image_record_observation_df: DataFrame, simple_observations_df: DataFrame
     ):
+        simple_observations_df = simple_observations_df.withColumn(
+            "sub_term_id", explode_outer("sub_term_id")
+        )
         simple_df = simple_observations_df.alias("simple")
         image_df = image_record_observation_df.alias("image").withColumn(
             "parameterAsc",
@@ -1332,12 +1335,9 @@ class ExperimentToObservationMapper(PySparkTask):
         image_record_observation_df = self.resolve_image_record_value(
             image_record_observation_df
         )
-        simple_ontological_obs_df = ontological_observation_df.withColumn(
-            "sub_term_id", explode("sub_term_id")
-        )
         image_record_observation_df = self.resolve_image_record_parameter_association(
             image_record_observation_df,
-            simple_observation_df.union(simple_ontological_obs_df),
+            simple_observation_df.union(ontological_observation_df),
         )
         image_record_observation_df = self.unify_schema(
             image_record_observation_df
