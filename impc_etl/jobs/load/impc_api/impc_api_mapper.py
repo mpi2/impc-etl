@@ -1123,7 +1123,7 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
         # Parsing app options
         impress_parameter_parquet_path = args[0]
         stats_results_parquet_path = args[1]
-        output_path = args[1]
+        output_path = args[2]
 
         stats_results_df = spark.read.parquet(stats_results_parquet_path)
         explode_cols = [
