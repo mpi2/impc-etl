@@ -29,6 +29,7 @@ from impc_etl.jobs.load import ExperimentToObservationMapper
 from impc_etl.jobs.load.solr.gene_mapper import GeneLoader
 from impc_etl.jobs.load.solr.genotype_phenotype_mapper import GenotypePhenotypeLoader
 from impc_etl.jobs.load.solr.impc_images_mapper import ImpcImagesLoader
+from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
 from impc_etl.workflow.config import ImpcConfig
 
