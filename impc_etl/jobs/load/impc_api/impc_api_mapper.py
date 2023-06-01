@@ -21,6 +21,7 @@ from pyspark.sql.functions import (
     split,
     arrays_zip,
     expr,
+    concat_ws,
 )
 
 from impc_etl.jobs.extract import ProductReportExtractor
@@ -1089,6 +1090,7 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
 
     def requires(self):
         return [
+            ImpressToParameterMapper(),
             StatsResultsMapper(),
         ]
 
@@ -1107,6 +1109,7 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
         """
         return [
             self.input()[0].path,
+            self.input()[1].path,
             self.output().path,
         ]
 
@@ -1117,7 +1120,8 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
         spark = SparkSession(sc)
 
         # Parsing app options
-        stats_results_parquet_path = args[0]
+        impress_parameter_parquet_path = args[0]
+        stats_results_parquet_path = args[1]
         output_path = args[1]
 
         stats_results_df = spark.read.parquet(stats_results_parquet_path)
@@ -1130,6 +1134,21 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
             "life_stage_name",
             "life_stage_acc",
         ]
+        impress_parameter_df = spark.read.parquet(impress_parameter_parquet_path)
+        unit_df = impress_parameter_df.select(
+            "fully_qualified_name", col("unit_x").alias("x"), col("unit_y").alias("y")
+        )
+        unit_df = unit_df.withColumn("unit", struct("x", "y"))
+        unit_df = unit_df.drop("x", "y")
+        stats_results_df = stats_results_df.withColumn(
+            "fully_qualified_name",
+            concat_ws(
+                "_", "pipeline_stable_id", "procedure_stable_id", "parameter_stable_id"
+            ),
+        )
+        stats_results_df = stats_results_df.join(
+            unit_df, "fully_qualified_name", "left_outer"
+        ).drop("fully_qualified_name")
         col_name_map = {
             "doc_id": "datasetId",
             "marker_accession_id": "mgiGeneAccessionId",
@@ -1177,6 +1196,10 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
                         "female_ko_effect_stderr_estimate",
                         "female_ko_parameter_estimate",
                         "female_percentage_change",
+                        "male_ko_effect_p_value",
+                        "male_ko_effect_stderr_estimate",
+                        "male_ko_parameter_estimate",
+                        "male_percentage_change",
                         "genotype_effect_p_value",
                         "genotype_effect_stderr_estimate",
                         "group_1_genotype",
@@ -1192,6 +1215,8 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
                         "sex_effect_stderr_estimate",
                         "male_effect_size",
                         "female_effect_size",
+                        "batch_significant",
+                        "variance_significant",
                     ]
                 },
             ],
@@ -1296,6 +1321,10 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
             "female_ko_effect_stderr_estimate",  # group under statisticalMethod.attributes
             "female_ko_parameter_estimate",  # group under statisticalMethod.attributes
             "female_percentage_change",  # group under statisticalMethod.attributes
+            "male_ko_effect_p_value",  # group under statisticalMethod.attributes
+            "male_ko_effect_stderr_estimate",  # group under statisticalMethod.attributes
+            "male_ko_parameter_estimate",  # group under statisticalMethod.attributes
+            "male_percentage_change",  # group under statisticalMethod.attributes
             "genotype_effect_p_value",  # group under statisticalMethod.attributes
             "genotype_effect_stderr_estimate",  # group under statisticalMethod.attributes
             "group_1_genotype",  # group under statisticalMethod.attributes
@@ -1311,6 +1340,8 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
             "sex_effect_stderr_estimate",  # group under statisticalMethod.attributes
             "male_effect_size",  # group under statisticalMethod.attributes
             "female_effect_size",  # group under statisticalMethod.attributes
+            "batch_significant",  # group under statisticalMethod.attributes
+            "variance_significant",  # group under statisticalMethod.attributes
             "soft_windowing_bandwidth",  # bandwidth, group under softWindowing
             "soft_windowing_shape",  # shape, group under softWindowing
             "soft_windowing_peaks",  # peaks, group under softWindowing
@@ -1327,6 +1358,7 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
             "top_level_mp_term_name",
             "mp_term_id_options",
             "mp_term_name_options",
+            "unit",
         )
 
         stats_results_df = stats_results_df.withColumn(
@@ -1392,12 +1424,8 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
         stats_results_df = stats_results_df.withColumnRenamed(
             "marker_accession_id", "mgiGeneAccessionId"
         )
-        stats_results_df = stats_results_df.withColumnRenamed(
-            "doc_id", "statistical_result_id"
-        )
-        stats_results_df = stats_results_df.withColumn(
-            "id", col("statistical_result_id")
-        )
+        stats_results_df = stats_results_df.withColumnRenamed("doc_id", "datasetId")
+        stats_results_df = stats_results_df.withColumn("id", col("datasetId"))
 
         drop_list = []
         for struct_col_name in new_structs_dict.keys():
