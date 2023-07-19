@@ -19,7 +19,7 @@ from impc_etl.jobs.load.impc_api.impc_api_mapper import (
     ImpcDatasetsMapper,
     ImpcDatasetsMetadataMapper,
 )
-from impc_etl.jobs.load.impc_api.impc_gene_bundle_mapper import ImpcGeneBundleMapper
+from impc_etl.jobs.load.impc_api.impc_bulk_api_mapper import ImpcBulkApiMapper
 from impc_etl.jobs.load.impc_images_mapper import ImagesPipelineInputGenerator
 from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.gene_mapper import GeneLoader
@@ -85,9 +85,9 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
         yield tasks
 
 
-class ImpcApi(luigi.Task):
+class ImpcBulkApi(luigi.Task):
     def requires(self):
-        return [ImpcGeneBundleMapper()]
+        return [ImpcBulkApiMapper()]
 
 
 class ImpcIndexDaily(luigi.Task):

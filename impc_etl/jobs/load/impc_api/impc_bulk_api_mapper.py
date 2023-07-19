@@ -5,6 +5,7 @@ from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import collect_set, struct, lit, col, zip_with
+import os
 
 from impc_etl.jobs.extract import ProductReportExtractor
 from impc_etl.jobs.load.observation_mapper import ExperimentToObservationMapper
@@ -29,15 +30,10 @@ EXCLUDE_PRODUCT_COLUMNS = [
 ]
 
 
-class ImpcGeneBundleMapper(PySparkTask):
-    name = "IMPC_Bundle_Mapper"
+class ImpcBulkApiMapper(PySparkTask):
+    name = "IMPC_Bulk_API_Mapper"
     embryo_data_json_path = luigi.Parameter()
-    mongodb_database = luigi.Parameter()
     output_path = luigi.Parameter()
-    packages = "org.mongodb.spark:mongo-spark-connector_2.12:3.0.2"
-    mongodb_connection_uri = luigi.Parameter()
-    mongodb_genes_collection = luigi.Parameter()
-    mongodb_replica_set = luigi.Parameter()
 
     @property
     def packages(self):
@@ -54,7 +50,9 @@ class ImpcGeneBundleMapper(PySparkTask):
         ]
 
     def output(self):
-        return ImpcConfig().get_target(f"{self.output_path}gene_bundle_parquet")
+        return ImpcConfig().get_target(
+            f"{self.output_path}impc_bulk_api/_MAPPING_SUCCESS"
+        )
 
     def app_options(self):
         return [
@@ -67,15 +65,6 @@ class ImpcGeneBundleMapper(PySparkTask):
             self.output().path,
         ]
 
-    def write_to_mongo(self, df: DataFrame, class_name: str, collection_name: str):
-        df = df.withColumn("_class", lit(class_name))
-        df.write.format("mongo").mode("overwrite").option(
-            "spark.mongodb.output.uri",
-            f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
-        ).option("database", str(self.mongodb_database)).option(
-            "collection", collection_name
-        ).save()
-
     def main(self, sc: SparkContext, *args: Any):
         # Drop statistical results from the gene bundle
         # Create an experimental data collection with the observations
@@ -87,7 +76,7 @@ class ImpcGeneBundleMapper(PySparkTask):
         stats_results_parquet_path = args[4]
         stats_results_raw_data_parquet_path = f"{stats_results_parquet_path}_raw_data"
         gene_core_parquet_path = args[5]
-        output_path = args[6]
+        output_path = os.path.dirname(args[6])
         spark = SparkSession(sc)
 
         observations_df = spark.read.parquet(observations_parquet_path)
@@ -184,12 +173,6 @@ class ImpcGeneBundleMapper(PySparkTask):
         gene_vs_phenotypes_df = gene_df.join(
             gp_by_gene_df, "mgi_accession_id", "left_outer"
         )
-        # self.write_to_mongo(
-        #     gene_vs_phenotypes_df,
-        #     "org.mousephenotype.api.models.GeneBundle",
-        #     "gene_bundles",
-        # )
-
         # Create search_index
         gp_mp_term_structured = genotype_phenotype_df.withColumn(
             "significant_mp_term",
@@ -237,25 +220,18 @@ class ImpcGeneBundleMapper(PySparkTask):
             ),
             "significant_mp_terms",
         )
-        self.write_to_mongo(
-            gene_search_df,
-            "org.mousephenotype.api.models.Gene",
-            "gene_search",
-        )
-        # self.write_to_mongo(
-        #     observations_df,
-        #     "org.mousephenotype.api.models.Observation",
-        #     "experimental_data",
-        # )
+
         stats_results_df = stats_results_df.withColumnRenamed(
             "doc_id", "statistical_result_id"
         )
         stats_results_df = stats_results_df.withColumn(
             "_id", col("statistical_result_id")
         )
-        # self.write_to_mongo(
-        #     stats_results_df,
-        #     "org.mousephenotype.api.models.StatisticalResult",
-        #     "statistical_results",
-        # )
-        gene_vs_phenotypes_df.write.parquet(output_path)
+
+        gene_search_df.write.json(output_path + "/gene_search_json")
+        observations_df.write.json(output_path + "/experimental_data_json")
+        stats_results_df.write.json(output_path + "/statistical_results_json")
+        gene_vs_phenotypes_df.write.json(output_path + "/gene_bundles_json")
+
+        with self.output().open("w"):
+            pass

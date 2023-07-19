@@ -206,7 +206,7 @@ class Constants:
         "monterotondo": "Monterotondo",
         "narlabs": "NARLabs",
         "cmsu": "CAM-SU GRC",
-        "cam-su grc": "CAM-SU GRC"
+        "cam-su grc": "CAM-SU GRC",
     }
     """
     This map is used to translate the centre IDs coming in the XML files to the ones we use on the website. 
@@ -245,7 +245,7 @@ class Constants:
         "pwg": "PWG",
         "cmsu": "CAM-SU GRC",
         "kribb": "KRIBB",
-        "cam-su grc": "CAM-SU GRC"
+        "cam-su grc": "CAM-SU GRC",
     }
     """
     This map is used to translate the project IDs coming in the XML files to the ones we use on the website. 
@@ -592,20 +592,20 @@ class Constants:
         },
         # ESLIM_009 derivations
         {
-            "europhenomeParameter": "ESLIM_009_001_701",
-            "europhenomeDerivation": "meanOfIncrements('ESLIM_009_001_001')",
+            "europhenomeParameter": "ESLIM_009_001_701",  # missing 13102
+            "europhenomeDerivation": "meanOfIncrements('ESLIM_009_001_001', 0)",
         },
         {
-            "europhenomeParameter": "ESLIM_009_001_702",
-            "europhenomeDerivation": "meanOfIncrements('ESLIM_009_001_002')",
+            "europhenomeParameter": "ESLIM_009_001_702",  # missing 13102
+            "europhenomeDerivation": "meanOfIncrements('ESLIM_009_001_002', 0)",
         },
         {
-            "europhenomeParameter": "ESLIM_009_001_703",
-            "europhenomeDerivation": "div(meanOfIncrements('ESLIM_009_001_001'), 'ESLIM_009_001_003')",
+            "europhenomeParameter": "ESLIM_009_001_703",  # missing 13090
+            "europhenomeDerivation": "div(meanOfIncrements('ESLIM_009_001_001', 0), 'ESLIM_009_001_003')",
         },
         {
-            "europhenomeParameter": "ESLIM_009_001_704",
-            "europhenomeDerivation": "div(meanOfIncrements('ESLIM_009_001_002'), 'ESLIM_009_001_003')",
+            "europhenomeParameter": "ESLIM_009_001_704",  # missing 13090
+            "europhenomeDerivation": "div(meanOfIncrements('ESLIM_009_001_002', 0), 'ESLIM_009_001_003')",
         },
         # ESLIM_005 derivations
         {
@@ -626,8 +626,8 @@ class Constants:
         },
         # ESLIM_004 derivations
         {
-            "europhenomeParameter": "ESLIM_004_001_701",
-            "europhenomeDerivation": "areaUnderCurve('ESLIM_004_001_002')",
+            "europhenomeParameter": "ESLIM_004_001_701",  # missing 12473
+            "europhenomeDerivation": "areaUnderCurve('ESLIM_004_001_002', 0)",
         },
     ]
     """

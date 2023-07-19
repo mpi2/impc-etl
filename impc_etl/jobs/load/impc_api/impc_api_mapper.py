@@ -825,6 +825,10 @@ class ImpcProductsMapper(PySparkTask):
             "mgi_accession_id", "allele_symbol", "allele_description"
         ).agg(collect_set("type").alias("product_types"))
 
+        products_df = products_df.withColumnRenamed(
+            "mgi_accession_id", "mgiGeneAccessionId"
+        )
+
         for col_name in products_df.columns:
             products_df = products_df.withColumnRenamed(
                 col_name, to_camel_case(col_name)
