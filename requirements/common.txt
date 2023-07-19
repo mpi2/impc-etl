@@ -1,5 +1,5 @@
 click
-requests
+requests==2.26.0
 findspark
 luigi
 setuptools_scm
@@ -10,3 +10,5 @@ wheel
 pronto
 pymongo
 fastobo
+boto3
+botocore

@@ -15,7 +15,7 @@ class ImpcConfig(luigi.Config):
             return luigi.LocalTarget(path)
 
         if self.deploy_mode == "aws":
-            return S3Target(f"s3://{self.s3_bucket}/{self.release_tag}/output/{path}")
+            return S3Target(f"s3://{self.s3_bucket}/{self.release_tag}/{path}")
 
         return (
             luigi.LocalTarget(path)
