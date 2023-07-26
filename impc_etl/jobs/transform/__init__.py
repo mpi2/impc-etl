@@ -7,8 +7,7 @@ from impc_etl.jobs.transform.experiment_bw_age_calculator import (
     ExperimentBWAgeCalculator,
 )
 from impc_etl.jobs.transform.experiment_parameter_derivator import (
-    LineLevelExperimentParameterDerivator,
-    SpecimenLevelExperimentParameterDerivator,
+    SpecimenLevelLegacyPWGExperimentParameterDerivator,
 )
 from impc_etl.jobs.transform.line_experiment_cross_ref import (
     LineLevelExperimentCrossRef,
