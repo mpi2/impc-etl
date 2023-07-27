@@ -80,7 +80,7 @@ class ParameterDerivator(PySparkTask):
         return [
             self.input().path,
             self.europhenome_pwg_derived_values_parquet_path,
-            self.self.output().path,
+            self.output().path,
         ]
 
     def main(self, sc: SparkContext, *args: Any):
