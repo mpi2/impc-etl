@@ -78,7 +78,7 @@ class ParameterDerivator(PySparkTask):
         Generates the options pass to the PySpark job
         """
         return [
-            self.input()[0].path,
+            self.input().path,
             self.europhenome_pwg_derived_values_parquet_path,
             self.self.output().path,
         ]
