@@ -595,6 +595,8 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
             "effect_size",
             "mp_term_id",
             "mp_term_name",
+            "intermediate_mp_term_id",
+            "intermediate_mp_term_name",
             "top_level_mp_term_id",
             "top_level_mp_term_name",
         )
@@ -602,6 +604,15 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
         gp_df = gp_df.withColumn(
             "phenotype",
             struct(col("mp_term_id").alias("id"), col("mp_term_name").alias("name")),
+        )
+
+        gp_df = gp_df.withColumn(
+            "intermediatePhenotype",
+            zip_with(
+                "intermediate_mp_term_id",
+                "intermediate_mp_term_name",
+                lambda x, y: struct(x.alias("id"), y.alias("name")),
+            ),
         )
 
         gp_df = gp_df.withColumn(
@@ -616,6 +627,8 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
         gp_df = gp_df.drop(
             "mp_term_id",
             "mp_term_name",
+            "intermediate_mp_term_id",
+            "intermediate_mp_term_name",
             "top_level_mp_term_id",
             "top_level_mp_term_name",
         )
