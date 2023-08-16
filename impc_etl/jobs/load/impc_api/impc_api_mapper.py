@@ -25,6 +25,8 @@ from pyspark.sql.functions import (
     countDistinct,
     array_contains,
     array_union,
+    count_if,
+    array,
 )
 
 from impc_etl.jobs.extract import ProductReportExtractor
@@ -322,19 +324,23 @@ class ImpcGeneSearchMapper(PySparkTask):
         )
 
 
-class ImpcPhenotypeProcedureMapper(PySparkTask):
+class ImpcPhenotypeSummaryMapper(PySparkTask):
     """
     PySpark Task class to extract GenTar Product report data.
     """
 
     #: Name of the Spark task
-    name: str = "Impc_Phenotype_Procedure_Mapper"
+    name: str = "Impc_Phenotype_Summary_Mapper"
 
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return ImpressToParameterMapper()
+        return [
+            MpLoader(),
+            ImpressToParameterMapper(),
+            StatsResultsMapper(),
+        ]
 
     def output(self):
         """
@@ -342,7 +348,7 @@ class ImpcPhenotypeProcedureMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/phenotype_procedure_service_json"
+            f"{self.output_path}/impc_web_api/phenotype_summary_service_json"
         )
 
     def app_options(self):
@@ -350,7 +356,9 @@ class ImpcPhenotypeProcedureMapper(PySparkTask):
         Generates the options pass to the PySpark job
         """
         return [
-            self.input().path,
+            self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
             self.output().path,
         ]
 
@@ -361,9 +369,68 @@ class ImpcPhenotypeProcedureMapper(PySparkTask):
         spark = SparkSession(sc)
 
         # Parsing app options
-        impress_parameter_parquet_path = args[0]
+        mp_parquet_path = args[0]
+        impress_parameter_parquet_path = args[1]
+        stats_results_parquet_path = args[2]
+        output_path = args[3]
+
+        mp_df = spark.read.parquet(mp_parquet_path)
         impress_df = spark.read.parquet(impress_parameter_parquet_path)
-        output_path = args[1]
+        stats_results_df = spark.read.parquet(stats_results_parquet_path)
+
+        stats_results_df = (
+            stats_results_df.select(
+                "marker_accession_id",
+                "status",
+                "top_level_mp_term_id",
+                "intermediate_mp_term_id",
+                when(col("mp_term_id").isNotNull(), array("mp_term_id"))
+                .otherwise(col("mp_term_id_options"))
+                .alias("mp_term_id_options"),
+                "significant",
+            )
+            .where(col("status") != "NotProcessed")
+            .distinct()
+        )
+
+        stats_results_df = stats_results_df.groupBy(
+            "marker_accession_id",
+            "status",
+            "top_level_mp_term_id",
+            "intermediate_mp_term_id",
+            "mp_term_id_options",
+        ).agg(max("significant").alias("significant"))
+
+        stats_results_df = stats_results_df.withColumn(
+            "mp_ids",
+            array_union(
+                "top_level_mp_term_id",
+                array_union(
+                    "intermediate_mp_term_id",
+                    "mp_term_id_options",
+                ),
+            ),
+        ).drop(
+            "status",
+            "top_level_mp_term_id",
+            "intermediate_mp_term_id",
+            "mp_term_id_options",
+        )
+        stats_results_df = (
+            stats_results_df.withColumn("mp_id", explode("mp_ids"))
+            .drop("mp_ids")
+            .distinct()
+        )
+        stats_results_df = stats_results_df.groupBy("mp_id").agg(
+            sum(when(col("significant") == True, 1).otherwise(0)).alias(
+                "significant_genes"
+            ),
+            sum(when(col("significant") == False, 1).otherwise(0)).alias(
+                "not_significant_genes"
+            ),
+        )
+
+        phenotype_summary_df = mp_df.join(stats_results_df, "mp_id", "left")
 
         impress_df = (
             impress_df.select(
@@ -393,8 +460,57 @@ class ImpcPhenotypeProcedureMapper(PySparkTask):
 
         for col_name in impress_df.columns:
             impress_df = impress_df.withColumnRenamed(col_name, to_camel_case(col_name))
+        impress_df = impress_df.withColumn("mp_id", explode("phenotypeIds"))
+        impress_df = impress_df.drop("phenotypeIds")
+        impress_df = impress_df.groupBy("mp_id").agg(
+            collect_set(
+                struct(
+                    *[
+                        col_name
+                        for col_name in impress_df.columns
+                        if col_name != "mp_id"
+                    ]
+                )
+            ).alias("procedures")
+        )
+        phenotype_summary_df = phenotype_summary_df.join(impress_df, "mp_id", "left")
 
-        impress_df.repartition(100).write.option("ignoreNullFields", "false").json(
+        phenotype_summary_mappings = {
+            "mp_id": "phenotypeId",
+            "mp_term": "phenotypeName",
+            "mp_definition": "phenotypeDefinition",
+            "mp_term_synonym": "phenotypeSynonyms",
+        }
+
+        for col_name in phenotype_summary_mappings.keys():
+            phenotype_summary_df = phenotype_summary_df.withColumnRenamed(
+                col_name, phenotype_summary_mappings[col_name]
+            )
+
+        for col_name in phenotype_summary_df.columns:
+            phenotype_summary_df = phenotype_summary_df.withColumnRenamed(
+                col_name, to_camel_case(col_name)
+            )
+
+        phenotype_summary_df = phenotype_summary_df.withColumn(
+            "topLevelPhenotypes",
+            zip_with(
+                "topLevelMpId",
+                "topLevelMpTerm",
+                lambda x, y: struct(x.alias("id"), y.alias("name")),
+            ),
+        )
+
+        phenotype_summary_df.select(
+            "mpId",
+            "mpName",
+            "mpDefinition",
+            "mpSynonyms",
+            "significantGenes",
+            "notSignificantGenes",
+            "procedures",
+            "topLevelPhenotypes",
+        ).distinct().repartition(100).write.option("ignoreNullFields", "false").json(
             output_path
         )
 

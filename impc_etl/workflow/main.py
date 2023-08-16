@@ -19,8 +19,8 @@ from impc_etl.jobs.load.impc_api.impc_api_mapper import (
     ImpcDatasetsMapper,
     ImpcDatasetsMetadataMapper,
     ImpcPhenotypeSearchMapper,
-    ImpcPhenotypeProcedureMapper,
     ImpcGeneSearchMapper,
+    ImpcPhenotypeSummaryMapper,
 )
 from impc_etl.jobs.load.impc_api.impc_bulk_api_mapper import ImpcBulkApiMapper
 from impc_etl.jobs.load.impc_api.impc_bulk_api_mongo_load import ImpcBulkApiMongoLoader
@@ -181,6 +181,6 @@ class ImpcWebApiMapper(luigi.Task):
             ImpcDatasetsMetadataMapper(),
             ImpcDatasetsMapper(),
             ImpcPhenotypeSearchMapper(),
-            ImpcPhenotypeProcedureMapper(),
+            ImpcPhenotypeSummaryMapper(),
             ImpcGeneSearchMapper(),
         ]
