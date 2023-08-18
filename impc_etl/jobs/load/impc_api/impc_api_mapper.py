@@ -318,7 +318,7 @@ class ImpcGeneSearchMapper(PySparkTask):
             "phenotypeStatus",
             "phenotypingDataAvailable",
         )
-        gene_search_df.repartition(100).write.option("ignoreNullFields", "false").json(
+        gene_search_df.repartition(1).write.option("ignoreNullFields", "false").json(
             output_path
         )
 
@@ -774,7 +774,7 @@ class ImpcPhenotypeSearchMapper(PySparkTask):
             zip_with(
                 "top_level_mp_term_id",
                 "top_level_mp_term",
-                lambda x, y: concat_ws("|", x, y),
+                lambda x, y: struct(x.alias("key"), y.alias("value")),
             ),
         )
 
@@ -783,7 +783,7 @@ class ImpcPhenotypeSearchMapper(PySparkTask):
             zip_with(
                 "intermediate_mp_id",
                 "intermediate_mp_term",
-                lambda x, y: concat_ws("|", x, y),
+                lambda x, y: struct(x.alias("key"), y.alias("value")),
             ),
         )
 
@@ -802,7 +802,7 @@ class ImpcPhenotypeSearchMapper(PySparkTask):
             "geneCount",
         )
 
-        phenotype_search_df.repartition(100).write.option(
+        phenotype_search_df.repartition(1).write.option(
             "ignoreNullFields", "false"
         ).json(output_path)
 
