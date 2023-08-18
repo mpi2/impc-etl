@@ -501,10 +501,10 @@ class ImpcPhenotypeSummaryMapper(PySparkTask):
         )
 
         phenotype_summary_df.select(
-            "mpId",
-            "mpName",
-            "mpDefinition",
-            "mpSynonyms",
+            "phenotypeId",
+            "phenotypeName",
+            "phenotypeDefinition",
+            "phenotypeSynonyms",
             "significantGenes",
             "notSignificantGenes",
             "procedures",
