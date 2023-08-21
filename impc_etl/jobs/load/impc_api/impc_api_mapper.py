@@ -1198,6 +1198,9 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
 
         gp_df = gp_df.withColumn("lifeStageName", explode("lifeStageName"))
         gp_df = gp_df.withColumnRenamed("topLevelPhenotype", "topLevelPhenotypes")
+        gp_df = gp_df.withColumnRenamed(
+            "intermediatePhenotype", "intermediatePhenotypes"
+        )
         gp_df = gp_df.withColumnRenamed("phenotypingCenter", "phenotypingCentre")
         gp_df = gp_df.withColumnRenamed("statisticalResultId", "datasetId")
         gp_df = gp_df.withColumn("pValue", col("pValue").astype(DoubleType()))
