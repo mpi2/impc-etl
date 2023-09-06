@@ -1321,6 +1321,17 @@ class ImpcPublicationsMapper(PySparkTask):
         gene_publications_json_path = args[0]
         output_path = args[1]
 
+        # publications_df.where(col("status") == "reviewed").select("title","authorString","consortiumPaper", col("firstPublicationDate").alias("publicationDate"), col("journalInfo.journal.title").alias("journalTitle"), "alleles.gacc", "alleles.geneSymbol", "alleles.alleleSymbol", col("pmid").alias("pmId"), "abstractText", "meshHeadingList", "grantsList").withColumn("alleles", zip_with("gacc", "alleleSymbol", lambda x,y: struct(x.alias("mgiGeneAccessionId"), y.alias("alleleSymbol")))).drop("geneSymbol", "alleleSymbol", "gacc").repartition(1).write.json("/nfs/production/tudor/komp/data-releases/latest-input/dr19.1/output/impc_web_api/publications_service_json/")
+
+        # Incremental count by year
+        # incremental_counts_by_year = publications_df.where(col("status") == "reviewed").select("pmid", "pubYear").withColumn("count", count("pmid").over(Window.partitionBy("pubYear").orderBy("pubYear")).alias("count")).select(col("pubYear").cast("int"), col("count").cast("int")).distinct().sort("pubYear").rdd.map(lambda row: row.asDict()).collect()
+
+        # Count by year and quarter
+        #  publications_by_quarter = [json.loads(s) for s in publications_df.where(col("status") == "reviewed").select("pmid", "pubYear", quarter("firstPublicationDate").alias("quarter")).withColumn("countQuarter", count("pmid").over(Window.partitionBy("pubYear", "quarter").orderBy("pubYear", col("quarter").asc()))).withColumn("countYear", count("pmid").over(Window.partitionBy("pubYear").orderBy("pubYear"))).select(col("pubYear").cast("int"), "quarter", col("countYear"), col("countQuarter")).distinct().sort("pubYear", "quarter").groupBy("pubYear", col("countYear").alias("count")).agg(collect_set(struct("quarter", col("countQuarter").alias("count"))).alias("byQuarter")).sort("pubYear").toJSON().collect()]
+
+        # Count by Grant Agency
+        # publications_by_grant_agency  = publications_df.where(col("status") == "reviewed").select("pmid", explode("grantsList").alias("grantInfo")).select("pmid", "grantInfo.agency").groupBy("agency").agg(countDistinct("pmid").alias("count")).sort(col("count").desc()).rdd.map(lambda row: row.asDict()).collect()
+
         publications_df = spark.read.json(gene_publications_json_path)
         publications_df = publications_df.withColumn("allele", explode("alleles"))
         publications_df = publications_df.select(

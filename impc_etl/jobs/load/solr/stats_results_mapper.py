@@ -1904,6 +1904,7 @@ class StatsResultsMapper(PySparkTask):
             "marker_symbol",
             "strain_accession_id",
             "text_value",
+            "experiment_id",
         ]
 
         viability_stats_results = (
@@ -2137,6 +2138,46 @@ class StatsResultsMapper(PySparkTask):
                 f.col("mp_term").isNull(),
                 f.lit(0.0),
             ).otherwise(f.col("effect_size")),
+        )
+        viability_supporting_data = (
+            observations_df.where(
+                f.col("parameter_stable_id").isin(
+                    [
+                        "IMPC_VIA_057_001",
+                        "IMPC_VIA_058_001",
+                        "IMPC_VIA_060_001",
+                        "IMPC_VIA_059_001",
+                        "IMPC_VIA_061_001",
+                        "IMPC_VIA_049_001",
+                        "IMPC_VIA_055_001",
+                        "IMPC_VIA_053_001",
+                        "IMPC_VIA_051_001",
+                        "IMPC_VIA_062_001",
+                        "IMPC_VIA_050_001",
+                        "IMPC_VIA_054_001",
+                        "IMPC_VIA_052_001",
+                        "IMPC_VIA_056_001",
+                        "IMPC_VIA_003_001",
+                        "IMPC_VIA_004_001",
+                        "IMPC_VIA_006_001",
+                        "IMPC_VIA_005_001",
+                        "IMPC_VIA_010_001",
+                        "IMPC_VIA_007_001",
+                        "IMPC_VIA_009_001",
+                        "IMPC_VIA_008_001",
+                        "IMPC_VIA_014_001",
+                        "IMPC_VIA_011_001",
+                        "IMPC_VIA_013_001",
+                        "IMPC_VIA_012_001",
+                    ]
+                )
+            )
+            .select("experiment_id", "observation_id")
+            .groupBy("experiment_id")
+            .agg(f.collect_set("observation_id").alias("observations_id"))
+        )
+        viability_stats_results = viability_stats_results.join(
+            viability_supporting_data, "experiment_id", "left_outer"
         )
         return viability_stats_results
 
