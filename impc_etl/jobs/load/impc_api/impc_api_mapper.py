@@ -2222,6 +2222,10 @@ class ImpcDatasetsMapper(PySparkTask):
         )
         datasets_df.repartition(10000).write.parquet(output_path)
 
+        line_observations_df = line_observations_df.withColumn(
+            "observation_id", explode("observation_id")
+        )
+
         line_datasets_df = dataset_line_observation_index_df.join(
             line_observations_df, "observation_id"
         )
