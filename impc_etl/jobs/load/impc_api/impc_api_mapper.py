@@ -2220,7 +2220,7 @@ class ImpcDatasetsMapper(PySparkTask):
                 "series"
             )
         )
-        datasets_df.repartition(10000).write.parquet(output_path)
+        #        datasets_df.repartition(10000).write.parquet(output_path)
 
         dataset_line_observation_index_df = (
             dataset_line_observation_index_df.withColumn(
@@ -2250,4 +2250,10 @@ class ImpcDatasetsMapper(PySparkTask):
             "datasetId", "sampleGroup", "specimenSex", "zygosity"
         ).agg(collect_set(struct("parameterName", "dataPoint")).alias("observations"))
 
-        line_datasets_df.repartition(10000).write.parquet(output_path + "line")
+        line_datasets_df = line_datasets_df.groupBy("datasetId").agg(
+            collect_set(
+                struct("sampleGroup", "specimenSex", "zygosity", "observations")
+            ).alias("series")
+        )
+
+        line_datasets_df.limit(1000).write.parquet(output_path + "line")
