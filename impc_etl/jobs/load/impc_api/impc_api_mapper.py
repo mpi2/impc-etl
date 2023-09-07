@@ -2114,7 +2114,27 @@ class ImpcDatasetsMapper(PySparkTask):
         dataset_observation_index_df = spark.read.parquet(
             dataset_observation_index_parquet_path
         )
+        line_level_procedures = [
+            "IMPC_VIA_002",
+            "IMPC_VIA_001",
+            "IMPC_EVM_001",
+            "IMPC_FER_001",
+            "IMPC_EVL_001",
+            "IMPC_EVP_001",
+            "IMPC_EVO_001",
+            "ESLIM_023_001",
+            "ESLIM_024_001",
+        ]
         observations_df = spark.read.parquet(observations_parquet_path)
+        line_observations_df = observations_df.where(
+            col("procedure_stable_id").isin(line_level_procedures)
+        )
+        dataset_line_observation_index_df = dataset_observation_index_df.select(
+            "doc_id", "observation_id"
+        ).distinct()
+        observations_df = observations_df.where(
+            ~col("procedure_stable_id").isin(line_level_procedures)
+        )
         dataset_observation_index_df = dataset_observation_index_df.withColumn(
             "window_weight",
             when(col("window_weight").isNotNull(), col("window_weight")).otherwise(
@@ -2201,3 +2221,27 @@ class ImpcDatasetsMapper(PySparkTask):
             )
         )
         datasets_df.repartition(10000).write.parquet(output_path)
+
+        line_datasets_df = dataset_line_observation_index_df.join(
+            line_observations_df, "observation_id"
+        )
+        line_datasets_df = line_datasets_df.drop("observation_id")
+        line_datasets_col_map = {
+            "doc_id": "datasetId",
+            "biological_sample_group": "sampleGroup",
+            "sex": "specimenSex",
+            "zygosity": "zygosity",
+            "parameter_name": "parameterName",
+            "data_point": "dataPoint",
+        }
+
+        for column_name, new_column_name in line_datasets_col_map.items():
+            line_datasets_df = line_datasets_df.withColumnRenamed(
+                column_name, new_column_name
+            )
+
+        line_datasets_df = line_datasets_df.groupBy(
+            "datasetId", "sampleGroup", "specimenSex", "zygosity"
+        ).agg(collect_set(struct("parameterName", "dataPoint")).alias("observations"))
+
+        line_datasets_df.repartition(10000).write.parquet(output_path + "line")
