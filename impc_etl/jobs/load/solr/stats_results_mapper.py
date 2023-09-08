@@ -1434,6 +1434,7 @@ class StatsResultsMapper(PySparkTask):
             "marker_accession_id",
             "marker_symbol",
             "strain_accession_id",
+            "experiment_id",
         ]
         fertility_stats_results = (
             observations_df.where(fertility_condition)
@@ -1521,6 +1522,25 @@ class StatsResultsMapper(PySparkTask):
                 f.col("mp_term").isNull(),
                 f.lit(0.0),
             ).otherwise(f.col("effect_size")),
+        )
+        fertility_supporting_data_parameters = [
+            "IMPC_FER_002_001",
+            "IMPC_FER_003_001",
+            "IMPC_FER_004_001",
+            "IMPC_FER_005_001",
+            "IMPC_FER_006_001",
+            "IMPC_FER_007_001",
+            "IMPC_FER_008_001",
+            "IMPC_FER_009_001",
+            "IMPC_FER_010_001",
+            "IMPC_FER_011_001",
+            "IMPC_FER_012_001",
+            "IMPC_FER_013_001",
+        ]
+        fertility_stats_results = self._add_line_level_supporting_data(
+            fertility_stats_results,
+            observations_df,
+            fertility_supporting_data_parameters,
         )
         return fertility_stats_results
 
@@ -1787,6 +1807,7 @@ class StatsResultsMapper(PySparkTask):
             "marker_symbol",
             "strain_accession_id",
             "text_value",
+            "experiment_id",
         ]
         embryo_viability_stats_results = (
             observations_df.where(
@@ -1867,6 +1888,85 @@ class StatsResultsMapper(PySparkTask):
                 f.col("mp_term").isNull(),
                 f.lit(0.0),
             ).otherwise(f.lit(1.0)),
+        )
+        embryo_viability_supporting_data_parameters = [
+            "IMPC_EVL_002_001",
+            "IMPC_EVL_007_001",
+            "IMPC_EVL_008_001",
+            "IMPC_EVL_009_001",
+            "IMPC_EVL_010_001",
+            "IMPC_EVL_011_001",
+            "IMPC_EVL_012_001",
+            "IMPC_EVL_013_001",
+            "IMPC_EVL_014_001",
+            "IMPC_EVL_015_001",
+            "IMPC_EVL_016_001",
+            "IMPC_EVL_017_001",
+            "IMPC_EVL_018_001",
+            "IMPC_EVL_021_001",
+            "IMPC_EVL_024_001",
+            "IMPC_EVL_025_001",
+            "IMPC_EVL_026_001",
+            "IMPC_EVL_027_001",
+            "IMPC_EVM_004_001",
+            "IMPC_EVM_005_001",
+            "IMPC_EVM_006_001",
+            "IMPC_EVM_007_001",
+            "IMPC_EVM_008_001",
+            "IMPC_EVM_009_001",
+            "IMPC_EVM_010_001",
+            "IMPC_EVM_011_001",
+            "IMPC_EVM_012_001",
+            "IMPC_EVM_013_001",
+            "IMPC_EVM_014_001",
+            "IMPC_EVM_015_001",
+            "IMPC_EVM_019_001",
+            "IMPC_EVM_023_001",
+            "IMPC_EVM_024_001",
+            "IMPC_EVM_025_001",
+            "IMPC_EVM_026_001",
+            "IMPC_EVM_027_001",
+            "IMPC_EVO_004_001",
+            "IMPC_EVO_005_001",
+            "IMPC_EVO_006_001",
+            "IMPC_EVO_007_001",
+            "IMPC_EVO_008_001",
+            "IMPC_EVO_009_001",
+            "IMPC_EVO_010_001",
+            "IMPC_EVO_011_001",
+            "IMPC_EVO_012_001",
+            "IMPC_EVO_013_001",
+            "IMPC_EVO_014_001",
+            "IMPC_EVO_015_001",
+            "IMPC_EVO_016_001",
+            "IMPC_EVO_017_001",
+            "IMPC_EVO_024_001",
+            "IMPC_EVO_025_001",
+            "IMPC_EVO_026_001",
+            "IMPC_EVO_027_001",
+            "IMPC_EVP_004_001",
+            "IMPC_EVP_005_001",
+            "IMPC_EVP_006_001",
+            "IMPC_EVP_007_001",
+            "IMPC_EVP_008_001",
+            "IMPC_EVP_009_001",
+            "IMPC_EVP_010_001",
+            "IMPC_EVP_011_001",
+            "IMPC_EVP_012_001",
+            "IMPC_EVP_013_001",
+            "IMPC_EVP_014_001",
+            "IMPC_EVP_015_001",
+            "IMPC_EVP_016_001",
+            "IMPC_EVP_023_001",
+            "IMPC_EVP_024_001",
+            "IMPC_EVP_025_001",
+            "IMPC_EVP_026_001",
+            "IMPC_EVP_027_001",
+        ]
+        embryo_viability_stats_results = self._add_line_level_supporting_data(
+            embryo_viability_stats_results,
+            observations_df,
+            embryo_viability_supporting_data_parameters,
         )
 
         return embryo_viability_stats_results
@@ -2139,47 +2239,57 @@ class StatsResultsMapper(PySparkTask):
                 f.lit(0.0),
             ).otherwise(f.col("effect_size")),
         )
+
+        viability_supporting_data_parameters = [
+            "IMPC_VIA_057_001",
+            "IMPC_VIA_058_001",
+            "IMPC_VIA_060_001",
+            "IMPC_VIA_059_001",
+            "IMPC_VIA_061_001",
+            "IMPC_VIA_049_001",
+            "IMPC_VIA_055_001",
+            "IMPC_VIA_053_001",
+            "IMPC_VIA_051_001",
+            "IMPC_VIA_062_001",
+            "IMPC_VIA_050_001",
+            "IMPC_VIA_054_001",
+            "IMPC_VIA_052_001",
+            "IMPC_VIA_056_001",
+            "IMPC_VIA_003_001",
+            "IMPC_VIA_004_001",
+            "IMPC_VIA_006_001",
+            "IMPC_VIA_005_001",
+            "IMPC_VIA_010_001",
+            "IMPC_VIA_007_001",
+            "IMPC_VIA_009_001",
+            "IMPC_VIA_008_001",
+            "IMPC_VIA_014_001",
+            "IMPC_VIA_011_001",
+            "IMPC_VIA_013_001",
+            "IMPC_VIA_012_001",
+        ]
+        viability_stats_results = self._add_line_level_supporting_data(
+            viability_stats_results,
+            observations_df,
+            viability_supporting_data_parameters,
+        )
+        return viability_stats_results
+
+    def _add_line_level_supporting_data(
+        self, line_stat_results, observations_df, supporting_data_parameters
+    ):
         viability_supporting_data = (
             observations_df.where(
-                f.col("parameter_stable_id").isin(
-                    [
-                        "IMPC_VIA_057_001",
-                        "IMPC_VIA_058_001",
-                        "IMPC_VIA_060_001",
-                        "IMPC_VIA_059_001",
-                        "IMPC_VIA_061_001",
-                        "IMPC_VIA_049_001",
-                        "IMPC_VIA_055_001",
-                        "IMPC_VIA_053_001",
-                        "IMPC_VIA_051_001",
-                        "IMPC_VIA_062_001",
-                        "IMPC_VIA_050_001",
-                        "IMPC_VIA_054_001",
-                        "IMPC_VIA_052_001",
-                        "IMPC_VIA_056_001",
-                        "IMPC_VIA_003_001",
-                        "IMPC_VIA_004_001",
-                        "IMPC_VIA_006_001",
-                        "IMPC_VIA_005_001",
-                        "IMPC_VIA_010_001",
-                        "IMPC_VIA_007_001",
-                        "IMPC_VIA_009_001",
-                        "IMPC_VIA_008_001",
-                        "IMPC_VIA_014_001",
-                        "IMPC_VIA_011_001",
-                        "IMPC_VIA_013_001",
-                        "IMPC_VIA_012_001",
-                    ]
-                )
+                f.col("parameter_stable_id").isin(supporting_data_parameters)
             )
             .select("experiment_id", "observation_id")
             .groupBy("experiment_id")
             .agg(f.collect_set("observation_id").alias("observations_id"))
         )
-        viability_stats_results = viability_stats_results.join(
+        line_stat_results = line_stat_results.join(
             viability_supporting_data, "experiment_id", "left_outer"
         )
-        return viability_stats_results
+        return line_stat_results
 
     def _histopathology_stats_results(self, observations_df: DataFrame):
         histopathology_stats_results = observations_df.where(

@@ -2122,8 +2122,6 @@ class ImpcDatasetsMapper(PySparkTask):
             "IMPC_EVL_001",
             "IMPC_EVP_001",
             "IMPC_EVO_001",
-            "ESLIM_023_001",
-            "ESLIM_024_001",
         ]
         observations_df = spark.read.parquet(observations_parquet_path)
         line_observations_df = observations_df.where(
@@ -2245,15 +2243,17 @@ class ImpcDatasetsMapper(PySparkTask):
             line_datasets_df = line_datasets_df.withColumnRenamed(
                 column_name, new_column_name
             )
-
+        line_datasets_df = line_datasets_df.withColumn(
+            "dataPoint", col("dataPoint").astype(DoubleType())
+        )
         line_datasets_df = line_datasets_df.groupBy(
-            "datasetId", "sampleGroup", "specimenSex", "zygosity"
+            "datasetId", "specimenSex", "zygosity"
         ).agg(collect_set(struct("parameterName", "dataPoint")).alias("observations"))
 
         line_datasets_df = line_datasets_df.groupBy("datasetId").agg(
-            collect_set(
-                struct("sampleGroup", "specimenSex", "zygosity", "observations")
-            ).alias("series")
+            collect_set(struct("specimenSex", "zygosity", "observations")).alias(
+                "series"
+            )
         )
 
-        line_datasets_df.limit(1000).write.parquet(output_path + "line")
+        line_datasets_df.write.parquet(output_path + "_line")
