@@ -210,8 +210,16 @@ class GenotypePhenotypeLoader(PySparkTask):
                 ),
             )
             .otherwise(
-                when(col("sex") == "male", col("male_ko_effect_p_value"))
-                .when(col("sex") == "female", col("female_ko_effect_p_value"))
+                when(
+                    (col("sex") == "male")
+                    & (col("male_ko_effect_p_value").isNotNull()),
+                    col("male_ko_effect_p_value"),
+                )
+                .when(
+                    (col("sex") == "female")
+                    & (col("female_ko_effect_p_value").isNotNull()),
+                    col("female_ko_effect_p_value"),
+                )
                 .otherwise(
                     when(
                         col("statistical_method").contains(
