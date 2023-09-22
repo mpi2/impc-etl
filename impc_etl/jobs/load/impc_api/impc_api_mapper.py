@@ -2329,6 +2329,9 @@ class ImpcPhenotypeStatisticalResultsMapper(PySparkTask):
             "intermediate_mp_term_id",
             "top_level_mp_term_id",
             "resource_fullname",
+            "mp_term_name",
+            "intermediate_mp_term_name",
+            "top_level_mp_term_name" "mp_term_name_options",
         )
 
         phenotype_stats_df = phenotype_stats_df.withColumn(
@@ -2385,6 +2388,11 @@ class ImpcPhenotypeStatisticalResultsMapper(PySparkTask):
             "resource_fullname": "resourceFullName",
             "doc_id": "datasetId",
         }
+
+        for col_name in phenotype_stats_map.keys():
+            phenotype_stats_df = phenotype_stats_df.withColumnRenamed(
+                col_name, phenotype_stats_map[col_name]
+            )
 
         for col_name in phenotype_stats_df.columns:
             phenotype_stats_df = phenotype_stats_df.withColumnRenamed(
