@@ -2219,7 +2219,7 @@ class ImpcDatasetsMapper(PySparkTask):
                 "series"
             )
         )
-        #        datasets_df.repartition(10000).write.parquet(output_path)
+        datasets_df.repartition(10000).write.parquet(output_path)
 
         dataset_line_observation_index_df = (
             dataset_line_observation_index_df.withColumn(
