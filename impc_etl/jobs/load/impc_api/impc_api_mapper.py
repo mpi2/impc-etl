@@ -1313,7 +1313,6 @@ class ImpcPublicationsMapper(PySparkTask):
         Generates the options pass to the PySpark job
         """
         return [
-            self.gene_publications_json_path,
             self.output().path,
         ]
 
@@ -1324,10 +1323,39 @@ class ImpcPublicationsMapper(PySparkTask):
         spark = SparkSession(sc)
 
         # Parsing app options
-        gene_publications_json_path = args[0]
-        output_path = args[1]
+        output_path = args[0]
 
-        # publications_df.where(col("status") == "reviewed").select("title","authorString","consortiumPaper", col("firstPublicationDate").alias("publicationDate"), col("journalInfo.journal.title").alias("journalTitle"), "alleles.gacc", "alleles.geneSymbol", "alleles.alleleSymbol", col("pmid").alias("pmId"), "abstractText", "meshHeadingList", "grantsList").withColumn("alleles", zip_with("gacc", "alleleSymbol", lambda x,y: struct(x.alias("mgiGeneAccessionId"), y.alias("alleleSymbol")))).drop("geneSymbol", "alleleSymbol", "gacc").repartition(1).write.json("/nfs/production/tudor/komp/data-releases/latest-input/dr19.1/output/impc_web_api/publications_service_json/")
+        publications_df = spark.read.format("mongo").load()
+
+        publications_df.where(col("status") == "reviewed").select(
+            "title",
+            "authorString",
+            "consortiumPaper",
+            col("firstPublicationDate").alias("publicationDate"),
+            col("journalInfo.journal.title").alias("journalTitle"),
+            col("alleles.acc").alias("mgiAlleleAccessionId"),
+            col("alleles.gacc").alias("mgiGeneAccessionId"),
+            col("alleles.geneSymbol"),
+            col("alleles.alleleSymbol"),
+            col("pmid").alias("pmId"),
+            "abstractText",
+            "meshHeadingList",
+            "grantsList",
+        ).withColumn(
+            "alleles",
+            arrays_zip(
+                "mgiAlleleAccessionId",
+                "mgiGeneAccessionId",
+                "geneSymbol",
+                "alleleSymbol",
+            ),
+        ).drop(
+            "mgiAlleleAccessionId", "mgiGeneAccessionId", "geneSymbol", "alleleSymbol"
+        ).repartition(
+            1
+        ).write.json(
+            output_path
+        )
 
         # Incremental count by year
         # incremental_counts_by_year = publications_df.where(col("status") == "reviewed").select("pmid", "pubYear").withColumn("count", count("pmid").over(Window.partitionBy("pubYear").orderBy("pubYear")).alias("count")).select(col("pubYear").cast("int"), col("count").cast("int")).distinct().sort("pubYear").rdd.map(lambda row: row.asDict()).collect()
@@ -1337,24 +1365,6 @@ class ImpcPublicationsMapper(PySparkTask):
 
         # Count by Grant Agency
         # publications_by_grant_agency  = publications_df.where(col("status") == "reviewed").select("pmid", explode("grantsList").alias("grantInfo")).select("pmid", "grantInfo.agency").groupBy("agency").agg(countDistinct("pmid").alias("count")).sort(col("count").desc()).rdd.map(lambda row: row.asDict()).collect()
-
-        publications_df = spark.read.json(gene_publications_json_path)
-        publications_df = publications_df.withColumn("allele", explode("alleles"))
-        publications_df = publications_df.select(
-            "allele.*",
-            "journalInfo.*",
-            *[col_name for col_name in publications_df.columns if col_name != "allele"],
-        )
-        publications_df = publications_df.withColumn(
-            "journalTitle", col("journal.title")
-        )
-        publications_df = publications_df.drop("journal")
-        publications_df = publications_df.withColumnRenamed(
-            "gacc", "mgiGeneAccessionId"
-        )
-        publications_df.repartition(100).write.option("ignoreNullFields", "false").json(
-            output_path
-        )
 
 
 class ImpcProductsMapper(PySparkTask):
@@ -2372,6 +2382,8 @@ class ImpcPhenotypeStatisticalResultsMapper(PySparkTask):
             ),
         )
         phenotype_stats_df = phenotype_stats_df.drop(
+            "top_level_mp_term_id",
+            "top_level_mp_term_name",
             "intermediate_mp_term_id",
             "intermediate_mp_term_name",
             "mp_term_id_options",
@@ -2398,6 +2410,18 @@ class ImpcPhenotypeStatisticalResultsMapper(PySparkTask):
         for col_name in phenotype_stats_df.columns:
             phenotype_stats_df = phenotype_stats_df.withColumnRenamed(
                 col_name, to_camel_case(col_name)
+            )
+
+        double_cols = [
+            "reportedEffectSize",
+            "reportedPValue",
+            "seqRegionStart",
+            "seqRegionEnd",
+        ]
+
+        for col_name in double_cols:
+            phenotype_stats_df = phenotype_stats_df.withColumn(
+                col_name, col(col_name).astype(DoubleType())
             )
 
         phenotype_stats_df.repartition(1000).write.option(
