@@ -2276,7 +2276,7 @@ class ImpcPhenotypeStatisticalResultsMapper(PySparkTask):
     """
 
     #: Name of the Spark task
-    name: str = "ImpcProductsMapper"
+    name: str = "ImpcPhenotypeStatisticalResultsMapper"
 
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
@@ -2415,13 +2415,21 @@ class ImpcPhenotypeStatisticalResultsMapper(PySparkTask):
         double_cols = [
             "reportedEffectSize",
             "reportedPValue",
-            "seqRegionStart",
-            "seqRegionEnd",
         ]
 
         for col_name in double_cols:
             phenotype_stats_df = phenotype_stats_df.withColumn(
                 col_name, col(col_name).astype(DoubleType())
+            )
+
+        int_cols = [
+            "seqRegionStart",
+            "seqRegionEnd",
+        ]
+
+        for col_name in int_cols:
+            phenotype_stats_df = phenotype_stats_df.withColumn(
+                col_name, col(col_name).astype(IntegerType())
             )
 
         phenotype_stats_df.repartition(1000).write.option(
