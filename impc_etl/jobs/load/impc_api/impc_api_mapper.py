@@ -2276,8 +2276,6 @@ class ImpcDatasetsMapper(PySparkTask):
         line_datasets_df = line_datasets_df.drop("observation_id")
         line_datasets_col_map = {
             "doc_id": "datasetId",
-            "sex": "specimenSex",
-            "zygosity": "zygosity",
             "parameter_stable_id": "parameterStableId",
             "parameter_name": "parameterName",
             "data_point": "dataPoint",
@@ -2293,8 +2291,6 @@ class ImpcDatasetsMapper(PySparkTask):
         line_datasets_df = line_datasets_df.groupBy("datasetId").agg(
             collect_set(
                 struct(
-                    "specimenSex",
-                    "zygosity",
                     "parameterStableId",
                     "parameterName",
                     "dataPoint",
