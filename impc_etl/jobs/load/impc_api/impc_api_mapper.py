@@ -2,7 +2,15 @@ import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
-from pyspark.sql.types import DoubleType, IntegerType, BooleanType, ArrayType
+from pyspark.sql.types import (
+    DoubleType,
+    IntegerType,
+    BooleanType,
+    ArrayType,
+    StringType,
+    StructType,
+    StructField,
+)
 from pyspark.sql.functions import (
     col,
     first,
@@ -26,6 +34,7 @@ from pyspark.sql.functions import (
     array_contains,
     array_union,
     array,
+    udf,
 )
 
 from impc_etl.jobs.extract import ProductReportExtractor
@@ -1305,7 +1314,7 @@ class ImpcPublicationsMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/gene_publications_service_json"
+            f"{self.output_path}/impc_web_api/publications_service_json"
         )
 
     def app_options(self):
@@ -1327,7 +1336,9 @@ class ImpcPublicationsMapper(PySparkTask):
 
         publications_df = spark.read.format("mongo").load()
 
-        publications_df.where(col("status") == "reviewed").select(
+        publication_service_df = publications_df.where(
+            col("status") == "reviewed"
+        ).select(
             "title",
             "authorString",
             "consortiumPaper",
@@ -1341,21 +1352,43 @@ class ImpcPublicationsMapper(PySparkTask):
             "abstractText",
             "meshHeadingList",
             "grantsList",
-        ).withColumn(
-            "alleles",
-            arrays_zip(
-                "mgiAlleleAccessionId",
-                "mgiGeneAccessionId",
-                "geneSymbol",
-                "alleleSymbol",
-            ),
-        ).drop(
-            "mgiAlleleAccessionId", "mgiGeneAccessionId", "geneSymbol", "alleleSymbol"
-        ).repartition(
-            1
-        ).write.json(
-            output_path
         )
+
+        def zip_func(*args):
+            return list(zip(*args))
+
+        zip_udf = udf(
+            zip_func,
+            ArrayType(
+                StructType(
+                    [
+                        StructField("mgiAlleleAccessionId", StringType(), True),
+                        StructField("mgiGeneAccessionId", StringType(), True),
+                        StructField("geneSymbol", StringType(), True),
+                        StructField("alleleSymbol", StringType(), True),
+                    ]
+                )
+            ),
+        )
+
+        publication_service_df = publication_service_df.withColumn(
+            "alleles",
+            zip_udf(
+                col("mgiAlleleAccessionId"),
+                col("mgiGeneAccessionId"),
+                col("geneSymbol"),
+                col("alleleSymbol"),
+            ),
+        )
+
+        publication_service_df = publication_service_df.drop(
+            "mgiAlleleAccessionId",
+            "mgiGeneAccessionId",
+            "geneSymbol",
+            "alleleSymbol",
+        )
+
+        publication_service_df.repartition(1).write.json(output_path)
 
         # Incremental count by year
         # incremental_counts_by_year = publications_df.where(col("status") == "reviewed").select("pmid", "pubYear").withColumn("count", count("pmid").over(Window.partitionBy("pubYear").orderBy("pubYear")).alias("count")).select(col("pubYear").cast("int"), col("count").cast("int")).distinct().sort("pubYear").rdd.map(lambda row: row.asDict()).collect()
@@ -2243,9 +2276,9 @@ class ImpcDatasetsMapper(PySparkTask):
         line_datasets_df = line_datasets_df.drop("observation_id")
         line_datasets_col_map = {
             "doc_id": "datasetId",
-            "biological_sample_group": "sampleGroup",
             "sex": "specimenSex",
             "zygosity": "zygosity",
+            "parameter_stable_id": "parameterStableId",
             "parameter_name": "parameterName",
             "data_point": "dataPoint",
         }
@@ -2257,14 +2290,16 @@ class ImpcDatasetsMapper(PySparkTask):
         line_datasets_df = line_datasets_df.withColumn(
             "dataPoint", col("dataPoint").astype(DoubleType())
         )
-        line_datasets_df = line_datasets_df.groupBy(
-            "datasetId", "specimenSex", "zygosity"
-        ).agg(collect_set(struct("parameterName", "dataPoint")).alias("observations"))
-
         line_datasets_df = line_datasets_df.groupBy("datasetId").agg(
-            collect_set(struct("specimenSex", "zygosity", "observations")).alias(
-                "series"
-            )
+            collect_set(
+                struct(
+                    "specimenSex",
+                    "zygosity",
+                    "parameterStableId",
+                    "parameterName",
+                    "dataPoint",
+                )
+            ).alias("counts")
         )
 
         line_datasets_df.write.parquet(output_path + "_line")
