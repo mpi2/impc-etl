@@ -1342,6 +1342,7 @@ class ImpcPublicationsMapper(PySparkTask):
             "title",
             "authorString",
             "consortiumPaper",
+            "doi",
             col("firstPublicationDate").alias("publicationDate"),
             col("journalInfo.journal.title").alias("journalTitle"),
             col("alleles.acc").alias("mgiAlleleAccessionId"),
