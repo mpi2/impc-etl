@@ -70,12 +70,18 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
     def run(self):
         tasks = []
         for dependency in self.input():
+            big_task = (
+                "observation" in dependency.path
+                or "statistical_results" in dependency.path
+            )
+
             tasks.append(
                 ImpcMergeIndex(
                     remote_host=self.remote_host,
                     parquet_path=dependency.path,
                     solr_path=self.solr_path,
                     local_path=self.local_path,
+                    big_task=big_task,
                 )
             )
             if "statistical_results" in dependency.path:
@@ -85,6 +91,7 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
                         parquet_path=dependency.path + "_raw_data",
                         solr_path=self.solr_path,
                         local_path=self.local_path,
+                        big_task=big_task,
                     )
                 )
         yield tasks

@@ -1,5 +1,6 @@
 import os
 
+from luigi.contrib.external_program import ExternalProgramTask
 from luigi.contrib.webhdfs import WebHdfsClient
 
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
@@ -73,35 +74,37 @@ class ImpcCopyIndexParts(luigi.Task):
         client.download(self.input()[0].path, self.output().path, n_threads=50)
 
 
-class ImpcMergeIndex(LSFExternalJobTask):
-    remote_host = luigi.Parameter()
+class ImpcMergeIndex(ExternalProgramTask):
     parquet_path = luigi.Parameter()
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
+    big_task = luigi.Parameter(False)
     solr_core_name = ""
-    n_cpu_flag = 56
-    shared_tmp_dir = "/tmp"
-    memory_flag = "210000"
-    resource_flag = "mem=16000"
-    extra_bsub_args = "-R span[ptile=14]"
-    runtime_flag = 240
-    queue_flag = "short"
+    cpus_per_task = 8
+    memory_flag = 64
+    runtime_flag = 60
+    multiplier = 1
 
-    def init_local(self):
-        self.app = (
-            "java -jar -Xmx209920m "
-            + os.getcwd()
-            + "/lib/impc-merge-index-1.0-SNAPSHOT.jar"
-        )
+    def program_args(self):
+        if self.big_task:
+            self.multiplier = 4
+        return [
+            "srun",
+            "--cpus-per-task",
+            self.cpus_per_task * self.multiplier,
+            "--mem",
+            f"{self.memory_flag * self.multiplier}G",
+            "-t",
+            self.runtime_flag * self.multiplier,
+            "java",
+            os.getcwd() + "/lib/impc-merge-index-1.0-SNAPSHOT.jar",
+            self.output().path,
+            self.input()[0].path + "/*/data/index/",
+        ]
 
     def requires(self):
         return [
-            ImpcCopyIndexParts(
-                remote_host=self.remote_host,
-                parquet_path=self.parquet_path,
-                solr_path=self.solr_path,
-                local_path=self.local_path,
-            ),
+            Parquet2Solr(input_path=self.parquet_path, output_path=self.solr_path),
         ]
 
     def output(self):
@@ -112,6 +115,3 @@ class ImpcMergeIndex(LSFExternalJobTask):
         )
         self.solr_core_name = os.path.basename(os.path.normpath(self.input()[0].path))
         return luigi.LocalTarget(f"{self.local_path}{self.solr_core_name}_merged")
-
-    def app_options(self):
-        return [self.output().path, self.input()[0].path + "/*/data/index/"]
