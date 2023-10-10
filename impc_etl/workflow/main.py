@@ -52,7 +52,6 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
     name = "IMPC_Index_Data_Release"
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
-    remote_host = luigi.Parameter()
 
     def requires(self):
         return [
@@ -77,7 +76,6 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
 
             tasks.append(
                 ImpcMergeIndex(
-                    remote_host=self.remote_host,
                     parquet_path=dependency.path,
                     solr_path=self.solr_path,
                     local_path=self.local_path,
@@ -87,7 +85,6 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
             if "statistical_results" in dependency.path:
                 tasks.append(
                     ImpcMergeIndex(
-                        remote_host=self.remote_host,
                         parquet_path=dependency.path + "_raw_data",
                         solr_path=self.solr_path,
                         local_path=self.local_path,
@@ -108,7 +105,6 @@ class ImpcIndexDaily(luigi.Task):
     parquet_path = luigi.Parameter()
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
-    remote_host = luigi.Parameter()
 
     def requires(self):
         return [
@@ -121,7 +117,6 @@ class ImpcIndexDaily(luigi.Task):
         for dependency in self.input():
             tasks.append(
                 ImpcMergeIndex(
-                    remote_host=self.remote_host,
                     parquet_path=dependency.path,
                     solr_path=self.solr_path,
                     local_path=self.local_path,
@@ -136,7 +131,6 @@ class ImpcCleanDaily(luigi.Task):
     parquet_path = luigi.Parameter()
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
-    remote_host = luigi.Parameter()
 
     def _delele_target_if_exists(
         self, target: Union[luigi.LocalTarget, HdfsTarget], hdfs=False
@@ -151,14 +145,12 @@ class ImpcCleanDaily(luigi.Task):
     def run(self):
         index_daily_task = ImpcIndexDaily(
             imits_product_tsv_path=self.imits_product_tsv_path,
-            remote_host=self.remote_host,
             parquet_path=self.parquet_path,
             solr_path=self.solr_path,
             local_path=self.local_path,
         )
         for index_daily_dependency in index_daily_task.requires():
             impc_merge_index_task = ImpcMergeIndex(
-                remote_host=self.remote_host,
                 parquet_path=index_daily_dependency.output().path,
                 solr_path=self.solr_path,
                 local_path=self.local_path,

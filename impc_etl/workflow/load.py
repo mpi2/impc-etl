@@ -49,7 +49,6 @@ class Parquet2Solr(SparkSubmitTask):
 
 
 class ImpcCopyIndexParts(luigi.Task):
-    remote_host = luigi.Parameter()
     parquet_path = luigi.Parameter()
     solr_path = luigi.Parameter()
     local_path = luigi.Parameter()
