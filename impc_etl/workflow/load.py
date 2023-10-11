@@ -101,7 +101,11 @@ class ImpcMergeIndex(ExternalProgramTask):
             f"-Xmx{(self.memory_flag * 1024 * self.multiplier) - 1024}m",
             os.getcwd() + "/lib/impc-merge-index-1.0-SNAPSHOT.jar",
             self.output().path,
-        ] + glob.glob(self.input()[0].path + "/*/data/index/")
+        ] + [
+            path_name
+            for path_name in glob.glob(self.input()[0].path + "/*/data/index/")
+            if "*" not in path_name
+        ]
 
     def requires(self):
         return [
