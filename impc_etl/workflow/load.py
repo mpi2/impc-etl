@@ -96,6 +96,8 @@ class ImpcMergeIndex(ExternalProgramTask):
             "-t",
             self.runtime_flag * self.multiplier,
             "java",
+            "-jar",
+            f"-Xmx{(self.memory_flag * 1024 * self.multiplier) - 1024}m",
             os.getcwd() + "/lib/impc-merge-index-1.0-SNAPSHOT.jar",
             self.output().path,
             self.input()[0].path + "/*/data/index/",
