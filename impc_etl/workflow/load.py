@@ -18,7 +18,7 @@ class Parquet2Solr(SparkSubmitTask):
         "observations_parquet": "experiment",
         "statistical_results_raw_data_include_parquet": "statistical-result",
         "statistical_results_raw_data_include_parquet_raw_data": "statistical-raw-data",
-        "gene_parquet": "gene",
+        "gene_data_include_parquet": "gene",
         "genotype_phenotype_parquet": "genotype-phenotype",
         "mp_parquet": "mp",
         "impress_parameter_parquet": "pipeline",
