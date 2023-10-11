@@ -5,10 +5,11 @@ from luigi.contrib.webhdfs import WebHdfsClient
 
 from impc_etl.shared.lsf_external_app_task import LSFExternalJobTask
 from impc_etl.workflow.normalization import *
+import glob
 
 
 class Parquet2Solr(SparkSubmitTask):
-    app = "lib/parquet2solr-0404-2022.jar"
+    app = "lib/parquet2solr-0.0.1-SNAPSHOT.jar"
     name = "IMPC_Parquet2Solr"
     input_path = luigi.Parameter()
     output_path = luigi.Parameter()
@@ -100,8 +101,7 @@ class ImpcMergeIndex(ExternalProgramTask):
             f"-Xmx{(self.memory_flag * 1024 * self.multiplier) - 1024}m",
             os.getcwd() + "/lib/impc-merge-index-1.0-SNAPSHOT.jar",
             self.output().path,
-            self.input()[0].path + "/*/data/index/",
-        ]
+        ] + glob.glob(self.input()[0].path + "/*/data/index/")
 
     def requires(self):
         return [
