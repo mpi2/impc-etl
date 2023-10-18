@@ -71,7 +71,7 @@ class ImpcDrDiffReportGeneration(PySparkTask):
         observations_df = observations_df.withColumn(
             "external_sample_id", upper("external_sample_id")
         )
-        observations_previous_df = observations_df.withColumn(
+        observations_previous_df = observations_previous_df.withColumn(
             "external_sample_id", upper("external_sample_id")
         )
         experiment_list = exp_df.select(
