@@ -1,3 +1,4 @@
+from pyspark.sql.connect.functions import upper
 from pyspark.sql.functions import concat_ws, col, lit, when, explode, collect_set, size
 
 
@@ -58,6 +59,13 @@ class ImpcDrDiffReportGeneration(PySparkTask):
             observations_previous_parquet_path
         )
         exp_df = spark.read.parquet(experiment_parquet_path)
+        exp_df = exp_df.withColumn("specimenID", upper("specimenID"))
+        observations_df = observations_df.withColumn(
+            "external_sample_id", upper("external_sample_id")
+        )
+        observations_previous_df = observations_df.withColumn(
+            "external_sample_id", upper("external_sample_id")
+        )
         experiment_list = exp_df.select(
             col("_centreID").alias("phenotyping_center"),
             col("_pipeline").alias("pipeline_stable_id"),
