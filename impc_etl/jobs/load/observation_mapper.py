@@ -712,7 +712,7 @@ class ExperimentToObservationMapper(PySparkTask):
 
         lights_out_expr = (
             when(
-                col("_dataSource") == "impc",
+                col("experiment._dataSource") == "impc",
                 when(
                     col("procedure_stable_id").like("%IMPC_CAL%"),
                     resolve_lights_out_udf(
@@ -721,7 +721,7 @@ class ExperimentToObservationMapper(PySparkTask):
                 ).otherwise(unix_timestamp(col("date_of_experiment"))),
             )
             .when(
-                col("_dataSource") == "europhenome",
+                col("experiment._dataSource") == "europhenome",
                 when(
                     col("phenotyping_center") == "HMGU",
                     col("date_of_experiment_seconds") + lit(18 * 60 * 60),
@@ -1189,7 +1189,7 @@ class ExperimentToObservationMapper(PySparkTask):
                 == specimen_df["specimen._specimenID"]
             ),
             "left_outer",
-        ).drop("specimen._dataSource")
+        )
         observation_df = observation_df.join(
             colony_df,
             (observation_df["specimen._colonyID"] == colony_df["colony.colony_name"]),
