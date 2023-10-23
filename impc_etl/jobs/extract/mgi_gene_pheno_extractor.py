@@ -20,6 +20,7 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType, StructField, StringType
 
 from impc_etl.shared.utils import extract_tsv
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 GENE_PHENO_SCHEMA = StructType(
@@ -36,7 +37,7 @@ GENE_PHENO_SCHEMA = StructType(
 )
 
 
-class MGIGenePhenoReportExtractor(PySparkTask):
+class MGIGenePhenoReportExtractor(SmallPySparkTask):
     """
     PySpark Task class to extract the information from the
     [MGI Gene Pheno report](http://www.informatics.jax.org/downloads/reports/MGI_GenePheno.rpt).

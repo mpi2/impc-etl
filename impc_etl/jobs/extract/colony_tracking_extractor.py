@@ -7,10 +7,11 @@ from pyspark import SparkContext
 from pyspark.sql.session import SparkSession
 
 from impc_etl.shared import utils
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 
-class ColonyTrackingExtractor(PySparkTask):
+class ColonyTrackingExtractor(SmallPySparkTask):
     """
     PySpark Task class to extract colony tracking information from reports.
     """

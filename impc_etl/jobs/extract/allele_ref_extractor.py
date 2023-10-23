@@ -10,6 +10,7 @@ from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import col
 
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 allele_ref_cols = [
@@ -23,7 +24,7 @@ allele_ref_cols = [
 ]
 
 
-class ExtractAlleleRef(PySparkTask):
+class ExtractAlleleRef(SmallPySparkTask):
     """
     PySparkTask task to extract allele reference data from the GenTar reference database.
     """

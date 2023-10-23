@@ -15,10 +15,11 @@ from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
 from impc_etl.shared.utils import extract_tsv
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 
-class MGIHomologyReportExtractor(PySparkTask):
+class MGIHomologyReportExtractor(SmallPySparkTask):
     """
     PySpark Task class to extract the information from the
     [Alliance Homology, HGNC and CCDS IDs report](http://www.informatics.jax.org/downloads/reports/HGNC_AllianceHomology.rpt).

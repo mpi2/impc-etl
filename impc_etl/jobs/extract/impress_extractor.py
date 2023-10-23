@@ -17,10 +17,11 @@ from pyspark.sql.types import StructType, ArrayType
 
 from impc_etl import logger
 from impc_etl.shared.utils import convert_to_row
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 
-class ImpressExtractor(PySparkTask):
+class ImpressExtractor(SmallPySparkTask):
     """
     PySpark Task class to extract [IMPReSS](https://www.mousephenotype.org/impress/index) information.
     It goes from the most general endpoint listing resources and down the hierarchy defined by IMPReSS.

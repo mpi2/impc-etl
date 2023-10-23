@@ -343,7 +343,9 @@ class ExperimentToObservationMapper(PySparkTask):
             ),
         )
 
-        exp_df = exp_df.withColumn("zygosity", col("specimen._zygosity"))
+        exp_df = exp_df.withColumn(
+            "zygosity", regexp_replace("specimen._zygosity", " ", "")
+        )
 
         exp_df = exp_df.withColumn(
             "zygosity",
@@ -1171,6 +1173,18 @@ class ExperimentToObservationMapper(PySparkTask):
             specimen_df,
             (experiment_df["experiment._centreID"] == specimen_df["specimen._centreID"])
             & (
+                when(
+                    (experiment_df["experiment._dataSource"] == "3i")
+                    & (
+                        specimen_df["specimen._dataSource"].isin(["MGP", "europhenome"])
+                    ),
+                    True,
+                ).otherwise(
+                    experiment_df["experiment._dataSource"]
+                    == specimen_df["specimen._dataSource"]
+                )
+            )
+            & (
                 experiment_df["experiment.specimenID"]
                 == specimen_df["specimen._specimenID"]
             ),
@@ -1194,18 +1208,49 @@ class ExperimentToObservationMapper(PySparkTask):
             "left_outer",
         )
 
-        experimental_observation_df = observation_df.where(
-            (lower(col("specimen._colonyID")) != "baseline")
-            & (col("specimen._isBaseline") != True)
-        ).join(
-            strain_df,
-            (col("colony.colony_background_strain") == col("strain.strainName"))
-            | (
-                concat(lit("MGI:"), col("specimen._strainID"))
-                == col("strain.mgiStrainID")
+        legacy_experimental_observation_df = (
+            observation_df.where(
+                col("experiment._dataSource").isin(["pwg", "3i", "EuroPhenome", "MGP"])
             )
-            | (col("specimen._strainID") == col("strain.strainName")),
-            "left_outer",
+            .where(
+                (lower(col("specimen._colonyID")) != "baseline")
+                & (col("specimen._isBaseline") != True)
+            )
+            .join(
+                strain_df,
+                when(
+                    col("colony.colony_background_strain").isNotNull(),
+                    col("colony.colony_background_strain") == col("strain.strainName"),
+                ).otherwise(
+                    (
+                        concat(lit("MGI:"), col("specimen._strainID"))
+                        == col("strain.mgiStrainID")
+                    )
+                    | (col("specimen._strainID") == col("strain.strainName"))
+                ),
+                "left_outer",
+            )
+        )
+
+        impc_experimental_observation_df = (
+            observation_df.where(col("experiment._dataSource") == "IMPC")
+            .where(
+                (lower(col("specimen._colonyID")) != "baseline")
+                & (col("specimen._isBaseline") != True)
+            )
+            .join(
+                strain_df,
+                (
+                    concat(lit("MGI:"), col("specimen._strainID"))
+                    == col("strain.mgiStrainID")
+                )
+                | (col("specimen._strainID") == col("strain.strainName")),
+                "left_outer",
+            )
+        )
+
+        experimental_observation_df = impc_experimental_observation_df.union(
+            legacy_experimental_observation_df
         )
 
         baseline_observation_df = observation_df.where(
@@ -1222,6 +1267,8 @@ class ExperimentToObservationMapper(PySparkTask):
         )
 
         ## TODO fallback to imits when its missing and do the join again
+        ## TODO avoid duplication by splitting experimental observations join with strain_df
+        ## in several joins and choosing the preferred strain source
 
         observation_df = baseline_observation_df.union(experimental_observation_df)
 

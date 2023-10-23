@@ -87,7 +87,7 @@ class SpecimenCleaner(PySparkTask):
         specimen_df = spark_session.read.parquet(input_path)
         specimen_clean_df = self.clean_specimens(specimen_df)
         specimen_clean_df = specimen_clean_df.dropDuplicates(
-            ["_specimenID", "_centreID"]
+            ["_specimenID", "_centreID", "_dataSource"]
         )
         specimen_clean_df.write.mode("overwrite").parquet(output_path)
 

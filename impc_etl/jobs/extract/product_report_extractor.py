@@ -8,10 +8,11 @@ from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
 from impc_etl.jobs.extract.imits_extractor import extract_gentar_tsv
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 
-class ProductReportExtractor(PySparkTask):
+class ProductReportExtractor(SmallPySparkTask):
     """
     PySpark Task class to extract GenTar Product report data.
     """

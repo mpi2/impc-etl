@@ -14,10 +14,11 @@ from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 
-class MPChooserGenerator(PySparkTask):
+class MPChooserGenerator(SmallPySparkTask):
     """
     PySpark task to generate the MP Chooser data structure.
 

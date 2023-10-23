@@ -19,10 +19,11 @@ from pyspark.sql.types import StringType
 
 from impc_etl.jobs.extract import ColonyTrackingExtractor
 from impc_etl.shared import utils
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 
-class ColonyCleaner(PySparkTask):
+class ColonyCleaner(SmallPySparkTask):
     """
     PySpark Task to clean some legacy colony  identifiers so they match the provided on the legacy  Specimen XML files.
     This task depends on `impc_etl.jobs.extract.colony_tracking_extractor.ColonyTrackingExtractor`.

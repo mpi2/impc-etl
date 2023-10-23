@@ -11,10 +11,11 @@ from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 
-class OntologyMetadataExtractor(PySparkTask):
+class OntologyMetadataExtractor(SmallPySparkTask):
     """
     PySpark task to generate the ontology metadata parquet.
     Takes in a  directory   containing a set of ontology  metadata CSV files and returns a parquet version of all of them.

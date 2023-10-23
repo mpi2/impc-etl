@@ -45,6 +45,7 @@ from impc_etl.jobs.load.solr.impc_images_mapper import ImpcImagesLoader
 from impc_etl.jobs.load.solr.mp_mapper import MpLoader
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 GENE_SUMMARY_MAPPINGS = {
@@ -1294,7 +1295,7 @@ class ImpcLacZExpressionMapper(PySparkTask):
         ).json(output_path)
 
 
-class ImpcPublicationsMapper(PySparkTask):
+class ImpcPublicationsMapper(SmallPySparkTask):
     """
     PySpark Task class to extract GenTar Product report data.
     """
@@ -1401,7 +1402,7 @@ class ImpcPublicationsMapper(PySparkTask):
         # publications_by_grant_agency  = publications_df.where(col("status") == "reviewed").select("pmid", explode("grantsList").alias("grantInfo")).select("pmid", "grantInfo.agency").groupBy("agency").agg(countDistinct("pmid").alias("count")).sort(col("count").desc()).rdd.map(lambda row: row.asDict()).collect()
 
 
-class ImpcProductsMapper(PySparkTask):
+class ImpcProductsMapper(SmallPySparkTask):
     """
     PySpark Task class to extract GenTar Product report data.
     """

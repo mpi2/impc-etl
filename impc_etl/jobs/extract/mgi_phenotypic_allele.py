@@ -19,6 +19,7 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType, StructField, StringType
 
 from impc_etl.shared.utils import extract_tsv
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 PHENOTYPIC_ALLELE_SCHEMA = StructType(
@@ -40,7 +41,7 @@ PHENOTYPIC_ALLELE_SCHEMA = StructType(
 )
 
 
-class MGIPhenotypicAlleleExtractor(PySparkTask):
+class MGIPhenotypicAlleleExtractor(SmallPySparkTask):
     """
     PySpark Task class to extract the information from the
     [MGI Phenotypic Allele report](http://www.informatics.jax.org/downloads/reports/MGI_PhenotypicAllele.rpt).

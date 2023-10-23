@@ -17,10 +17,11 @@ from impc_etl.jobs.extract.xml_extraction_helper import (
     get_entity_by_type,
 )
 from impc_etl.shared.exceptions import UnsupportedEntityError
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 
-class SpecimenExtractor(PySparkTask):
+class SpecimenExtractor(SmallPySparkTask):
     """
     PySpark Task class to extract experimental data from the DCC XML files.
     """

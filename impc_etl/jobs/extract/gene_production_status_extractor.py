@@ -19,10 +19,11 @@ from pyspark.sql.functions import (
 from pyspark.sql.types import StringType, IntegerType
 
 from impc_etl.jobs.extract.product_report_extractor import ProductReportExtractor
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 
-class GeneProductionStatusExtractor(PySparkTask):
+class GeneProductionStatusExtractor(SmallPySparkTask):
     """
     PySpark Task class to extract gene status information from tracking systems reports.
     This also maps the different status in the reports to the ones we use on the website.

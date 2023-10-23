@@ -138,6 +138,7 @@ class SpecimenCrossRef(PySparkTask):
         )
         specimen_df = specimen_df.select(
             "specimen.*",
+            "_dataSource",
             "_productionCentre",
             "allelicComposition",
             "colony.phenotyping_consortium",

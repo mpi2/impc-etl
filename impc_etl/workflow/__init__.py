@@ -1,3 +1,11 @@
-from luigi.contrib.spark import SparkSubmitTask
+from luigi.contrib.spark import SparkSubmitTask, PySparkTask
+from luigi import configuration
 
-SparkSubmitTask.stream_for_searching_tracking_url = "stdout"
+
+class SmallPySparkTask(PySparkTask):
+    @property
+    def conf(self):
+        return self._dict_config(
+            configuration.get_config().get(self.spark_version, "conf", None)
+            + " | spark.cores.max=48"
+        )

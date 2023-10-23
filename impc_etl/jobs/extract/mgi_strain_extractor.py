@@ -19,6 +19,7 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType, StructField, StringType
 
 from impc_etl.shared.utils import extract_tsv
+from impc_etl.workflow import SmallPySparkTask
 from impc_etl.workflow.config import ImpcConfig
 
 STRAIN_SCHEMA = StructType(
@@ -30,7 +31,7 @@ STRAIN_SCHEMA = StructType(
 )
 
 
-class MGIStrainReportExtractor(PySparkTask):
+class MGIStrainReportExtractor(SmallPySparkTask):
     """
     PySpark Task class to extract the information from the
     [MGI strain report](http://www.informatics.jax.org/downloads/reports/MGI_Strain.rpt).
