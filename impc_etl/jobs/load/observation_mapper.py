@@ -1189,7 +1189,7 @@ class ExperimentToObservationMapper(PySparkTask):
                 == specimen_df["specimen._specimenID"]
             ),
             "left_outer",
-        )
+        ).drop("specimen._dataSource")
         observation_df = observation_df.join(
             colony_df,
             (observation_df["specimen._colonyID"] == colony_df["colony.colony_name"]),
