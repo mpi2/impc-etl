@@ -1210,7 +1210,7 @@ class ExperimentToObservationMapper(PySparkTask):
 
         legacy_experimental_observation_df = (
             observation_df.where(
-                col("experiment._dataSource").isin(["pwg", "3i", "EuroPhenome", "MGP"])
+                col("experiment._dataSource").isin(["pwg", "3i", "europhenome", "MGP"])
             )
             .where(
                 (lower(col("specimen._colonyID")) != "baseline")
@@ -1233,7 +1233,7 @@ class ExperimentToObservationMapper(PySparkTask):
         )
 
         impc_experimental_observation_df = (
-            observation_df.where(col("experiment._dataSource") == "IMPC")
+            observation_df.where(col("experiment._dataSource") == "impc")
             .where(
                 (lower(col("specimen._colonyID")) != "baseline")
                 & (col("specimen._isBaseline") != True)
