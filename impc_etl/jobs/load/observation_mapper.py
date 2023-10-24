@@ -1174,10 +1174,7 @@ class ExperimentToObservationMapper(PySparkTask):
             (experiment_df["experiment._centreID"] == specimen_df["specimen._centreID"])
             & (
                 when(
-                    (experiment_df["experiment._dataSource"] == "3i")
-                    & (
-                        specimen_df["specimen._dataSource"].isin(["MGP", "europhenome"])
-                    ),
+                    (experiment_df["experiment._dataSource"].isin(["3i", "pwg"])),
                     True,
                 ).otherwise(
                     experiment_df["experiment._dataSource"]
@@ -1240,11 +1237,16 @@ class ExperimentToObservationMapper(PySparkTask):
             )
             .join(
                 strain_df,
-                (
-                    concat(lit("MGI:"), col("specimen._strainID"))
-                    == col("strain.mgiStrainID")
-                )
-                | (col("specimen._strainID") == col("strain.strainName")),
+                when(
+                    col("specimen._strainID").isNotNull(),
+                    (
+                        concat(lit("MGI:"), col("specimen._strainID"))
+                        == col("strain.mgiStrainID")
+                    )
+                    | (col("specimen._strainID") == col("strain.strainName")),
+                ).otherwise(
+                    col("colony.colony_background_strain") == col("strain.strainName")
+                ),
                 "left_outer",
             )
         )
