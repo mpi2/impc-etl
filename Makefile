@@ -163,7 +163,7 @@ imaging-omero-upload:
 
 
 imaging-data-csv-check:
-	@scp $(etl-host):$(etl-dir)/$(dr-tag)/output/images_pipeline_input_csv/part-*.csv $(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_wo_omero_ids.csv
+	@cp $(etl-dir)/$(dr-tag)/output/images_pipeline_input_csv/part-*.csv $(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_wo_omero_ids.csv
 	@if [ -f "$(input-data-path)/imaging-data-archive/$(dr-tag)/impc_images_input_wo_omero_ids.csv" ]; then echo "CSV file successfully retrieved"; else "ERROR: The Pre-statistical analysis task did not produce a CSV file!"; fi
 
 
