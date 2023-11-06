@@ -1626,6 +1626,7 @@ class ImpcImagesMapper(PySparkTask):
             impc_images_df.where(col("biologicalSampleGroup") == "experimental")
             .groupBy(
                 "mgiGeneAccessionId",
+                "geneSymbol",
                 "strainAccessionId",
                 "pipelineStableId",
                 "procedureStableId",
@@ -1676,6 +1677,7 @@ class ImpcImagesMapper(PySparkTask):
 
         impc_images_control_df = impc_images_control_df.groupBy(
             "mgiGeneAccessionId",
+            "geneSymbol",
             "strainAccessionId",
             "pipelineStableId",
             "procedureStableId",
