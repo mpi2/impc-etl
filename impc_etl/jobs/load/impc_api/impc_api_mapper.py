@@ -1615,8 +1615,8 @@ class ImpcImagesMapper(PySparkTask):
 
         impc_images_df = impc_images_df.withColumn(
             "associatedParameters",
-            arrays_zip("stableId", "sequenceId", "name", "value"),
-        ).drop("id", "sequenceId", "name", "value")
+            arrays_zip("stableId", "associationSequenceId", "name", "value"),
+        ).drop("id", "associationSequenceId", "name", "value")
 
         impc_images_df = impc_images_df.withColumnRenamed(
             "gene_accession_id", "mgiGeneAccessionId"
