@@ -1660,7 +1660,7 @@ class ImpcImagesMapper(PySparkTask):
             "procedureName",
             "parameterStableId",
             "parameterName",
-        ).orderBy(col("observation_id"))
+        ).orderBy(col("observationId"))
 
         impc_images_control_df = impc_images_df.where(
             col("biologicalSampleGroup") == "control"
