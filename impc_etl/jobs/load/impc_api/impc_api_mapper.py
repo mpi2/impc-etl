@@ -1608,6 +1608,10 @@ class ImpcImagesMapper(PySparkTask):
             "life_stage_name", "lifeStageName"
         )
 
+        impc_images_df = impc_images_df.withColumnRenamed(
+            "gene_accession_id", "mgiGeneAccessionId"
+        )
+
         for col_name in impc_images_df.columns:
             impc_images_df = impc_images_df.withColumnRenamed(
                 col_name, to_camel_case(col_name)
@@ -1617,10 +1621,6 @@ class ImpcImagesMapper(PySparkTask):
             "associatedParameters",
             arrays_zip("stableId", "associationSequenceId", "name", "value"),
         ).drop("id", "associationSequenceId", "name", "value")
-
-        impc_images_df = impc_images_df.withColumnRenamed(
-            "gene_accession_id", "mgiGeneAccessionId"
-        )
 
         impc_images_experimental_df = (
             impc_images_df.where(col("biologicalSampleGroup") == "experimental")
