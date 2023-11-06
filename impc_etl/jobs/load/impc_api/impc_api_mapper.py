@@ -1596,7 +1596,7 @@ class ImpcImagesMapper(PySparkTask):
             "parameter_association_stable_id", "stableId"
         )
         impc_images_df = impc_images_df.withColumnRenamed(
-            "parameter_association_sequence_id", "sequenceId"
+            "parameter_association_sequence_id", "associationSequenceId"
         )
         impc_images_df = impc_images_df.withColumnRenamed(
             "parameter_association_name", "name"
