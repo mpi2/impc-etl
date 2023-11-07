@@ -155,7 +155,7 @@ class StatsResultsMapper(PySparkTask):
                 if col_name != "observations_window_weight"
             ]
             stats_results_df = open_stats_df.select(*stats_results_column_list)
-            stats_results_df = stats_results_df.repartition(15000)
+            stats_results_df = stats_results_df.repartition(10000)
         else:
             stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
         for col_name in stats_results_df.columns:
