@@ -2176,7 +2176,6 @@ class StatsResultsMapper(PySparkTask):
                 "p_value",
                 "male_mutants",
                 "female_mutants",
-                "viability_outcome",
             ]
         ).agg(
             f.collect_set("category").alias("categories"),
