@@ -2035,23 +2035,11 @@ class StatsResultsMapper(PySparkTask):
 
         viability_stats_results = viability_stats_results.withColumn(
             "category",
-            f.lower(f.col("category")),
-        )
-
-        json_outcome_schema = StructType(
-            [
-                StructField("outcome", StringType()),
-                StructField("n", IntegerType()),
-                StructField("P", DoubleType()),
-            ]
-        )
-
-        viability_stats_results = viability_stats_results.withColumn(
-            "viability_outcome",
-            f.when(
-                f.col("procedure_stable_id") == "IMPC_VIA_002",
-                f.from_json(f.col("text_value"), json_outcome_schema),
-            ).otherwise(f.lit(None)),
+            f.lower(
+                f.when(
+                    f.col("procedure_stable_id") == "IMPC_VIA_002", f.col("text_value")
+                ).otherwise(f.col("category"))
+            ),
         )
 
         viability_p_values = observations_df.where(
@@ -2062,7 +2050,7 @@ class StatsResultsMapper(PySparkTask):
             f.col("data_point").alias("p_value"),
         )
 
-        viability_male_mutants = observations_df.where(
+        viability_001_male_mutants = observations_df.where(
             f.col("parameter_stable_id") == "IMPC_VIA_010_001"
         ).select(
             "procedure_stable_id",
@@ -2070,12 +2058,58 @@ class StatsResultsMapper(PySparkTask):
             f.col("data_point").alias("male_mutants"),
         )
 
-        viability_female_mutants = observations_df.where(
+        viability_002_male_mutants = (
+            observations_df.where(
+                f.col("parameter_stable_id").isin(
+                    [
+                        "IMPC_VIA_051_001",
+                        "IMPC_VIA_053_001",
+                        "IMPC_VIA_055_001",
+                    ]
+                )
+            )
+            .select(
+                "procedure_stable_id",
+                "colony_id",
+                "data_point",
+            )
+            .groupBy("procedure_stable_id", "colony_id")
+            .agg(f.sum("data_point").alias("male_mutants"))
+        )
+
+        viability_male_mutants = viability_001_male_mutants.union(
+            viability_002_male_mutants
+        )
+
+        viability_001_female_mutants = observations_df.where(
             f.col("parameter_stable_id") == "IMPC_VIA_014_001"
         ).select(
             "procedure_stable_id",
             "colony_id",
             f.col("data_point").alias("female_mutants"),
+        )
+
+        viability_002_female_mutants = (
+            observations_df.where(
+                f.col("parameter_stable_id").isin(
+                    [
+                        "IMPC_VIA_052_001",
+                        "IMPC_VIA_054_001",
+                        "IMPC_VIA_056_001",
+                    ]
+                )
+            )
+            .select(
+                "procedure_stable_id",
+                "colony_id",
+                "data_point",
+            )
+            .groupBy("procedure_stable_id", "colony_id")
+            .agg(f.sum("data_point").alias("female_mutants"))
+        )
+
+        viability_female_mutants = viability_001_female_mutants.union(
+            viability_002_female_mutants
         )
 
         viability_stats_results = viability_stats_results.withColumn(
@@ -2089,15 +2123,12 @@ class StatsResultsMapper(PySparkTask):
         )
         viability_stats_results = viability_stats_results.withColumn(
             "p_value",
-            f.when(
-                f.col("procedure_stable_id") == "IMPC_VIA_002",
-                f.col("viability_outcome.P"),
-            ).otherwise(f.col("p_value")),
+            f.col("p_value"),
         )
         viability_stats_results = viability_stats_results.withColumn(
             "p_value",
             f.when(
-                f.col("p_value").isNull() & ~f.col("category").contains("Viable"),
+                f.col("p_value").isNull() & ~f.col("category").contains("viable"),
                 f.lit(0.0),
             ).otherwise(f.col("p_value")),
         )
@@ -2106,14 +2137,6 @@ class StatsResultsMapper(PySparkTask):
         )
         viability_stats_results = viability_stats_results.join(
             viability_male_mutants, ["colony_id", "procedure_stable_id"], "left_outer"
-        )
-        viability_stats_results = viability_stats_results.withColumn(
-            "male_mutants",
-            f.when(
-                (f.col("procedure_stable_id") == "IMPC_VIA_002")
-                & (f.col("parameter_name").contains(" males ")),
-                f.col("viability_outcome.n"),
-            ).otherwise(f.col("male_mutants")),
         )
 
         viability_stats_results = viability_stats_results.withColumn(
@@ -2124,20 +2147,8 @@ class StatsResultsMapper(PySparkTask):
         )
 
         viability_stats_results = viability_stats_results.withColumn(
-            "female_mutants",
-            f.when(
-                (f.col("procedure_stable_id") == "IMPC_VIA_002")
-                & (f.col("parameter_name").contains(" females ")),
-                f.col("viability_outcome.n"),
-            ).otherwise(f.col("female_mutants")),
-        )
-
-        viability_stats_results = viability_stats_results.withColumn(
             "statistical_method",
-            f.when(
-                f.col("procedure_stable_id") == "IMPC_VIA_002",
-                f.lit("Binomial distribution probability"),
-            ).otherwise(f.lit("Supplied as data")),
+            f.lit("Supplied as data"),
         )
 
         viability_stats_results = viability_stats_results.withColumn(
@@ -2199,11 +2210,11 @@ class StatsResultsMapper(PySparkTask):
                         .cast(StringType())
                         .alias("sex"),
                         f.when(
-                            f.col("viability_outcome.outcome").contains("subviable"),
+                            f.col("category").contains("subviable"),
                             f.lit("MP:0011110"),
                         )
                         .when(
-                            f.col("viability_outcome.outcome").contains("lethal"),
+                            f.col("category").contains("lethal"),
                             f.lit("MP:0011100"),
                         )
                         .otherwise(f.lit(None).cast(StringType()))
