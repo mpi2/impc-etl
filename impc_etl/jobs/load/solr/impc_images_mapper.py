@@ -102,18 +102,11 @@ class ImpcImagesLoader(PySparkTask):
             ],
         )
         image_observations_df = image_observations_df.select("obs.*", "omero.omero_id")
-        parameter_association_fields = [
-            "parameter_association_stable_id",
-            "parameter_association_sequence_id",
-            "parameter_association_name",
-            "parameter_association_value",
-        ]
-        image_observations_exp_df = image_observations_df
-        for parameter_association_field in parameter_association_fields:
-            image_observations_exp_df = image_observations_exp_df.withColumn(
-                f"{parameter_association_field}_exp",
-                explode_outer(parameter_association_field),
-            )
+        image_observations_exp_df = image_observations_df.withColumn(
+            "parameter_association_stable_id_exp",
+            explode_outer("parameter_association_stable_id"),
+        )
+
         image_observations_x_impress_df = image_observations_exp_df.withColumn(
             "fully_qualified_name",
             concat_ws(
@@ -123,6 +116,10 @@ class ImpcImagesLoader(PySparkTask):
                 "parameter_association_stable_id_exp",
             ),
         )
+
+        image_observations_x_impress_df = image_observations_x_impress_df.select(
+            "observation_id", "fully_qualified_name"
+        ).distinct()
 
         image_observations_x_impress_df = image_observations_x_impress_df.join(
             pipeline_core_df,
