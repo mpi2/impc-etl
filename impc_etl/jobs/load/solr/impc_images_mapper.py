@@ -88,7 +88,7 @@ class ImpcImagesLoader(PySparkTask):
         image_observations_df = observations_df.where(
             col("observation_type") == "image_record"
         )
-        image_observations_df = image_observations_df.alias("obs").repartition(672)
+        image_observations_df = image_observations_df.alias("obs")
         image_observations_df = image_observations_df.join(
             omero_ids_df,
             [
@@ -122,11 +122,9 @@ class ImpcImagesLoader(PySparkTask):
                 "procedure_stable_id",
                 "parameter_association_stable_id_exp",
             ),
-        ).repartition(672)
+        )
 
-        image_observations_x_impress_df = image_observations_x_impress_df.repartition(
-            672
-        ).join(
+        image_observations_x_impress_df = image_observations_x_impress_df.join(
             pipeline_core_df,
             (
                 image_observations_x_impress_df["fully_qualified_name"]
@@ -205,11 +203,9 @@ class ImpcImagesLoader(PySparkTask):
                 "impress_intermediate_mp_term",
             ]
         )
-        image_observations_x_impress_df = (
-            image_observations_x_impress_df.groupBy("observation_id")
-            .agg(*group_by_expressions)
-            .repartition(672)
-        )
+        image_observations_x_impress_df = image_observations_x_impress_df.groupBy(
+            "observation_id"
+        ).agg(*group_by_expressions)
 
         image_observations_df = image_observations_df.join(
             image_observations_x_impress_df, "observation_id"
