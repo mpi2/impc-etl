@@ -71,8 +71,7 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
         tasks = []
         for dependency in self.input():
             big_task = (
-                "observation" in dependency.path
-                or "statistical_results" in dependency.path
+                "experiment" in dependency.path or "statistical" in dependency.path
             )
 
             tasks.append(
@@ -83,7 +82,7 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
                     big_task=big_task,
                 )
             )
-            if "statistical_results" in dependency.path:
+            if "statistical" in dependency.path:
                 tasks.append(
                     ImpcMergeIndex(
                         parquet_path=dependency.path + "_raw_data",

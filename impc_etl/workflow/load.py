@@ -87,7 +87,7 @@ class ImpcMergeIndex(ExternalProgramTask):
 
     def program_args(self):
         if self.big_task:
-            self.multiplier = 4
+            self.multiplier = 3
         return [
             "srun",
             "--cpus-per-task",
