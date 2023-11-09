@@ -2,6 +2,8 @@ import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, Window
+import json
+import os
 from pyspark.sql.types import (
     DoubleType,
     IntegerType,
@@ -36,6 +38,10 @@ from pyspark.sql.functions import (
     array,
     udf,
     row_number,
+    avg,
+    stddev,
+    count,
+    quarter,
 )
 
 from impc_etl.jobs.extract import ProductReportExtractor
@@ -1338,7 +1344,7 @@ class ImpcPublicationsMapper(SmallPySparkTask):
         # Parsing app options
         output_path = args[0]
 
-        publications_df = spark.read.format("mongo").load()
+        publications_df = spark.read.format("mongodb").load()
 
         publication_service_df = publications_df.where(
             col("status") == "reviewed"
@@ -1396,13 +1402,94 @@ class ImpcPublicationsMapper(SmallPySparkTask):
         publication_service_df.repartition(1).write.json(output_path)
 
         # Incremental count by year
-        # incremental_counts_by_year = publications_df.where(col("status") == "reviewed").select("pmid", "pubYear").withColumn("count", count("pmid").over(Window.partitionBy("pubYear").orderBy("pubYear")).alias("count")).select(col("pubYear").cast("int"), col("count").cast("int")).distinct().sort("pubYear").rdd.map(lambda row: row.asDict()).collect()
+        incremental_counts_by_year = (
+            publications_df.where(col("status") == "reviewed")
+            .select("pmid", "pubYear")
+            .withColumn(
+                "count",
+                count("pmid")
+                .over(Window.partitionBy("pubYear").orderBy("pubYear"))
+                .alias("count"),
+            )
+            .select(col("pubYear").cast("int"), col("count").cast("int"))
+            .distinct()
+            .sort("pubYear")
+            .rdd.map(lambda row: row.asDict())
+            .collect()
+        )
+        aggregations_path = output_path.replace(
+            "publications", "publications_aggregation"
+        )
+        if not os.path.exists(aggregations_path):
+            os.makedirs(aggregations_path)
+        with open(
+            output_path.replace("publications", "publications_aggregation")
+            + "/incremental_counts_by_year.json",
+            "w",
+        ) as f:
+            json.dump(incremental_counts_by_year, f, ensure_ascii=False)
 
         # Count by year and quarter
-        #  publications_by_quarter = [json.loads(s) for s in publications_df.where(col("status") == "reviewed").select("pmid", "pubYear", quarter("firstPublicationDate").alias("quarter")).withColumn("countQuarter", count("pmid").over(Window.partitionBy("pubYear", "quarter").orderBy("pubYear", col("quarter").asc()))).withColumn("countYear", count("pmid").over(Window.partitionBy("pubYear").orderBy("pubYear"))).select(col("pubYear").cast("int"), "quarter", col("countYear"), col("countQuarter")).distinct().sort("pubYear", "quarter").groupBy("pubYear", col("countYear").alias("count")).agg(collect_set(struct("quarter", col("countQuarter").alias("count"))).alias("byQuarter")).sort("pubYear").toJSON().collect()]
+        publications_by_quarter = [
+            json.loads(s)
+            for s in publications_df.where(col("status") == "reviewed")
+            .select("pmid", "pubYear", quarter("firstPublicationDate").alias("quarter"))
+            .withColumn(
+                "countQuarter",
+                count("pmid").over(
+                    Window.partitionBy("pubYear", "quarter").orderBy(
+                        "pubYear", col("quarter").asc()
+                    )
+                ),
+            )
+            .withColumn(
+                "countYear",
+                count("pmid").over(Window.partitionBy("pubYear").orderBy("pubYear")),
+            )
+            .select(
+                col("pubYear").cast("int"),
+                "quarter",
+                col("countYear"),
+                col("countQuarter"),
+            )
+            .distinct()
+            .sort("pubYear", "quarter")
+            .groupBy("pubYear", col("countYear").alias("count"))
+            .agg(
+                collect_set(
+                    struct("quarter", col("countQuarter").alias("count"))
+                ).alias("byQuarter")
+            )
+            .sort("pubYear")
+            .toJSON()
+            .collect()
+        ]
+
+        with open(
+            output_path.replace("publications", "publications_aggregation")
+            + "/publications_by_quarter.json",
+            "w",
+        ) as f:
+            json.dump(publications_by_quarter, f, ensure_ascii=False)
 
         # Count by Grant Agency
-        # publications_by_grant_agency  = publications_df.where(col("status") == "reviewed").select("pmid", explode("grantsList").alias("grantInfo")).select("pmid", "grantInfo.agency").groupBy("agency").agg(countDistinct("pmid").alias("count")).sort(col("count").desc()).rdd.map(lambda row: row.asDict()).collect()
+        publications_by_grant_agency = (
+            publications_df.where(col("status") == "reviewed")
+            .select("pmid", explode("grantsList").alias("grantInfo"))
+            .select("pmid", "grantInfo.agency")
+            .groupBy("agency")
+            .agg(countDistinct("pmid").alias("count"))
+            .sort(col("count").desc())
+            .rdd.map(lambda row: row.asDict())
+            .collect()
+        )
+
+        with open(
+            output_path.replace("publications", "publications_aggregation")
+            + "/publications_by_grant_agency.json",
+            "w",
+        ) as f:
+            json.dump(publications_by_grant_agency, f, ensure_ascii=False)
 
 
 class ImpcProductsMapper(SmallPySparkTask):
@@ -2633,3 +2720,116 @@ class ImpcPhenotypeStatisticalResultsMapper(PySparkTask):
         phenotype_stats_df.repartition(1000).write.option(
             "ignoreNullFields", "false"
         ).json(output_path)
+
+
+class ImpcBWTDatasetsMapper(PySparkTask):
+    """
+    PySpark Task class to extract GenTar Product report data.
+    """
+
+    #: Name of the Spark task
+    name: str = "ImpcBWTDatasetsMapper"
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
+
+    def requires(self):
+        return [
+            StatsResultsMapper(raw_data_in_output="bundled"),
+            ExperimentToObservationMapper(),
+        ]
+
+    def output(self):
+        """
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/product_report_parquet)
+        """
+        return ImpcConfig().get_target(
+            f"{self.output_path}/impc_web_api/bwt_curve_service_json"
+        )
+
+    def app_options(self):
+        """
+        Generates the options pass to the PySpark job
+        """
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args):
+        """
+        Takes in a SparkContext and the list of arguments generated by `app_options` and executes the PySpark job.
+        """
+        spark = SparkSession(sc)
+
+        # Parsing app options
+        stats_results_parquet_path = args[0]
+        raw_data_parquet_path = args[0] + "_raw_data_ids"
+        observations_parquet_path = args[1]
+        output_path = args[1]
+
+        stats_results_df = spark.read.parquet(stats_results_parquet_path)
+        raw_data_df = spark.read.parquet(raw_data_parquet_path)
+        observations_df = spark.read.parquet(observations_parquet_path)
+        stats_results_df.select(
+            "doc_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "marker_accession_id",
+        ).withColumn("procedure_stable_id", explode("procedure_stable_id")).where(
+            col("parameter_stable_id") == "IMPC_BWT_008_001"
+        ).join(
+            raw_data_df, "doc_id", "left_outer"
+        ).withColumn(
+            "observation_id", explode("observation_id")
+        ).drop(
+            "window_weight"
+        ).join(
+            observations_df.drop("procedure_stable_id", "parameter_stable_id"),
+            "observation_id",
+            "left_outer",
+        ).select(
+            "doc_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "marker_accession_id",
+            "biological_sample_group",
+            "sex",
+            "zygosity",
+            "discrete_point",
+            "data_point",
+        ).groupBy(
+            "doc_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "marker_accession_id",
+            "biological_sample_group",
+            "sex",
+            "zygosity",
+            "discrete_point",
+        ).agg(
+            avg("data_point").alias("mean"),
+            stddev("data_point").alias("std"),
+            count("data_point").alias("count"),
+        ).groupBy(
+            col("doc_id").alias("datasetId"),
+            col("procedure_stable_id").alias("procedureStableId"),
+            col("parameter_stable_id").alias("parameterStableId"),
+            col("marker_accession_id").alias("mgiGeneAccessionId"),
+        ).agg(
+            collect_set(
+                struct(
+                    col("biological_sample_group").alias("sampleGroup"),
+                    "sex",
+                    "zygosity",
+                    col("discrete_point").alias("ageInWeeks"),
+                    "mean",
+                    "std",
+                    "count",
+                )
+            ).alias("dataPoints")
+        ).write.json(
+            output_path
+        )
