@@ -2716,7 +2716,51 @@ class ImpcPhenotypeStatisticalResultsMapper(PySparkTask):
             phenotype_stats_df = phenotype_stats_df.withColumn(
                 col_name, col(col_name).astype(IntegerType())
             )
-
+        phenotype_stats_df = (
+            phenotype_stats_df.withColumn(
+                "potentialPhenotypes",
+                when(
+                    col("significantPhenotype").isNotNull(),
+                    array("significantPhenotype"),
+                ).otherwise(col("potentialPhenotypes")),
+            )
+            .withColumn(
+                "phenotypes",
+                concat(
+                    "potentialPhenotypes",
+                    "intermediatePhenotypes",
+                    "topLevelPhenotypes",
+                ),
+            )
+            .drop(
+                "potentialPhenotypes",
+                "intermediatePhenotypes",
+                "topLevelPhenotypes",
+                "significantPhenotype",
+            )
+            .withColumn("phenotypeId", explode("phenotypes.id"))
+            .drop("phenotypes")
+            .groupBy("phenotypeId")
+            .agg(
+                collect_set(
+                    struct(
+                        "mgiGeneAccessionId",
+                        "markerSymbol",
+                        "markerName",
+                        "reportedPValue",
+                        "reportedEffectSize",
+                        "chrName",
+                        "chrStrand",
+                        "seqRegionId",
+                        "seqRegionStart",
+                        "seqRegionEnd",
+                        "significant",
+                        "resourceFullName",
+                    )
+                ).alias("results")
+            )
+            .drop("markerName")
+        )
         phenotype_stats_df.repartition(1000).write.option(
             "ignoreNullFields", "false"
         ).json(output_path)
