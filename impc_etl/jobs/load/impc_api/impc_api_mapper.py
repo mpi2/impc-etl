@@ -2949,7 +2949,7 @@ class ImpcExternalLinksMapper(PySparkTask):
 
         gene_mgi_accession_df = (
             gene_df.select("mgi_accession_id")
-            .withColumnRenamed("mgi_accession_id", "mgi_gene_accession_id ")
+            .withColumnRenamed("mgi_accession_id", "mgi_gene_accession_id")
             .dropDuplicates()
         )
 
