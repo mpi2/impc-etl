@@ -24,6 +24,7 @@ from impc_etl.jobs.load.impc_api.impc_api_mapper import (
     ImpcPhenotypeStatisticalResultsMapper,
     ImpcImagesMapper,
     ImpcBWTDatasetsMapper,
+    ImpcExternalLinksMapper,
 )
 from impc_etl.jobs.load.impc_api.impc_bulk_api_mapper import ImpcBulkApiMapper
 from impc_etl.jobs.load.impc_api.impc_bulk_api_mongo_load import ImpcBulkApiMongoLoader
@@ -187,4 +188,5 @@ class ImpcWebApiMapper(luigi.Task):
             ImpcPhenotypeStatisticalResultsMapper(),
             ImpcImagesMapper(),
             ImpcBWTDatasetsMapper(),
+            ImpcExternalLinksMapper(),
         ]
