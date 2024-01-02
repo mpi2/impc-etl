@@ -2929,9 +2929,6 @@ class ImpcExternalLinksMapper(PySparkTask):
         mouse_human_ortholog_report_df = spark.read.csv(
             mouse_human_ortholog_report_tsv_path, sep="\t", header=True
         )
-        mouse_human_ortholog_report_df = mouse_human_ortholog_report_df.select(
-            "human_gene_symbol", "mgi_gene_accession_id"
-        )
 
         for col_name in mouse_human_ortholog_report_df.columns:
             mouse_human_ortholog_report_df = (
@@ -2939,6 +2936,10 @@ class ImpcExternalLinksMapper(PySparkTask):
                     col_name, col_name.replace(" ", "_").lower()
                 )
             )
+
+        mouse_human_ortholog_report_df = mouse_human_ortholog_report_df.select(
+            "human_gene_symbol", "mgi_gene_accession_id"
+        )
 
         gene_mgi_accession_df = (
             gene_df.select("mgi_accession_id")
