@@ -2938,7 +2938,13 @@ class ImpcExternalLinksMapper(PySparkTask):
             )
 
         mouse_human_ortholog_report_df = mouse_human_ortholog_report_df.select(
-            "human_gene_symbol", "mgi_gene_accession_id"
+            "human_gene_symbol", "mgi_gene_acc_id"
+        )
+
+        mouse_human_ortholog_report_df = (
+            mouse_human_ortholog_report_df.withColumnRenamed(
+                "mgi_gene_acc_id", "mgi_gene_accession_id"
+            )
         )
 
         gene_mgi_accession_df = (
