@@ -2887,7 +2887,7 @@ class ImpcExternalLinksMapper(PySparkTask):
     #: Name of the Spark task
     name: str = "ImpcExternalLinksMapper"
 
-    mouse_human_ortholog_report_tsv: luigi.Parameter = luigi.Parameter()
+    mouse_human_ortholog_report_tsv_path: luigi.Parameter = luigi.Parameter()
 
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
@@ -2910,6 +2910,7 @@ class ImpcExternalLinksMapper(PySparkTask):
         """
         return [
             self.input()[0].path,
+            self.mouse_human_ortholog_report_tsv_path,
             self.output().path,
         ]
 
@@ -2921,12 +2922,12 @@ class ImpcExternalLinksMapper(PySparkTask):
 
         # Parsing app options
         gene_parquet_path = args[0]
-        mouse_human_ortholog_report_tsv = args[1]
+        mouse_human_ortholog_report_tsv_path = args[1]
         output_path = args[2]
 
         gene_df = spark.read.parquet(gene_parquet_path)
         mouse_human_ortholog_report_df = spark.read.csv(
-            mouse_human_ortholog_report_tsv, sep="\t", header=True
+            mouse_human_ortholog_report_tsv_path, sep="\t", header=True
         )
         mouse_human_ortholog_report_df = mouse_human_ortholog_report_df.select(
             "human_gene_symbol", "mgi_gene_accession_id"
