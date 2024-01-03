@@ -407,17 +407,9 @@ class ImpcPhenotypeSummaryMapper(PySparkTask):
                 .alias("mp_term_id_options"),
                 "significant",
             )
-            .where(col("status") != "NotProcessed")
+            .where(col("status") != lit("NotProcessed"))
             .distinct()
         )
-
-        stats_results_df = stats_results_df.groupBy(
-            "marker_accession_id",
-            "status",
-            "top_level_mp_term_id",
-            "intermediate_mp_term_id",
-            "mp_term_id_options",
-        ).agg(max("significant").alias("significant"))
 
         stats_results_df = stats_results_df.withColumn(
             "mp_ids",
@@ -434,16 +426,22 @@ class ImpcPhenotypeSummaryMapper(PySparkTask):
             "intermediate_mp_term_id",
             "mp_term_id_options",
         )
+
         stats_results_df = (
             stats_results_df.withColumn("mp_id", explode("mp_ids"))
             .drop("mp_ids")
             .distinct()
         )
+
+        stats_results_df = stats_results_df.groupBy("marker_accession_id", "mp_id").agg(
+            max("significant").alias("significant")
+        )
+
         stats_results_df = stats_results_df.groupBy("mp_id").agg(
-            sum(when(col("significant") == True, 1).otherwise(0)).alias(
+            sum(when(col("significant") == lit(True), 1).otherwise(0)).alias(
                 "significant_genes"
             ),
-            sum(when(col("significant") == False, 1).otherwise(0)).alias(
+            sum(when(col("significant") == lit(False), 1).otherwise(0)).alias(
                 "not_significant_genes"
             ),
         )
