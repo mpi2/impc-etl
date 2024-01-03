@@ -2550,6 +2550,12 @@ class StatsResultsMapper(PySparkTask):
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "data_type", f.lit("adult-gross-path")
         )
+        supporting_data_parameters = [f"IMPC_PAT_0{i}_002" for i in range(1, 30)] + [
+            f"IMPC_PAT_0{i}_002" for i in range(62, 76)
+        ]
+        gross_pathology_stats_results = self._add_line_level_supporting_data(
+            gross_pathology_stats_results, observations_df, supporting_data_parameters
+        )
         return gross_pathology_stats_results
 
     def _select_collapsed_mp_term(

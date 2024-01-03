@@ -2410,6 +2410,7 @@ class ImpcDatasetsMapper(PySparkTask):
         dataset_observation_index_df = spark.read.parquet(
             dataset_observation_index_parquet_path
         )
+
         line_level_procedures = [
             "IMPC_VIA_002",
             "IMPC_VIA_001",
@@ -2482,6 +2483,8 @@ class ImpcDatasetsMapper(PySparkTask):
             "data_point": "dataPoint",
             "time_point": "timePoint",
             "discrete_point": "discretePoint",
+            "sub_term_id": "ontologyTermId",
+            "sub_term_name": "ontologyTermName",
         }
         double_type_cols = ["data_point", "discrete_point", "weight", "window_weight"]
         for double_col in double_type_cols:
@@ -2505,6 +2508,8 @@ class ImpcDatasetsMapper(PySparkTask):
                     "dataPoint",
                     "timePoint",
                     "discretePoint",
+                    "ontologyTermId",
+                    "ontologyTermName",
                 )
             ).alias("observations")
         )
