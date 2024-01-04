@@ -2464,6 +2464,8 @@ class ImpcDatasetsMapper(PySparkTask):
             "time_point",
             "discrete_point",
             "date_of_birth",
+            "sub_term_id",
+            "sub_term_name",
         ).distinct()
 
         datasets_df = dataset_observation_index_df.join(
