@@ -2471,6 +2471,7 @@ class StatsResultsMapper(PySparkTask):
             "sub_term_id",
             "sub_term_name",
             "specimen_id",
+            "experiment_id",
         ]
         gross_pathology_stats_results = (
             gross_pathology_stats_results.withColumnRenamed(
