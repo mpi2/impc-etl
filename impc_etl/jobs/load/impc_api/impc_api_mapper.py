@@ -3028,6 +3028,11 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
             "parameter_stable_id",
             "parameter_name",
             "life_stage_name",
+            "sub_term_id",
+            "sub_term_name",
+            "sub_term_description",
+            "text_value",
+            "category",
         ]
         observations_df = observations_df.select(*pathology_datasets_cols)
         pathology_datasets_df = observations_df.where(
@@ -3040,16 +3045,28 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
             pathology_datasets_df = pathology_datasets_df.withColumnRenamed(
                 col_name, to_camel_case(col_name)
             )
+
+        pathology_datasets_df = pathology_datasets_df.withColumnRenamed(
+            "subTermId", "termId"
+        )
+        pathology_datasets_df = pathology_datasets_df.withColumnRenamed(
+            "subTermName", "termName"
+        )
+
+        pathology_datasets_df = pathology_datasets_df.withColumn(
+            "ontologyTerms", arrays_zip("termId", "termName")
+        )
+        pathology_datasets_df = pathology_datasets_df.drop("termId", "termName")
         pathology_datasets_df = pathology_datasets_df.groupBy("mgiGeneAccessionId").agg(
             collect_set(
                 struct(
                     *[
                         to_camel_case(col_name)
-                        for col_name in pathology_datasets_cols
-                        if col_name != "gene_accession_id"
+                        for col_name in pathology_datasets_df.columns
+                        if col_name not in ["mgiGeneAccessionId"]
                     ]
                 )
-            )
+            ).alias("datasets")
         )
         pathology_datasets_df.write.json(output_path, mode="overwrite")
 
@@ -3155,6 +3172,6 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
                         if col_name not in ["mgiGeneAccessionId", "tissue"]
                     ]
                 )
-            )
+            ).alias("datasets")
         )
         histopathology_datasets_df.write.json(output_path, mode="overwrite")
