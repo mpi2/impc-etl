@@ -3074,7 +3074,7 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/pathology_service_json"
+            f"{self.output_path}/impc_web_api/histopathology_service_json"
         )
 
     def app_options(self):
