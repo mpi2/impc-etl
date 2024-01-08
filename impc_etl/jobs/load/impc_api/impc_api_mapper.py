@@ -3151,8 +3151,8 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
                 struct(
                     *[
                         to_camel_case(col_name)
-                        for col_name in histopathology_datasets_cols
-                        if col_name != "gene_accession_id"
+                        for col_name in histopathology_datasets_df.columns
+                        if col_name not in ["mgiGeneAccessionId", "tissue"]
                     ]
                 )
             )
