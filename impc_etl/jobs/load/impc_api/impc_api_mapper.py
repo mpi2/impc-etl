@@ -2987,7 +2987,7 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return [GeneLoader()]
+        return [ExperimentToObservationMapper()]
 
     def output(self):
         """
