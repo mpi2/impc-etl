@@ -3121,8 +3121,8 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
 
         # Parsing app options
         observations_parquet_path = args[0]
-        impc_images_parquet_path = args[0]
-        output_path = args[1]
+        impc_images_parquet_path = args[1]
+        output_path = args[2]
 
         observations_df = spark.read.parquet(observations_parquet_path)
         impc_images_df = spark.read.parquet(impc_images_parquet_path)
