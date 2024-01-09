@@ -3214,10 +3214,10 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
         ).drop("parameter_association_value")
 
         histopathology_images_df = histopathology_images_df.withColumn(
-            "sub_term_name", array("sub_term_name")
+            "sub_term_id", array("sub_term_id")
         )
         histopathology_images_df = histopathology_images_df.withColumn(
-            "sub_term_id", array("sub_term_id")
+            "sub_term_name", array("sub_term_name")
         )
 
         histopathology_datasets_df = histopathology_datasets_df.union(
