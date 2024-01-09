@@ -3088,6 +3088,8 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
     #: Name of the Spark task
     name: str = "ImpcHistopathologyDatasetsMapper"
 
+    ma_metadata_csv_path = luigi.Parameter()
+
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
@@ -3110,6 +3112,7 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
         return [
             self.input()[0].path,
             self.input()[1].path,
+            self.ma_metadata_csv_path,
             self.output().path,
         ]
 
@@ -3122,10 +3125,18 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
         # Parsing app options
         observations_parquet_path = args[0]
         impc_images_parquet_path = args[1]
-        output_path = args[2]
+        ma_metadata_csv_path = args[2]
+        output_path = args[3]
 
         observations_df = spark.read.parquet(observations_parquet_path)
         impc_images_df = spark.read.parquet(impc_images_parquet_path)
+        ma_metadata_df = spark.read.csv(ma_metadata_csv_path, header=True)
+        ma_metadata_df = ma_metadata_df.withColumnRenamed("name", "sub_term_name")
+        ma_metadata_df = ma_metadata_df.withColumnRenamed("curie", "sub_term_id")
+        ma_metadata_df = ma_metadata_df.withColumn(
+            "sub_term_name", array("sub_term_name")
+        )
+        ma_metadata_df = ma_metadata_df.withColumn("sub_term_id", array("sub_term_id"))
         histopathology_datasets_cols = [
             "gene_accession_id",
             "allele_accession_id",
@@ -3173,10 +3184,11 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
             explode(array_distinct("parameter_association_name")).alias(
                 "parameter_association_name"
             ),
+            explode(array_distinct("parameter_association_value")).alias(
+                "parameter_association_value"
+            ),
             lit(None).astype(StringType()).alias("text_value"),
             lit(None).astype(StringType()).alias("category"),
-            lit(None).astype(ArrayType(StringType())).alias("sub_term_id"),
-            lit(None).astype(ArrayType(StringType())).alias("sub_term_name"),
             "omero_id",
             "jpeg_url",
             "thumbnail_url",
@@ -3190,6 +3202,12 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
                 "parameter_name",
             ),
         ).drop("parameter_association_name")
+
+        histopathology_images_df = histopathology_images_df.join(
+            ma_metadata_df,
+            col("parameter_association_value") == col("sub_term_id"),
+            "left_outer",
+        ).drop("parameter_association_value")
 
         histopathology_datasets_df = histopathology_datasets_df.union(
             histopathology_images_df
