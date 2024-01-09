@@ -43,6 +43,7 @@ from pyspark.sql.functions import (
     count,
     quarter,
     regexp_extract,
+    array_distinct,
 )
 
 from impc_etl.jobs.extract import ProductReportExtractor
@@ -3091,7 +3092,7 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return [ExperimentToObservationMapper()]
+        return [ExperimentToObservationMapper(), ImpcImagesMapper()]
 
     def output(self):
         """
@@ -3108,6 +3109,7 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
         """
         return [
             self.input()[0].path,
+            self.input()[1].path,
             self.output().path,
         ]
 
@@ -3118,10 +3120,12 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
         spark = SparkSession(sc)
 
         # Parsing app options
-        observations_parquet = args[0]
+        observations_parquet_path = args[0]
+        impc_images_parquet_path = args[0]
         output_path = args[1]
 
-        observations_df = spark.read.parquet(observations_parquet)
+        observations_df = spark.read.parquet(observations_parquet_path)
+        impc_images_df = spark.read.parquet(impc_images_parquet_path)
         histopathology_datasets_cols = [
             "gene_accession_id",
             "allele_accession_id",
@@ -3143,8 +3147,58 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
         observations_df = observations_df.select(*histopathology_datasets_cols)
         histopathology_datasets_df = observations_df.where(
             col("parameter_stable_id").contains("HIS")
+            & ~col("parameter_name").contains("Images")
         )
 
+        histopathology_images_df = impc_images_df.where(
+            col("parameter_stable_id").contains("HIS")
+        )
+
+        histopathology_images_df = histopathology_images_df.select(
+            "gene_accession_id",
+            "allele_accession_id",
+            "allele_symbol",
+            "zygosity",
+            "pipeline_stable_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "parameter_name",
+            "life_stage_name",
+            "specimen_id",
+            "external_sample_id",
+            "phenotyping_center",
+            explode(array_distinct("parameter_association_name")).alias(
+                "parameter_association_name"
+            ),
+            "omero_id",
+            "jpeg_url",
+            "thumbnail_url",
+        )
+
+        histopathology_images_df = histopathology_images_df.withColumn(
+            "parameter_name",
+            concat(
+                regexp_extract(col("parameter_association_name"), r"(.*) - .*", 1),
+                "parameter_name",
+            ),
+        ).drop("parameter_association_name")
+        for col_name in ["text_value", "category"]:
+            histopathology_images_df[col_name] = lit(None).astype(StringType())
+
+        for col_name in [
+            "sub_term_id",
+            "sub_term_name",
+        ]:
+            histopathology_images_df[col_name] = lit(None).astype(
+                ArrayType(StringType())
+            )
+
+        for col_name in ["omero_id", "jpeg_url", "thumbnail_url"]:
+            histopathology_datasets_df[col_name] = lit(None).astype(StringType())
+
+        histopathology_datasets_df = histopathology_datasets_df.union(
+            histopathology_images_df
+        )
         histopathology_datasets_df = histopathology_datasets_df.withColumnRenamed(
             "gene_accession_id", "mgi_gene_accession_id"
         )
