@@ -3030,9 +3030,11 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
             "life_stage_name",
             "sub_term_id",
             "sub_term_name",
-            "sub_term_description",
             "text_value",
             "category",
+            "data_point",
+            "external_sample_id",
+            "phenotyping_center",
         ]
         observations_df = observations_df.select(*pathology_datasets_cols)
         pathology_datasets_df = observations_df.where(
@@ -3053,17 +3055,23 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
             "subTermName", "termName"
         )
 
+        pathology_datasets_df = pathology_datasets_df.withColumnRenamed(
+            "external_sample_id", "sampleId"
+        )
+
         pathology_datasets_df = pathology_datasets_df.withColumn(
             "ontologyTerms", arrays_zip("termId", "termName")
         )
         pathology_datasets_df = pathology_datasets_df.drop("termId", "termName")
-        pathology_datasets_df = pathology_datasets_df.groupBy("mgiGeneAccessionId").agg(
+        pathology_datasets_df = pathology_datasets_df.groupBy(
+            "mgiGeneAccessionId", "parameterStableId"
+        ).agg(
             collect_set(
                 struct(
                     *[
                         to_camel_case(col_name)
                         for col_name in pathology_datasets_df.columns
-                        if col_name not in ["mgiGeneAccessionId"]
+                        if col_name not in ["mgiGeneAccessionId", "parameterStableId"]
                     ]
                 )
             ).alias("datasets")
@@ -3129,6 +3137,8 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
             "sub_term_name",
             "text_value",
             "category",
+            "external_sample_id",
+            "phenotyping_center",
         ]
         observations_df = observations_df.select(*histopathology_datasets_cols)
         histopathology_datasets_df = observations_df.where(
@@ -3149,6 +3159,10 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
         )
         histopathology_datasets_df = histopathology_datasets_df.withColumnRenamed(
             "subTermName", "termName"
+        )
+
+        histopathology_datasets_df = histopathology_datasets_df.withColumnRenamed(
+            "external_sample_id", "sampleId"
         )
 
         histopathology_datasets_df = histopathology_datasets_df.withColumn(
@@ -3172,6 +3186,9 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
                         if col_name not in ["mgiGeneAccessionId", "tissue"]
                     ]
                 )
-            ).alias("datasets")
+            ).alias("observations")
         )
+        histopathology_datasets_df = histopathology_datasets_df.groupBy(
+            "mgiGeneAccessionId",
+        ).agg(collect_set(struct("tissue", "observations")).alias("datasets"))
         histopathology_datasets_df.write.json(output_path, mode="overwrite")
