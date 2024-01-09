@@ -3092,7 +3092,7 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return [ExperimentToObservationMapper(), ImpcImagesMapper()]
+        return [ExperimentToObservationMapper(), ImpcImagesLoader()]
 
     def output(self):
         """
