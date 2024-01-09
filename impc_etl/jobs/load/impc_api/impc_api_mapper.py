@@ -3183,18 +3183,22 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
             ),
         ).drop("parameter_association_name")
         for col_name in ["text_value", "category"]:
-            histopathology_images_df[col_name] = lit(None).astype(StringType())
+            histopathology_images_df = histopathology_images_df.withColumn(
+                col_name, lit(None).astype(StringType())
+            )
 
         for col_name in [
             "sub_term_id",
             "sub_term_name",
         ]:
-            histopathology_images_df[col_name] = lit(None).astype(
-                ArrayType(StringType())
+            histopathology_images_df = histopathology_images_df.withColumn(
+                col_name, lit(None).astype(ArrayType(StringType()))
             )
 
         for col_name in ["omero_id", "jpeg_url", "thumbnail_url"]:
-            histopathology_datasets_df[col_name] = lit(None).astype(StringType())
+            histopathology_datasets_df = histopathology_datasets_df.withColumn(
+                col_name, lit(None).astype(StringType())
+            )
 
         histopathology_datasets_df = histopathology_datasets_df.union(
             histopathology_images_df
