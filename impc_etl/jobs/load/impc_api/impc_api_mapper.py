@@ -3130,7 +3130,9 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
 
         observations_df = spark.read.parquet(observations_parquet_path)
         impc_images_df = spark.read.parquet(impc_images_parquet_path)
-        ma_metadata_df = spark.read.csv(ma_metadata_csv_path, header=True)
+        ma_metadata_df = spark.read.csv(ma_metadata_csv_path, header=True).select(
+            "name", "curie"
+        )
         ma_metadata_df = ma_metadata_df.withColumnRenamed("name", "sub_term_name")
         ma_metadata_df = ma_metadata_df.withColumnRenamed("curie", "sub_term_id")
         histopathology_datasets_cols = [
