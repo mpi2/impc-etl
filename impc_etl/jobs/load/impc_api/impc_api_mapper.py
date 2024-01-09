@@ -3137,12 +3137,15 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
             "parameter_name",
             "life_stage_name",
             "specimen_id",
-            "sub_term_id",
-            "sub_term_name",
-            "text_value",
-            "category",
             "external_sample_id",
             "phenotyping_center",
+            "text_value",
+            "category",
+            "sub_term_id",
+            "sub_term_name",
+            lit(None).astype(StringType()).alias("omero_id"),
+            lit(None).astype(StringType()).alias("jpeg_url"),
+            lit(None).astype(StringType()).alias("thumbnail_url"),
         ]
         observations_df = observations_df.select(*histopathology_datasets_cols)
         histopathology_datasets_df = observations_df.where(
@@ -3170,6 +3173,10 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
             explode(array_distinct("parameter_association_name")).alias(
                 "parameter_association_name"
             ),
+            lit(None).astype(StringType()).alias("text_value"),
+            lit(None).astype(StringType()).alias("category"),
+            lit(None).astype(ArrayType(StringType())).alias("sub_term_id"),
+            lit(None).astype(ArrayType(StringType())).alias("sub_term_name"),
             "omero_id",
             "jpeg_url",
             "thumbnail_url",
@@ -3182,23 +3189,6 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
                 "parameter_name",
             ),
         ).drop("parameter_association_name")
-        for col_name in ["text_value", "category"]:
-            histopathology_images_df = histopathology_images_df.withColumn(
-                col_name, lit(None).astype(StringType())
-            )
-
-        for col_name in [
-            "sub_term_id",
-            "sub_term_name",
-        ]:
-            histopathology_images_df = histopathology_images_df.withColumn(
-                col_name, lit(None).astype(ArrayType(StringType()))
-            )
-
-        for col_name in ["omero_id", "jpeg_url", "thumbnail_url"]:
-            histopathology_datasets_df = histopathology_datasets_df.withColumn(
-                col_name, lit(None).astype(StringType())
-            )
 
         histopathology_datasets_df = histopathology_datasets_df.union(
             histopathology_images_df
