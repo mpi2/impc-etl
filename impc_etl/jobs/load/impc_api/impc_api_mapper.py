@@ -3186,6 +3186,7 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
             "parameter_name",
             concat(
                 regexp_extract(col("parameter_association_name"), r"(.*) - .*", 1),
+                lit(" - "),
                 "parameter_name",
             ),
         ).drop("parameter_association_name")
