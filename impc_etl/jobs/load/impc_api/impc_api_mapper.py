@@ -3150,11 +3150,11 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
             "phenotyping_center",
             "text_value",
             "category",
-            "sub_term_id",
-            "sub_term_name",
             lit(None).astype(StringType()).alias("omero_id"),
             lit(None).astype(StringType()).alias("jpeg_url"),
             lit(None).astype(StringType()).alias("thumbnail_url"),
+            "sub_term_id",
+            "sub_term_name",
         ]
         observations_df = observations_df.select(*histopathology_datasets_cols)
         histopathology_datasets_df = observations_df.where(
