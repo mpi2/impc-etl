@@ -3133,10 +3133,6 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
         ma_metadata_df = spark.read.csv(ma_metadata_csv_path, header=True)
         ma_metadata_df = ma_metadata_df.withColumnRenamed("name", "sub_term_name")
         ma_metadata_df = ma_metadata_df.withColumnRenamed("curie", "sub_term_id")
-        ma_metadata_df = ma_metadata_df.withColumn(
-            "sub_term_name", array("sub_term_name")
-        )
-        ma_metadata_df = ma_metadata_df.withColumn("sub_term_id", array("sub_term_id"))
         histopathology_datasets_cols = [
             "gene_accession_id",
             "allele_accession_id",
@@ -3181,17 +3177,23 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
             "specimen_id",
             "external_sample_id",
             "phenotyping_center",
-            explode(array_distinct("parameter_association_name")).alias(
-                "parameter_association_name"
-            ),
-            explode(array_distinct("parameter_association_value")).alias(
-                "parameter_association_value"
-            ),
+            "parameter_association_name",
+            "parameter_association_value",
             lit(None).astype(StringType()).alias("text_value"),
             lit(None).astype(StringType()).alias("category"),
             "omero_id",
             "jpeg_url",
             "thumbnail_url",
+        )
+
+        histopathology_images_df = histopathology_images_df.withColumn(
+            "parameter_association_name",
+            explode(array_distinct("parameter_association_name")),
+        )
+
+        histopathology_images_df = histopathology_images_df.withColumn(
+            "parameter_association_value",
+            explode(array_distinct("parameter_association_value")),
         )
 
         histopathology_images_df = histopathology_images_df.withColumn(
@@ -3208,6 +3210,13 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
             col("parameter_association_value") == col("sub_term_id"),
             "left_outer",
         ).drop("parameter_association_value")
+
+        histopathology_images_df = histopathology_images_df.withColumn(
+            "sub_term_name", array("sub_term_name")
+        )
+        histopathology_images_df = histopathology_images_df.withColumn(
+            "sub_term_id", array("sub_term_id")
+        )
 
         histopathology_datasets_df = histopathology_datasets_df.union(
             histopathology_images_df
