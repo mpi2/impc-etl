@@ -121,7 +121,9 @@ class ImpcImagesLoader(PySparkTask):
             "checksum",
             regexp_extract("download_file_path", r"\/.*\/(.+)", 1),
         )
-        image_observations_df = image_observations_df.join(media_info_df, "checksum")
+        image_observations_df = image_observations_df.join(
+            media_info_df, "checksum", "left_outer"
+        )
         image_observations_df = image_observations_df.withColumn(
             "file_type",
             when(
