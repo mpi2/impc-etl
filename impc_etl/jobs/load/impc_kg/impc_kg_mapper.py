@@ -235,7 +235,7 @@ class ImpcKgImageRecordObservationObservationMapper(PySparkTask):
 
         output_cols = [
             "observation_id",
-            "phenotyping_centre_id",
+            "phenotyping_center_id",
             "parameter_id",
             "observation_type",
             "download_url",
