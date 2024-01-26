@@ -194,10 +194,6 @@ class ImpcKgImageRecordObservationObservationMapper(PySparkTask):
             input_df, "phenotyping_center_id", ["phenotyping_center"]
         )
         observation_df = spark.read.parquet(observation_parquet_path)
-        increment_value_df = observation_df.select(
-            "observation_id", "increment_value"
-        ).distinct()
-        input_df = input_df.join(increment_value_df, "observation_id")
 
         associated_observation_df = observation_df.select(
             col("observation_id").alias("related_observation_id"),
@@ -229,8 +225,10 @@ class ImpcKgImageRecordObservationObservationMapper(PySparkTask):
             "left_outer",
         )
 
-        image_association_df = image_association_df.groupBy("observation_id").agg(
-            collect_set("related_observation_id").alias("related_observation_ids")
+        image_association_df = (
+            image_association_df.groupBy("observation_id")
+            .agg(collect_set("related_observation_id").alias("related_observation_ids"))
+            .select("observation_id", "related_observation_ids")
         )
 
         input_df = input_df.join(image_association_df, "observation_id", "left_outer")
