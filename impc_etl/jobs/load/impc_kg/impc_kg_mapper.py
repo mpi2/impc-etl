@@ -220,7 +220,7 @@ class ImpcKgImageRecordObservationObservationMapper(PySparkTask):
         ).distinct()
 
         image_association_df = image_association_df.select(
-            "related_observation_id", "experiment_id", "parameter_association.*"
+            "observation_id", "experiment_id", "parameter_association.*"
         )
 
         image_association_df = image_association_df.join(
