@@ -325,6 +325,7 @@ class ImpcKgExperimentMapper(PySparkTask):
         else:
             input_df = input_df.where(col("specimen_id").isNull())
             input_df = _add_unique_id(input_df, "colony_id", ["colony_id"])
+        input_df = input_df.withColumn("experiment_type", lit(experiment_type))
         output_df = (
             input_df.groupBy(*output_cols + extra_cols)
             .agg(collect_set("observation_id").alias("observation_ids"))
