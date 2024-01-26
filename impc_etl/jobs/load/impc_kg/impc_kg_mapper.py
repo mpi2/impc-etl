@@ -248,5 +248,5 @@ class ImpcKgImageRecordObservationObservationMapper(PySparkTask):
 
         output_df = input_df.select(*output_cols).distinct()
         for col_name in output_df.columns:
-            output_df.withColumnRenamed(col_name, to_camel_case(col_name))
+            output_df = output_df.withColumnRenamed(col_name, to_camel_case(col_name))
         output_df.write.json(output_path, mode="overwrite")
