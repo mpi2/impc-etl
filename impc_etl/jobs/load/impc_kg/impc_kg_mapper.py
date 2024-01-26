@@ -68,8 +68,8 @@ class ImpcKgObservationMapper(PySparkTask):
         """
         return [
             self.input()[0].path,
-            self.extra_cols,
             self.observation_type,
+            self.extra_cols,
             self.output().path,
         ]
 
