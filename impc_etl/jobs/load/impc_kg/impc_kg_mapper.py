@@ -4,8 +4,16 @@ import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.connect.functions import explode
-from pyspark.sql.functions import md5, when, concat, lit, col, arrays_zip, collect_set
+from pyspark.sql.functions import (
+    md5,
+    when,
+    concat,
+    lit,
+    col,
+    arrays_zip,
+    collect_set,
+    explode,
+)
 
 from impc_etl.jobs.load import ExperimentToObservationMapper
 from impc_etl.jobs.load.impc_api.impc_api_mapper import to_camel_case, ImpcImagesMapper
