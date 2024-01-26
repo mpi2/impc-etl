@@ -103,10 +103,10 @@ class ImpcKgObservationMapper(PySparkTask):
 
         output_df = input_df.select(*output_cols + extra_cols).distinct()
         if observation_type != "":
-            output_df = input_df.where(col("observation_type") == observation_type)
+            output_df = output_df.where(col("observation_type") == observation_type)
         output_col_map = {"sub_term_id": "ontology_term_ids"}
         for col_name in output_df.columns:
-            output_df.withColumnRenamed(
+            output_df = output_df.withColumnRenamed(
                 col_name,
                 to_camel_case(output_col_map[col_name])
                 if col_name in output_col_map
@@ -200,7 +200,7 @@ class ImpcKgImageRecordObservationObservationMapper(PySparkTask):
         input_df = input_df.join(increment_value_df, "observation_id")
 
         associated_observation_df = observation_df.select(
-            col("observation_id").alias("association_observation_id"),
+            col("observation_id").alias("related_observation_id"),
             "experiment_id",
             "parameter_stable_id",
         )
@@ -209,7 +209,7 @@ class ImpcKgImageRecordObservationObservationMapper(PySparkTask):
             "parameter_association_stable_id", "parameter_stable_id"
         )
         image_association_df = image_association_df.select(
-            col("observation_id").alias("related_observation_id"),
+            "observation_id",
             "experiment_id",
             explode(
                 arrays_zip(
