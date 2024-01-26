@@ -16,7 +16,7 @@ from pyspark.sql.functions import (
 )
 
 from impc_etl.jobs.load import ExperimentToObservationMapper
-from impc_etl.jobs.load.impc_api.impc_api_mapper import to_camel_case, ImpcImagesMapper
+from impc_etl.jobs.load.impc_api.impc_api_mapper import to_camel_case
 from impc_etl.jobs.load.solr.impc_images_mapper import ImpcImagesLoader
 from impc_etl.workflow.config import ImpcConfig
 
@@ -92,11 +92,11 @@ class ImpcKgObservationMapper(PySparkTask):
             ["pipeline_stable_id", "procedure_stable_id", "parameter_stable_id"],
         )
         input_df = _add_unique_id(
-            input_df, "phenotyping_centre_id", ["phenotyping_centre"]
+            input_df, "phenotyping_center_id", ["phenotyping_center"]
         )
         output_cols = [
             "observation_id",
-            "phenotyping_centre_id",
+            "phenotyping_center_id",
             "parameter_id",
             "observation_type",
         ]
@@ -191,7 +191,7 @@ class ImpcKgImageRecordObservationObservationMapper(PySparkTask):
             ["pipeline_stable_id", "procedure_stable_id", "parameter_stable_id"],
         )
         input_df = _add_unique_id(
-            input_df, "phenotyping_centre_id", ["phenotyping_centre"]
+            input_df, "phenotyping_center_id", ["phenotyping_center"]
         )
         observation_df = spark.read.parquet(observation_parquet_path)
         increment_value_df = observation_df.select(
