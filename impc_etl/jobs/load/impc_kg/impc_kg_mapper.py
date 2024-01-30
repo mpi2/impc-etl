@@ -473,16 +473,17 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return [ImpcDatasetsMetadataMapper()]
+        return [
+            ImpcDatasetsMetadataMapper(),
+            StatsResultsMapper(raw_data_in_output="bundled"),
+        ]
 
     def output(self):
         """
         Returns the full parquet path as an output for the Luigi Task
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
-        return ImpcConfig().get_target(
-            f"{self.output_path}/impc_kg/statistical_result_json"
-        )
+        return ImpcConfig().get_target(f"{self.output_path}/impc_kg/dataset_json")
 
     def app_options(self):
         """
@@ -490,6 +491,7 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
         """
         return [
             self.input()[0].path,
+            self.input()[1].path,
             self.output().path,
         ]
 
@@ -501,9 +503,19 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
 
         # Parsing app options
         input_parquet_path = args[0]
+        dataset_observation_index_parquet_path = args[0] + "_raw_data_ids"
         output_path = args[1]
 
         input_df = spark.read.json(input_parquet_path)
+        dataset_observation_index_df = spark.read.parquet(
+            dataset_observation_index_parquet_path
+        )
+        dataset_observation_index_df = dataset_observation_index_df.select(
+            "doc_id", "observation_id"
+        ).groupBy("doc_id", collect_set("observation_id").alias("observations"))
+        dataset_observation_index_df = dataset_observation_index_df.withColumnRenamed(
+            "doc_id", "datasetId"
+        )
         input_df = _add_unique_id(
             input_df,
             "parameter_id",
@@ -543,7 +555,11 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
             "strainAccessionId",
             "summaryStatistics",
             "zygosity",
+            "observations",
         ]
+        input_df = input_df.join(
+            dataset_observation_index_df, "datasetId", "left_outer"
+        )
         output_df = input_df.select(*output_cols).distinct()
         for col_name in output_df.columns:
             output_df = output_df.withColumnRenamed(
@@ -604,36 +620,20 @@ class ImpcKgGenePhenotypeAssociationMapper(PySparkTask):
         input_df = _add_unique_id(
             input_df, "phenotyping_center_id", ["phenotypingCentre"]
         )
-        input_df = _add_unique_id(
-            input_df, "production_center_id", ["productionCentre"]
-        )
-        input_df = _add_unique_id(input_df, "colonyId", ["colonyId"])
+        input_df = input_df.withColumnRenamed("id", "genePhenotypeAssociationId")
         output_cols = [
+            "genePhenotypeAssociationId",
             "alleleAccessionId",
-            "classificationTag",
-            "colonyId",
-            "dataType",
-            "datasetId",
             "phenotyping_center_id",
-            "production_center_id",
-            "lifeStageAcc",
-            "metadataGroup",
-            "metadataValues",
+            "datasetId",
+            "effectSize",
+            "lifeStageName",
             "mgiGeneAccessionId",
-            "phenotypeSex",
-            "potentialPhenotypes",
+            "pValue",
+            "parameter_id",
+            "phenotype",
             "projectName",
-            "reportedEffectSize",
-            "reportedPValue",
-            "resourceName",
             "sex",
-            "significant",
-            "significantPhenotype",
-            "softWindowing",
-            "statisticalMethod",
-            "status",
-            "strainAccessionId",
-            "summaryStatistics",
             "zygosity",
         ]
         output_df = input_df.select(*output_cols).distinct()
