@@ -188,15 +188,15 @@ class ImpcGeneSummaryMapper(PySparkTask):
         gene_images_flag = observations_df.where(
             col("observation_type") == "image_record"
         )
-        gene_images_flag = gene_images_flag.groupBy("gene_accession_id").agg(
-            first("observation_id").alias("obs_id")
-        )
-        gene_images_flag = gene_images_flag.withColumn(
-            "hasImagingData", col("obs_id").isNotNull()
-        )
+        gene_images_flag = gene_images_flag.select(
+            "gene_accession_id", lit(True).alias("hasImagingData")
+        ).distinct()
         gene_images_flag = gene_images_flag.withColumnRenamed("gene_accession_id", "id")
-        gene_images_flag = gene_images_flag.drop("obs_id")
         gene_df = gene_df.join(gene_images_flag, "id", "left_outer")
+        gene_df = gene_df.withColumn(
+            "hasImagingData",
+            when(col("hasImagingData").isNotNull(), lit(True)).otherwise(lit(False)),
+        )
 
         gene_hist_flag = observations_df.where(
             col("procedure_stable_id").contains("HIS")
@@ -232,28 +232,32 @@ class ImpcGeneSummaryMapper(PySparkTask):
                 ]
             )
         )
-        gene_via_flag = gene_via_flag.groupBy("gene_accession_id").agg(
-            first("observation_id").alias("obs_id")
-        )
+        gene_via_flag = gene_via_flag.select(
+            "gene_accession_id", lit(True).alias("hasViabilityData")
+        ).distinct()
+        # hasViabilityData
         gene_via_flag = gene_via_flag.withColumn(
             "hasViabilityData", col("obs_id").isNotNull()
         )
         gene_via_flag = gene_via_flag.withColumnRenamed("gene_accession_id", "id")
-        gene_via_flag = gene_via_flag.drop("obs_id")
         gene_df = gene_df.join(gene_via_flag, "id", "left_outer")
+        gene_df = gene_df.withColumn(
+            "hasViabilityData",
+            when(col("hasViabilityData").isNotNull(), lit(True)).otherwise(lit(False)),
+        )
 
         gene_bw_flag = observations_df.where(
             col("parameter_stable_id") == "IMPC_BWT_008_001"
         )
-        gene_bw_flag = gene_bw_flag.groupBy("gene_accession_id").agg(
-            first("observation_id").alias("obs_id")
-        )
-        gene_bw_flag = gene_bw_flag.withColumn(
-            "hasBodyWeightData", col("obs_id").isNotNull()
-        )
+        gene_bw_flag = gene_bw_flag.select(
+            "gene_accession_id", lit(True).alias("hasBodyWeightData")
+        ).distinct()
         gene_bw_flag = gene_bw_flag.withColumnRenamed("gene_accession_id", "id")
-        gene_bw_flag = gene_bw_flag.drop("obs_id")
         gene_df = gene_df.join(gene_bw_flag, "id", "left_outer")
+        gene_df = gene_df.withColumn(
+            "hasBodyWeightData",
+            when(col("hasBodyWeightData").isNotNull(), lit(True)).otherwise(lit(False)),
+        )
 
         gene_df = gene_df.drop("datasets_raw_data")
 
