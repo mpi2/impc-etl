@@ -205,7 +205,8 @@ class ImpcGeneSummaryMapper(PySparkTask):
             first("observation_id").alias("obs_id")
         )
         gene_hist_flag = gene_hist_flag.withColumn(
-            "hasHistopathologyData", col("obs_id").isNotNull()
+            "hasHistopathologyData",
+            when(col("obs_id").isNotNull(), lit(True)).otherwise(lit(False)),
         )
         gene_hist_flag = gene_hist_flag.withColumnRenamed("gene_accession_id", "id")
         gene_hist_flag = gene_hist_flag.drop("obs_id")

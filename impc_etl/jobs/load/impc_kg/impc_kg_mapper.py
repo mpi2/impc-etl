@@ -17,7 +17,10 @@ from pyspark.sql.functions import (
 )
 
 from impc_etl.jobs.load import ExperimentToObservationMapper
-from impc_etl.jobs.load.impc_api.impc_api_mapper import to_camel_case
+from impc_etl.jobs.load.impc_api.impc_api_mapper import (
+    to_camel_case,
+    ImpcDatasetsMetadataMapper,
+)
 from impc_etl.jobs.load.solr.impc_images_mapper import ImpcImagesLoader
 from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
 from impc_etl.workflow.config import ImpcConfig
@@ -473,7 +476,7 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return [StatsResultsMapper(raw_data_in_output="bundled")]
+        return [ImpcDatasetsMetadataMapper()]
 
     def output(self):
         """
@@ -481,7 +484,7 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_kg/{self.specimen_type}_specimen_json"
+            f"{self.output_path}/impc_kg/statistical_result_json"
         )
 
     def app_options(self):
@@ -490,8 +493,6 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
         """
         return [
             self.input()[0].path,
-            self.specimen_type,
-            self.extra_cols,
             self.output().path,
         ]
 
@@ -503,49 +504,50 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
 
         # Parsing app options
         input_parquet_path = args[0]
-        specimen_type = args[1]
-        extra_cols = args[2].replace(" ", "").split(",") if args[2] != "" else []
-        output_path = args[3]
+        output_path = args[1]
 
-        input_df = spark.read.parquet(input_parquet_path)
+        input_df = spark.read.json(input_parquet_path)
         input_df = _add_unique_id(
             input_df,
-            "procedure_id",
-            ["pipeline_stable_id", "procedure_stable_id"],
+            "parameter_id",
+            ["pipelineStableId", "procedureStableId", "parameterStableId"],
         )
         input_df = _add_unique_id(
-            input_df, "phenotyping_center_id", ["phenotyping_center"]
+            input_df, "phenotyping_center_id", ["phenotypingCentre"]
         )
         input_df = _add_unique_id(
-            input_df, "production_center_id", ["production_center"]
+            input_df, "production_center_id", ["productionCentre"]
         )
-        input_df = _add_unique_id(input_df, "pipeline_id", ["pipeline_stable_id"])
-        input_df = _add_unique_id(input_df, "colony_id", ["colony_id"])
+        input_df = _add_unique_id(input_df, "colonyId", ["colonyId"])
         output_cols = [
-            "specimen_id",
-            "colony_id",
-            "genetic_background",
-            "zygosity",
-            "production_center_id",
+            "alleleAccessionId",
+            "classificationTag",
+            "colonyId",
+            "dataType",
+            "datasetId",
             "phenotyping_center_id",
-            "project",
-            "litter_id",
-            "biological_sample_group",
+            "production_center_id",
+            "lifeStageAcc",
+            "metadataGroup",
+            "metadataValues",
+            "mgiGeneAccessionId",
+            "phenotypeSex",
+            "potentialPhenotypes",
+            "projectName",
+            "reportedEffectSize",
+            "reportedPValue",
+            "resourceName",
             "sex",
-            "pipeline_id",
+            "significant",
+            "significantPhenotype",
+            "softWindowing",
+            "statisticalMethod",
+            "status",
+            "strainAccessionId",
+            "summaryStatistics",
+            "zygosity",
         ]
-        input_df = input_df.where(col("specimen_id").isNotNull())
-
-        if specimen_type == "mouse":
-            input_df = input_df.where(col("date_of_birth").isNotNull())
-        else:
-            input_df = input_df.where(col("date_of_birth").isNull())
-            input_df = input_df.withColumnRenamed(
-                "developmental_stage_acc", "developmental_stage_curie"
-            )
-
-        input_df = input_df.withColumn("specimen_type", lit(specimen_type))
-        output_df = input_df.select(*output_cols + extra_cols).distinct()
+        output_df = input_df.select(*output_cols).distinct()
         for col_name in output_df.columns:
             output_df = output_df.withColumnRenamed(
                 col_name,
