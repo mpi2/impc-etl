@@ -503,8 +503,8 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
 
         # Parsing app options
         input_parquet_path = args[0]
-        dataset_observation_index_parquet_path = args[0] + "_raw_data_ids"
-        output_path = args[1]
+        dataset_observation_index_parquet_path = args[1] + "_raw_data_ids"
+        output_path = args[2]
 
         input_df = spark.read.json(input_parquet_path)
         dataset_observation_index_df = spark.read.parquet(
