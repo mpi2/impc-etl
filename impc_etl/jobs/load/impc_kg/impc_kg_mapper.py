@@ -510,9 +510,11 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
         dataset_observation_index_df = spark.read.parquet(
             dataset_observation_index_parquet_path
         )
-        dataset_observation_index_df = dataset_observation_index_df.select(
-            "doc_id", "observation_id"
-        ).groupBy("doc_id", collect_set("observation_id").alias("observations"))
+        dataset_observation_index_df = (
+            dataset_observation_index_df.select("doc_id", "observation_id")
+            .groupBy("doc_id")
+            .agg(collect_set("observation_id").alias("observations"))
+        )
         dataset_observation_index_df = dataset_observation_index_df.withColumnRenamed(
             "doc_id", "datasetId"
         )
