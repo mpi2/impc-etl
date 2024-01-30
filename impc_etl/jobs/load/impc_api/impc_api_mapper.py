@@ -201,17 +201,18 @@ class ImpcGeneSummaryMapper(PySparkTask):
         gene_hist_flag = observations_df.where(
             col("procedure_stable_id").contains("HIS")
         )
-        gene_hist_flag = gene_hist_flag.groupBy("gene_accession_id").agg(
-            first("observation_id").alias("obs_id")
-        )
-        gene_hist_flag = gene_hist_flag.withColumn(
-            "hasHistopathologyData",
-            when(col("obs_id").isNotNull(), lit(True)).otherwise(lit(False)),
-        )
+        gene_hist_flag = gene_hist_flag.select(
+            "gene_accession_id", lit(True).alias("hasHistopathologyData")
+        ).distinct()
         gene_hist_flag = gene_hist_flag.withColumnRenamed("gene_accession_id", "id")
-        gene_hist_flag = gene_hist_flag.drop("obs_id")
 
         gene_df = gene_df.join(gene_hist_flag, "id", "left_outer")
+        gene_df = gene_df.withColumn(
+            "hasHistopathologyData",
+            when(col("hasHistopathologyData").isNotNull(), lit(True)).otherwise(
+                lit(False)
+            ),
+        )
 
         gene_via_flag = observations_df.where(
             col("parameter_stable_id").isin(
