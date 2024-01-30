@@ -20,6 +20,7 @@ from impc_etl.jobs.load import ExperimentToObservationMapper
 from impc_etl.jobs.load.impc_api.impc_api_mapper import (
     to_camel_case,
     ImpcDatasetsMetadataMapper,
+    ImpcGenePhenotypeHitsMapper,
 )
 from impc_etl.jobs.load.solr.impc_images_mapper import ImpcImagesLoader
 from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
@@ -564,7 +565,7 @@ class ImpcKgGenePhenotypeAssociationMapper(PySparkTask):
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return [ImpcDatasetsMetadataMapper()]
+        return [ImpcGenePhenotypeHitsMapper()]
 
     def output(self):
         """
@@ -572,7 +573,7 @@ class ImpcKgGenePhenotypeAssociationMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_kg/statistical_result_json"
+            f"{self.output_path}/impc_kg/gene_phenotype_association_json"
         )
 
     def app_options(self):

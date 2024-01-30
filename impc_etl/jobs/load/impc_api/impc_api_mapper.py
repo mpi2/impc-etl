@@ -235,10 +235,6 @@ class ImpcGeneSummaryMapper(PySparkTask):
         gene_via_flag = gene_via_flag.select(
             "gene_accession_id", lit(True).alias("hasViabilityData")
         ).distinct()
-        # hasViabilityData
-        gene_via_flag = gene_via_flag.withColumn(
-            "hasViabilityData", col("obs_id").isNotNull()
-        )
         gene_via_flag = gene_via_flag.withColumnRenamed("gene_accession_id", "id")
         gene_df = gene_df.join(gene_via_flag, "id", "left_outer")
         gene_df = gene_df.withColumn(
