@@ -454,12 +454,12 @@ class ImpcKgSpecimenMapper(PySparkTask):
 
 class ImpcKgMouseSpecimenMapper(ImpcKgSpecimenMapper):
     extra_cols = "date_of_birth"
-    experiment_type = "mouse"
+    specimen_type = "mouse"
 
 
 class ImpcKgEmbryoSpecimenMapper(ImpcKgSpecimenMapper):
     extra_cols = "developmental_stage_curie"
-    experiment_type = "embryo"
+    specimen_type = "embryo"
 
 
 class ImpcKgStatisticalResultMapper(PySparkTask):
