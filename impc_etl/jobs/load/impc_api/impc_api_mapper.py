@@ -3439,7 +3439,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 sum("count").alias("total"),
                 collect_set(struct("zygosity", "count")).alias("counts"),
             )
-            .rdd.map(lambda row: row.asDict())
+            .rdd.map(lambda row: row.asDict(True))
             .collect()
         )
 
@@ -3540,7 +3540,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
         )
         phenotype_associations_by_procedure = (
             phenotype_associations_by_procedure_df.rdd.map(
-                lambda row: row.asDict()
+                lambda row: row.asDict(True)
             ).collect()
         )
 
