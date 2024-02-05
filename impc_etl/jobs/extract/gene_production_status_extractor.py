@@ -126,12 +126,12 @@ class GeneProductionStatusExtractor(SmallPySparkTask):
             "Chimeras obtained": "Assigned for Mouse Production and Phenotyping",
             "Micro-injection in progress": "Assigned for Mouse Production and Phenotyping",
             "Mouse Allele Modification Genotype Confirmed": "Mice Produced",
+            "Rederivation Complete": "Mice Produced",
+            "Rederivation Started": "Mice Produced",
             "Cre Excision Started": "Started",
             "Cre Excision Complete": "Started",
             "Genotype confirmed": "Mice Produced",
             "Phenotype Attempt Registered": "Mice Produced",
-            "Rederivation Complete": "Mice Produced",
-            "Rederivation Started": "Mice Produced",
         }
 
         # Collapse mouse production status
