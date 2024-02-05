@@ -27,6 +27,7 @@ from impc_etl.jobs.load.impc_api.impc_api_mapper import (
     ImpcExternalLinksMapper,
     ImpcPathologyDatasetsMapper,
     ImpcHistopathologyDatasetsMapper,
+    ImpcReleaseMetadataMapper,
 )
 from impc_etl.jobs.load.impc_api.impc_bulk_api_mapper import ImpcBulkApiMapper
 from impc_etl.jobs.load.impc_api.impc_bulk_api_mongo_load import ImpcBulkApiMongoLoader
@@ -227,4 +228,5 @@ class ImpcKgMapping(luigi.Task):
             ImpcKgEmbryoSpecimenMapper(),
             ImpcKgStatisticalResultMapper(),
             ImpcKgGenePhenotypeAssociationMapper(),
+            ImpcReleaseMetadataMapper(),
         ]
