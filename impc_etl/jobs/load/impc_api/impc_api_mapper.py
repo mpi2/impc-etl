@@ -3512,6 +3512,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 ).alias("counts"),
             )
             .rdd.map(lambda row: row.asDict())
+            .collect()
         )
 
         release_metadata_dict = {
