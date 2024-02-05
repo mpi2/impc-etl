@@ -3525,7 +3525,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
         phenotype_associations_by_procedure_df = (
             phenotype_associations_by_procedure_df.groupBy(
                 col("procedure_name"), col("life_stage_name")
-            ).agg(countDistinct("*").alias("count"))
+            ).count()
         )
         phenotype_associations_by_procedure_df = (
             phenotype_associations_by_procedure_df.withColumnRenamed(
