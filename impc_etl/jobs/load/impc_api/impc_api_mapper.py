@@ -3423,11 +3423,16 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             .collect()
         )
 
-        phenotype_annotations = (
+        phenotype_annotations_df = (
             gene_phenotype_df.withColumn(
                 "topLevelPhenotype", explode("top_level_mp_term_name")
             )
             .groupBy("topLevelPhenotype", "zygosity")
+            .agg(count("*").alias("count"))
+        )
+
+        phenotype_annotations = (
+            phenotype_annotations_df.groupBy("topLevelPhenotype", "zygosity")
             .agg(count("*").alias("count"))
             .groupBy("topLevelPhenotype")
             .agg(
@@ -3508,18 +3513,35 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             .collect()
         )
 
-        phenotype_associations_by_procedure = (
-            gene_phenotype_df.groupBy(col("procedure_name"), col("life_stage_name"))
-            .agg(countDistinct("*").alias("count"))
-            .groupBy("procedure_name")
-            .agg(
-                sum("count").alias("total"),
-                collect_set(
-                    struct(col("life_stage_name").alias("lifeStage"), "count")
-                ).alias("counts"),
+        phenotype_associations_by_procedure_df = gene_phenotype_df.withColumn(
+            "procedure_name", explode("procedure_name")
+        )
+        phenotype_associations_by_procedure_df = (
+            phenotype_associations_by_procedure_df.withColumn(
+                "life_stage_name", explode("life_stage_name")
             )
-            .rdd.map(lambda row: row.asDict())
-            .collect()
+        )
+
+        phenotype_associations_by_procedure_df = (
+            phenotype_associations_by_procedure_df.groupBy(
+                col("procedure_name"), col("life_stage_name")
+            ).agg(countDistinct("*").alias("count"))
+        )
+        phenotype_associations_by_procedure_df = (
+            phenotype_associations_by_procedure_df.withColumnRenamed(
+                "life_stage_name", "lifeStage"
+            )
+        )
+        phenotype_associations_by_procedure_df = (
+            phenotype_associations_by_procedure_df.groupBy("procedure_name").agg(
+                sum("count").alias("total"),
+                collect_set(struct(col("life_stage_name"), "count")).alias("counts"),
+            )
+        )
+        phenotype_associations_by_procedure = (
+            phenotype_associations_by_procedure_df.rdd.map(
+                lambda row: row.asDict()
+            ).collect()
         )
 
         release_metadata_dict = {
