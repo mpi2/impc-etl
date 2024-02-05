@@ -3451,15 +3451,15 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             )
 
         allele_mouse_prod_status_map = {
-            "Micro-injection in progress": 0,
-            "Chimeras obtained": 1,
-            "Mouse Allele Modification Genotype Confirmed": 2,
-            "Rederivation Started": 3,
-            "Rederivation Complete": 4,
-            "Cre Excision Started": 5,
-            "Cre Excision Complete": 6,
-            "Genotype confirmed": 7,
-            "Phenotype Attempt Registered": 8,
+            "Micro-injection in progress": 1,
+            "Chimeras obtained": 2,
+            "Mouse Allele Modification Genotype Confirmed": 3,
+            "Rederivation Started": 4,
+            "Rederivation Complete": 5,
+            "Cre Excision Started": 6,
+            "Cre Excision Complete": 7,
+            "Genotype confirmed": 8,
+            "Phenotype Attempt Registered": 9,
         }
 
         def choose_latest_production_status(row: Row):
@@ -3470,7 +3470,11 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 "conditional_allele_production_status",
                 "crispr_allele_production_status",
             ]:
-                if allele_mouse_prod_status_map[row[status_col]] > latest_status_order:
+                if (
+                    row[status_col] in allele_mouse_prod_status_map
+                    and allele_mouse_prod_status_map[row[status_col]]
+                    > latest_status_order
+                ):
                     latest_status_order = allele_mouse_prod_status_map[row[status_col]]
                     latest_status = row[status_col]
             return latest_status
