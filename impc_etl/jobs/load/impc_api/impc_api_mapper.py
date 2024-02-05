@@ -3425,7 +3425,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
 
         phenotype_annotations = (
             gene_phenotype_df.withColumn(
-                "topLevelPhenotype", explode("topLevelPhenotype")
+                "topLevelPhenotype", explode("intermediate_mp_term_name")
             )
             .rdd.map(lambda row: row.asDict())
             .collect()
