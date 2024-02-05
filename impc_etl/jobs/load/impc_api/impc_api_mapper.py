@@ -3427,6 +3427,13 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             gene_phenotype_df.withColumn(
                 "topLevelPhenotype", explode("top_level_mp_term_name")
             )
+            .groupBy("topLevelPhenotype", "zygosity")
+            .agg(count("*").alias("count"))
+            .groupBy("topLevelPhenotype")
+            .agg(
+                sum("count").alias("total"),
+                collect_set(struct("zygosity", "count")).alias("counts"),
+            )
             .rdd.map(lambda row: row.asDict())
             .collect()
         )
