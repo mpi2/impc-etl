@@ -3425,7 +3425,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
 
         phenotype_annotations = (
             gene_phenotype_df.withColumn(
-                "topLevelPhenotype", explode("intermediate_mp_term_name")
+                "topLevelPhenotype", explode("top_level_mp_term_name")
             )
             .rdd.map(lambda row: row.asDict())
             .collect()
@@ -3476,7 +3476,12 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             return latest_status
 
         genotyping_status_df = gentar_gene_status_df.withColumn(
-            "latest_status", udf(choose_latest_production_status, StringType())()
+            "latest_status",
+            udf(choose_latest_production_status, StringType())(
+                struct(
+                    *[gentar_gene_status_df[x] for x in gentar_gene_status_df.columns]
+                )
+            ),
         )
         genotyping_status = (
             genotyping_status_df.groupBy(col("latest_status").alias("status"))
