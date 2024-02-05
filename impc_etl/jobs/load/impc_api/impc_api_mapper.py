@@ -3348,7 +3348,9 @@ class ImpcReleaseMetadataMapper(PySparkTask):
 
         observations_df = spark.read.parquet(observations_parquet_path)
         gene_phenotype_df = spark.read.parquet(gene_phenotype_parquet_path)
-        gentar_gene_status_df = spark.read.parquet(gentar_gene_status_path)
+        gentar_gene_status_df = spark.read.csv(
+            gentar_gene_status_path, header=True, sep="\t"
+        )
 
         with open(release_notes_md_path, "r", encoding="utf-8") as file:
             md_content = file.read()
