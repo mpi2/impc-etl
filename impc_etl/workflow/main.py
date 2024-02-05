@@ -208,6 +208,7 @@ class ImpcWebApiMapper(luigi.Task):
             ImpcExternalLinksMapper(),
             ImpcPathologyDatasetsMapper(),
             ImpcHistopathologyDatasetsMapper(),
+            ImpcReleaseMetadataMapper(),
         ]
 
 
@@ -228,5 +229,4 @@ class ImpcKgMapping(luigi.Task):
             ImpcKgEmbryoSpecimenMapper(),
             ImpcKgStatisticalResultMapper(),
             ImpcKgGenePhenotypeAssociationMapper(),
-            ImpcReleaseMetadataMapper(),
         ]
