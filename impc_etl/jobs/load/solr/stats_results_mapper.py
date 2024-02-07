@@ -2201,7 +2201,7 @@ class StatsResultsMapper(PySparkTask):
             "mp_term",
             f.when(
                 (f.col("procedure_stable_id") == "IMPC_VIA_002")
-                | (f.col("procedure_stable_id") == "ESLIM_023_001_001"),
+                | (f.col("procedure_stable_id") == "ESLIM_023_001"),
                 f.array(
                     f.struct(
                         f.lit("ABNORMAL").cast(StringType()).alias("event"),
