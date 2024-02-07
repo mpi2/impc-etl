@@ -2027,6 +2027,10 @@ class StatsResultsMapper(PySparkTask):
                     )
                     & (f.col("procedure_stable_id") == "IMPC_VIA_002")
                 )
+                | (
+                    (f.col("procedure_stable_id") == "ESLIM_023_001")
+                    & (f.col("parameter_stable_id") == "ESLIM_023_001_001")
+                )
             )
             .withColumnRenamed("gene_accession_id", "marker_accession_id")
             .withColumnRenamed("gene_symbol", "marker_symbol")
@@ -2038,7 +2042,11 @@ class StatsResultsMapper(PySparkTask):
             f.lower(
                 f.when(
                     f.col("procedure_stable_id") == "IMPC_VIA_002", f.col("text_value")
-                ).otherwise(f.col("category"))
+                )
+                .when(
+                    f.col("procedure_stable_id") == "ESLIM_023_001", f.col("category")
+                )
+                .otherwise(f.col("category"))
             ),
         )
 
@@ -2277,6 +2285,11 @@ class StatsResultsMapper(PySparkTask):
             "IMPC_VIA_011_001",
             "IMPC_VIA_013_001",
             "IMPC_VIA_012_001",
+            "ESLIM_023_001_002",
+            "ESLIM_023_001_003",
+            "ESLIM_023_001_004",
+            "ESLIM_023_001_005",
+            "ESLIM_023_001_006",
         ]
         viability_stats_results = self._add_line_level_supporting_data(
             viability_stats_results,
