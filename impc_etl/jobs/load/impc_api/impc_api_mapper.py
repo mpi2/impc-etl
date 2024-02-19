@@ -3671,7 +3671,10 @@ class ImpcLateAdultLandingPageMapper(PySparkTask):
                                 gene_parameter_data["parameter_name"]
                             ] = (2 if gene_parameter_data["significant"] else 1)
                 gene_heatmap_row[procedure_name] = gene_procedure_data
-            late_adult_data_dict[gene_data["marker_symbol"]] = gene_heatmap_row
+            late_adult_data_dict[gene_data["marker_symbol"]] = {
+                "mgiGeneAccessionId": gene_data["marker_accession_id"],
+                "procedures": gene_heatmap_row,
+            }
 
         with open(output_path, mode="w") as output_file:
             output_file.write(json.dumps(late_adult_data_dict))
