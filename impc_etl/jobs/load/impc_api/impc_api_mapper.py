@@ -3714,6 +3714,7 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
         """
         return [
             self.input()[0].path,
+            self.input()[1].path,
             self.output().path,
         ]
 
