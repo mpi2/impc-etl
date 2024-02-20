@@ -1058,22 +1058,63 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
             "significant",
             "mp_term_id",
             "mp_term_name",
+            "mp_term_id_options",
+            "mp_term_name_options",
+            "intermediate_mp_term_id",
+            "intermediate_mp_term_name",
             "top_level_mp_term_id",
             "top_level_mp_term_name",
         )
 
         stats_results_df = stats_results_df.withColumn(
-            "phenotype",
-            struct(col("mp_term_id").alias("id"), col("mp_term_name").alias("name")),
+            "significantPhenotype",
+            when(
+                col("mp_term_id").isNotNull(),
+                struct(
+                    col("mp_term_id").alias("id"), col("mp_term_name").alias("name")
+                ),
+            ).otherwise(lit(None)),
+        )
+
+        stats_results_df = stats_results_df.withColumn(
+            "intermediatePhenotypes",
+            when(
+                col("intermediate_mp_term_id").isNotNull(),
+                zip_with(
+                    "intermediate_mp_term_id",
+                    "intermediate_mp_term_name",
+                    lambda x, y: struct(x.alias("id"), y.alias("name")),
+                ),
+            ).otherwise(lit(None)),
         )
 
         stats_results_df = stats_results_df.withColumn(
             "topLevelPhenotypes",
+            when(
+                col("top_level_mp_term_id").isNotNull(),
+                zip_with(
+                    "top_level_mp_term_id",
+                    "top_level_mp_term_name",
+                    lambda x, y: struct(x.alias("id"), y.alias("name")),
+                ),
+            ).otherwise(lit(None)),
+        )
+
+        stats_results_df = stats_results_df.withColumn(
+            "potentialPhenotypes",
             zip_with(
-                "top_level_mp_term_id",
-                "top_level_mp_term_name",
-                lambda x, y: struct(x.alias("id"), y.alias("name")),
+                "mp_term_id_options",
+                "mp_term_name_options",
+                phenotype_term_zip_udf,
             ),
+        )
+
+        stats_results_df = stats_results_df.withColumn(
+            "potentialPhenotypes",
+            when(
+                col("significantPhenotype").isNotNull(),
+                array("significantPhenotype"),
+            ).otherwise(col("potentialPhenotypes")),
         )
 
         stats_results_df = stats_results_df.drop(
