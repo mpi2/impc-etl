@@ -150,7 +150,9 @@ class ImpcGeneSummaryMapper(PySparkTask):
         genotype_phenotype_df = genotype_phenotype_df.withColumnRenamed(
             "marker_accession_id", "id"
         )
-        gp_call_by_gene = genotype_phenotype_df.groupBy("id").count()
+        gp_call_by_gene = genotype_phenotype_df.groupBy("id").agg(
+            countDistinct("mp_term_id").alias("count")
+        )
         gp_call_by_gene = gp_call_by_gene.withColumnRenamed(
             "count", "significantPhenotypesCount"
         )
