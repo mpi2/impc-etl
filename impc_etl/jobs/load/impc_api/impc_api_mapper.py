@@ -3736,14 +3736,6 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
             stat_results_df.data_type == "histopathology"
         )
 
-        gene_df = (
-            histopath_stat_results_df.select("marker_symbol")
-            .sort("marker_symbol")
-            .distinct()
-        )
-
-        gene_list = [str(row.marker_symbol) for row in gene_df.collect()]
-
         anatomy_df = (
             histopath_stat_results_df.withColumn(
                 "anatomy",
@@ -3769,15 +3761,21 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
                 .getItem(0)
                 .alias("anatomy"),
             )
+            .sort("anatomy")
             .groupBy("marker_symbol")
             .pivot("anatomy")
             .max("significantInt")
             .na.fill(0)
+            .sort("marker_symbol")
         )
+
+        significance_data = significance_df.collect()
+
+        gene_list = [str(row.marker_symbol) for row in significance_data]
 
         rows = [
             [int(row[col_name]) for col_name in anatomy_list]
-            for row in significance_df.collect()
+            for row in significance_data
         ]
 
         histopath_data_dict = {
