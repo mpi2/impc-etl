@@ -3804,8 +3804,8 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
                 split(histopath_stat_results_df.parameter_name, " - ").getItem(0),
             )
             .select("anatomy")
-            .sort("anatomy")
             .distinct()
+            .sort("anatomy")
         )
 
         anatomy_list = [str(row.anatomy) for row in anatomy_df.collect()]
@@ -3844,19 +3844,14 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
                 "markerSymbol": row.marker_symbol,
                 "mgiGeneAccessionId": str(row.marker_accession_id),
                 "hasTissue": bool(row.hasTissue),
+                "significance": [int(row[col_name]) for col_name in anatomy_list],
             }
             for row in significance_data
         ]
 
-        rows = [
-            [int(row[col_name]) for col_name in anatomy_list]
-            for row in significance_data
-        ]
-
         histopath_data_dict = {
-            "anatomyList": anatomy_list,
-            "geneList": gene_list,
-            "rows": rows,
+            "columns": anatomy_list,
+            "rows": gene_list,
         }
 
         with open(output_path, mode="w") as output_file:
