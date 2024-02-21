@@ -3851,7 +3851,7 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
 
         histopath_data_dict = {
             "columns": anatomy_list,
-            "rows": gene_list,
+            "rows": sorted(gene_list, key=lambda k: k["markerSymbol"]),
         }
 
         with open(output_path, mode="w") as output_file:
