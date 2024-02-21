@@ -3782,9 +3782,17 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
         stat_results_df = spark.read.parquet(statistical_results_parquet_path)
         product_df = spark.read.json(product_report_json_path)
         product_df = product_df.withColumn(
-            "hasTissue", array_contains("productTypes", lit("tissue"))
+            "hasTissueInt",
+            when(array_contains("productTypes", lit("tissue")), 1).otherwise(0),
         )
-        product_df = product_df.select("mgiGeneAccessionId", "hasTissue").distinct()
+        product_df = (
+            product_df.select("mgiGeneAccessionId", "hasTissueInt")
+            .groupBy("mgiGeneAccessionId")
+            .agg(max("hasTissueInt").alias("maxTissueInt"))
+        )
+        product_df = product_df.withColumn("hasTissue", col("maxTissueInt") == 1).drop(
+            "hasTissueInt"
+        )
 
         histopath_stat_results_df = stat_results_df.where(
             stat_results_df.data_type == "histopathology"
