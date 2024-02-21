@@ -3784,7 +3784,7 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
         product_df = product_df.withColumn(
             "hasTissue", array_contains("productTypes", lit("tissue"))
         )
-        product_df = product_df.select("mgiGeneAccessionId", "hasTissue")
+        product_df = product_df.select("mgiGeneAccessionId", "hasTissue").distinct()
 
         histopath_stat_results_df = stat_results_df.where(
             stat_results_df.data_type == "histopathology"
