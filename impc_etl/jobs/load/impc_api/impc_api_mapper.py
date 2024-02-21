@@ -3795,8 +3795,8 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
         )
 
         histopath_stat_results_df = stat_results_df.where(
-            stat_results_df.data_type
-            == "histopathology" & stat_results_df.marker_symbol.isNotNull()
+            (stat_results_df.data_type == "histopathology")
+            & col("marker_symbol").isNotNull()
         )
 
         anatomy_df = (
