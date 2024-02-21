@@ -3737,6 +3737,8 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
     #: Name of the Spark task
     name: str = "ImpcHistopathologyLandingPageMapper"
 
+    product_report_json_path = luigi.Parameter()
+
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
@@ -3762,6 +3764,7 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
         return [
             self.input()[0].path,
             self.input()[1].path,
+            self.product_report_json_path,
             self.output().path,
         ]
 
@@ -3772,12 +3775,16 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
         spark = SparkSession(sc)
 
         # Parsing app options
-        observations_parquet_path = args[0]
         statistical_results_parquet_path = args[1]
-        output_path = args[2]
+        product_report_json_path = args[2]
+        output_path = args[3]
 
-        observations_df = spark.read.parquet(observations_parquet_path)
         stat_results_df = spark.read.parquet(statistical_results_parquet_path)
+        product_df = spark.read.json(product_report_json_path)
+        product_df = product_df.withColumn(
+            "hasTissue", array_contains("productTypes", lit("tissue"))
+        )
+        product_df = product_df.select("mgiGeneAccessionId", "hasTissue")
 
         histopath_stat_results_df = stat_results_df.where(
             stat_results_df.data_type == "histopathology"
@@ -3809,16 +3816,28 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
                 .alias("anatomy"),
             )
             .sort("anatomy")
-            .groupBy("marker_symbol")
+            .groupBy("marker_accession_id", "marker_symbol")
             .pivot("anatomy")
             .max("significantInt")
             .na.fill(0)
             .sort("marker_symbol")
         )
 
+        significance_df = significance_df.join(
+            product_df,
+            col("marker_accession_id") == col("mgiGeneAccessionId"),
+            "left_outer",
+        )
+
         significance_data = significance_df.collect()
 
-        gene_list = [str(row.marker_symbol) for row in significance_data]
+        gene_list = {
+            str(row.marker_symbol): {
+                "mgiGeneAccessionId": str(row.marker_accession_id),
+                "hasTissue": str(row.hasTissue),
+            }
+            for row in significance_data
+        }
 
         rows = [
             [int(row[col_name]) for col_name in anatomy_list]
