@@ -3831,13 +3831,14 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
 
         significance_data = significance_df.collect()
 
-        gene_list = {
-            str(row.marker_symbol): {
+        gene_list = [
+            {
+                "markerSymbol": row.marker_symbol,
                 "mgiGeneAccessionId": str(row.marker_accession_id),
                 "hasTissue": bool(row.hasTissue),
             }
             for row in significance_data
-        }
+        ]
 
         rows = [
             [int(row[col_name]) for col_name in anatomy_list]
