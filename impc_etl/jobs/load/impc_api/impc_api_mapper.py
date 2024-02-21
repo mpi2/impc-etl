@@ -3834,7 +3834,7 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
         gene_list = {
             str(row.marker_symbol): {
                 "mgiGeneAccessionId": str(row.marker_accession_id),
-                "hasTissue": str(row.hasTissue),
+                "hasTissue": bool(row.hasTissue),
             }
             for row in significance_data
         }
