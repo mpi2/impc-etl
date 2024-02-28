@@ -873,7 +873,6 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
         "ambiguous",
     ]
     lacz_observations_by_gene = lacz_observations.groupBy(
-        "strain_accession_id",
         "gene_accession_id",
         "zygosity",
         "parameter_stable_id",
