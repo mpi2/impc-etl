@@ -1350,7 +1350,7 @@ class ImpcLacZExpressionMapper(PySparkTask):
         lacz_expression_data = lacz_expression_data.withColumnRenamed(
             "geneAccessionId", "mgiGeneAccessionId"
         )
-        lacz_expression_data.repartition(100).write.option(
+        lacz_expression_data.distinct().repartition(100).write.option(
             "ignoreNullFields", "false"
         ).json(output_path)
 
