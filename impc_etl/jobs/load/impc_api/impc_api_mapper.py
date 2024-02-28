@@ -1,7 +1,7 @@
 import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
-from pyspark.sql import SparkSession, Window
+from pyspark.sql import SparkSession, Window, DataFrame
 import json
 import os
 from pyspark.sql.types import (
@@ -897,7 +897,7 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
         "parameter_stable_id",
         "parameter_name",
         "mutantCounts",
-    )
+    ).distinct()
 
     wt_lacz_observations_by_strain = lacz_observations.where(
         col("biological_sample_group") == "control"
@@ -963,7 +963,7 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
     lacz_observations_by_gene = lacz_observations_by_gene.withColumn(
         "lacZLifestage", lit(lacz_lifestage)
     )
-    return lacz_observations_by_gene
+    return lacz_observations_by_gene.distinct()
 
 
 def to_camel_case(snake_str):
@@ -1292,7 +1292,7 @@ class ImpcLacZExpressionMapper(PySparkTask):
     """
 
     #: Name of the Spark task
-    name: str = "ImpcGeneStatsResultsMapper"
+    name: str = "ImpcLacZExpressionMapper"
 
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
@@ -3630,8 +3630,6 @@ class ImpcLateAdultLandingPageMapper(PySparkTask):
     #: Name of the Spark task
     name: str = "ImpcLateAdultLandingPageMapper"
 
-    ma_metadata_csv_path = luigi.Parameter()
-
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
@@ -3669,64 +3667,296 @@ class ImpcLateAdultLandingPageMapper(PySparkTask):
         output_path = args[1]
 
         stat_results_df = spark.read.parquet(statistical_results_parquet_path)
+        late_adult_stats_results_df = stat_results_df.where(
+            stat_results_df.pipeline_stable_id.contains("LA_")
+        ).withColumn("procedure_name", explode("procedure_name"))
         late_adult_procedure_data = (
-            stat_results_df.withColumn("procedure_name", explode("procedure_name"))
-            .where(stat_results_df.pipeline_stable_id.contains("LA_"))
-            .groupBy("marker_accession_id", "marker_symbol", "procedure_name")
-            .agg(
-                max(when(col("significant") == True, 1).otherwise(0)).alias(
-                    "procedureSignificance"
-                ),
-                collect_set(struct("parameter_name", "significant")).alias(
-                    "parameters"
-                ),
+            late_adult_stats_results_df.withColumn(
+                "significantInt",
+                when(col("significant") == True, 2)
+                .when(col("significant") == False, 1)
+                .otherwise(0),
             )
-            .groupBy("marker_accession_id", "marker_symbol")
-            .agg(
-                collect_set(
-                    struct("procedure_name", "procedureSignificance", "parameters")
-                ).alias("procedures")
+            .select(
+                "marker_accession_id",
+                "marker_symbol",
+                "procedure_name",
+                "significantInt",
             )
-            .sort("marker_symbol")
-            .rdd.map(lambda row: row.asDict(True))
-            .collect()
+            .sort("marker_symbol", "procedure_name")
+            .distinct()
         )
-        late_adult_procedure_list = (
-            stat_results_df.where(stat_results_df.pipeline_stable_id.contains("LA_"))
-            .withColumn("procedure_name", explode("procedure_name"))
-            .select("procedure_name", "parameter_name")
-            .sort("procedure_name", "parameter_name")
-            .groupBy("procedure_name")
-            .agg(collect_set("parameter_name").alias("parameters"))
-            .rdd.map(lambda row: row.asDict(True))
-            .collect()
+        late_adult_procedure_data = (
+            late_adult_procedure_data.groupBy(
+                "marker_accession_id",
+                "marker_symbol",
+            )
+            .pivot("procedure_name")
+            .max("significantInt")
+            .na.fill(0)
+            .where(col("marker_symbol").isNotNull())
         )
-        late_adult_data_dict = {}
-        for gene_data in late_adult_procedure_data:
-            gene_heatmap_row = {}
-            for procedure in late_adult_procedure_list:
-                procedure_name = procedure["procedure_name"]
-                gene_procedure_data = {
-                    "value": 0,
-                    "parameters": {p: 0 for p in procedure["parameters"]},
-                }
-                for gene_procedure in gene_data["procedures"]:
-                    if gene_procedure["procedure_name"] == procedure_name:
-                        gene_procedure_data["value"] = (
-                            2 if gene_procedure["procedureSignificance"] else 1
-                        )
-                        for gene_parameter_data in gene_procedure["parameters"]:
-                            gene_procedure_data["parameters"][
-                                gene_parameter_data["parameter_name"]
-                            ] = (2 if gene_parameter_data["significant"] else 1)
-                gene_heatmap_row[procedure_name] = gene_procedure_data
-            late_adult_data_dict[gene_data["marker_symbol"]] = {
-                "mgiGeneAccessionId": gene_data["marker_accession_id"],
-                "procedures": gene_heatmap_row,
-            }
+        procedure_list = sorted(
+            [
+                str(row.procedure_name)
+                for row in late_adult_stats_results_df.select("procedure_name")
+                .sort("procedure_name")
+                .distinct()
+                .collect()
+            ]
+        )
+
+        procedure_late_adult_data_dict = {
+            "columns": procedure_list,
+            "rows": sorted(
+                [
+                    {
+                        "mgiGeneAccessionId": row.marker_accession_id,
+                        "markerSymbol": row.marker_symbol,
+                        "significance": [
+                            int(row[procedureName]) for procedureName in procedure_list
+                        ],
+                    }
+                    for row in late_adult_procedure_data.collect()
+                ],
+                key=lambda x: x["markerSymbol"],
+            ),
+        }
 
         with open(output_path, mode="w") as output_file:
-            output_file.write(json.dumps(late_adult_data_dict))
+            output_file.write(json.dumps(procedure_late_adult_data_dict))
+
+
+class ImpcCardiovascularLandingPageMapper(PySparkTask):
+    """
+    PySpark Task class to extract GenTar Product report data.
+    """
+
+    #: Name of the Spark task
+    name: str = "ImpcCardiovascularLandingPageMapper"
+
+    #: Path of the output directory where the new parquet file will be generated.
+    output_path: luigi.Parameter = luigi.Parameter()
+
+    def requires(self):
+        return [
+            StatsResultsMapper(raw_data_in_output="bundled"),
+            GenotypePhenotypeLoader(),
+        ]
+
+    def output(self):
+        """
+        Returns the full parquet path as an output for the Luigi Task
+        (e.g. impc/dr15.2/parquet/product_report_parquet)
+        """
+        return ImpcConfig().get_target(
+            f"{self.output_path}/impc_web_api/cardiovascular_landing.json"
+        )
+
+    def app_options(self):
+        """
+        Generates the options pass to the PySpark job
+        """
+        return [
+            self.input()[0].path,
+            self.input()[1].path,
+            self.output().path,
+        ]
+
+    def main(self, sc: SparkContext, *args):
+        """
+        Takes in a SparkContext and the list of arguments generated by `app_options` and executes the PySpark job.
+        """
+        spark = SparkSession(sc)
+
+        # Parsing app options
+        statistical_results_parquet_path = args[0]
+        genotype_phenotype_parquet_path = args[1]
+        output_path = args[1]
+
+        stat_results_df = spark.read.parquet(statistical_results_parquet_path)
+        genotype_phenotype_df = spark.read.parquet(genotype_phenotype_parquet_path)
+
+        cardiovascular_system_mp_id = "MP:0005385"
+
+        tested_genes = (
+            stat_results_df.where(
+                (col("mp_term_id") == lit(cardiovascular_system_mp_id))
+                | array_contains("mp_term_id_options", lit(cardiovascular_system_mp_id))
+                | array_contains(
+                    "intermediate_mp_term_id", lit(cardiovascular_system_mp_id)
+                )
+                | array_contains(
+                    "top_level_mp_term_id", lit(cardiovascular_system_mp_id)
+                )
+            )
+            .where(~(col("status") == "NotProcessed"))
+            .select("marker_accession_id")
+            .distinct()
+        )
+
+        female_significant_genes = (
+            genotype_phenotype_df.where(
+                (col("mp_term_id") == lit(cardiovascular_system_mp_id))
+                | array_contains(
+                    "intermediate_mp_term_id", lit(cardiovascular_system_mp_id)
+                )
+                | array_contains(
+                    "top_level_mp_term_id", lit(cardiovascular_system_mp_id)
+                )
+            )
+            .where(col("sex") == "female")
+            .select("marker_accession_id")
+            .distinct()
+        )
+
+        male_significant_genes = (
+            genotype_phenotype_df.where(
+                (col("mp_term_id") == lit(cardiovascular_system_mp_id))
+                | array_contains(
+                    "intermediate_mp_term_id", lit(cardiovascular_system_mp_id)
+                )
+                | array_contains(
+                    "top_level_mp_term_id", lit(cardiovascular_system_mp_id)
+                )
+            )
+            .where(col("sex") == "male")
+            .select("marker_accession_id")
+            .distinct()
+        )
+
+        both_significant_genes = male_significant_genes.intersect(
+            female_significant_genes
+        )
+
+        female_significant_genes = female_significant_genes.subtract(
+            both_significant_genes
+        )
+        male_significant_genes = male_significant_genes.subtract(both_significant_genes)
+
+        significant_genes_by_phenotype = (
+            genotype_phenotype_df.where(
+                (col("mp_term_id") == lit(cardiovascular_system_mp_id))
+                | array_contains(
+                    "intermediate_mp_term_id", lit(cardiovascular_system_mp_id)
+                )
+                | array_contains(
+                    "top_level_mp_term_id", lit(cardiovascular_system_mp_id)
+                )
+            )
+            .groupBy("mp_term_id", "mp_term_name")
+            .agg(countDistinct("marker_accession_id").alias("count"))
+        )
+
+        genotype_phenotype_distribution = (
+            genotype_phenotype_df.select(
+                "marker_accession_id",
+                "mp_term_id",
+                "intermediate_mp_term_id",
+                "top_level_mp_term_id",
+            )
+            .distinct()
+            .groupBy("marker_accession_id", "marker_symbol")
+            .agg(
+                sum(
+                    when(
+                        (col("mp_term_id") == lit(cardiovascular_system_mp_id))
+                        | array_contains(
+                            "intermediate_mp_term_id", lit(cardiovascular_system_mp_id)
+                        )
+                        | array_contains(
+                            "top_level_mp_term_id", lit(cardiovascular_system_mp_id)
+                        ),
+                        lit(1),
+                    ).otherwise(lit(0))
+                ).alias("cardiovascularPhenotypeCount"),
+                sum(
+                    when(
+                        (col("mp_term_id") == lit(cardiovascular_system_mp_id))
+                        | array_contains(
+                            "intermediate_mp_term_id", lit(cardiovascular_system_mp_id)
+                        )
+                        | array_contains(
+                            "top_level_mp_term_id", lit(cardiovascular_system_mp_id)
+                        ),
+                        lit(0),
+                    ).otherwise(lit(1))
+                ).alias("otherPhenotypeCount"),
+            )
+        )
+
+        gene_by_top_level_phenotype_df = (
+            genotype_phenotype_df.withColumn(
+                "top_level_phenotype",
+                zip_with(
+                    "top_level_mp_term_id",
+                    "top_level_mp_term_name",
+                    lambda x, y: struct(x.alias("id"), y.alias("name")),
+                ),
+            )
+            .withColumn("top_level_phenotype", explode("top_level_phenotype"))
+            .groupBy("top_level_phenotype")
+            .agg(collect_set("marker_accession_id").alias("marker_accession_ids"))
+            .select("top_level_phenotype.*", "marker_accession_ids")
+        )
+
+        cardiovascular_system_gene_list = (
+            gene_by_top_level_phenotype_df.where(
+                col("id") == lit(cardiovascular_system_mp_id)
+            )
+            .rdd.map(lambda row: row.asDict(True))
+            .collect()[0]
+        )
+
+        other_system_gene_list = (
+            gene_by_top_level_phenotype_df.where(
+                ~(col("id") == lit(cardiovascular_system_mp_id))
+            )
+            .rdd.map(lambda row: row.asDict(True))
+            .collect()
+        )
+        chord_diagram_data = {
+            "keys": [cardiovascular_system_gene_list["name"]],
+            "matrix": [],
+        }
+        cardio_only_genes = set(cardiovascular_system_gene_list["marker_accession_ids"])
+        cardio_system_intersections = []
+        for other_system_genes in other_system_gene_list:
+            gene_intersection = list(
+                set(cardiovascular_system_gene_list["marker_accession_ids"])
+                & set(other_system_genes["marker_accession_ids"])
+            )
+            if len(gene_intersection) > 0:
+                cardio_only_genes = cardio_only_genes.difference(
+                    set(other_system_genes["marker_accession_ids"])
+                )
+                cardio_system_intersections.append(len(gene_intersection))
+                chord_diagram_data["keys"].append(other_system_genes["name"])
+        cardio_system_intersections.insert(0, len(cardio_only_genes))
+        chord_diagram_data["matrix"].append(cardio_system_intersections)
+        for value in cardio_system_intersections[1:]:
+            chord_diagram_data["matrix"].append(
+                [value] + [0 for _ in range(0, len(cardio_system_intersections[1:]))]
+            )
+
+        cardiovascular_landing_data_dict = {
+            "pieChart": {
+                "maleOnly": male_significant_genes.count(),
+                "femaleOnly": female_significant_genes.count(),
+                "both": both_significant_genes.count(),
+                "total": tested_genes.count(),
+            },
+            "table": significant_genes_by_phenotype.rdd.map(
+                lambda row: row.asDict(True)
+            ).collect(),
+            "phenotypeDistribution": genotype_phenotype_distribution.rdd.map(
+                lambda row: row.asDict(True)
+            ).collect(),
+            "chordDiagram": [],
+        }
+
+        with open(output_path, mode="w") as output_file:
+            output_file.write(json.dumps(cardiovascular_landing_data_dict))
 
 
 class ImpcHistopathologyLandingPageMapper(PySparkTask):
