@@ -842,7 +842,7 @@ def get_lacz_expression_count(observations_df, lacz_lifestage):
         & (col("parameter_name") != "LacZ Images Wholemount")
     )
     lacz_observations_by_gene = lacz_observations_by_gene.select(
-        "gene_accession_id", "zygosity", "parameter_name"
+        "gene_accession_id", "zygosity", lower("parameter_name")
     ).distinct()
     lacz_observations_by_gene = lacz_observations_by_gene.groupBy(
         "gene_accession_id"
