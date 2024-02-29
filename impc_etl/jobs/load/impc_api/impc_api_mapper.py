@@ -964,6 +964,9 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
     lacz_images_by_gene = lacz_images_by_gene.withColumnRenamed(
         "parameter_association_name", "parameter_name"
     )
+    lacz_images_by_gene = lacz_images_by_gene.withColumn(
+        "parameter_name", lower("parameter_name")
+    )
     lacz_observations_by_gene = lacz_observations_by_gene.join(
         lacz_images_by_gene,
         ["gene_accession_id", "zygosity", "parameter_name"],
