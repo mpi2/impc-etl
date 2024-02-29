@@ -45,6 +45,7 @@ from pyspark.sql.functions import (
     quarter,
     regexp_extract,
     array_distinct,
+    lower,
 )
 
 from impc_etl.jobs.extract import ProductReportExtractor
@@ -858,6 +859,10 @@ def get_lacz_expression_count(observations_df, lacz_lifestage):
 
 def get_lacz_expression_data(observations_df, lacz_lifestage):
     procedure_name = "Adult LacZ" if lacz_lifestage == "adult" else "Embryo LacZ"
+
+    observations_df = observations_df.withColumn(
+        "parameter_name", lower("parameter_name")
+    )
 
     lacz_observations = observations_df.where(
         (col("procedure_name") == procedure_name)
