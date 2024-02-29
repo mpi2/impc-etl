@@ -875,7 +875,6 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
     lacz_observations_by_gene = lacz_observations.groupBy(
         "gene_accession_id",
         "zygosity",
-        "parameter_stable_id",
         "parameter_name",
     ).agg(
         *[
@@ -883,7 +882,10 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
                 to_camel_case(category.replace(" ", "_"))
             )
             for category in categories
-        ]
+        ],
+        collect_set(
+            "parameter_stable_id",
+        ).alias("mutant_parameter_stable_ids"),
     )
     lacz_observations_by_gene = lacz_observations_by_gene.withColumn(
         "mutantCounts",
@@ -893,7 +895,7 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
     lacz_observations_by_gene = lacz_observations_by_gene.select(
         "gene_accession_id",
         "zygosity",
-        "parameter_stable_id",
+        "parameter_stable_ids",
         "parameter_name",
         "mutantCounts",
     ).distinct()
@@ -903,14 +905,17 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
     )
 
     wt_lacz_observations_by_strain = wt_lacz_observations_by_strain.groupBy(
-        "parameter_stable_id", "parameter_name"
+        "parameter_name"
     ).agg(
         *[
             sum(when(col("category") == category, 1).otherwise(0)).alias(
                 to_camel_case(category.replace(" ", "_"))
             )
             for category in categories
-        ]
+        ],
+        collect_set(
+            "parameter_stable_id",
+        ).alias("control_parameter_stable_ids"),
     )
 
     wt_lacz_observations_by_strain = wt_lacz_observations_by_strain.withColumn(
@@ -919,12 +924,12 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
     )
 
     wt_lacz_observations_by_strain = wt_lacz_observations_by_strain.select(
-        "parameter_stable_id", "parameter_name", "controlCounts"
+        "parameter_name", "controlCounts"
     )
 
     lacz_observations_by_gene = lacz_observations_by_gene.join(
         wt_lacz_observations_by_strain,
-        ["parameter_stable_id", "parameter_name"],
+        ["parameter_name"],
         "left_outer",
     )
 
