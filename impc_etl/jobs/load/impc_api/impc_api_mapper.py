@@ -895,7 +895,7 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
     lacz_observations_by_gene = lacz_observations_by_gene.select(
         "gene_accession_id",
         "zygosity",
-        "parameter_stable_ids",
+        "mutant_parameter_stable_ids",
         "parameter_name",
         "mutantCounts",
     ).distinct()
