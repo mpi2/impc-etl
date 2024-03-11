@@ -1010,8 +1010,8 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
     def requires(self):
         return [
             StatsResultsMapper(),
-            ImpressToParameterMapper(),
             OntologyTermHierarchyExtractor(),
+            ImpressToParameterMapper(),
         ]
 
     def output(self):
