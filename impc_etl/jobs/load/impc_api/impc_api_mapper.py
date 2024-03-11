@@ -46,9 +46,14 @@ from pyspark.sql.functions import (
     regexp_extract,
     array_distinct,
     lower,
+    size,
+    array_intersect,
 )
 
 from impc_etl.jobs.extract import ProductReportExtractor
+from impc_etl.jobs.extract.ontology_hierarchy_extractor import (
+    OntologyTermHierarchyExtractor,
+)
 from impc_etl.jobs.load import ExperimentToObservationMapper
 from impc_etl.jobs.load.solr.gene_mapper import GeneLoader
 from impc_etl.jobs.load.solr.genotype_phenotype_mapper import GenotypePhenotypeLoader
@@ -1005,6 +1010,8 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
     def requires(self):
         return [
             StatsResultsMapper(),
+            ImpressToParameterMapper(),
+            OntologyTermHierarchyExtractor(),
         ]
 
     def output(self):
@@ -1022,6 +1029,8 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         """
         return [
             self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
             self.output().path,
         ]
 
@@ -1033,15 +1042,71 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
 
         # Parsing app options
         stats_results_parquet_path = args[0]
-        output_path = args[1]
+        ontology_term_hierarchy_parquet_path = args[1]
+        impress_parameter_parquet_path = args[2]
+        output_path = args[3]
 
         stats_results_df = spark.read.parquet(stats_results_parquet_path)
+        ontology_term_hierarchy_df = spark.read.parquet(
+            ontology_term_hierarchy_parquet_path
+        )
+        impress_parameter_df = spark.read.parquet(impress_parameter_parquet_path)
         explode_cols = [
             "procedure_stable_id",
             "procedure_name",
             "project_name",
             "life_stage_name",
         ]
+
+        parent_df = ontology_term_hierarchy_df.where(size(col("child_ids")) > 0).select(
+            "child_ids", "id", "term"
+        )
+
+        parent_df = parent_df.withColumnRenamed("id", "parent_id").withColumnRenamed(
+            "term", "parent_term"
+        )
+
+        impress_abnormal_df = impress_parameter_df.where(
+            col("abnormal_mp_id").isNotNull()
+        ).select(
+            "pipeline_stable_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "abnormal_mp_id",
+            "abnormal_mp_term",
+        )
+
+        stats_results_df = stats_results_df.join(
+            parent_df,
+            size(array_intersect("child_ids", "mp_term_id_options"))
+            == size("mp_term_id_options"),
+            "left_outer",
+        )
+
+        stats_results_df = stats_results_df.join(
+            impress_abnormal_df,
+            ["pipeline_stable_id", "procedure_stable_id", "parameter_stable_id"],
+            "left_outer",
+        )
+
+        stats_results_df = stats_results_df.withColumn(
+            "display_phenotype",
+            when(
+                col("abnormal_mp_id").isNotNull(),
+                struct(
+                    col("abnormal_mp_id").alias("id"),
+                    col("abnormal_mp_term").alias("name"),
+                ),
+            )
+            .when(
+                col("parent_id").isNotNull(),
+                struct(
+                    col("parent_id").alias("id"),
+                    col("parent_term").alias("name"),
+                ),
+            )
+            .otherwise(lit(None)),
+        ).drop("abnormal_mp_id", "abnormal_mp_term", "parent_id", "parent_term")
 
         for col_name in explode_cols:
             stats_results_df = stats_results_df.withColumn(col_name, explode(col_name))
@@ -1076,6 +1141,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
             "intermediate_mp_term_name",
             "top_level_mp_term_id",
             "top_level_mp_term_name",
+            "display_phenotype",
         )
 
         stats_results_df = stats_results_df.withColumn(
