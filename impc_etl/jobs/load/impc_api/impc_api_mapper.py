@@ -1085,7 +1085,20 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
 
         stats_results_df = stats_results_df.join(
             impress_abnormal_df,
-            ["pipeline_stable_id", "procedure_stable_id", "parameter_stable_id"],
+            (
+                stats_results_df.pipeline_stable_id
+                == impress_abnormal_df.pipeline_stable_id
+            )
+            & (
+                array_contains(
+                    stats_results_df.procedure_stable_id,
+                    impress_abnormal_df.procedure_stable_id,
+                )
+            )
+            & (
+                stats_results_df.parameter_stable_id
+                == impress_abnormal_df.parameter_stable_id
+            ),
             "left_outer",
         )
 
