@@ -1847,6 +1847,22 @@ class ImpcImagesMapper(PySparkTask):
             )
 
         impc_images_df = impc_images_df.withColumn(
+            "thumbnailUrl",
+            when(
+                (col("omeroId") != -1) & (col("fileType") != "application/pdf"),
+                col("thumbnailUrl"),
+            ).otherwise(lit(None)),
+        )
+
+        impc_images_df = impc_images_df.withColumn(
+            "downloadUrl",
+            when(
+                (col("omeroId") != -1) & (col("fileType") != "application/pdf"),
+                col("downloadUrl"),
+            ).otherwise(col("downloadFileP ath")),
+        )
+
+        impc_images_df = impc_images_df.withColumn(
             "associatedParameters",
             arrays_zip("stableId", "associationSequenceId", "name", "value"),
         ).drop("id", "associationSequenceId", "name", "value")
