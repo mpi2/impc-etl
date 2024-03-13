@@ -1859,7 +1859,7 @@ class ImpcImagesMapper(PySparkTask):
             when(
                 (col("omeroId") != -1) & (col("fileType") != "application/pdf"),
                 col("downloadUrl"),
-            ).otherwise(col("downloadFileP ath")),
+            ).otherwise(col("downloadFilePath")),
         )
 
         impc_images_df = impc_images_df.withColumn(
