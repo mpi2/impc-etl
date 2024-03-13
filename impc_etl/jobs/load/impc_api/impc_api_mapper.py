@@ -1849,9 +1849,9 @@ class ImpcImagesMapper(PySparkTask):
         impc_images_df = impc_images_df.withColumn(
             "thumbnailUrl",
             when(
-                (col("omeroId") != -1) & (col("fileType") != "application/pdf"),
-                col("thumbnailUrl"),
-            ).otherwise(lit(None)),
+                (col("omeroId") == -1) | (col("fileType") == "application/pdf"),
+                lit(None),
+            ).otherwise(col("thumbnailUrl")),
         )
 
         impc_images_df = impc_images_df.withColumn(
