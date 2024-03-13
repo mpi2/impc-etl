@@ -48,6 +48,7 @@ from pyspark.sql.functions import (
     lower,
     size,
     array_intersect,
+    filter,
 )
 
 from impc_etl.jobs.extract import ProductReportExtractor
@@ -1011,7 +1012,6 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         return [
             StatsResultsMapper(),
             OntologyTermHierarchyExtractor(),
-            ImpressToParameterMapper(),
         ]
 
     def output(self):
@@ -1030,7 +1030,6 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         return [
             self.input()[0].path,
             self.input()[1].path,
-            self.input()[2].path,
             self.output().path,
         ]
 
@@ -1043,14 +1042,12 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         # Parsing app options
         stats_results_parquet_path = args[0]
         ontology_term_hierarchy_parquet_path = args[1]
-        impress_parameter_parquet_path = args[2]
-        output_path = args[3]
+        output_path = args[2]
 
         stats_results_df = spark.read.parquet(stats_results_parquet_path)
         ontology_term_hierarchy_df = spark.read.parquet(
             ontology_term_hierarchy_parquet_path
         )
-        impress_parameter_df = spark.read.parquet(impress_parameter_parquet_path)
         explode_cols = [
             "procedure_stable_id",
             "procedure_name",
@@ -1066,51 +1063,27 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
             "term", "parent_term"
         )
 
-        impress_abnormal_df = impress_parameter_df.where(
-            col("abnormal_mp_id").isNotNull()
-        ).select(
-            "pipeline_stable_id",
-            "procedure_stable_id",
-            "parameter_stable_id",
-            "abnormal_mp_id",
-            "abnormal_mp_term",
-        )
-
         stats_results_df = stats_results_df.join(
             parent_df,
             size(array_intersect("child_ids", "mp_term_id_options"))
             == size("mp_term_id_options"),
             "left_outer",
         )
-
-        stats_results_df = stats_results_df.join(
-            impress_abnormal_df,
-            (
-                stats_results_df.pipeline_stable_id
-                == impress_abnormal_df.pipeline_stable_id
-            )
-            & (
-                array_contains(
-                    stats_results_df.procedure_stable_id,
-                    impress_abnormal_df.procedure_stable_id,
-                )
-            )
-            & (
-                stats_results_df.parameter_stable_id
-                == impress_abnormal_df.parameter_stable_id
+        stats_results_df = stats_results_df.withColumn(
+            "potentialPhenotypes",
+            zip_with(
+                "mp_term_id_options",
+                "mp_term_name_options",
+                phenotype_term_zip_udf,
             ),
-            "left_outer",
         )
-
+        stats_results_df = stats_results_df.withColumn(
+            "abnormal_phenotype",
+            filter("potentialPhenotypes", lambda p: p["name"].contains("abnormal")),
+        )
         stats_results_df = stats_results_df.withColumn(
             "display_phenotype",
-            when(
-                col("abnormal_mp_id").isNotNull(),
-                struct(
-                    col("abnormal_mp_id").alias("id"),
-                    col("abnormal_mp_term").alias("name"),
-                ),
-            )
+            when(col("abnormal_term").isNotNull(), col("abnormal_term"))
             .when(
                 col("parent_id").isNotNull(),
                 struct(
@@ -1749,23 +1722,50 @@ class ImpcGeneImagesMapper(PySparkTask):
         output_path = args[1]
 
         impc_images_df = spark.read.parquet(impc_images_parquet_path)
-
-        impc_images_df = impc_images_df.groupBy(
+        window_spec = Window.partitionBy(
             "gene_accession_id",
             "strain_accession_id",
             "procedure_stable_id",
             "procedure_name",
             "parameter_stable_id",
             "parameter_name",
-        ).agg(
-            count("observation_id").alias("count"),
-            first("thumbnail_url").alias("thumbnail_url"),
-            first("file_type").alias("file_type"),
+        ).orderBy("omero_id", "file_type")
+
+        impc_images_df = (
+            impc_images_df.withColumn(
+                "min_omero_id", first("omero_id").over(window_spec)
+            )
+            .groupBy(
+                "gene_accession_id",
+                "strain_accession_id",
+                "procedure_stable_id",
+                "procedure_name",
+                "parameter_stable_id",
+                "parameter_name",
+            )
+            .agg(
+                count("observation_id").alias("count"),
+                first("thumbnail_url").alias("thumbnail_url"),
+                first("file_type").alias("file_type"),
+                when(first("file_type") == "application/pdf", lit(True))
+                .when(first("min_omero_id") == -1, lit(True))
+                .otherwise(lit(False))
+                .alias("is_special_format"),
+            )
+        )
+
+        impc_images_df = impc_images_df.withColumn(
+            "thumbnail_url",
+            when(col("is_special_format") == True, lit(None)).otherwise(
+                col("thumbnail_url")
+            ),
         )
 
         impc_images_df = impc_images_df.withColumnRenamed(
             "gene_accession_id", "mgiGeneAccessionId"
         )
+
+        impc_images_df = impc_images_df.where(col("mgiGeneAccessionId").isNotNull())
 
         for col_name in impc_images_df.columns:
             impc_images_df = impc_images_df.withColumnRenamed(
@@ -3167,8 +3167,12 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
             "allele_symbol",
             "zygosity",
             "pipeline_stable_id",
+            "pipeline_stable_key",
             "procedure_stable_id",
+            "procedure_stable_key",
+            "procedure_name",
             "parameter_stable_id",
+            "parameter_stable_key",
             "parameter_name",
             "life_stage_name",
             "sub_term_id",
@@ -3178,6 +3182,9 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
             "data_point",
             "external_sample_id",
             "phenotyping_center",
+            "metadata",
+            "strainName",
+            "strainAccessionId",
         ]
         observations_df = observations_df.select(*pathology_datasets_cols)
         pathology_datasets_df = observations_df.where(
@@ -3206,15 +3213,25 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
             "ontologyTerms", arrays_zip("termId", "termName")
         )
         pathology_datasets_df = pathology_datasets_df.drop("termId", "termName")
-        pathology_datasets_df = pathology_datasets_df.groupBy(
-            "mgiGeneAccessionId", "parameterStableId"
-        ).agg(
+        common_columns = [
+            "mgiGeneAccessionId",
+            "geneSymbol",
+            "pipelineStableId",
+            "pipelineStableKey",
+            "procedureStableId",
+            "procedureStableKey",
+            "procedureName",
+            "parameterStableId",
+            "parameterStableKey",
+            "parameterName",
+        ]
+        pathology_datasets_df = pathology_datasets_df.groupBy(*common_columns).agg(
             collect_set(
                 struct(
                     *[
                         to_camel_case(col_name)
                         for col_name in pathology_datasets_df.columns
-                        if col_name not in ["mgiGeneAccessionId", "parameterStableId"]
+                        if col_name not in common_columns
                     ]
                 )
             ).alias("datasets")
