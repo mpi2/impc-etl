@@ -2011,7 +2011,9 @@ class ImpcGeneDiseasesMapper(PySparkTask):
             max_values, ["disease_id", "marker_id", "phenodigm_score"]
         )
 
-        max_disease_df = max_disease_df.withColumnRenamed("marker_id", "id")
+        max_disease_df = max_disease_df.withColumnRenamed(
+            "marker_id", "mgiGeneAccessionId"
+        )
 
         for col_name in max_disease_df.columns:
             max_disease_df = max_disease_df.withColumnRenamed(
