@@ -2004,11 +2004,16 @@ class ImpcGeneDiseasesMapper(PySparkTask):
             (col("disease_model_avg_norm") + col("disease_model_max_norm")) / 2,
         )
 
-        max_values = disease_df.groupBy("disease_id", "marker_id").agg(
-            max("phenodigm_score").alias("phenodigm_score")
+        window_spec = Window.partitionBy("disease_id", "marker_id").orderBy(
+            col("phenodigm_score").desc()
         )
-        max_disease_df = disease_df.join(
-            max_values, ["disease_id", "marker_id", "phenodigm_score"]
+
+        max_disease_df = disease_df.withColumn(
+            "row_number", row_number().over(window_spec)
+        )
+
+        max_disease_df = max_disease_df.filter(col("row_number") == 1).drop(
+            "row_number"
         )
 
         max_disease_df = max_disease_df.withColumnRenamed(
