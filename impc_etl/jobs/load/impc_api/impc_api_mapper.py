@@ -4261,8 +4261,8 @@ class ImpcPhenotypePleiotropyMapper(PySparkTask):
         spark = SparkSession(sc)
 
         # Parsing app options
-        genotype_phenotype_parquet_path = args[1]
-        output_path = args[3]
+        genotype_phenotype_parquet_path = args[0]
+        output_path = args[1]
 
         genotype_phenotype_df = spark.read.parquet(genotype_phenotype_parquet_path)
         top_level_phenotypes = (
