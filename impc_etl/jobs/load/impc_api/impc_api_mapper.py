@@ -4280,6 +4280,7 @@ class ImpcPhenotypePleiotropyMapper(PySparkTask):
             pleiotropy_json[top_level_phenotype] = (
                 genotype_phenotype_df.select(
                     "marker_accession_id",
+                    "marker_symbol",
                     "mp_term_id",
                     "intermediate_mp_term_id",
                     "top_level_mp_term_id",
