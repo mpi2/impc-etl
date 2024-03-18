@@ -19,6 +19,8 @@ from pyspark.sql.functions import (
     flatten,
     collect_list,
     udf,
+    struct,
+    transform,
 )
 from pyspark.sql.types import ArrayType, StringType
 
@@ -189,10 +191,10 @@ class ImpressToParameterMapper(PySparkTask):
         )
 
         uniquify = udf(self._uniquify, ArrayType(StringType()))
+        phenotype_term = lambda x, y: struct(col(x).alias("id"), col(y).alias("term"))
 
         pipeline_mp_terms_df = pipeline_mp_terms_df.groupBy("fully_qualified_name").agg(
-            collect_set("id").alias("mp_id"),
-            collect_set("term").alias("mp_term"),
+            phenotype_term("id", "term").alias("mp"),
             uniquify(flatten(collect_list("top_level_ids"))).alias("top_level_mp_id"),
             uniquify(flatten(collect_list("top_level_terms"))).alias(
                 "top_level_mp_term"
@@ -236,6 +238,12 @@ class ImpressToParameterMapper(PySparkTask):
                     lit(None)
                 )
             ).alias("decreased_mp_term"),
+        )
+
+        pipeline_df = (
+            pipeline_df.withColumn("mp_id", transform("mp -> mp.id"))
+            .withColumn("mp_term", transform("mp -> mp.term"))
+            .drop("mp")
         )
 
         pipeline_df = pipeline_df.join(
