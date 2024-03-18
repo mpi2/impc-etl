@@ -240,8 +240,10 @@ class ImpressToParameterMapper(PySparkTask):
             ).alias("decreased_mp_term"),
         )
 
-        pipeline_df = (
-            pipeline_df.withColumn("mp_id", transform("mp", lambda mp: mp["id"]))
+        pipeline_mp_terms_df = (
+            pipeline_mp_terms_df.withColumn(
+                "mp_id", transform("mp", lambda mp: mp["id"])
+            )
             .withColumn("mp_term", transform("mp", lambda mp: mp["id"]))
             .drop("mp")
         )
