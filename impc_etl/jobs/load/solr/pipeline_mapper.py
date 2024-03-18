@@ -241,8 +241,8 @@ class ImpressToParameterMapper(PySparkTask):
         )
 
         pipeline_df = (
-            pipeline_df.withColumn("mp_id", transform("mp", "mp -> mp.id"))
-            .withColumn("mp_term", transform("mp", "mp -> mp.term"))
+            pipeline_df.withColumn("mp_id", transform("mp", lambda mp: mp["id"]))
+            .withColumn("mp_term", transform("mp", lambda mp: mp["id"]))
             .drop("mp")
         )
 
