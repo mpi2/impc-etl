@@ -1091,38 +1091,46 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         stats_results_df = stats_results_df.withColumn(
             "max_level", min("ontology_level").over(window_spec)
         )
-        stats_results_df = stats_results_df.groupBy(
-            *[
-                col_name
-                for col_name in stats_results_df.columns
-                if col_name
-                not in ["potentialPhenotype", "ontology_level", "level_id", "max_level"]
-            ]
-        ).agg(
-            collect_set("potentialPhenotype").alias("potentialPhenotypes"),
-            collect_set(
+        stats_results_df = (
+            stats_results_df.groupBy(
+                *[
+                    col_name
+                    for col_name in stats_results_df.columns
+                    if col_name
+                    not in [
+                        "potentialPhenotype",
+                        "ontology_level",
+                        "level_id",
+                        "max_level",
+                    ]
+                ]
+            )
+            .agg(
+                collect_set("potentialPhenotype").alias("potentialPhenotypes"),
+                collect_set(
+                    when(
+                        col("ontology_level") == col("max_level"),
+                        col("potentialPhenotype"),
+                    ).otherwise(lit(None))
+                ).alias("generalPhenotypes"),
+            )
+            .withColumn(
+                "display_phenotype",
                 when(
-                    col("ontology_level") == col("max_level"),
-                    col("potentialPhenotype"),
-                ).otherwise(lit(None))
-            ).alias("generalPhenotypes"),
+                    size(col("generalPhenotypes")) == 1,
+                    col("generalPhenotypes").getItem(0),
+                )
+                .when(
+                    col("parent_id").isNotNull(),
+                    struct(
+                        col("parent_id").alias("id"),
+                        col("parent_term").alias("name"),
+                    ),
+                )
+                .otherwise(lit(None)),
+            )
+            .drop("child_ids", "parent_id", "parent_term", "generalPhenotypes")
         )
-
-        stats_results_df = stats_results_df.withColumn(
-            "display_phenotype",
-            when(
-                size(col("generalPhenotypes")) == 1, col("generalPhenotypes").getItem(0)
-            )
-            .when(
-                col("parent_id").isNotNull(),
-                struct(
-                    col("parent_id").alias("id"),
-                    col("parent_term").alias("name"),
-                ),
-            )
-            .otherwise(lit(None)),
-        ).drop("generalPhenotypes", "parent_id", "parent_term")
-
         for col_name in explode_cols:
             stats_results_df = stats_results_df.withColumn(col_name, explode(col_name))
         stats_results_df = stats_results_df.select(
@@ -1869,6 +1877,9 @@ class ImpcImagesMapper(PySparkTask):
         impc_images_df = impc_images_df.withColumnRenamed(
             "gene_accession_id", "mgiGeneAccessionId"
         )
+        impc_images_df = impc_images_df.withColumn(
+            "anatomyTerms", zip_with("anatomy_id", "anatomy_term")
+        )
 
         for col_name in impc_images_df.columns:
             impc_images_df = impc_images_df.withColumnRenamed(
@@ -1924,6 +1935,7 @@ class ImpcImagesMapper(PySparkTask):
                         "ageInWeeks",
                         "alleleSymbol",
                         "associatedParameters",
+                        "dateOfExperiment",
                     )
                 ).alias("images")
             )
@@ -1935,6 +1947,7 @@ class ImpcImagesMapper(PySparkTask):
             "procedureName",
             "parameterStableId",
             "parameterName",
+            "metadataGroup",
         ).orderBy(col("observationId"))
 
         impc_images_control_df = impc_images_df.where(
@@ -1959,6 +1972,7 @@ class ImpcImagesMapper(PySparkTask):
             "parameterStableId",
             "parameterName",
             "biologicalSampleGroup",
+            "metadataGroup",
         ).agg(
             collect_set(
                 struct(
