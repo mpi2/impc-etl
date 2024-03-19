@@ -1990,6 +1990,7 @@ class ImpcImagesMapper(PySparkTask):
                     "ageInWeeks",
                     "alleleSymbol",
                     "associatedParameters",
+                    "dateOfExperiment",
                 )
             ).alias("images")
         )
