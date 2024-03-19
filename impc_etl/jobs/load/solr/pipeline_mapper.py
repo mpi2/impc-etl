@@ -194,7 +194,7 @@ class ImpressToParameterMapper(PySparkTask):
         phenotype_term = lambda x, y: struct(col(x).alias("id"), col(y).alias("term"))
 
         pipeline_mp_terms_df = pipeline_mp_terms_df.groupBy("fully_qualified_name").agg(
-            collect_set(phenotype_term("id", "term").alias("mp")),
+            collect_set(phenotype_term("id", "term")).alias("mp"),
             uniquify(flatten(collect_list("top_level_ids"))).alias("top_level_mp_id"),
             uniquify(flatten(collect_list("top_level_terms"))).alias(
                 "top_level_mp_term"
