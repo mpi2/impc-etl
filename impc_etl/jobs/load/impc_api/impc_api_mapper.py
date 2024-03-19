@@ -27,6 +27,7 @@ from pyspark.sql.functions import (
     concat,
     count,
     max,
+    min,
     avg,
     regexp_replace,
     split,
@@ -1078,12 +1079,40 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
             ),
         )
         stats_results_df = stats_results_df.withColumn(
-            "abnormal_phenotype",
-            filter("potentialPhenotypes", lambda p: p["name"].contains("abnormal")),
+            "potentialPhenotype", explode("potentialPhenotypes")
         )
+        ontology_level_df = ontology_term_hierarchy_df.select(
+            "id", size("intermediate_ids").alias("ontology_level")
+        ).distinct()
+        stats_results_df = stats_results_df.join(
+            ontology_level_df, col("potentialPhenotype.id") == col("id"), "left_outer"
+        )
+        window_spec = Window.partitionBy("doc_id")
+        stats_results_df = stats_results_df.withColumn(
+            "max_level", min("ontology_level").over(window_spec)
+        )
+        stats_results_df = stats_results_df.groupBy(
+            *[
+                col_name
+                for col_name in stats_results_df.columns
+                if col_name
+                not in ["potentialPhenotype", "ontology_level", "level_id", "max_level"]
+            ]
+        ).agg(
+            collect_set("potentialPhenotype").alias("potentialPhenotypes"),
+            collect_set(
+                when(
+                    col("ontology_level") == col("max_level"),
+                    col("potentialPhenotype"),
+                ).otherwise(lit(None))
+            ).alias("generalPhenotypes"),
+        )
+
         stats_results_df = stats_results_df.withColumn(
             "display_phenotype",
-            when(col("abnormal_term").isNotNull(), col("abnormal_term"))
+            when(
+                size(col("generalPhenotypes")) == 1, col("generalPhenotypes").getItem(0)
+            )
             .when(
                 col("parent_id").isNotNull(),
                 struct(
@@ -1092,7 +1121,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
                 ),
             )
             .otherwise(lit(None)),
-        ).drop("abnormal_mp_id", "abnormal_mp_term", "parent_id", "parent_term")
+        ).drop("generalPhenotypes", "parent_id", "parent_term")
 
         for col_name in explode_cols:
             stats_results_df = stats_results_df.withColumn(col_name, explode(col_name))
@@ -4288,6 +4317,7 @@ class ImpcPhenotypePleiotropyMapper(PySparkTask):
                 .distinct()
                 .groupBy("marker_accession_id", "marker_symbol")
                 .agg(
+                    collect_set("top_level_mp_term_id").alias("top_level_mp_term_ids"),
                     sum(
                         when(
                             (col("mp_term_id") == lit(top_level_phenotype))
@@ -4313,6 +4343,10 @@ class ImpcPhenotypePleiotropyMapper(PySparkTask):
                         ).otherwise(lit(1))
                     ).alias("otherPhenotypeCount"),
                 )
+                .where(
+                    array_contains("top_level_mp_term_ids", lit(top_level_phenotypes))
+                )
+                .drop("top_level_mp_term_ids")
                 .rdd.map(lambda row: row.asDict(True))
                 .collect()
             )
