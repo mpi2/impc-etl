@@ -1920,6 +1920,7 @@ class ImpcImagesMapper(PySparkTask):
                 "parameterStableId",
                 "parameterName",
                 "biologicalSampleGroup",
+                "metadataGroup",
             )
             .agg(
                 collect_set(
