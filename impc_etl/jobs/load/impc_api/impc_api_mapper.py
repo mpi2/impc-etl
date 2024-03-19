@@ -1938,6 +1938,7 @@ class ImpcImagesMapper(PySparkTask):
                         "alleleSymbol",
                         "associatedParameters",
                         "dateOfExperiment",
+                        "anatomyTerms",
                     )
                 ).alias("images")
             )
@@ -1991,6 +1992,7 @@ class ImpcImagesMapper(PySparkTask):
                     "alleleSymbol",
                     "associatedParameters",
                     "dateOfExperiment",
+                    "anatomyTerms",
                 )
             ).alias("images")
         )
