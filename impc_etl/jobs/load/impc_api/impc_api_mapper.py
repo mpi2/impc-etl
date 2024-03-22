@@ -1877,9 +1877,16 @@ class ImpcImagesMapper(PySparkTask):
         impc_images_df = impc_images_df.withColumnRenamed(
             "gene_accession_id", "mgiGeneAccessionId"
         )
+
         impc_images_df = impc_images_df.withColumn(
             "anatomyTerms",
-            zip_with("anatomy_id", "anatomy_term", phenotype_term_zip_udf),
+            zip_with(
+                "anatomy_id",
+                "anatomy_term",
+                lambda x, y: when(
+                    x.isNotNull(), struct(x.alias("anatomyTermId"), y.alias("name"))
+                ).otherwise(lit(None)),
+            ),
         )
 
         for col_name in impc_images_df.columns:
