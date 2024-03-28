@@ -951,9 +951,11 @@ class ImpcKgMouseGeneMapper(PySparkTask):
             ["mgi_accession_id"],
         )
 
-        gene_ref_df = gene_ref_df.select("mgi_accession_id", "human_gene_acc_id")
+        gene_ref_df = gene_ref_df.select("mgi_gene_acc_id", "human_gene_acc_id")
 
-        gene_df = gene_df.join(gene_ref_df, "mgi_accession_id").drop("mgi_gene_acc_id")
+        gene_df = gene_df.join(
+            gene_ref_df, col("mgi_accession_id") == col("mgi_gene_acc_id")
+        ).drop("mgi_gene_acc_id")
 
         gene_df = _map_unique_ids(
             gene_df, "human_gene_orthologues", "human_gene_acc_id"
