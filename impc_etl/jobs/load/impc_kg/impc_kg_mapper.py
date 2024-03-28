@@ -577,6 +577,7 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
             "zygosity",
             "observations",
         ]
+        input_df = input_df.withColumnRenamed("datasetId", "statisticalResultId")
         input_df = input_df.join(
             dataset_observation_index_df, "statisticalResultId", "left_outer"
         )
