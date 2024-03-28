@@ -714,8 +714,12 @@ class ImpcKgParameterMapper(PySparkTask):
             ["pipeline_stable_id", "procedure_stable_id", "parameter_stable_id"],
         )
 
-        input_df = input_df.withColumn("unit_x", trim(col("unit_x")))
-        input_df = input_df.withColumn("unit_y", trim(col("unit_y")))
+        input_df = input_df.withColumn("unit_x", trim(col("unit_x"))).withColumn(
+            "unit_x", when(~(col("unit_x") == ""), col("unit_x")).otherwise(lit(None))
+        )
+        input_df = input_df.withColumn("unit_y", trim(col("unit_y"))).withColumn(
+            "unit_y", when(~(col("unit_y") == ""), col("unit_y")).otherwise(lit(None))
+        )
         input_df = input_df.withColumnRenamed(
             "mp_id",
             "potentialPhenotypeTermCuries",
@@ -741,7 +745,9 @@ class ImpcKgParameterMapper(PySparkTask):
                 col_name,
                 to_camel_case(col_name),
             )
-        output_df.distinct().write.json(output_path, mode="overwrite")
+        output_df.distinct().repartition(100).write.option(
+            "ignoreNullFields", "false"
+        ).json(output_path, mode="overwrite")
 
 
 class ImpcKgProcedureMapper(PySparkTask):

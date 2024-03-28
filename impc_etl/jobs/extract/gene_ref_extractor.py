@@ -102,7 +102,7 @@ class ExtractGeneRef(SmallPySparkTask):
             mouse_gene.*,
             mouse_gene_synonym.synonym,
             human_gene.symbol AS human_gene_symbol,
-            human_gene_synonym.synonym AS human_symbol_synonym
+            human_gene_synonym.synonym AS human_symbol_synonym,
             human_gene.hgnc_acc_id AS human_gene_acc_id
         FROM
             public.mouse_gene
