@@ -714,6 +714,8 @@ class ImpcKgParameterMapper(PySparkTask):
             ["pipeline_stable_id", "procedure_stable_id", "parameter_stable_id"],
         )
 
+        input_df = input_df.drop("name")
+
         input_df = input_df.withColumn("unit_x", trim(col("unit_x"))).withColumn(
             "unit_x", when(~(col("unit_x") == ""), col("unit_x")).otherwise(lit(None))
         )
@@ -803,6 +805,8 @@ class ImpcKgProcedureMapper(PySparkTask):
             ["pipeline_stable_id", "procedure_stable_id", "parameter_stable_id"],
         )
 
+        input_df = input_df.drop("name")
+
         input_df = input_df.withColumnRenamed(
             "procedure_name",
             "name",
@@ -873,6 +877,8 @@ class ImpcKgPipelineMapper(PySparkTask):
             "procedure_id",
             ["pipeline_stable_id", "procedure_stable_id"],
         )
+
+        input_df = input_df.drop("name")
 
         input_df = input_df.withColumnRenamed(
             "pipeline_name",
