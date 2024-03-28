@@ -939,7 +939,7 @@ class ImpcKgMouseGeneMapper(PySparkTask):
 
         # Parsing app options
         gene_parquet_path = args[0]
-        gene_ref_parquet_path = args[0]
+        gene_ref_parquet_path = args[1]
         output_path = args[1]
 
         gene_df = spark.read.parquet(gene_parquet_path)
