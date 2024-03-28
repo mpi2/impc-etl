@@ -553,7 +553,7 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
             "classificationTag",
             "colonyId",
             "dataType",
-            "datasetId",
+            "statisticalResultId",
             "phenotyping_center_id",
             "production_center_id",
             "lifeStageAcc",
@@ -578,7 +578,7 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
             "observations",
         ]
         input_df = input_df.join(
-            dataset_observation_index_df, "datasetId", "left_outer"
+            dataset_observation_index_df, "statisticalResultId", "left_outer"
         )
         output_df = input_df.select(*output_cols).distinct()
         for col_name in output_df.columns:
