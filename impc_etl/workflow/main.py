@@ -48,6 +48,10 @@ from impc_etl.jobs.load.impc_kg.impc_kg_mapper import (
     ImpcKgEmbryoSpecimenMapper,
     ImpcKgStatisticalResultMapper,
     ImpcKgGenePhenotypeAssociationMapper,
+    ImpcKgParameterMapper,
+    ImpcKgProcedureMapper,
+    ImpcKgPipelineMapper,
+    ImpcKgMouseGeneMapper,
 )
 from impc_etl.jobs.load.mp_chooser_mapper import MPChooserGenerator
 from impc_etl.jobs.load.solr.gene_mapper import GeneLoader
@@ -235,4 +239,8 @@ class ImpcKgMapping(luigi.Task):
             ImpcKgEmbryoSpecimenMapper(),
             ImpcKgStatisticalResultMapper(),
             ImpcKgGenePhenotypeAssociationMapper(),
+            ImpcKgParameterMapper(),
+            ImpcKgProcedureMapper(),
+            ImpcKgPipelineMapper(),
+            ImpcKgMouseGeneMapper(),
         ]
