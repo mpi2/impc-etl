@@ -707,7 +707,7 @@ class ImpcKgParameterMapper(PySparkTask):
         input_parquet_path = args[0]
         output_path = args[1]
 
-        input_df = spark.read.json(input_parquet_path)
+        input_df = spark.read.parquet(input_parquet_path)
         input_df = _add_unique_id(
             input_df,
             "parameter_id",
@@ -790,7 +790,7 @@ class ImpcKgProcedureMapper(PySparkTask):
         input_parquet_path = args[0]
         output_path = args[1]
 
-        input_df = spark.read.json(input_parquet_path)
+        input_df = spark.read.parquet(input_parquet_path)
         input_df = _add_unique_id(
             input_df,
             "procedure_id",
@@ -862,7 +862,7 @@ class ImpcKgPipelineMapper(PySparkTask):
         input_parquet_path = args[0]
         output_path = args[1]
 
-        input_df = spark.read.json(input_parquet_path)
+        input_df = spark.read.parquet(input_parquet_path)
         input_df = _add_unique_id(
             input_df,
             "pipeline_id",
@@ -935,8 +935,8 @@ class ImpcKgMouseGeneMapper(PySparkTask):
         gene_ref_parquet_path = args[0]
         output_path = args[1]
 
-        gene_df = spark.read.json(gene_parquet_path)
-        gene_ref_df = spark.read.json(gene_ref_parquet_path)
+        gene_df = spark.read.parquet(gene_parquet_path)
+        gene_ref_df = spark.read.parquet(gene_ref_parquet_path)
 
         gene_df = _add_unique_id(
             gene_df,
