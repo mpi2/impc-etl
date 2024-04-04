@@ -1409,7 +1409,7 @@ class ExperimentToObservationMapper(PySparkTask):
             observation_df, pipeline_df, "seriesParameter"
         )
         time_series_observation_df = self.resolve_time_series_value(
-            time_series_observation_df
+            time_series_observation_df, pipeline_df
         )
         time_series_observation_df = self.unify_schema(
             time_series_observation_df
@@ -1420,7 +1420,7 @@ class ExperimentToObservationMapper(PySparkTask):
         )
         if line_time_series_observation_df is not None:
             line_time_series_observation_df = self.resolve_time_series_value(
-                line_time_series_observation_df
+                line_time_series_observation_df, pipeline_df
             )
             line_time_series_observation_df = (
                 line_time_series_observation_df.withColumn("specimen_id", lit(None))
