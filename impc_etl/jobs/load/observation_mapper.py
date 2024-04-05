@@ -739,7 +739,7 @@ class ExperimentToObservationMapper(PySparkTask):
         time_series_observation_df = time_series_observation_df.where(
             col("data_point").isNotNull()
             | col("category").isNotNull()
-            | col("text_value").isNull()
+            | col("text_value").isNotNull()
         )
         time_point_expr = None
 
