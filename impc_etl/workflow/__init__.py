@@ -10,3 +10,7 @@ class SmallPySparkTask(PySparkTask):
             + " | "
             + configuration.get_config().get(self.spark_version, "conf", None)
         )
+
+    @property
+    def total_executor_cores(self):
+        return 48
