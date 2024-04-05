@@ -7,7 +7,7 @@ class SmallPySparkTask(PySparkTask):
     def conf(self):
         return self._dict_config(
             "spark.cores.max=48"
-            + " | "
+            + "|"
             + configuration.get_config().get(self.spark_version, "conf", None)
         )
 
