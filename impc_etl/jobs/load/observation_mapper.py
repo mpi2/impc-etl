@@ -663,16 +663,19 @@ class ExperimentToObservationMapper(PySparkTask):
     def resolve_time_series_value(
         self, time_series_observation_df: DataFrame, pipeline_df: DataFrame
     ):
+        time_series_parameter_type_df = pipeline_df.select(
+            col("pipelineKey").alias("pipeline_stable_id"),
+            col("procedure.procedureKey").alias("procedure_stable_id"),
+            col("parameter.parameterKey").alias("parameter_stable_id"),
+            col("parameter.isOption").alias("is_categorical"),
+            col("parameter.valueType").alias("impress_value_type"),
+            col("parameter.isIncrement").alias("is_time_series"),
+        ).distinct()
+        time_series_parameter_type_df = time_series_parameter_type_df.where(
+            col("is_time_series") == True
+        )
         time_series_parameter_type_df = (
-            pipeline_df.select(
-                col("pipelineKey").alias("pipeline_stable_id"),
-                col("procedure.procedureKey").alias("procedure_stable_id"),
-                col("parameter.parameterKey").alias("parameter_stable_id"),
-                col("parameter.isOption").alias("is_categorical"),
-                col("parameter.valueType").alias("impress_value_type"),
-                col("parameter.isIncrement").alias("is_time_series"),
-            )
-            .withColumn(
+            time_series_parameter_type_df.withColumn(
                 "observation_sub_type",
                 when(
                     col("impress_value_type").isin(["INT", "FLOAT"]),
@@ -732,6 +735,11 @@ class ExperimentToObservationMapper(PySparkTask):
         )
         time_series_observation_df = time_series_observation_df.drop(
             "observation_sub_type"
+        )
+        time_series_observation_df = time_series_observation_df.where(
+            col("data_point").isNotNull()
+            | col("category").isNotNull()
+            | col("text_value").isNull()
         )
         time_point_expr = None
 
