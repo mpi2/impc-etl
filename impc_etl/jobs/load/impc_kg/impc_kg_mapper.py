@@ -1055,18 +1055,20 @@ class ImpcKgMouseAlleleMapper(PySparkTask):
         mouse_allele_col_map = {
             "allele_name": "name",
             "allele_symbol": "symbol",
-            "allele_mgi_accession_id": "mgiAlleleAccessionId",
+            "mgi_allele_acc_id": "mgiAlleleAccessionId",
         }
 
         output_cols = [
             "mouse_allele_id",
-            "allele_description",
+            "allele_attribute",
             "allele_name",
             "allele_symbol",
-            "allele_mgi_accession_id",
+            "mgi_allele_acc_id",
             "type",
             "synonyms",
             "ensembl_acc_id",
+            "mouse_gene",
+            "db_name",
         ]
         output_df = allele_ref_df.select(*output_cols).distinct()
         for col_name in output_df.columns:
