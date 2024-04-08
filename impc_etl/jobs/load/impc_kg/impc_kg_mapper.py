@@ -1043,13 +1043,13 @@ class ImpcKgMouseAlleleMapper(PySparkTask):
         allele_ref_df = _add_unique_id(
             allele_ref_df,
             "mouse_gene",
-            ["gene_mgi_accession_id"],
+            ["mgi_marker_acc_id"],
         )
 
         allele_ref_df = _add_unique_id(
             allele_ref_df,
             "mouse_allele_id",
-            ["allele_mgi_accession_id"],
+            ["mgi_allele_acc_id"],
         )
 
         mouse_allele_col_map = {
