@@ -135,7 +135,9 @@ class ImpcKgObservationMapper(PySparkTask):
                 if col_name in output_col_map
                 else to_camel_case(col_name),
             )
-        output_df.write.json(output_path, mode="overwrite")
+        output_df.coalesce(1).write.json(
+            output_path, mode="overwrite", compression="gzip"
+        )
 
 
 class ImpcKgUnidimensionalObservationMapper(ImpcKgObservationMapper):
@@ -272,7 +274,9 @@ class ImpcKgImageRecordObservationObservationMapper(PySparkTask):
         output_df = input_df.select(*output_cols).distinct()
         for col_name in output_df.columns:
             output_df = output_df.withColumnRenamed(col_name, to_camel_case(col_name))
-        output_df.write.json(output_path, mode="overwrite")
+        output_df.coalesce(1).write.json(
+            output_path, mode="overwrite", compression="gzip"
+        )
 
 
 class ImpcKgExperimentMapper(PySparkTask):
@@ -358,7 +362,9 @@ class ImpcKgExperimentMapper(PySparkTask):
                 col_name,
                 to_camel_case(col_name),
             )
-        output_df.write.json(output_path, mode="overwrite")
+        output_df.coalesce(1).write.json(
+            output_path, mode="overwrite", compression="gzip"
+        )
 
 
 class ImpcKgSpecimenExperimentMapper(ImpcKgExperimentMapper):
@@ -468,7 +474,9 @@ class ImpcKgSpecimenMapper(PySparkTask):
                 col_name,
                 to_camel_case(col_name),
             )
-        output_df.write.json(output_path, mode="overwrite")
+        output_df.coalesce(1).write.json(
+            output_path, mode="overwrite", compression="gzip"
+        )
 
 
 class ImpcKgMouseSpecimenMapper(ImpcKgSpecimenMapper):
@@ -590,7 +598,9 @@ class ImpcKgStatisticalResultMapper(PySparkTask):
                 col_name,
                 to_camel_case(col_name),
             )
-        output_df.write.json(output_path, mode="overwrite")
+        output_df.coalesce(1).write.json(
+            output_path, mode="overwrite", compression="gzip"
+        )
 
 
 class ImpcKgGenePhenotypeAssociationMapper(PySparkTask):
@@ -645,6 +655,7 @@ class ImpcKgGenePhenotypeAssociationMapper(PySparkTask):
             input_df, "phenotyping_center_id", ["phenotypingCentre"]
         )
         input_df = _add_unique_id(input_df, "mouse_gene_id", ["mgiGeneAccessionId"])
+        input_df = _add_unique_id(input_df, "mouse_allele_id", ["alleleAccessionId"])
         input_df = input_df.withColumnRenamed("id", "genePhenotypeAssociationId")
         input_df = input_df.withColumnRenamed("datasetId", "statisticalResultId")
         output_cols = [
@@ -661,6 +672,7 @@ class ImpcKgGenePhenotypeAssociationMapper(PySparkTask):
             "projectName",
             "sex",
             "zygosity",
+            "mouse_allele_id",
         ]
         output_df = input_df.select(*output_cols).distinct()
         for col_name in output_df.columns:
@@ -668,7 +680,9 @@ class ImpcKgGenePhenotypeAssociationMapper(PySparkTask):
                 col_name,
                 to_camel_case(col_name),
             )
-        output_df.write.json(output_path, mode="overwrite")
+        output_df.coalesce(1).write.json(
+            output_path, mode="overwrite", compression="gzip"
+        )
 
 
 class ImpcKgParameterMapper(PySparkTask):
@@ -751,9 +765,9 @@ class ImpcKgParameterMapper(PySparkTask):
                 col_name,
                 to_camel_case(col_name),
             )
-        output_df.distinct().repartition(100).write.option(
-            "ignoreNullFields", "false"
-        ).json(output_path, mode="overwrite")
+        output_df.distinct().coalesce(1).write.option("ignoreNullFields", "false").json(
+            output_path, mode="overwrite"
+        )
 
 
 class ImpcKgProcedureMapper(PySparkTask):
@@ -827,7 +841,9 @@ class ImpcKgProcedureMapper(PySparkTask):
                 col_name,
                 to_camel_case(col_name),
             )
-        output_df.distinct().write.json(output_path, mode="overwrite")
+        output_df.distinct().coalesce(1).write.json(
+            output_path, mode="overwrite", compression="gzip"
+        )
 
 
 class ImpcKgPipelineMapper(PySparkTask):
@@ -900,7 +916,9 @@ class ImpcKgPipelineMapper(PySparkTask):
                 col_name,
                 to_camel_case(col_name),
             )
-        output_df.distinct().write.json(output_path, mode="overwrite")
+        output_df.distinct().coalesce(1).write.json(
+            output_path, mode="overwrite", compression="gzip"
+        )
 
 
 class ImpcKgMouseGeneMapper(PySparkTask):
@@ -995,7 +1013,9 @@ class ImpcKgMouseGeneMapper(PySparkTask):
                 if col_name not in mouse_gene_col_map
                 else to_camel_case(mouse_gene_col_map[col_name]),
             )
-        output_df.distinct().write.json(output_path, mode="overwrite")
+        output_df.distinct().coalesce(1).write.json(
+            output_path, mode="overwrite", compression="gzip"
+        )
 
 
 class ImpcKgMouseAlleleMapper(PySparkTask):
@@ -1078,7 +1098,9 @@ class ImpcKgMouseAlleleMapper(PySparkTask):
                 if col_name not in mouse_allele_col_map
                 else to_camel_case(mouse_allele_col_map[col_name]),
             )
-        output_df.distinct().write.json(output_path, mode="overwrite")
+        output_df.distinct().coalesce(1).write.json(
+            output_path, mode="overwrite", compression="gzip"
+        )
 
 
 class ImpcKgPublicationsMapper(PySparkTask):
@@ -1147,4 +1169,6 @@ class ImpcKgPublicationsMapper(PySparkTask):
 
         publications_df = publications_df.drop("mgiAlleleAccessionIds")
 
-        publications_df.write.json(output_path)
+        publications_df.coalesce(1).write.json(
+            output_path, mode="overwrite", compression="gzip"
+        )
