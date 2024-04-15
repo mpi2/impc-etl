@@ -1185,7 +1185,7 @@ class ImpcKgHumanGeneMapper(PySparkTask):
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return [GeneLoader(), ExtractGeneRef()]
+        return [ExtractGeneRef()]
 
     def output(self):
         """
@@ -1200,7 +1200,6 @@ class ImpcKgHumanGeneMapper(PySparkTask):
         """
         return [
             self.input()[0].path,
-            self.input()[1].path,
             self.output().path,
         ]
 
