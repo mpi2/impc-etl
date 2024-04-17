@@ -126,7 +126,7 @@ class ParquetSolrLoader(ExternalProgramTask):
     def requires(self):
         return ParquetJSONSolrMapper(
             parquet_path=self.parquet_path,
-            solr_host=self.dev_solr_host,
+            dev_solr_host=self.dev_solr_host,
             core_name=self.core_name,
             partition_size=self.partition_size,
             output_path=self.solr_json_path,
