@@ -92,11 +92,11 @@ class ParquetJSONSolrMapper(PySparkTask):
             ]:
                 if "array" in dict(filtered_df.dtypes)[col_name]:
                     filtered_df = filtered_df.withColumn(
-                        col_name, filtered_df[col_name].cast("double")
+                        col_name, filtered_df[col_name].cast("array<double>")
                     )
                 else:
                     filtered_df = filtered_df.withColumn(
-                        col_name, filtered_df[col_name].cast("array<double>")
+                        col_name, filtered_df[col_name].cast("double")
                     )
 
         filtered_df = filtered_df.withColumn("id", expr("uuid()"))
