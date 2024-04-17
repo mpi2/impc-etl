@@ -111,7 +111,7 @@ class ParquetJSONSolrMapper(PySparkTask):
                     filtered_df = filtered_df.withColumn(
                         col_name, filtered_df[col_name].cast("double")
                     )
-        if unique_field_map[core_name] not in filtered_df.columns():
+        if unique_field_map[core_name] not in filtered_df.columns:
             filtered_df = filtered_df.withColumn(
                 unique_field_map[core_name], expr("uuid()")
             )
