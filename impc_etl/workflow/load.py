@@ -104,7 +104,6 @@ class ParquetJSONSolrMapper(PySparkTask):
         filtered_df.repartition(int(partition_size)).write.json(
             output_path,
             mode="overwrite",
-            compression="gzip",
         )
 
 
