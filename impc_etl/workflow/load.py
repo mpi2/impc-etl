@@ -90,13 +90,18 @@ class ParquetJSONSolrMapper(PySparkTask):
                 "plong",
                 "plongs",
             ]:
-                filtered_df = filtered_df.withColumn(
-                    col_name, filtered_df[col_name].cast("double")
-                )
+                if "array" in dict(filtered_df.dtypes)[col_name]:
+                    filtered_df = filtered_df.withColumn(
+                        col_name, filtered_df[col_name].cast("double")
+                    )
+                else:
+                    filtered_df = filtered_df.withColumn(
+                        col_name, filtered_df[col_name].cast("array<double>")
+                    )
 
         filtered_df = filtered_df.withColumn("id", expr("uuid()"))
 
-        filtered_df.repartition(partition_size).write.json(
+        filtered_df.repartition(int(partition_size)).write.json(
             output_path,
             mode="overwrite",
             compression="gzip",
