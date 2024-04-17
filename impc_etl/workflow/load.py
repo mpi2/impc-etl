@@ -150,7 +150,7 @@ class ParquetSolrLoader(ExternalProgramTask):
             self.solr_scripts_path,
             self.solr_post_path,
             self.solr_port,
-            self.solr_json_path,
+            self.input().path,
             self.core_name,
         ]
 

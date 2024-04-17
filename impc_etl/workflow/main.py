@@ -160,7 +160,7 @@ class ImpcPostStatisticalAnalysisOnDemandSolr(luigi.Task):
 
     def run(self):
         tasks = []
-        for dependency in self.input():
+        for index, dependency in enumerate(self.input()):
             big_task = (
                 "experiment" in dependency.path or "statistical" in dependency.path
             )
@@ -172,14 +172,18 @@ class ImpcPostStatisticalAnalysisOnDemandSolr(luigi.Task):
                     partition_size=1000 if big_task else 10,
                     big_task=big_task,
                     solr_json_path=self.output().path,
+                    solr_port=8986 + index,
                 )
             )
             if "statistical" in dependency.path:
                 tasks.append(
                     ParquetSolrLoader(
                         parquet_path=dependency.path,
-                        core_name=self.solr_path,
+                        core_name=self.parquet_solr_map[parquet_name],
                         big_task=big_task,
+                        partition_size=1000 if big_task else 10,
+                        solr_json_path=self.output().path,
+                        solr_port=8986 + index + 1,
                     )
                 )
         yield tasks
