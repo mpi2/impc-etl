@@ -126,7 +126,6 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
 
 class ImpcPostStatisticalAnalysisOnDemandSolr(luigi.Task):
     name = "ImpcPostStatisticalAnalysisOnDemandSolr"
-    solr_path = luigi.Parameter()
     output_path = luigi.Parameter()
 
     parquet_solr_map = {
