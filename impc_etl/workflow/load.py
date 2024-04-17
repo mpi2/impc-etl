@@ -138,7 +138,7 @@ class ParquetSolrLoader(ExternalProgramTask):
     solr_json_path: luigi.Parameter = luigi.Parameter()
 
     cpus_per_task = 8
-    memory_flag = 64
+    memory_flag = 32
     runtime_flag = 60
     multiplier = 1
 
