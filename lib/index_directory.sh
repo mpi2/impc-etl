@@ -48,6 +48,9 @@ for file_group in file_list_part_*; do
 done
 wait
 
+eval "curl http://localhost:$SOLR_PORT/solr/$CORE_NAME/update -F stream.body='<optimize />'"
+
+
 # Clean up temporary files (optional)
 rm file_list_part_*
 

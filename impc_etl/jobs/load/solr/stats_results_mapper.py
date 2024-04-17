@@ -159,7 +159,10 @@ class StatsResultsMapper(PySparkTask):
         else:
             stats_results_df = open_stats_df.select(*STATS_RESULTS_COLUMNS)
         for col_name in stats_results_df.columns:
-            if dict(stats_results_df.dtypes)[col_name] == "null":
+            if (
+                dict(stats_results_df.dtypes)[col_name] == "null"
+                or dict(stats_results_df.dtypes)[col_name] == "void"
+            ):
                 stats_results_df = stats_results_df.withColumn(
                     col_name, f.lit(None).astype(StringType())
                 )
