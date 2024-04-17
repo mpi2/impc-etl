@@ -15,7 +15,7 @@ CORE_NAME="$5"
 
 # Start Solr
 echo "Starting Solr in port $SOLR_PORT"
-bash "$SOLR_SCRIPTS_PATH/start.sh" $SOLR_PORT
+bash "$SOLR_SCRIPTS_PATH/start.sh" $SOLR_PORT $CORE_NAME
 wait
 sleep 60
 
