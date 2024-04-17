@@ -63,6 +63,19 @@ class ParquetJSONSolrMapper(PySparkTask):
         # Load Parquet data into a DataFrame
         parquet_df = spark.read.parquet(parquet_path)
 
+        unique_field_map = {
+            "experiment": "id",
+            "statistical-result": "doc_id",
+            "statistical-raw-data": "doc_id",
+            "gene": "mgi_accession_id",
+            "genotype-phenotype": "doc_id",
+            "mp": "mp_id",
+            "pipeline": "fully_qualified_name",
+            "product": "product_index",
+            "mgi-phenotype": "doc_id",
+            "impc_images": "id",
+        }
+
         # Extract column names and types from Solr schema
         schema_url = f"{dev_solr_host}/solr/{core_name}/schema/fields"
         response = requests.get(schema_url)
@@ -98,8 +111,10 @@ class ParquetJSONSolrMapper(PySparkTask):
                     filtered_df = filtered_df.withColumn(
                         col_name, filtered_df[col_name].cast("double")
                     )
-
-        filtered_df = filtered_df.withColumn("id", expr("uuid()"))
+        if unique_field_map[core_name] not in filtered_df.columns():
+            filtered_df = filtered_df.withColumn(
+                unique_field_map[core_name], expr("uuid()")
+            )
 
         filtered_df.repartition(int(partition_size)).write.json(
             output_path,

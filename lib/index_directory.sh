@@ -44,7 +44,8 @@ cd "$DIRECTORY" || exit 1
 
 pwd
 # Split the list of files in the directory into groups of 10 files each
-find . -maxdepth 1 -type f -name 'part*.json.gz' | split -l 10 - file_list_part_
+find . -maxdepth 1 -type f -name 'part*.json' | split -l 10 - file_list_part_
+wait
 
 # Process each group of files in parallel
 for file_group in file_list_part_*; do
@@ -52,7 +53,8 @@ for file_group in file_list_part_*; do
 done
 wait
 
-eval "curl http://localhost:$SOLR_PORT/solr/$CORE_NAME/update -F stream.body='<optimize />'"
+eval "curl http://localhost:$SOLR_PORT/solr/$CORE_NAME/update?optimize=true"
+wait
 
 
 # Clean up temporary files (optional)
