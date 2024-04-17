@@ -156,7 +156,7 @@ class ParquetSolrLoader(ExternalProgramTask):
 
     def program_args(self):
         if self.big_task:
-            self.multiplier = 2
+            self.multiplier = 4
         return [
             "srun",
             "--cpus-per-task",
