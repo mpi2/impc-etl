@@ -1,3 +1,4 @@
+import os
 from typing import Union
 
 import luigi
@@ -65,7 +66,7 @@ from impc_etl.jobs.load.solr.mp_mapper import MpLoader
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
 from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
 from impc_etl.jobs.load.stats_pipeline_input_mapper import StatsPipelineInputMapper
-from impc_etl.workflow.load import ImpcMergeIndex
+from impc_etl.workflow.load import ImpcMergeIndex, ParquetSolrLoader
 
 
 class ImpcPreStatisticalAnalysis(luigi.Task):
@@ -121,6 +122,68 @@ class ImpcPostStatisticalAnalysis(luigi.Task):
                     )
                 )
         yield tasks
+
+
+class ImpcPostStatisticalAnalysisOnDemandSolr(luigi.Task):
+    name = "ImpcPostStatisticalAnalysisOnDemandSolr"
+    solr_path = luigi.Parameter()
+    output_path = luigi.Parameter()
+
+    parquet_solr_map = {
+        "observations_parquet": "experiment",
+        "statistical_results_raw_data_include_parquet": "statistical-result",
+        "statistical_results_raw_data_include_parquet_raw_data": "statistical-raw-data",
+        "gene_data_include_parquet": "gene",
+        "genotype_phenotype_parquet": "genotype-phenotype",
+        "mp_parquet": "mp",
+        "impress_parameter_parquet": "pipeline",
+        "product_report_raw_parquet": "product",
+        "mgi_phenotype_parquet": "mgi-phenotype",
+        "impc_images_core_parquet": "impc_images",
+    }
+
+    def output(self):
+        return luigi.LocalTarget(f"{self.output_path}/_INDEX_ALL_SUCCESS")
+
+    def requires(self):
+        return [
+            ImpressToParameterMapper(),
+            GenotypePhenotypeLoader(),
+            GeneLoader(),
+            MpLoader(),
+            MGIPhenotypeCoreLoader(),
+            ProductReportExtractor(),
+            ImpcImagesLoader(),
+            ExperimentToObservationMapper(),
+            StatsResultsMapper(),
+        ]
+
+    def run(self):
+        tasks = []
+        for dependency in self.input():
+            big_task = (
+                "experiment" in dependency.path or "statistical" in dependency.path
+            )
+            parquet_name = os.path.basename(os.path.normpath(dependency.path))
+            tasks.append(
+                ParquetSolrLoader(
+                    parquet_path=dependency.path,
+                    core_name=self.parquet_solr_map[parquet_name],
+                    partition_size=1000 if big_task else 10,
+                    big_task=big_task,
+                    solr_json_path=self.output().path,
+                )
+            )
+            if "statistical" in dependency.path:
+                tasks.append(
+                    ParquetSolrLoader(
+                        parquet_path=dependency.path,
+                        core_name=self.solr_path,
+                        big_task=big_task,
+                    )
+                )
+        yield tasks
+        open(self.output().path, "a").close()
 
 
 class ImpcBulkApi(luigi.Task):

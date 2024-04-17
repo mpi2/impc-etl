@@ -108,7 +108,7 @@ class ParquetSolrLoader(ExternalProgramTask):
     parquet_path = luigi.Parameter()
     dev_solr_host = luigi.Parameter()
     core_name = luigi.Parameter()
-    partition_size = luigi.IntParameter(default=100)
+    partition_size = luigi.IntParameter(default=10)
     solr_workdir = luigi.Parameter()
     solr_scripts_path = luigi.Parameter()
     solr_post_path = luigi.Parameter()
