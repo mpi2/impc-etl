@@ -161,7 +161,7 @@ class ImpcPostStatisticalAnalysisOnDemandSolr(luigi.Task):
         tasks = []
         for index, dependency in enumerate(self.input()):
             big_task = (
-                "experiment" in dependency.path or "statistical" in dependency.path
+                "observation" in dependency.path or "statistical" in dependency.path
             )
             parquet_name = os.path.basename(os.path.normpath(dependency.path))
             tasks.append(
