@@ -904,7 +904,7 @@ class ExperimentToObservationMapper(PySparkTask):
         #     "parameterAsc",
         #     explode("image.seriesMediaParameterValue.parameterAssociation"),
         # )
-        image_df = image_record_observation_df.select(
+        image_df = image_record_observation_df.alias("image").select(
             "image.seriesMediaParameterValue.parameterAssociation.*", "*"
         )
         image_vs_simple_parameters_df = image_df.join(
