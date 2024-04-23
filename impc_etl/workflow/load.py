@@ -152,7 +152,9 @@ class ParquetSolrLoader(ExternalProgramTask):
         )
 
     def output(self):
-        return luigi.LocalTarget(f"{self.solr_json_path}/_INDEX_SUCCESS")
+        return ImpcConfig().get_target(
+            f"{self.solr_json_path}/{self.core_name}_json/_INDEX_SUCCESS"
+        )
 
     def program_args(self):
         if self.big_task:
