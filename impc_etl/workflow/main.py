@@ -141,9 +141,6 @@ class ImpcPostStatisticalAnalysisOnDemandSolr(luigi.Task):
         "impc_images_core_parquet": "impc_images",
     }
 
-    def output(self):
-        return luigi.LocalTarget(f"{self.output_path}/_INDEX_ALL_SUCCESS")
-
     def requires(self):
         return [
             ImpressToParameterMapper(),
@@ -186,7 +183,6 @@ class ImpcPostStatisticalAnalysisOnDemandSolr(luigi.Task):
                     )
                 )
         yield tasks
-        open(self.output().path, "a").close()
 
 
 class ImpcBulkApi(luigi.Task):
