@@ -3241,13 +3241,25 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
         output_path = args[2]
 
         observations_df = spark.read.parquet(observations_parquet_path)
-        parameter_df = spark.read.parquet(parameter_parquet_path).select(
-            "pipeline_stable_id",
-            "pipeline_stable_key",
-            "procedure_stable_id",
-            "procedure_stable_key",
-            "parameter_stable_id",
-            "parameter_stable_key",
+        parameter_df = (
+            spark.read.parquet(parameter_parquet_path)
+            .select(
+                "pipeline_stable_id",
+                "pipeline_stable_key",
+                "procedure_stable_id",
+                "procedure_stable_key",
+                "parameter_stable_id",
+                "parameter_stable_key",
+            )
+            .distinct()
+        )
+        observations_df = observations_df.join(
+            parameter_df,
+            [
+                "pipeline_stable_id",
+                "procedure_stable_id",
+                "parameter_stable_id",
+            ],
         )
         pathology_datasets_cols = [
             "gene_accession_id",
@@ -3275,14 +3287,6 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
             "strainAccessionId",
         ]
         observations_df = observations_df.select(*pathology_datasets_cols)
-        observations_df = observations_df.join(
-            parameter_df,
-            [
-                "pipeline_stable_id",
-                "procedure_stable_id",
-                "parameter_stable_id",
-            ],
-        )
         pathology_datasets_df = observations_df.where(
             col("parameter_stable_id").contains("PAT")
         )
