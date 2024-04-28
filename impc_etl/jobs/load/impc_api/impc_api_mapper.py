@@ -4392,12 +4392,6 @@ class ImpcPhenotypePleiotropyMapper(PySparkTask):
                         ).otherwise(lit(1))
                     ).alias("otherPhenotypeCount"),
                 )
-                .where(
-                    array_contains(
-                        "top_level_mp_term_ids",
-                        array(*[lit(tp) for tp in top_level_phenotype]),
-                    )
-                )
                 .drop("top_level_mp_term_ids")
                 .rdd.map(lambda row: row.asDict(True))
                 .collect()
