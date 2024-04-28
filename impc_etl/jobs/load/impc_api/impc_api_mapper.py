@@ -3116,7 +3116,7 @@ class ImpcExternalLinksMapper(PySparkTask):
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return [ExperimentToObservationMapper()]
+        return [GeneLoader()]
 
     def output(self):
         """
