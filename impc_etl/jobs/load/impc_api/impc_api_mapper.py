@@ -3263,6 +3263,7 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
         )
         pathology_datasets_cols = [
             "gene_accession_id",
+            "gene_symbol",
             "allele_accession_id",
             "allele_symbol",
             "zygosity",
