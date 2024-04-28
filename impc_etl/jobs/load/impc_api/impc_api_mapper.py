@@ -3283,8 +3283,8 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
             "external_sample_id",
             "phenotyping_center",
             "metadata",
-            "strainName",
-            "strainAccessionId",
+            "strain_name",
+            "strain_accession_id",
         ]
         observations_df = observations_df.select(*pathology_datasets_cols)
         pathology_datasets_df = observations_df.where(
