@@ -3208,7 +3208,7 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return [ExperimentToObservationMapper()]
+        return [ExperimentToObservationMapper(), ImpressToParameterMapper()]
 
     def output(self):
         """
@@ -3225,6 +3225,7 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
         """
         return [
             self.input()[0].path,
+            self.input()[1].path,
             self.output().path,
         ]
 
@@ -3235,10 +3236,19 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
         spark = SparkSession(sc)
 
         # Parsing app options
-        observations_parquet = args[0]
-        output_path = args[1]
+        observations_parquet_path = args[0]
+        parameter_parquet_path = args[1]
+        output_path = args[2]
 
-        observations_df = spark.read.parquet(observations_parquet)
+        observations_df = spark.read.parquet(observations_parquet_path)
+        parameter_df = spark.read.parquet(parameter_parquet_path).select(
+            "pipeline_stable_id",
+            "pipeline_stable_key",
+            "procedure_stable_id",
+            "procedure_stable_key",
+            "parameter_stable_id",
+            "parameter_stable_key",
+        )
         pathology_datasets_cols = [
             "gene_accession_id",
             "allele_accession_id",
@@ -3265,6 +3275,14 @@ class ImpcPathologyDatasetsMapper(PySparkTask):
             "strainAccessionId",
         ]
         observations_df = observations_df.select(*pathology_datasets_cols)
+        observations_df = observations_df.join(
+            parameter_df,
+            [
+                "pipeline_stable_id",
+                "procedure_stable_id",
+                "parameter_stable_id",
+            ],
+        )
         pathology_datasets_df = observations_df.where(
             col("parameter_stable_id").contains("PAT")
         )
