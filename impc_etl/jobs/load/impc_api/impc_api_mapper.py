@@ -1968,9 +1968,7 @@ class ImpcImagesMapper(PySparkTask):
             "row", row_number().over(window_controls)
         )
 
-        impc_images_control_df = impc_images_control_df.where(col("row") <= 50).drop(
-            "row"
-        )
+        impc_images_control_df = impc_images_control_df.drop("row")
 
         impc_images_control_df = impc_images_control_df.groupBy(
             "mgiGeneAccessionId",
