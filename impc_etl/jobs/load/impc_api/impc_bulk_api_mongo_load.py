@@ -30,7 +30,7 @@ class ImpcBulkApiMongoLoader(PySparkTask):
     embryo_data_json_path = luigi.Parameter()
     mongodb_database = luigi.Parameter()
     output_path = luigi.Parameter()
-    packages = "org.mongodb.spark:mongo-spark-connector_2.12:3.0.2"
+    #   packages = "org.mongodb.spark:mongo-spark-connector_2.12:3.0.2"
     mongodb_connection_uri = luigi.Parameter()
     mongodb_genes_collection = luigi.Parameter()
     mongodb_replica_set = luigi.Parameter()
@@ -54,8 +54,8 @@ class ImpcBulkApiMongoLoader(PySparkTask):
 
     def write_to_mongo(self, df: DataFrame, class_name: str, collection_name: str):
         df = df.withColumn("_class", lit(class_name))
-        df.write.format("mongo").mode("overwrite").option(
-            "spark.mongodb.output.uri",
+        df.write.format("mongodb").mode("overwrite").option(
+            "spark.mongodb.write.uri",
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
             "collection", collection_name
@@ -67,7 +67,6 @@ class ImpcBulkApiMongoLoader(PySparkTask):
         output_path = os.path.dirname(args[0])
 
         spark = SparkSession(sc)
-
         gene_search_json_path = output_path + "/gene_search_json/"
         gene_search_df = spark.read.json(gene_search_json_path)
 
@@ -79,6 +78,7 @@ class ImpcBulkApiMongoLoader(PySparkTask):
 
         statistical_results_json_path = output_path + "/statistical_results_json/"
         statistical_results_df = spark.read.json(statistical_results_json_path)
+        statistical_results_df = statistical_results_df.repartition(10000)
 
         self.write_to_mongo(
             gene_search_df,

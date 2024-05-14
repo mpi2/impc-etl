@@ -2967,12 +2967,10 @@ class ImpcPhenotypeStatisticalResultsMapper(PySparkTask):
                     struct(
                         "mgiGeneAccessionId",
                         "markerSymbol",
-                        "markerName",
                         "reportedPValue",
                         "reportedEffectSize",
                         "chrName",
                         "chrStrand",
-                        "seqRegionId",
                         "seqRegionStart",
                         "seqRegionEnd",
                         "significant",
@@ -2980,7 +2978,6 @@ class ImpcPhenotypeStatisticalResultsMapper(PySparkTask):
                     )
                 ).alias("results")
             )
-            .drop("markerName")
         )
         phenotype_stats_df.repartition(1000).write.option(
             "ignoreNullFields", "false"
@@ -3526,9 +3523,13 @@ class ImpcHistopathologyDatasetsMapper(PySparkTask):
                 )
             ).alias("observations")
         )
-        histopathology_datasets_df = histopathology_datasets_df.groupBy(
-            "mgiGeneAccessionId",
-        ).agg(collect_set(struct("tissue", "observations")).alias("datasets"))
+        histopathology_datasets_df = (
+            histopathology_datasets_df.groupBy(
+                "mgiGeneAccessionId",
+            )
+            .agg(collect_set(struct("tissue", "observations")).alias("datasets"))
+            .where(col("mgiGeneAccessionId").isNotNull())
+        )
         histopathology_datasets_df.write.json(output_path, mode="overwrite")
 
 
