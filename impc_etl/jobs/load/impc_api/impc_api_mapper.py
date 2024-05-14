@@ -2796,7 +2796,7 @@ class ImpcPhenotypeStatisticalResultsMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/phenotype_stats_service_json"
+            f"{self.output_path}/impc_web_api/phenotype_stats_service_parquet"
         )
 
     def app_options(self):
@@ -2979,9 +2979,7 @@ class ImpcPhenotypeStatisticalResultsMapper(PySparkTask):
                 ).alias("results")
             )
         )
-        phenotype_stats_df.repartition(1000).write.option(
-            "ignoreNullFields", "false"
-        ).json(output_path)
+        phenotype_stats_df.repartition(1000).write.parquet(output_path)
 
 
 class ImpcBWTDatasetsMapper(PySparkTask):
