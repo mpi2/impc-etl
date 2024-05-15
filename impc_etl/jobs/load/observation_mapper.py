@@ -908,7 +908,16 @@ class ExperimentToObservationMapper(PySparkTask):
         image_vs_simple_parameters_df = image_df.join(
             simple_df,
             (col("simple.experiment_id") == col("image.experiment_id"))
-            & (col("simple.parameter_stable_id") == col("_parameterID")),
+            & (col("simple.parameter_stable_id") == col("_parameterID"))
+            & (
+                (
+                    (
+                        col("simple.sequenceID").isNotNull()
+                        & col("image.sequenceID").isNotNull()
+                    )
+                    & (col("simple.sequenceID") == col("image.sequenceID"))
+                )
+            ),
         )
         image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
             "paramName", col("simple.parameter_name")
