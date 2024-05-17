@@ -3138,7 +3138,7 @@ class ImpcExternalLinksMapper(PySparkTask):
         # Parsing app options
         gene_parquet_path = args[0]
         mouse_human_ortholog_report_tsv_path = args[1]
-        output_path = args[3]
+        output_path = args[2]
 
         gene_df = spark.read.parquet(gene_parquet_path)
         mouse_human_ortholog_report_df = spark.read.csv(
