@@ -3197,7 +3197,7 @@ class ImpcExternalLinksMapper(PySparkTask):
         ).drop("embryo_data_available")
 
         umass_external_links_df = embryo_data_df.withColumnRenamed(
-            "mgi_accession_id", "mgi_gene_accession_id"
+            "mgi_accession_id", "mgiGeneAccessionId"
         )
         umass_external_links_df = umass_external_links_df.withColumnRenamed(
             "marker_symbol", "label"
@@ -3210,6 +3210,9 @@ class ImpcExternalLinksMapper(PySparkTask):
         )
         umass_external_links_df = umass_external_links_df.withColumn(
             "providerName", lit("UMASS Early Lethal KOMP Phenotypes Catalog")
+        )
+        umass_external_links_df = umass_external_links_df.select(
+            "mgiGeneAccessionId", "label", "href", "providerName"
         )
 
         external_links_df = gwas_external_links_df.union(umass_external_links_df)
