@@ -913,9 +913,9 @@ class ExperimentToObservationMapper(PySparkTask):
                 (
                     (
                         col("simple.sequenceID").isNotNull()
-                        & col("image.sequenceID").isNotNull()
+                        & col("image._sequenceID").isNotNull()
                     )
-                    & (col("simple.sequenceID") == col("image.sequenceID"))
+                    & (col("simple.sequenceID") == col("image._sequenceID"))
                 )
             ),
         )
