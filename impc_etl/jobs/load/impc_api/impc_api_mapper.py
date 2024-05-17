@@ -3104,7 +3104,6 @@ class ImpcExternalLinksMapper(PySparkTask):
     name: str = "ImpcExternalLinksMapper"
 
     mouse_human_ortholog_report_tsv_path: luigi.Parameter = luigi.Parameter()
-
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
@@ -3139,13 +3138,12 @@ class ImpcExternalLinksMapper(PySparkTask):
         # Parsing app options
         gene_parquet_path = args[0]
         mouse_human_ortholog_report_tsv_path = args[1]
-        output_path = args[2]
+        output_path = args[3]
 
         gene_df = spark.read.parquet(gene_parquet_path)
         mouse_human_ortholog_report_df = spark.read.csv(
             mouse_human_ortholog_report_tsv_path, sep="\t", header=True
         )
-
         for col_name in mouse_human_ortholog_report_df.columns:
             mouse_human_ortholog_report_df = (
                 mouse_human_ortholog_report_df.withColumnRenamed(
@@ -3153,8 +3151,151 @@ class ImpcExternalLinksMapper(PySparkTask):
                 )
             )
 
+        umass_gene_list = [
+            "4933427D14Rik",
+            "Aasdhppt",
+            "Aatf",
+            "Actr8",
+            "Alg14",
+            "Ap2s1",
+            "Atp2b1",
+            "Atp5d",
+            "Atp6v1f",
+            "B4gat1",
+            "Bc052040",
+            "Bcs1l",
+            "Borcs6",
+            "Casc3",
+            "Ccdc59",
+            "Cct7",
+            "Cct8",
+            "Cdc37",
+            "Cenpo",
+            "Cherp",
+            "Clptm1",
+            "Clpx",
+            "Cog1",
+            "Dbr1",
+            "Dctn6",
+            "Ddx21",
+            "Ddx46",
+            "Ddx47",
+            "Ddx59",
+            "Dhx37",
+            "Dhx8",
+            "Dnaaf2",
+            "Dnajc13",
+            "Dolk",
+            "Ebna1bp2",
+            "Efl1",
+            "Eif2s1",
+            "Eif5b",
+            "Eipr1",
+            "Elof1",
+            "Eny2",
+            "Exoc2",
+            "Exosc2",
+            "Fastkd5",
+            "Gemin6",
+            "Glrx3",
+            "Gspt1",
+            "Gtpbp4",
+            "Haus4",
+            "Hlcs",
+            "Ipo11",
+            "Ipo7",
+            "Isca1",
+            "Lin52",
+            "Ltv1",
+            "Mars2",
+            "Mbip",
+            "Mcrs1",
+            "Med20",
+            "Mepce",
+            "Mrm3",
+            "Mrpl22",
+            "Mrpl3",
+            "Mrpl41",
+            "Mrpl44",
+            "Mrps18c",
+            "Mrps22",
+            "Mrps25",
+            "Mtpap",
+            "Nars",
+            "Nars2",
+            "Ncapd3",
+            "Ndc80",
+            "Ndufa9",
+            "Ndufs8",
+            "Nifk",
+            "Nsl1",
+            "Nup155",
+            "Nup205",
+            "Nup93",
+            "Orc2",
+            "Orc6",
+            "Osbp",
+            "Pdcd7",
+            "Pmpcb",
+            "Pold2",
+            "Polr1a",
+            "Polr1d",
+            "Polr2b",
+            "Pop5",
+            "Ppp1r35",
+            "Prim1",
+            "Prpf4b",
+            "Rab11a",
+            "Rad54l2",
+            "Ranbp2",
+            "Rbbp4",
+            "Riok1",
+            "Rpain",
+            "Sars",
+            "Sart3",
+            "Scfd1",
+            "Sdhaf2",
+            "Sepsecs",
+            "Ska2",
+            "Smarce1",
+            "Snapc2",
+            "Snrnp70",
+            "Sptb",
+            "Sptssa",
+            "Strn3",
+            "Taf1c",
+            "Taf1d",
+            "Tbcb",
+            "Tbcc",
+            "Tbcd",
+            "Thoc3",
+            "Thoc7",
+            "Timm22",
+            "Tmx2",
+            "Tomm20",
+            "Tpk1",
+            "Trit1",
+            "Trmt5",
+            "Tsen54",
+            "Ttc1",
+            "Ttk",
+            "Tubgcp2",
+            "Tubgcp4",
+            "U2af2",
+            "Ube2m",
+            "Uqcr10",
+            "Washc4",
+            "Wdr73",
+            "Ykt6",
+            "Ylpm1",
+            "Zc3h4",
+            "Zfp407",
+            "Zfp622",
+            "Zwint",
+        ]
+
         mouse_human_ortholog_report_df = mouse_human_ortholog_report_df.select(
-            "human_gene_symbol", "mgi_gene_acc_id"
+            "human_gene_symbol", "mouse_gene_symbol", "mgi_gene_acc_id"
         )
 
         mouse_human_ortholog_report_df = (
@@ -3169,23 +3310,49 @@ class ImpcExternalLinksMapper(PySparkTask):
             .dropDuplicates()
         )
 
-        external_links_df = gene_mgi_accession_df.join(
+        gwas_external_links_df = gene_mgi_accession_df.join(
             mouse_human_ortholog_report_df, "mgi_gene_accession_id"
         )
 
-        external_links_df = external_links_df.withColumnRenamed(
+        gwas_external_links_df = gwas_external_links_df.withColumnRenamed(
             "mgi_gene_accession_id", "mgiGeneAccessionId"
         )
 
-        external_links_df = external_links_df.withColumnRenamed(
+        gwas_external_links_df = gwas_external_links_df.withColumnRenamed(
             "human_gene_symbol", "label"
         )
 
-        external_links_df = external_links_df.withColumn(
+        gwas_external_links_df = gwas_external_links_df.withColumn(
             "href",
-            concat(lit("https://www.ebi.ac.uk/gwas/genes/"), external_links_df.label),
+            concat(
+                lit("https://www.ebi.ac.uk/gwas/genes/"), gwas_external_links_df.label
+            ),
         )
-        external_links_df = external_links_df.withColumn("providerName", lit("GWAS"))
+        gwas_external_links_df = gwas_external_links_df.withColumn(
+            "providerName", lit("GWAS Catalog")
+        )
+
+        embryo_data_df = (
+            gene_df.select("mgi_accession_id", "gene_symbol", "embryo_data_available")
+            .where(col("embryo_data_available") == True)
+            .where(col("gene_symbol").isin(umass_gene_list))
+        ).drop("embryo_data_available")
+
+        umass_external_links_df = embryo_data_df.withColumnRenamed(
+            "mgi_accession_id", "mgi_gene_accession_id"
+        )
+        umass_external_links_df = umass_external_links_df.withColumnRenamed(
+            "gene_symbol", "label"
+        )
+        umass_external_links_df = umass_external_links_df.withColumn(
+            "href",
+            concat(lit("https://websites.umass.edu/jmager/"), embryo_data_df.label),
+        )
+        umass_external_links_df = umass_external_links_df.withColumn(
+            "providerName", lit("UMASS Early Lethal KOMP Phenotypes Catalog")
+        )
+
+        external_links_df = gwas_external_links_df.union(umass_external_links_df)
         external_links_df.write.json(output_path, mode="overwrite")
 
 
