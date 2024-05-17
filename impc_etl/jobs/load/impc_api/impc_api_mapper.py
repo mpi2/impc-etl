@@ -3204,7 +3204,9 @@ class ImpcExternalLinksMapper(PySparkTask):
         )
         umass_external_links_df = umass_external_links_df.withColumn(
             "href",
-            concat(lit("https://websites.umass.edu/jmager/"), embryo_data_df.label),
+            concat(
+                lit("https://websites.umass.edu/jmager/"), umass_external_links_df.label
+            ),
         )
         umass_external_links_df = umass_external_links_df.withColumn(
             "providerName", lit("UMASS Early Lethal KOMP Phenotypes Catalog")
