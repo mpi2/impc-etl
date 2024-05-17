@@ -3191,9 +3191,9 @@ class ImpcExternalLinksMapper(PySparkTask):
         )
 
         embryo_data_df = (
-            gene_df.select("mgi_accession_id", "marker_symbol", "embryo_data_available")
-            .where(col("embryo_data_available") == True)
-            .where(col("marker_symbol").isin(Constants.UMASS_GENES))
+            gene_df.select(
+                "mgi_accession_id", "marker_symbol", "embryo_data_available"
+            ).where(col("marker_symbol").isin(Constants.UMASS_GENES))
         ).drop("embryo_data_available")
 
         umass_external_links_df = embryo_data_df.withColumnRenamed(
