@@ -967,14 +967,14 @@ class ExperimentToObservationMapper(PySparkTask):
             "paramSeqs",
             "paramValues",
         )
-        image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
-            "image.observation_id", "image.parameter_stable_id"
-        ).agg(
-            max("paramIDs").alias("paramIDs"),
-            max("paramNames").alias("paramNames"),
-            max("paramSeqs").alias("paramSeqs"),
-            max("paramValues").alias("paramValues"),
-        )
+        # image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
+        #     "image.observation_id", "image.parameter_stable_id"
+        # ).agg(
+        #     max("paramIDs").alias("paramIDs"),
+        #     max("paramNames").alias("paramNames"),
+        #     max("paramSeqs").alias("paramSeqs"),
+        #     max("paramValues").alias("paramValues"),
+        # )
         image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumnRenamed(
             "observation_id", "img_observation_id"
         ).withColumnRenamed("parameter_stable_id", "img_parameter_stable_id")
