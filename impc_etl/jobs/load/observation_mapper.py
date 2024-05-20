@@ -895,102 +895,84 @@ class ExperimentToObservationMapper(PySparkTask):
 
     def resolve_image_record_parameter_association(
         self, image_record_observation_df: DataFrame, simple_observations_df: DataFrame
-    ):
+    ) -> DataFrame:
+        # Explode the sub_term_id array in simple_observations_df
         simple_observations_df = simple_observations_df.withColumn(
             "sub_term_id", explode_outer("sub_term_id")
         )
         simple_df = simple_observations_df.alias("simple")
+
+        # Explode the parameterAssociation array in image_record_observation_df
         image_df = image_record_observation_df.alias("image").withColumn(
             "parameterAsc",
             explode("image.seriesMediaParameterValue.parameterAssociation"),
         )
         image_df = image_df.select("parameterAsc.*", "*")
+
+        # Join image_df with simple_df on experiment_id, parameter_stable_id, and sequence_id
         image_vs_simple_parameters_df = image_df.join(
             simple_df,
             (col("simple.experiment_id") == col("image.experiment_id"))
             & (col("simple.parameter_stable_id") == col("_parameterID"))
             & (
                 (
-                    (
-                        col("simple.sequence_id").isNotNull()
-                        & col("image._sequenceID").isNotNull()
-                    )
-                    & (col("simple.sequence_id") == col("image._sequenceID"))
+                    col("simple.sequence_id").isNotNull()
+                    & col("image._sequenceID").isNotNull()
                 )
+                & (col("simple.sequence_id") == col("image._sequenceID"))
             ),
         )
-        image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-            "paramName", col("simple.parameter_name")
-        )
-        image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-            "paramSeq", col("image._sequenceID")
-        )
-        image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-            "paramValue",
-            when(col("data_point").isNotNull(), col("data_point")).otherwise(
-                when(col("category").isNotNull(), col("category")).otherwise(
-                    when(col("sub_term_id").isNotNull(), col("sub_term_id")).otherwise(
-                        col("text_value")
-                    )
-                )
-            ),
-        )
-        window = Window.partitionBy(
-            "image.observation_id",
-            "image.parameter_stable_id",
-        ).orderBy("_parameterID")
 
+        # Add paramName, paramSeq, and paramValue columns
+        image_vs_simple_parameters_df = (
+            image_vs_simple_parameters_df.withColumn(
+                "paramName", col("simple.parameter_name")
+            )
+            .withColumn("paramSeq", col("image._sequenceID"))
+            .withColumn(
+                "paramValue",
+                when(col("data_point").isNotNull(), col("data_point")).otherwise(
+                    when(col("category").isNotNull(), col("category")).otherwise(
+                        when(
+                            col("sub_term_id").isNotNull(), col("sub_term_id")
+                        ).otherwise(col("text_value"))
+                    )
+                ),
+            )
+        )
+
+        # Group by observation_id and parameter_stable_id and aggregate the lists
         image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
-            col("image.observation_id"), col("image.parameter_stable_id")
+            "image.observation_id", "image.parameter_stable_id"
         ).agg(
             collect_list("_parameterID").alias("paramIDs"),
             collect_list("paramName").alias("paramNames"),
             collect_list("paramSeq").alias("paramSeqs"),
             collect_list("paramValue").alias("paramValues"),
         )
-        # image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-        #     "paramIDs", collect_list("_parameterID").over(window)
-        # )
-        # image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-        #     "paramNames", collect_list("paramName").over(window)
-        # )
-        # image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-        #     "paramSeqs", collect_list("paramSeq").over(window)
-        # )
-        # image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-        #     "paramValues", collect_list("paramValue").over(window)
-        # )
-        image_vs_simple_parameters_df = image_vs_simple_parameters_df.select(
-            "image.observation_id",
-            "image.parameter_stable_id",
-            "paramIDs",
-            "paramNames",
-            "paramSeqs",
-            "paramValues",
-        )
-        # image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
-        #     "image.observation_id", "image.parameter_stable_id"
-        # ).agg(
-        #     max("paramIDs").alias("paramIDs"),
-        #     max("paramNames").alias("paramNames"),
-        #     max("paramSeqs").alias("paramSeqs"),
-        #     max("paramValues").alias("paramValues"),
-        # )
+
+        # Rename columns for joining back with the original image_record_observation_df
         image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumnRenamed(
             "observation_id", "img_observation_id"
         ).withColumnRenamed("parameter_stable_id", "img_parameter_stable_id")
+
+        # Join the aggregated results back with the original image_record_observation_df
         image_record_observation_df = image_record_observation_df.join(
             image_vs_simple_parameters_df,
             (
-                image_record_observation_df["observation_id"]
-                == image_vs_simple_parameters_df["img_observation_id"]
-            )
-            & (
-                image_record_observation_df["parameter_stable_id"]
-                == image_vs_simple_parameters_df["img_parameter_stable_id"]
+                (
+                    image_record_observation_df["observation_id"]
+                    == image_vs_simple_parameters_df["img_observation_id"]
+                )
+                & (
+                    image_record_observation_df["parameter_stable_id"]
+                    == image_vs_simple_parameters_df["img_parameter_stable_id"]
+                )
             ),
             "left_outer",
         )
+
+        # Rename columns as required
         image_record_observation_df = (
             image_record_observation_df.withColumnRenamed(
                 "paramIDs", "parameter_association_stable_id"
@@ -999,6 +981,7 @@ class ExperimentToObservationMapper(PySparkTask):
             .withColumnRenamed("paramSeqs", "parameter_association_sequence_id")
             .withColumnRenamed("paramValues", "parameter_association_value")
         )
+
         return image_record_observation_df
 
     def resolve_simple_media_value(self, media_parameter_df):
