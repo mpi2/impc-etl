@@ -929,7 +929,7 @@ class ExperimentToObservationMapper(PySparkTask):
             image_vs_simple_parameters_df.withColumn(
                 "paramName", col("simple.parameter_name")
             )
-            .withColumn("paramSeq", col("image.assoc_seq_id"))
+            .withColumn("paramSeq", col("assoc_seq_id"))
             .withColumn(
                 "paramValue",
                 when(col("data_point").isNotNull(), col("data_point")).otherwise(
