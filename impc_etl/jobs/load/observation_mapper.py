@@ -907,6 +907,7 @@ class ExperimentToObservationMapper(PySparkTask):
             "parameterAsc",
             explode("image.seriesMediaParameterValue.parameterAssociation"),
         )
+        image_df = image_df.withColumn("assoc_seq_id", "parameterAssoc._sequenceID")
         image_df = image_df.select("parameterAsc.*", "*")
 
         # Join image_df with simple_df on experiment_id, parameter_stable_id, and sequence_id
@@ -919,7 +920,7 @@ class ExperimentToObservationMapper(PySparkTask):
                     col("simple.sequence_id").isNotNull()
                     & col("image._sequenceID").isNotNull()
                 )
-                & (col("simple.sequence_id") == col("image._sequenceID"))
+                & (col("simple.sequence_id") == col("image.assoc_seq_id"))
             ),
         )
 
@@ -928,7 +929,7 @@ class ExperimentToObservationMapper(PySparkTask):
             image_vs_simple_parameters_df.withColumn(
                 "paramName", col("simple.parameter_name")
             )
-            .withColumn("paramSeq", col("image._sequenceID"))
+            .withColumn("paramSeq", col("image.assoc_seq_id"))
             .withColumn(
                 "paramValue",
                 when(col("data_point").isNotNull(), col("data_point")).otherwise(
