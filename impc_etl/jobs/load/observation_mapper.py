@@ -907,9 +907,7 @@ class ExperimentToObservationMapper(PySparkTask):
             "parameterAsc",
             explode("image.seriesMediaParameterValue.parameterAssociation"),
         )
-        image_df = image_df.withColumn(
-            "assoc_seq_id", col("parameterAssoc._sequenceID")
-        )
+        image_df = image_df.withColumn("assoc_seq_id", col("parameterAsc._sequenceID"))
         image_df = image_df.select("parameterAsc.*", "*")
 
         # Join image_df with simple_df on experiment_id, parameter_stable_id, and sequence_id
