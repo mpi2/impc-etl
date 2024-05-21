@@ -945,7 +945,7 @@ class ExperimentToObservationMapper(PySparkTask):
 
         # Group by observation_id and parameter_stable_id and aggregate the lists
         aggregated_df = image_vs_simple_parameters_df.groupBy(
-            "observation_id", "parameter_stable_id"
+            "image.observation_id", "image.parameter_stable_id"
         ).agg(
             collect_list("_parameterID").alias("paramIDs"),
             collect_list("paramName").alias("paramNames"),
