@@ -938,26 +938,26 @@ class ExperimentToObservationMapper(PySparkTask):
             "image.observation_id", "image.parameter_stable_id"
         ).orderBy("_parameterID")
 
-        # image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
-        #     col("image.observation_id"), col("image.parameter_stable_id")
-        # ).agg(
-        #     collect_list("_parameterID").over(window).alias("paramIDs"),
-        #     collect_list("paramName").over(window).alias("paramNames"),
-        #     collect_set("paramSeq").over(window).alias("paramSeqs"),
-        #     collect_set("paramValue").over(window).alias("paramValues")
+        image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
+            col("image.observation_id"), col("image.parameter_stable_id")
+        ).agg(
+            collect_list("_parameterID").over(window).alias("paramIDs"),
+            collect_list("paramName").over(window).alias("paramNames"),
+            collect_list("paramSeq").over(window).alias("paramSeqs"),
+            collect_list("paramValue").over(window).alias("paramValues"),
+        )
+        # image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        #     "paramIDs", collect_list("_parameterID").over(window)
         # )
-        image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-            "paramIDs", collect_list("_parameterID").over(window)
-        )
-        image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-            "paramNames", collect_list("paramName").over(window)
-        )
-        image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-            "paramSeqs", collect_list("paramSeq").over(window)
-        )
-        image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
-            "paramValues", collect_list("paramValue").over(window)
-        )
+        # image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        #     "paramNames", collect_list("paramName").over(window)
+        # )
+        # image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        #     "paramSeqs", collect_list("paramSeq").over(window)
+        # )
+        # image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumn(
+        #     "paramValues", collect_list("paramValue").over(window)
+        # )
         image_vs_simple_parameters_df = image_vs_simple_parameters_df.select(
             "image.observation_id",
             "image.parameter_stable_id",
@@ -966,14 +966,14 @@ class ExperimentToObservationMapper(PySparkTask):
             "paramSeqs",
             "paramValues",
         )
-        image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
-            "image.observation_id", "image.parameter_stable_id"
-        ).agg(
-            max("paramIDs").alias("paramIDs"),
-            max("paramNames").alias("paramNames"),
-            max("paramSeqs").alias("paramSeqs"),
-            max("paramValues").alias("paramValues"),
-        )
+        # image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
+        #     "image.observation_id", "image.parameter_stable_id"
+        # ).agg(
+        #     max("paramIDs").alias("paramIDs"),
+        #     max("paramNames").alias("paramNames"),
+        #     max("paramSeqs").alias("paramSeqs"),
+        #     max("paramValues").alias("paramValues"),
+        # )
         image_vs_simple_parameters_df = image_vs_simple_parameters_df.withColumnRenamed(
             "observation_id", "img_observation_id"
         ).withColumnRenamed("parameter_stable_id", "img_parameter_stable_id")
