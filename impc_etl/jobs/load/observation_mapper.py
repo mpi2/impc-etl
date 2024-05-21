@@ -935,7 +935,7 @@ class ExperimentToObservationMapper(PySparkTask):
             ),
         )
         window = Window.partitionBy(
-            "image.observation_id", "image.parameter_stable_id"
+            "image.observation_id", "image.parameter_stable_id", "_parameterID"
         ).orderBy("_parameterID")
 
         image_vs_simple_parameters_df = image_vs_simple_parameters_df.groupBy(
