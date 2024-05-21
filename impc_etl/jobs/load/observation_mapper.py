@@ -911,14 +911,18 @@ class ExperimentToObservationMapper(PySparkTask):
         ).select(
             "parameterAsc.*", "observation_id", "parameter_stable_id", "experiment_id"
         )
+        image_df = image_df.alias("image")
 
         # Join image_df with simple_df on experiment_id, parameter_stable_id, and sequence_id
         image_vs_simple_parameters_df = image_df.join(
             simple_df,
-            (col("simple.experiment_id") == col("experiment_id"))
-            & (col("simple.parameter_stable_id") == col("_parameterID"))
-            & (col("simple.sequence_id").isNotNull() & col("_sequenceID").isNotNull())
-            & (col("simple.sequence_id") == col("_sequenceID")),
+            (col("simple.experiment_id") == col("image.experiment_id"))
+            & (col("simple.parameter_stable_id") == col("image._parameterID"))
+            & (
+                col("simple.sequence_id").isNotNull()
+                & col("image._sequenceID").isNotNull()
+            )
+            & (col("simple.sequence_id") == col("image._sequenceID")),
         )
 
         # Add paramName, paramSeq, and paramValue columns
