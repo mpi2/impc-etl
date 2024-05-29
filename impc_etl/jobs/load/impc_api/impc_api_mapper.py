@@ -1948,6 +1948,7 @@ class ImpcImagesMapper(PySparkTask):
                         "associatedParameters",
                         "dateOfExperiment",
                         "anatomyTerms",
+                        "imageLink",
                     )
                 ).alias("images")
             )
@@ -2000,6 +2001,7 @@ class ImpcImagesMapper(PySparkTask):
                     "associatedParameters",
                     "dateOfExperiment",
                     "anatomyTerms",
+                    "imageLink",
                 )
             ).alias("images")
         )
