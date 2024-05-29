@@ -1166,6 +1166,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
             "top_level_mp_term_id",
             "top_level_mp_term_name",
             "display_phenotype",
+            "statistical_method",
         )
 
         stats_results_df = stats_results_df.withColumn(
@@ -4187,7 +4188,7 @@ class ImpcCardiovascularLandingPageMapper(PySparkTask):
             "phenotypeDistribution": genotype_phenotype_distribution.rdd.map(
                 lambda row: row.asDict(True)
             ).collect(),
-            "chordDiagram": [],
+            "chordDiagram": chord_diagram_data,
         }
 
         with open(output_path, mode="w") as output_file:
