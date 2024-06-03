@@ -64,6 +64,7 @@ from impc_etl.jobs.load.solr.impc_images_mapper import ImpcImagesLoader
 from impc_etl.jobs.load.solr.mgi_phenotype_mapper import MGIPhenotypeCoreLoader
 from impc_etl.jobs.load.solr.mp_mapper import MpLoader
 from impc_etl.jobs.load.solr.pipeline_mapper import ImpressToParameterMapper
+from impc_etl.jobs.load.solr.stats_raw_data_mapper import ImpcStatisticalRawDataMapper
 from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
 from impc_etl.jobs.load.stats_pipeline_input_mapper import StatsPipelineInputMapper
 from impc_etl.workflow.load import ImpcMergeIndex, ParquetSolrLoader
@@ -131,7 +132,7 @@ class ImpcPostStatisticalAnalysisOnDemandSolr(luigi.Task):
     parquet_solr_map = {
         "observations_parquet": "experiment",
         "statistical_results_raw_data_include_parquet": "statistical-result",
-        "statistical_results_raw_data_include_parquet_raw_data": "statistical-raw-data",
+        "statistical_raw_data_parquet": "statistical-raw-data",
         "gene_data_include_parquet": "gene",
         "genotype_phenotype_parquet": "genotype-phenotype",
         "mp_parquet": "mp",
@@ -152,6 +153,7 @@ class ImpcPostStatisticalAnalysisOnDemandSolr(luigi.Task):
             ImpcImagesLoader(),
             ExperimentToObservationMapper(),
             StatsResultsMapper(),
+            ImpcStatisticalRawDataMapper(),
         ]
 
     def run(self):
