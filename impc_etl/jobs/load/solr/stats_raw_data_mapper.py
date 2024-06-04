@@ -122,15 +122,12 @@ class ImpcStatisticalRawDataMapper(PySparkTask):
             "biological_sample_group",
             "date_of_experiment",
             "external_sample_id",
-            "sex",
-            "weight",
+            col("sex").alias("specimen_sex"),
+            col("weight").alias("body_weight"),
             "data_point",
             "category",
             "time_point",
             "discrete_point",
-            "date_of_birth",
-            "sub_term_id",
-            "sub_term_name",
         ).distinct()
 
         datasets_df = dataset_observation_index_df.join(
