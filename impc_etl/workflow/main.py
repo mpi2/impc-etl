@@ -173,17 +173,6 @@ class ImpcPostStatisticalAnalysisOnDemandSolr(luigi.Task):
                     solr_port=8986 + index,
                 )
             )
-            if "statistical" in dependency.path:
-                tasks.append(
-                    ParquetSolrLoader(
-                        parquet_path=dependency.path + "_raw_data",
-                        core_name=self.parquet_solr_map[parquet_name + "_raw_data"],
-                        big_task=big_task,
-                        partition_size=1000 if big_task else 10,
-                        solr_json_path=self.output_path,
-                        solr_port=8986 + index + 1,
-                    )
-                )
         yield tasks
 
 
