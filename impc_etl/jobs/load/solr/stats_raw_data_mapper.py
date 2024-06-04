@@ -13,11 +13,12 @@ from pyspark.sql.functions import (
     struct,
     to_json,
     regexp_replace,
-    base64,
     arrays_zip,
     udf,
 )
 from pyspark.sql.types import DoubleType, StringType
+import base64
+
 
 from impc_etl.jobs.load import ExperimentToObservationMapper
 from impc_etl.jobs.load.solr.stats_results_mapper import StatsResultsMapper
