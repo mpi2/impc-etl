@@ -1167,6 +1167,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
             "top_level_mp_term_name",
             "display_phenotype",
             "statistical_method",
+            "status",
         )
 
         stats_results_df = stats_results_df.withColumn(
