@@ -1014,6 +1014,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         return [
             StatsResultsMapper(),
             OntologyTermHierarchyExtractor(),
+            ImpressToParameterMapper(),
         ]
 
     def output(self):
@@ -1032,6 +1033,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         return [
             self.input()[0].path,
             self.input()[1].path,
+            self.input()[2].path,
             self.output().path,
         ]
 
@@ -1044,7 +1046,8 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         # Parsing app options
         stats_results_parquet_path = args[0]
         ontology_term_hierarchy_parquet_path = args[1]
-        output_path = args[2]
+        impress_parquet_path = args[2]
+        output_path = args[3]
 
         stats_results_df = spark.read.parquet(stats_results_parquet_path)
         ontology_term_hierarchy_df = spark.read.parquet(
@@ -1134,6 +1137,26 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         )
         for col_name in explode_cols:
             stats_results_df = stats_results_df.withColumn(col_name, explode(col_name))
+        impress_df = (
+            spark.read.parquet(impress_parquet_path)
+            .select(
+                "fully_qualified_name",
+                col("procedure.minAnimals").alias("procedure_min_animals"),
+                col("procedure.minFemales").alias("procedure_min_females"),
+                col("procedure.minMales").alias("procedure_min_males"),
+            )
+            .distinct()
+        )
+        stats_results_df = stats_results_df.withColumn(
+            "fully_qualified_name",
+            concat_ws(
+                "_", "pipeline_stable_id", "procedure_stable_id", "parameter_stable_id"
+            ),
+        )
+        stats_results_df = stats_results_df.join(
+            impress_df, "fully_qualified_name", "left_outer"
+        )
+        stats_results_df = stats_results_df.drop("fully_qualified_name")
         stats_results_df = stats_results_df.select(
             "doc_id",
             "data_type",
@@ -1141,6 +1164,9 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
             "pipeline_stable_id",
             "procedure_stable_id",
             "procedure_name",
+            "procedure_min_animals",
+            "procedure_min_females",
+            "procedure_min_males",
             "parameter_stable_id",
             "parameter_name",
             "allele_accession_id",
