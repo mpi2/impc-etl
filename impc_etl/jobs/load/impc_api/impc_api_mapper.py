@@ -2277,7 +2277,10 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
         ]
         impress_parameter_df = spark.read.parquet(impress_parameter_parquet_path)
         unit_df = impress_parameter_df.select(
-            "fully_qualified_name", col("unit_x").alias("x"), col("unit_y").alias("y")
+            "fully_qualified_name",
+            col("unit_x").alias("x"),
+            col("unit_y").alias("y"),
+            col("categories").alias("parameter_category_list"),
         )
         unit_df = unit_df.withColumn("unit", struct("x", "y"))
         unit_df = unit_df.drop("x", "y")
@@ -2500,6 +2503,7 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
             "mp_term_id_options",
             "mp_term_name_options",
             "unit",
+            "parameter_category_list",
         )
 
         stats_results_df = stats_results_df.withColumn(
