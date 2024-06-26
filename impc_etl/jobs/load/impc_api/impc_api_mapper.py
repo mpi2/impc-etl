@@ -4649,21 +4649,30 @@ class ImpcEmbryoLandingMapper(PySparkTask):
             "primary_viability_table": [
                 {
                     **row.asDict(),
-                    "genes": dict(zip(["mgiGeneAccessionId", "geneSymbol"], row.genes)),
+                    "genes": [
+                        dict(zip(["mgiGeneAccessionId", "geneSymbol"], gene_tuple))
+                        for gene_tuple in row.genes
+                    ],
                 }
                 for row in impc_viability_outcomes_table_df.collect()
             ],
             "primary_viability_chart": [
                 {
                     **row.asDict(),
-                    "genes": dict(zip(["mgiGeneAccessionId", "geneSymbol"], row.genes)),
+                    "genes": [
+                        dict(zip(["mgiGeneAccessionId", "geneSymbol"], gene_tuple))
+                        for gene_tuple in row.genes
+                    ],
                 }
                 for row in impc_viability_outcomes_chart_df.collect()
             ],
             "secondary_viability_data": [
                 {
                     **row.asDict(),
-                    "genes": dict(zip(["mgiGeneAccessionId", "geneSymbol"], row.genes)),
+                    "genes": [
+                        dict(zip(["mgiGeneAccessionId", "geneSymbol"], gene_tuple))
+                        for gene_tuple in row.genes
+                    ],
                 }
                 for row in impc_secondary_viability_windows_df.collect()
             ],
