@@ -4585,7 +4585,9 @@ class ImpcEmbryoLandingMapper(PySparkTask):
 
         impc_secondary_viability_windows_df = (
             impc_secondary_viability_windows_df.groupBy("FUSIL").agg(
-                collect_set(struct("mgi_gene_accession_id", "gene_symbol"))
+                collect_set(struct("mgi_gene_accession_id", "gene_symbol")).alias(
+                    "genes"
+                )
             )
         )
 
@@ -4644,18 +4646,18 @@ class ImpcEmbryoLandingMapper(PySparkTask):
         ).agg(collect_set(to_camel_case("procedure_name")).alias("procedureNames"))
 
         embryo_landing_json = {
-            "primary_viability_table": impc_viability_outcomes_table_df.rdd.map(
-                lambda row: row.asDict()
-            ).collect(),
-            "primary_viability_chart": impc_viability_outcomes_chart_df.rdd.map(
-                lambda row: row.asDict()
-            ).collect(),
-            "secondary_viability_data": impc_secondary_viability_windows_df.rdd.map(
-                lambda row: row.asDict()
-            ).collect(),
-            "embryo_data_availability_grid": embryo_data_df.rdd.map(
-                lambda row: row.asDict()
-            ).collect(),
+            "primary_viability_table": [
+                row.asDict() for row in impc_viability_outcomes_table_df.collect()
+            ],
+            "primary_viability_chart": [
+                row.asDict() for row in impc_viability_outcomes_chart_df.collect()
+            ],
+            "secondary_viability_data": [
+                row.asDict() for row in impc_secondary_viability_windows_df.collect()
+            ],
+            "embryo_data_availability_grid": [
+                row.asDict() for row in embryo_data_df.collect()
+            ],
         }
 
         with open(output_path, mode="w") as output_file:
