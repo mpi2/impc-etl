@@ -4470,7 +4470,7 @@ class ImpcEmbryoLandingMapper(PySparkTask):
     name: str = "ImpcEmbryoLandingMapper"
 
     embryo_data_json_path = luigi.Parameter()
-    embryo_viability_calls_csv_path = luigi.Parameter()
+    embryo_viability_calls_tsv_path = luigi.Parameter()
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
@@ -4499,7 +4499,7 @@ class ImpcEmbryoLandingMapper(PySparkTask):
             self.input()[1].path,
             self.input()[2].path,
             self.embryo_data_json_path,
-            self.embryo_viability_calls_csv_path,
+            self.embryo_viability_calls_tsv_path,
             self.output().path,
         ]
 
@@ -4514,7 +4514,7 @@ class ImpcEmbryoLandingMapper(PySparkTask):
         impress_parameter_parquet_path = args[1]
         gene_parquet_path = args[2]
         embryo_data_json_path = args[3]
-        embryo_viability_calls_csv_path = args[4]
+        embryo_viability_calls_tsv_path = args[4]
         output_path = args[5]
 
         observations_df = spark.read.parquet(observations_parquet_path)
@@ -4574,7 +4574,7 @@ class ImpcEmbryoLandingMapper(PySparkTask):
         )
 
         impc_secondary_viability_windows_df = spark.read.csv(
-            embryo_viability_calls_csv_path, header=True
+            embryo_viability_calls_tsv_path, header=True, sep="\t"
         )
 
         impc_secondary_viability_windows_df = (
