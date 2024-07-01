@@ -4629,7 +4629,7 @@ class ImpcEmbryoLandingMapper(PySparkTask):
             col("analysis_view_url"),
             col("has_automated_analysis"),
             col("url").alias("embryo_viewer_url"),
-            col(""),
+            col("is_umass_gene"),
         ).distinct()
 
         for col_name in embryo_data_df.columns:
