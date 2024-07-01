@@ -4629,7 +4629,7 @@ class ImpcEmbryoLandingMapper(PySparkTask):
             col("analysis_view_url"),
             col("has_automated_analysis"),
             col("url").alias("embryo_viewer_url"),
-            col("is_umass_gene"),
+            col(""),
         ).distinct()
 
         for col_name in embryo_data_df.columns:
@@ -4643,10 +4643,11 @@ class ImpcEmbryoLandingMapper(PySparkTask):
             to_camel_case("analysis_view_url"),
             to_camel_case("has_automated_analysis"),
             to_camel_case("embryo_viewer_url"),
+            to_camel_case("is_umass_gene"),
         ).agg(collect_set(to_camel_case("procedure_name")).alias("procedureNames"))
 
         embryo_landing_json = {
-            "primary_viability_table": [
+            "primaryViabilityTable": [
                 {
                     **row.asDict(),
                     "genes": [
@@ -4656,7 +4657,7 @@ class ImpcEmbryoLandingMapper(PySparkTask):
                 }
                 for row in impc_viability_outcomes_table_df.collect()
             ],
-            "primary_viability_chart": [
+            "primaryViabilityChart": [
                 {
                     **row.asDict(),
                     "genes": [
@@ -4666,7 +4667,7 @@ class ImpcEmbryoLandingMapper(PySparkTask):
                 }
                 for row in impc_viability_outcomes_chart_df.collect()
             ],
-            "secondary_viability_data": [
+            "secondaryViabilityData": [
                 {
                     **row.asDict(),
                     "genes": [
@@ -4676,7 +4677,7 @@ class ImpcEmbryoLandingMapper(PySparkTask):
                 }
                 for row in impc_secondary_viability_windows_df.collect()
             ],
-            "embryo_data_availability_grid": [
+            "embryoDataAvailabilityGrid": [
                 row.asDict() for row in embryo_data_df.collect()
             ],
         }
