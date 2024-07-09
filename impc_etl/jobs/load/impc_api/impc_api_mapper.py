@@ -4014,7 +4014,7 @@ class ImpcLateAdultLandingPageMapper(PySparkTask):
         procedure_parameter_list = sorted(
             [
                 str(row.procedure_name)
-                for row in late_adult_stats_results_df.select("procedure_parameter")
+                for row in late_adult_parameter_data.select("procedure_parameter")
                 .sort("procedure_parameter")
                 .distinct()
                 .collect()
