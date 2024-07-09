@@ -3913,7 +3913,7 @@ class ImpcLateAdultLandingPageMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/late_adult_landing.json"
+            f"{self.output_path}/impc_web_api/late_adult_landing"
         )
 
     def app_options(self):
@@ -3992,8 +3992,87 @@ class ImpcLateAdultLandingPageMapper(PySparkTask):
             ),
         }
 
-        with open(output_path, mode="w") as output_file:
+        late_adult_parameter_data = (
+            late_adult_stats_results_df.withColumn(
+                "significantInt",
+                when(col("significant") == True, 2)
+                .when(col("significant") == False, 1)
+                .otherwise(0),
+            )
+            .select(
+                "marker_accession_id",
+                "marker_symbol",
+                "procedure_name",
+                concat_ws("_", col("procedure_name"), col("parameter_name")).alias(
+                    "procedure_parameter"
+                ),
+                "significantInt",
+            )
+            .sort("marker_symbol", "procedure_parameter")
+            .distinct()
+        )
+        procedure_parameter_list = sorted(
+            [
+                str(row.procedure_name)
+                for row in late_adult_stats_results_df.select("procedure_parameter")
+                .sort("procedure_parameter")
+                .distinct()
+                .collect()
+            ]
+        )
+        late_adult_parameter_data = (
+            late_adult_parameter_data.groupBy(
+                "marker_accession_id",
+                "marker_symbol",
+                "procedure_name",
+            )
+            .pivot("procedure_parameter")
+            .max("significantInt")
+            .na.fill(0)
+            .where(col("marker_symbol").isNotNull())
+        )
+
+        parameter_late_adult_data_dicts = [
+            {
+                "columns": [
+                    p.replace(procedure_name + "_", "")
+                    for p in procedure_parameter_list
+                    if p.startswith(procedure_name)
+                ],
+                "rows": sorted(
+                    [
+                        {
+                            "mgiGeneAccessionId": row.marker_accession_id,
+                            "markerSymbol": row.marker_symbol,
+                            "significance": [
+                                int(row[p])
+                                for p in procedure_parameter_list
+                                if p.startswith(procedure_name)
+                            ],
+                        }
+                        for row in late_adult_parameter_data.where(
+                            col("procedure_name") == procedure_name
+                        ).collect()
+                    ],
+                    key=lambda x: x["markerSymbol"],
+                ),
+            }
+            for procedure_name in procedure_list
+        ]
+
+        if not os.path.exists(output_path):
+            # Create the directory
+            os.makedirs(output_path)
+
+        with open(f"{output_path}/procedure_level_data.json", mode="w") as output_file:
             output_file.write(json.dumps(procedure_late_adult_data_dict))
+
+        for index, procedure_name in enumerate(procedure_list):
+            with open(
+                f"{output_path}/{procedure_name.lower().replace(' ', '_')}_data.json",
+                mode="w",
+            ) as output_file:
+                output_file.write(json.dumps(parameter_late_adult_data_dicts[index]))
 
 
 class ImpcCardiovascularLandingPageMapper(PySparkTask):
@@ -4593,7 +4672,7 @@ class ImpcEmbryoLandingMapper(PySparkTask):
 
         impc_secondary_viability_windows_df = (
             impc_secondary_viability_windows_df.withColumnRenamed(
-                "FUSIL", "window_of_lethality"
+                "FUSIL", "windowOfLethality"
             )
         )
 
