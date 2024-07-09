@@ -4013,7 +4013,7 @@ class ImpcLateAdultLandingPageMapper(PySparkTask):
         )
         procedure_parameter_list = sorted(
             [
-                str(row.procedure_name)
+                str(row.procedure_parameter)
                 for row in late_adult_parameter_data.select("procedure_parameter")
                 .sort("procedure_parameter")
                 .distinct()
