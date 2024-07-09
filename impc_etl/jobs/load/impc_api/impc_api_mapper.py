@@ -1,3 +1,5 @@
+import re
+
 import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
@@ -4067,9 +4069,21 @@ class ImpcLateAdultLandingPageMapper(PySparkTask):
         with open(f"{output_path}/procedure_level_data.json", mode="w") as output_file:
             output_file.write(json.dumps(procedure_late_adult_data_dict))
 
+        def sanitize_filename(filename):
+            # Define a regex pattern to match invalid characters
+            pattern = r'[<>:"/\\|?*]'
+
+            # Replace invalid characters with an underscore
+            sanitized_filename = re.sub(pattern, "_", filename)
+
+            # Optionally strip leading/trailing whitespace and dots
+            sanitized_filename = sanitized_filename.strip().strip(".")
+
+            return sanitized_filename.lower()
+
         for index, procedure_name in enumerate(procedure_list):
             with open(
-                f"{output_path}/{procedure_name.lower().replace(' ', '_')}_data.json",
+                f"{output_path}/{sanitize_filename(procedure_name)}_data.json",
                 mode="w",
             ) as output_file:
                 output_file.write(json.dumps(parameter_late_adult_data_dicts[index]))
