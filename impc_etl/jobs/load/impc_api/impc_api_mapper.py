@@ -4077,7 +4077,7 @@ class ImpcLateAdultLandingPageMapper(PySparkTask):
             sanitized_filename = re.sub(pattern, "_", filename)
 
             # Optionally strip leading/trailing whitespace and dots
-            sanitized_filename = sanitized_filename.strip().strip(".")
+            sanitized_filename = sanitized_filename.strip().strip(".").strip("_")
 
             return sanitized_filename.lower()
 
