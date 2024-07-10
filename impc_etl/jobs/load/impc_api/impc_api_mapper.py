@@ -4632,7 +4632,8 @@ class ImpcEmbryoLandingMapper(PySparkTask):
             "outcome",
             when(col("category").isNotNull(), col("category")).otherwise(
                 concat(
-                    split(col("text_value"), "-").getItem(0),
+                    split(col("text_value"), " - ").getItem(0),
+                    lit(" - "),
                     when(lower(col("text_value")).contains("lethal"), "Lethal")
                     .when(lower(col("text_value")).contains("subviable"), "Subviable")
                     .when(
@@ -4652,7 +4653,9 @@ class ImpcEmbryoLandingMapper(PySparkTask):
 
         impc_viability_outcomes_table_df = impc_viability_outcomes_df.withColumn(
             "outcome",
-            when(col("category").isNotNull(), col("category")).otherwise(
+            when(
+                col("category").isNotNull(), split(col("category"), " - ").getItem(1)
+            ).otherwise(
                 when(lower(col("text_value")).contains("lethal"), "Lethal")
                 .when(lower(col("text_value")).contains("subviable"), "Subviable")
                 .when(
