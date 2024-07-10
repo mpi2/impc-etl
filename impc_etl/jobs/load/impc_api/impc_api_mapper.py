@@ -4618,7 +4618,10 @@ class ImpcEmbryoLandingMapper(PySparkTask):
                 )
             )
             .where(col("datasource_name") == "IMPC")
-            .where(~(col("text_value") == "Cannot be calculated"))
+            .where(
+                (~(col("text_value") == "Cannot be calculated"))
+                | col("text_value").isNull()
+            )
         )
 
         impc_viability_outcomes_df = impc_viability_outcomes_df.withColumnRenamed(
