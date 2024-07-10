@@ -4071,7 +4071,7 @@ class ImpcLateAdultLandingPageMapper(PySparkTask):
 
         def sanitize_filename(filename):
             # Define a regex pattern to match invalid characters
-            pattern = r'[<>:"/\\|?*\s\(\)-]'
+            pattern = r'[<>:"/\\|?*\s\(\)-]+'
 
             # Replace invalid characters with an underscore
             sanitized_filename = re.sub(pattern, "_", filename)
