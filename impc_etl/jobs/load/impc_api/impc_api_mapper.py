@@ -4427,7 +4427,7 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
 
         significance_df = significance_df.withColumn(
             "hasTissue",
-            when(col("hasTissue").isNotNull(), lit(False)).otherwise(col("hasTissue")),
+            when(col("hasTissue").isNull(), lit(False)).otherwise(col("hasTissue")),
         )
 
         significance_data = significance_df.collect()
