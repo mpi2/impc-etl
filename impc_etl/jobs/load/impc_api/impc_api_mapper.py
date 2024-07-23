@@ -4437,7 +4437,9 @@ class ImpcHistopathologyLandingPageMapper(PySparkTask):
                 "markerSymbol": row.marker_symbol,
                 "mgiGeneAccessionId": str(row.marker_accession_id),
                 "hasTissue": bool(row.hasTissue),
-                "allelesWithTissue": [str(val) for val in row["allelesWithTissue"]],
+                "allelesWithTissue": [str(val) for val in row["allelesWithTissue"]]
+                if row["allelesWithTissue"] is not None
+                else None,
                 "significance": [int(row[col_name]) for col_name in anatomy_list],
             }
             for row in significance_data
