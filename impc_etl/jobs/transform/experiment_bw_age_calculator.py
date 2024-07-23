@@ -314,9 +314,10 @@ class ExperimentBWAgeCalculator(PySparkTask):
         weights and tries to find the closest BW that belongs to the same procedure first. If it doesn't find any,
         it tries with BW observations coming from the _BWT procedures, if there is none _BWT procedure observations,
         it looks for any other procedures. Finally, the  algorithm limits the maximum distance for between the closest
-        BW observation anf the experiment date to 5 days, if there is not suitable BW assocition in the 5 days window
+        BW observation anf the experiment date to 5 days, if there is no suitable BW association in the 5 days window
         around the experiment date, the BW association is marked as null.
         """
+        time_window = 5 if "LA_" not in procedure_group else 10
         if specimen_weights is None or len(specimen_weights) == 0:
             return {
                 "sourceExperimentId": None,
@@ -395,9 +396,11 @@ class ExperimentBWAgeCalculator(PySparkTask):
                     nearest_weight = candidate_weight
                     nearest_diff = candidate_diff
 
-        days_diff = nearest_diff / 86400000 if nearest_diff is not None else 6
+        days_diff = (
+            nearest_diff / 86400000 if nearest_diff is not None else time_window + 1
+        )
 
-        if nearest_weight is not None and days_diff < 5:
+        if nearest_weight is not None and days_diff < time_window:
             return {**nearest_weight.asDict(), "error": errors}
         else:
             return {
