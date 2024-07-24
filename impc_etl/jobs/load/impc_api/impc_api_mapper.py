@@ -4797,12 +4797,13 @@ class ImpcIDGMapper(PySparkTask):
     name: str = "ImpcIDGMapper"
 
     ortholog_mapping_report_tsv_path = luigi.Parameter()
+    idg_family_mapping_report_json_path = luigi.Parameter()
 
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return [GenotypePhenotypeLoader()]
+        return [GeneLoader()]
 
     def output(self):
         """
@@ -4810,7 +4811,7 @@ class ImpcIDGMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/phenotype_pleiotropy.json"
+            f"{self.output_path}/impc_web_api/idg_landing.json"
         )
 
     def app_options(self):
@@ -4818,6 +4819,8 @@ class ImpcIDGMapper(PySparkTask):
         Generates the options pass to the PySpark job
         """
         return [
+            self.idg_family_mapping_report_json_path,
+            self.ortholog_mapping_report_tsv_path,
             self.input()[0].path,
             self.output().path,
         ]
@@ -4829,63 +4832,39 @@ class ImpcIDGMapper(PySparkTask):
         spark = SparkSession(sc)
 
         # Parsing app options
-        genotype_phenotype_parquet_path = args[0]
-        output_path = args[1]
+        idg_family_mapping_report_json_path = args[0]
+        ortholog_mapping_report_tsv_path = args[1]
+        gene_parquet_path = args[2]
+        output_path = args[3]
 
-        genotype_phenotype_df = spark.read.parquet(genotype_phenotype_parquet_path)
-        top_level_phenotypes = (
-            genotype_phenotype_df.select(
-                explode("top_level_mp_term_id").alias("top_level_mp_term_id")
-            )
-            .groupBy()
-            .agg(collect_set("top_level_mp_term_id"))
-            .collect()[0][0]
+        idg_family_df = spark.read.json(idg_family_mapping_report_json_path)
+        ortholog_mapping_df = spark.read.csv(ortholog_mapping_report_tsv_path, sep="\t")
+        gene_df = spark.read.parquet(gene_parquet_path)
+
+        gene_df = gene_df.select(
+            "mgi_accession_id",
+            "marker_symbol",
+            "significant_top_level_mp_terms",
+            "not_significant_top_level_mp_terms",
+            "phenotype_status",
+            "mouse_production_status",
+            "es_cell_production_status",
+        ).distinct()
+
+        ortholog_mapping_df = ortholog_mapping_df.select(
+            col("Mgi Gene Acc Id").alias("mgi_accession_id"),
+            col("Human Gene Symbol").alias("human_gene_symbol"),
+        ).distinct()
+
+        gene_df = gene_df.join(
+            ortholog_mapping_df,
+            "mgi_accession_id",
         )
+        idg_family_df = idg_family_df.withColumnRenamed("Gene", "human_gene_symbol")
+        idg_family_df = idg_family_df.withColumnRenamed("IDGFamily", "idg_family")
+        gene_df = gene_df.join(idg_family_df, "human_gene_symbol")
 
-        pleiotropy_json = {}
+        idg_landing_json = gene_df.collect()
 
-        for top_level_phenotype in top_level_phenotypes:
-            pleiotropy_json[top_level_phenotype] = (
-                genotype_phenotype_df.select(
-                    "marker_accession_id",
-                    "marker_symbol",
-                    "mp_term_id",
-                    "intermediate_mp_term_id",
-                    "top_level_mp_term_id",
-                )
-                .distinct()
-                .groupBy("marker_accession_id", "marker_symbol")
-                .agg(
-                    collect_set("top_level_mp_term_id").alias("top_level_mp_term_ids"),
-                    sum(
-                        when(
-                            (col("mp_term_id") == lit(top_level_phenotype))
-                            | array_contains(
-                                "intermediate_mp_term_id", lit(top_level_phenotype)
-                            )
-                            | array_contains(
-                                "top_level_mp_term_id", lit(top_level_phenotype)
-                            ),
-                            lit(1),
-                        ).otherwise(lit(0))
-                    ).alias("phenotypeCount"),
-                    sum(
-                        when(
-                            (col("mp_term_id") == lit(top_level_phenotype))
-                            | array_contains(
-                                "intermediate_mp_term_id", lit(top_level_phenotype)
-                            )
-                            | array_contains(
-                                "top_level_mp_term_id", lit(top_level_phenotype)
-                            ),
-                            lit(0),
-                        ).otherwise(lit(1))
-                    ).alias("otherPhenotypeCount"),
-                )
-                .where(col("phenotypeCount") > 0)
-                .drop("top_level_mp_term_ids")
-                .rdd.map(lambda row: row.asDict(True))
-                .collect()
-            )
         with open(output_path, mode="w") as output_file:
-            output_file.write(json.dumps(pleiotropy_json))
+            output_file.write(json.dumps(idg_landing_json))
