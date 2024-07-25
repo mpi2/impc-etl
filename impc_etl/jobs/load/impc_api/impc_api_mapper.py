@@ -4838,7 +4838,9 @@ class ImpcIDGMapper(PySparkTask):
         output_path = args[3]
 
         idg_family_df = spark.read.json(idg_family_mapping_report_json_path)
-        ortholog_mapping_df = spark.read.csv(ortholog_mapping_report_tsv_path, sep="\t")
+        ortholog_mapping_df = spark.read.csv(
+            ortholog_mapping_report_tsv_path, sep="\t", header=True
+        )
         gene_df = spark.read.parquet(gene_parquet_path)
 
         gene_df = gene_df.select(
