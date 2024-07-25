@@ -4866,7 +4866,7 @@ class ImpcIDGMapper(PySparkTask):
         idg_family_df = idg_family_df.withColumnRenamed("IDGFamily", "idg_family")
         gene_df = gene_df.join(idg_family_df, "human_gene_symbol")
 
-        idg_landing_json = gene_df.collect()
+        idg_landing_json = gene_df.rdd.map(lambda row: row.asDict(True)).collect()
 
         with open(output_path, mode="w") as output_file:
             output_file.write(json.dumps(idg_landing_json))
