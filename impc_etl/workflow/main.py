@@ -133,7 +133,7 @@ class ImpcPostStatisticalAnalysisOnDemandSolr(luigi.Task):
 
     parquet_solr_map = {
         "observations_parquet": "experiment",
-        "statistical_results_raw_data_include_parquet": "statistical-result",
+        "statistical_results_raw_data_bundled_parquet": "statistical-result",
         "statistical_raw_data_parquet": "statistical-raw-data",
         "gene_data_include_parquet": "gene",
         "genotype_phenotype_parquet": "genotype-phenotype",
@@ -154,7 +154,7 @@ class ImpcPostStatisticalAnalysisOnDemandSolr(luigi.Task):
             ProductReportExtractor(),
             ImpcImagesLoader(),
             ExperimentToObservationMapper(),
-            StatsResultsMapper(),
+            StatsResultsMapper(raw_data_in_output="bundled"),
             ImpcStatisticalRawDataMapper(),
         ]
 
