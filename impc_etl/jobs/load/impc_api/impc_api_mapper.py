@@ -3766,9 +3766,15 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             "MGI ID": "mgi_accession_id",
             "Assignment Status": "assignment_status",
             "ES Null Production Status": "null_allele_production_status",
+            "ES Null Production Work Unit": "null_allele_production_center",
             "ES Conditional Production Status": "conditional_allele_production_status",
+            "ES Conditional Production Work Unit": "conditional_allele_production_center",
             "Crispr Production Status": "crispr_allele_production_status",
+            "Crispr Production Work Unit": "crispr_allele_production_center",
+            "Crispr Conditional Production Status": "crispr_conditional_allele_production_status",
+            "Crispr Conditional Production Work Unit": "crispr_conditional_allele_production_center",
             "Early Adult Phenotyping Status": "phenotyping_status",
+            "Phenotyping Work Unit": "phenotyping_center",
         }
         for col_name in gentar_gene_status_df.columns:
             new_col_name = (
@@ -3795,10 +3801,12 @@ class ImpcReleaseMetadataMapper(PySparkTask):
         def choose_latest_production_status(row: Row):
             latest_status_order = 0
             latest_status = None
+            latest_center = None
             for status_col in [
                 "null_allele_production_status",
                 "conditional_allele_production_status",
                 "crispr_allele_production_status",
+                "crispr_conditional_allele_production_status",
             ]:
                 if (
                     row[status_col] in allele_mouse_prod_status_map
@@ -3807,11 +3815,38 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 ):
                     latest_status_order = allele_mouse_prod_status_map[row[status_col]]
                     latest_status = row[status_col]
+                    latest_center = row[status_col.replace("status", "center")]
             return latest_status
+
+        def choose_latest_production_center(row: Row):
+            latest_status_order = 0
+            latest_status = None
+            latest_center = None
+            for status_col in [
+                "null_allele_production_status",
+                "conditional_allele_production_status",
+                "crispr_allele_production_status",
+                "crispr_conditional_allele_production_status",
+            ]:
+                if (
+                    row[status_col] in allele_mouse_prod_status_map
+                    and allele_mouse_prod_status_map[row[status_col]]
+                    > latest_status_order
+                ):
+                    latest_center = row[status_col.replace("status", "center")]
+            return latest_center
 
         genotyping_status_df = gentar_gene_status_df.withColumn(
             "latest_status",
             udf(choose_latest_production_status, StringType())(
+                struct(
+                    *[gentar_gene_status_df[x] for x in gentar_gene_status_df.columns]
+                )
+            ),
+        )
+        genotyping_status_df = genotyping_status_df.withColumn(
+            "latest_center",
+            udf(choose_latest_production_center, StringType())(
                 struct(
                     *[gentar_gene_status_df[x] for x in gentar_gene_status_df.columns]
                 )
@@ -3824,8 +3859,32 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             .collect()
         )
 
+        genotyping_status_by_center = (
+            genotyping_status_df.groupBy(
+                col("latest_status").alias("status"),
+                col("latest_center").alias("center"),
+            )
+            .agg(countDistinct("mgi_accession_id").alias("count"))
+            .rdd.map(lambda row: row.asDict())
+            .collect()
+        )
+
         phenotyping_status = (
             genotyping_status_df.groupBy(col("phenotyping_status").alias("status"))
+            .agg(countDistinct("mgi_accession_id").alias("count"))
+            .rdd.map(lambda row: row.asDict())
+            .collect()
+        )
+
+        phenotyping_status_by_center = (
+            genotyping_status_df.withColumn(
+                "phenotyping_center", explode(split("phenotyping_center", ", "))
+            )
+            .select("phenotyping_status", "phenotyping_center", "mgi_accession_id")
+            .groupBy(
+                col("phenotyping_status").alias("status"),
+                col("phenotyping_center").alias("center"),
+            )
             .agg(countDistinct("mgi_accession_id").alias("count"))
             .rdd.map(lambda row: row.asDict())
             .collect()
@@ -3882,9 +3941,13 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             "sampleCounts": lines_by_phenotyping_center,
             "dataQualityChecks": data_quality_counts,
             "phenotypeAnnotations": phenotype_annotations,
-            "productionStatus": [
+            "productionStatusOverall": [
                 {"statusType": "genotyping", "counts": genotyping_status},
                 {"statusType": "phenotyping", "counts": phenotyping_status},
+            ],
+            "productionStatusByCenter": [
+                {"statusType": "genotyping", "counts": genotyping_status_by_center},
+                {"statusType": "phenotyping", "counts": phenotyping_status_by_center},
             ],
             "phenotypeAssociationsByProcedure": phenotype_associations_by_procedure,
         }
