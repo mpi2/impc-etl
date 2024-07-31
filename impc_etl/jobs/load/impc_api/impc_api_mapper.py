@@ -52,6 +52,7 @@ from pyspark.sql.functions import (
     size,
     array_intersect,
     filter,
+    trim,
 )
 
 from impc_etl.config.constants import Constants
@@ -3624,7 +3625,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/release_metadata_json"
+            f"{self.output_path}/impc_web_api/release_metadata.json"
         )
 
     def app_options(self):
@@ -3860,7 +3861,10 @@ class ImpcReleaseMetadataMapper(PySparkTask):
         )
 
         genotyping_status_by_center = (
-            genotyping_status_df.groupBy(
+            genotyping_status_df.withColumn(
+                "latest_center", explode(split(trim("latest_center"), ",\s+"))
+            )
+            .groupBy(
                 col("latest_status").alias("status"),
                 col("latest_center").alias("center"),
             )
@@ -3878,7 +3882,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
 
         phenotyping_status_by_center = (
             genotyping_status_df.withColumn(
-                "phenotyping_center", explode(split("phenotyping_center", ", "))
+                "phenotyping_center", explode(split(trim("phenotyping_center"), ",\s+"))
             )
             .select("phenotyping_status", "phenotyping_center", "mgi_accession_id")
             .groupBy(
