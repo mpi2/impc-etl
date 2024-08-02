@@ -1606,12 +1606,6 @@ class ImpcPublicationsMapper(SmallPySparkTask):
         )
         if not os.path.exists(aggregations_path):
             os.makedirs(aggregations_path)
-        with open(
-            output_path.replace("publications", "publications_aggregation")
-            + "/incremental_counts_by_year.json",
-            "w",
-        ) as f:
-            json.dump(incremental_counts_by_year, f, ensure_ascii=False)
 
         # Count by year and quarter
         publications_by_quarter = [
@@ -1649,13 +1643,6 @@ class ImpcPublicationsMapper(SmallPySparkTask):
             .collect()
         ]
 
-        with open(
-            output_path.replace("publications", "publications_aggregation")
-            + "/publications_by_quarter.json",
-            "w",
-        ) as f:
-            json.dump(publications_by_quarter, f, ensure_ascii=False)
-
         # Count by Grant Agency
         publications_by_grant_agency = (
             publications_df.where(col("status") == "reviewed")
@@ -1670,10 +1657,18 @@ class ImpcPublicationsMapper(SmallPySparkTask):
 
         with open(
             output_path.replace("publications", "publications_aggregation")
-            + "/publications_by_grant_agency.json",
+            + "/publications_aggregation.json",
             "w",
         ) as f:
-            json.dump(publications_by_grant_agency, f, ensure_ascii=False)
+            json.dump(
+                {
+                    "incrementalCountsByYear": incremental_counts_by_year,
+                    "publicationsByQuarter": publications_by_quarter,
+                    "publicationsByGrantAgency": publications_by_grant_agency,
+                },
+                f,
+                ensure_ascii=False,
+            )
 
 
 class ImpcProductsMapper(SmallPySparkTask):
