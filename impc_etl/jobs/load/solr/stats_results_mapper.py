@@ -342,7 +342,10 @@ class StatsResultsMapper(PySparkTask):
 
         aggregation_expression = []
 
-        for col_name in list(set(OBSERVATIONS_STATS_MAP.values())):
+        for col_name in list(set(OBSERVATIONS_STATS_MAP.values())) + [
+            "female_mutant_specimen_count",
+            "male_mutant_specimen_count",
+        ]:
             if col_name not in [
                 "datasource_name",
                 "production_center",
