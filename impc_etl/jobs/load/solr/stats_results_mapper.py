@@ -386,17 +386,17 @@ class StatsResultsMapper(PySparkTask):
             "male_mutant_count",
             f.when(
                 f.col("data_type") == "time_series",
-                f.col("male_mutant_specimen_count"),
+                f.col("observation_male_mutant_specimen_count"),
             ).otherwise(f.col("male_mutant_count")),
-        ).drop("male_mutant_specimen_count")
+        ).drop("observation_male_mutant_specimen_count")
 
         open_stats_df = open_stats_df.withColumn(
             "female_mutant_count",
             f.when(
                 f.col("data_type") == "time_series",
-                f.col("female_mutant_specimen_count"),
+                f.col("observation_female_mutant_specimen_count"),
             ).otherwise(f.col("female_mutant_count")),
-        ).drop("female_mutant_specimen_count")
+        ).drop("observation_female_mutant_specimen_count")
 
         open_stats_df = open_stats_df.withColumn(
             "pipeline_stable_id",
