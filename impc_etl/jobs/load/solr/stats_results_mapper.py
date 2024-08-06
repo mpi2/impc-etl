@@ -343,7 +343,12 @@ class StatsResultsMapper(PySparkTask):
         aggregation_expression = []
 
         for col_name in list(set(OBSERVATIONS_STATS_MAP.values())):
-            if col_name not in ["datasource_name", "production_center"]:
+            if col_name not in [
+                "datasource_name",
+                "production_center",
+                "female_mutant_specimen_count",
+                "male_mutant_specimen_count",
+            ]:
                 if col_name == "sex":
                     aggregation_expression.append(
                         f.array_distinct(f.flatten(f.collect_set(col_name))).alias(
@@ -360,7 +365,13 @@ class StatsResultsMapper(PySparkTask):
                     )
 
         observations_metadata_df = observations_metadata_df.groupBy(
-            STATS_OBSERVATIONS_JOIN + ["datasource_name", "production_center"]
+            STATS_OBSERVATIONS_JOIN
+            + [
+                "datasource_name",
+                "production_center",
+                "female_mutant_specimen_count",
+                "male_mutant_specimen_count",
+            ]
         ).agg(*aggregation_expression)
 
         open_stats_df = self.map_to_stats(
