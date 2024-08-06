@@ -318,28 +318,50 @@ class StatsResultsMapper(PySparkTask):
             ]
         ).agg(f.collect_set("sex").alias("sex"))
 
-        aggregation_expresion = []
+        aggregation_expression = []
 
         for col_name in list(set(OBSERVATIONS_STATS_MAP.values())):
             if col_name not in ["datasource_name", "production_center"]:
                 if col_name == "sex":
-                    aggregation_expresion.append(
+                    aggregation_expression.append(
                         f.array_distinct(f.flatten(f.collect_set(col_name))).alias(
                             col_name
                         )
                     )
                 elif col_name in ["strain_name", "genetic_background"]:
-                    aggregation_expresion.append(
+                    aggregation_expression.append(
                         f.first(f.col(col_name)).alias(col_name)
                     )
                 else:
-                    aggregation_expresion.append(
+                    aggregation_expression.append(
                         f.collect_set(col_name).alias(col_name)
                     )
+        aggregation_expression.append(
+            f.size(
+                f.collect_set(
+                    f.when(
+                        (f.col("biological_sample_group") == "experimental")
+                        & (f.col("sex") == "male"),
+                        f.col("specimen_id"),
+                    ).otherwise(f.lit(None))
+                )
+            ).alias("male_mutant_specimen_count")
+        )
+        aggregation_expression.append(
+            f.size(
+                f.collect_set(
+                    f.when(
+                        (f.col("biological_sample_group") == "experimental")
+                        & (f.col("sex") == "female"),
+                        f.col("specimen_id"),
+                    ).otherwise(f.lit(None))
+                )
+            ).alias("female_mutant_specimen_count")
+        )
 
         observations_metadata_df = observations_metadata_df.groupBy(
             STATS_OBSERVATIONS_JOIN + ["datasource_name", "production_center"]
-        ).agg(*aggregation_expresion)
+        ).agg(*aggregation_expression)
 
         open_stats_df = self.map_to_stats(
             open_stats_df,
@@ -348,6 +370,22 @@ class StatsResultsMapper(PySparkTask):
             OBSERVATIONS_STATS_MAP,
             "observation",
         )
+
+        open_stats_df = open_stats_df.withColumn(
+            "male_mutant_count",
+            f.when(
+                f.col("data_type") == "time_series",
+                f.col("male_mutant_specimen_count"),
+            ).otherwise(f.col("male_mutant_count")),
+        ).drop("male_mutant_specimen_count")
+
+        open_stats_df = open_stats_df.withColumn(
+            "female_mutant_count",
+            f.when(
+                f.col("data_type") == "time_series",
+                f.col("female_mutant_specimen_count"),
+            ).otherwise(f.col("female_mutant_count")),
+        ).drop("female_mutant_specimen_count")
 
         open_stats_df = open_stats_df.withColumn(
             "pipeline_stable_id",
