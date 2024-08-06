@@ -308,15 +308,37 @@ class StatsResultsMapper(PySparkTask):
         open_stats_df = open_stats_df.union(embryo_stats)
 
         observations_metadata_df = observations_df.select(
-            STATS_OBSERVATIONS_JOIN + list(set(OBSERVATIONS_STATS_MAP.values()))
+            STATS_OBSERVATIONS_JOIN
+            + list(set(OBSERVATIONS_STATS_MAP.values()))
+            + ["biological_sample_group", "specimen_id"]
         ).dropDuplicates()
         observations_metadata_df = observations_metadata_df.groupBy(
             *[
                 col_name
                 for col_name in observations_metadata_df.columns
-                if col_name != "sex"
+                if col_name not in ["sex", "biological_sample_group", "specimen_id"]
             ]
-        ).agg(f.collect_set("sex").alias("sex"))
+        ).agg(
+            f.collect_set("sex").alias("sex"),
+            f.size(
+                f.collect_set(
+                    f.when(
+                        (f.col("biological_sample_group") == "experimental")
+                        & (f.col("sex") == "male"),
+                        f.col("specimen_id"),
+                    ).otherwise(f.lit(None))
+                )
+            ).alias("male_mutant_specimen_count"),
+            f.size(
+                f.collect_set(
+                    f.when(
+                        (f.col("biological_sample_group") == "experimental")
+                        & (f.col("sex") == "female"),
+                        f.col("specimen_id"),
+                    ).otherwise(f.lit(None))
+                )
+            ).alias("female_mutant_specimen_count"),
+        )
 
         aggregation_expression = []
 
@@ -336,28 +358,6 @@ class StatsResultsMapper(PySparkTask):
                     aggregation_expression.append(
                         f.collect_set(col_name).alias(col_name)
                     )
-        aggregation_expression.append(
-            f.size(
-                f.collect_set(
-                    f.when(
-                        (f.col("biological_sample_group") == "experimental")
-                        & (f.col("sex") == "male"),
-                        f.col("specimen_id"),
-                    ).otherwise(f.lit(None))
-                )
-            ).alias("male_mutant_specimen_count")
-        )
-        aggregation_expression.append(
-            f.size(
-                f.collect_set(
-                    f.when(
-                        (f.col("biological_sample_group") == "experimental")
-                        & (f.col("sex") == "female"),
-                        f.col("specimen_id"),
-                    ).otherwise(f.lit(None))
-                )
-            ).alias("female_mutant_specimen_count")
-        )
 
         observations_metadata_df = observations_metadata_df.groupBy(
             STATS_OBSERVATIONS_JOIN + ["datasource_name", "production_center"]
