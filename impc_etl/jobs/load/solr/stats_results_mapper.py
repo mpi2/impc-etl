@@ -374,8 +374,6 @@ class StatsResultsMapper(PySparkTask):
             + [
                 "datasource_name",
                 "production_center",
-                "female_mutant_specimen_count",
-                "male_mutant_specimen_count",
             ]
         ).agg(*aggregation_expression)
 
