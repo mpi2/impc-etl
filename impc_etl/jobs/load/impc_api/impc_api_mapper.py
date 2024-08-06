@@ -1287,7 +1287,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
         stats_results_df = stats_results_df.withColumn(
             "femaleMutantCount", col("femaleMutantCount").astype(IntegerType())
         )
-        stats_results_df.repartition(1000).write.option(
+        stats_results_df.distinct().repartition(1000).write.option(
             "ignoreNullFields", "false"
         ).json(output_path)
 
