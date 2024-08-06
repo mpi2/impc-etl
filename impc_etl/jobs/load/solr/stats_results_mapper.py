@@ -346,8 +346,6 @@ class StatsResultsMapper(PySparkTask):
             if col_name not in [
                 "datasource_name",
                 "production_center",
-                "female_mutant_specimen_count",
-                "male_mutant_specimen_count",
             ]:
                 if col_name == "sex":
                     aggregation_expression.append(
@@ -358,6 +356,13 @@ class StatsResultsMapper(PySparkTask):
                 elif col_name in ["strain_name", "genetic_background"]:
                     aggregation_expression.append(
                         f.first(f.col(col_name)).alias(col_name)
+                    )
+                elif col_name in [
+                    "female_mutant_specimen_count",
+                    "male_mutant_specimen_count",
+                ]:
+                    aggregation_expression.append(
+                        f.sum(f.col(col_name)).alias(col_name)
                     )
                 else:
                     aggregation_expression.append(
