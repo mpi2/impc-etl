@@ -1071,6 +1071,8 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
             "term", "parent_term"
         )
 
+        stats_results_df = stats_results_df.distinct()
+
         stats_results_df = stats_results_df.join(
             parent_df,
             size(array_intersect("child_ids", "mp_term_id_options"))
