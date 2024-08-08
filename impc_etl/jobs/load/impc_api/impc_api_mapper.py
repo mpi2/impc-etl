@@ -53,6 +53,7 @@ from pyspark.sql.functions import (
     array_intersect,
     filter,
     trim,
+    explode_outer,
 )
 
 from impc_etl.config.constants import Constants
@@ -1088,7 +1089,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
             ),
         )
         stats_results_df = stats_results_df.withColumn(
-            "potentialPhenotype", explode("potentialPhenotypes")
+            "potentialPhenotype", explode_outer("potentialPhenotypes")
         ).drop("potentialPhenotypes")
         ontology_level_df = ontology_term_hierarchy_df.select(
             "id", size("intermediate_ids").alias("ontology_level")
