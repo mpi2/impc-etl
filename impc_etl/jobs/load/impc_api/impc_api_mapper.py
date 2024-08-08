@@ -1111,6 +1111,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
                         "ontology_level",
                         "level_id",
                         "max_level",
+                        "id",
                     ]
                 ]
             )
@@ -1140,13 +1141,7 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
             )
             .drop("child_ids", "parent_id", "parent_term", "generalPhenotypes")
         )
-        stats_results_df = stats_results_df.groupBy(
-            *[
-                col(col_name)
-                for col_name in stats_results_df.columns
-                if col_name != "display_phenotype"
-            ]
-        ).agg(first("display_phenotype", ignorenulls=True).alias("display_phenotype"))
+
         for col_name in explode_cols:
             stats_results_df = stats_results_df.withColumn(col_name, explode(col_name))
         impress_df = (
