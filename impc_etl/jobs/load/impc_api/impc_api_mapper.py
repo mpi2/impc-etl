@@ -1074,13 +1074,13 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
 
         stats_results_df = stats_results_df.distinct()
 
-        stats_results_df = stats_results_df.join(
+        stats_results_with_phenotype_df = stats_results_df.join(
             parent_df,
             size(array_intersect("child_ids", "mp_term_id_options"))
             == size("mp_term_id_options"),
             "left_outer",
         )
-        stats_results_df = stats_results_df.withColumn(
+        stats_results_with_phenotype_df = stats_results_with_phenotype_df.withColumn(
             "potentialPhenotypes",
             zip_with(
                 "mp_term_id_options",
@@ -1088,24 +1088,24 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
                 phenotype_term_zip_udf,
             ),
         )
-        stats_results_df = stats_results_df.withColumn(
-            "potentialPhenotype", explode_outer("potentialPhenotypes")
+        stats_results_with_phenotype_df = stats_results_with_phenotype_df.withColumn(
+            "potentialPhenotype", explode("potentialPhenotypes")
         ).drop("potentialPhenotypes")
         ontology_level_df = ontology_term_hierarchy_df.select(
             "id", size("intermediate_ids").alias("ontology_level")
         ).distinct()
-        stats_results_df = stats_results_df.join(
+        stats_results_with_phenotype_df = stats_results_with_phenotype_df.join(
             ontology_level_df, col("potentialPhenotype.id") == col("id"), "left_outer"
         )
         window_spec = Window.partitionBy("doc_id")
-        stats_results_df = stats_results_df.withColumn(
+        stats_results_with_phenotype_df = stats_results_with_phenotype_df.withColumn(
             "max_level", min("ontology_level").over(window_spec)
         )
-        stats_results_df = (
-            stats_results_df.groupBy(
+        stats_results_with_phenotype_df = (
+            stats_results_with_phenotype_df.groupBy(
                 *[
                     col_name
-                    for col_name in stats_results_df.columns
+                    for col_name in stats_results_with_phenotype_df.columns
                     if col_name
                     not in [
                         "potentialPhenotype",
@@ -1141,6 +1141,13 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
                 .otherwise(lit(None)),
             )
             .drop("child_ids", "parent_id", "parent_term", "generalPhenotypes")
+        )
+
+        stats_results_with_phenotype_df = stats_results_with_phenotype_df.select(
+            "doc_id", "display_phenotype"
+        )
+        stats_results_df = stats_results_df.join(
+            stats_results_with_phenotype_df, col("doc_id"), "left_outer"
         )
 
         for col_name in explode_cols:
