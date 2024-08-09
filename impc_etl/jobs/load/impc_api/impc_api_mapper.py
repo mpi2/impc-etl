@@ -1145,9 +1145,9 @@ class ImpcGeneStatsResultsMapper(PySparkTask):
 
         stats_results_with_phenotype_df = stats_results_with_phenotype_df.select(
             "doc_id", "display_phenotype"
-        )
+        ).distinct()
         stats_results_df = stats_results_df.join(
-            stats_results_with_phenotype_df, col("doc_id"), "left_outer"
+            stats_results_with_phenotype_df, "doc_id", "left_outer"
         )
 
         for col_name in explode_cols:
