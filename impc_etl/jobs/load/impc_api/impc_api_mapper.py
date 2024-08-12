@@ -2060,6 +2060,12 @@ class ImpcGeneDiseasesMapper(PySparkTask):
     #: Path to the CSV gene disease association report
     disease_model_summary_csv_path = luigi.Parameter()
 
+    #: Path to the CSV gene disease association report
+    mouse_model_phenodigm_csv_path = luigi.Parameter()
+
+    #: Path to the CSV gene disease association report
+    disease_phenodigm_csv_path = luigi.Parameter()
+
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
@@ -2078,6 +2084,8 @@ class ImpcGeneDiseasesMapper(PySparkTask):
         """
         return [
             self.disease_model_summary_csv_path,
+            self.mouse_model_phenodigm_csv_path,
+            self.disease_phenodigm_csv_path,
             self.output().path,
         ]
 
@@ -2089,14 +2097,25 @@ class ImpcGeneDiseasesMapper(PySparkTask):
 
         # Parsing app options
         disease_model_summary_csv_path = args[0]
-        output_path = args[1]
+        mouse_model_phenodigm_csv_path = args[1]  # model_id, model_phenotypes
+        disease_phenodigm_csv_path = args[2]  # disease_id, disease_phenotypes
+        output_path = args[3]
 
         disease_df = spark.read.csv(disease_model_summary_csv_path, header=True)
+        mouse_model_df = spark.read.csv(
+            mouse_model_phenodigm_csv_path, header=True
+        ).select("model_id", "model_phenotypes")
+        disease_phenodigm_df = spark.read.csv(
+            disease_phenodigm_csv_path, header=True
+        ).select("disease_id", "disease_phenotypes")
 
         disease_df = disease_df.withColumn(
             "phenodigm_score",
             (col("disease_model_avg_norm") + col("disease_model_max_norm")) / 2,
         )
+
+        disease_df = disease_df.join(disease_phenodigm_df, "disease_id", "left_outer")
+        disease_df = disease_df.join(mouse_model_df, "model_id", "left_outer")
 
         window_spec = Window.partitionBy("disease_id", "marker_id").orderBy(
             col("phenodigm_score").desc()
