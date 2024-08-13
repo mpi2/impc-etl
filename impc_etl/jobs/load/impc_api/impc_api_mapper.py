@@ -4859,7 +4859,9 @@ class ImpcEmbryoLandingMapper(PySparkTask):
 
         embryo_data_df = embryo_data_df.withColumn(
             "has_vignettes",
-            col("mgi_gene_accession_id").isin(genes_with_embryo_vignettes),
+            col(to_camel_case("mgi_gene_accession_id")).isin(
+                genes_with_embryo_vignettes
+            ),
         )
 
         embryo_data_df = embryo_data_df.groupBy(
