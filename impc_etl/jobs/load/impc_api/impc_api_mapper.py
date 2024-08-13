@@ -4834,6 +4834,34 @@ class ImpcEmbryoLandingMapper(PySparkTask):
                 col_name, to_camel_case(col_name)
             )
 
+        genes_with_embryo_vignettes = [
+            "MGI:1913761",
+            "MGI:1916804",
+            "MGI:102806",
+            "MGI:1195985",
+            "MGI:1915138",
+            "MGI:1337104",
+            "MGI:3039593",
+            "MGI:1922814",
+            "MGI:97491",
+            "MGI:1928849",
+            "MGI:2151064",
+            "MGI:104606",
+            "MGI:103226",
+            "MGI:1920939",
+            "MGI:95698",
+            "MGI:1915091",
+            "MGI:1924285",
+            "MGI:1914797",
+            "MGI:1351614",
+            "MGI:2147810",
+        ]
+
+        embryo_data_df = embryo_data_df.withColumn(
+            "has_vignettes",
+            col("mgi_gene_accession_id").isin(genes_with_embryo_vignettes),
+        )
+
         embryo_data_df = embryo_data_df.groupBy(
             to_camel_case("mgi_gene_accession_id"),
             to_camel_case("gene_symbol"),
@@ -4841,6 +4869,7 @@ class ImpcEmbryoLandingMapper(PySparkTask):
             to_camel_case("has_automated_analysis"),
             to_camel_case("embryo_viewer_url"),
             to_camel_case("is_umass_gene"),
+            to_camel_case("has_vignettes"),
         ).agg(collect_set(to_camel_case("procedure_name")).alias("procedureNames"))
 
         embryo_landing_json = {
