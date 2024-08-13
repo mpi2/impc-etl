@@ -2101,7 +2101,9 @@ class ImpcGeneDiseasesMapper(PySparkTask):
         disease_phenodigm_csv_path = args[2]  # disease_id, disease_phenotypes
         output_path = args[3]
 
-        disease_df = spark.read.csv(disease_model_summary_csv_path, header=True)
+        disease_df = spark.read.csv(disease_model_summary_csv_path, header=True).drop(
+            "disease_phenotypes", "model_phenotypes"
+        )
         mouse_model_df = spark.read.csv(
             mouse_model_phenodigm_csv_path, header=True
         ).select("model_id", "model_phenotypes")
