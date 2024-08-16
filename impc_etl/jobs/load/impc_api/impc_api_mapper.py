@@ -954,8 +954,8 @@ def get_lacz_expression_data(observations_df, lacz_lifestage):
         (col("procedure_name") == procedure_name)
         & (col("observation_type") == "image_record")
         & (
-            (col("parameter_name") != "LacZ Images Section")
-            | (col("parameter_name") != "LacZ Images Wholemount")
+            (lower(col("parameter_name")) == "lacz images section")
+            | (lower(col("parameter_name")) == "lacz images wholemount")
         )
     )
 
