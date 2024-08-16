@@ -919,10 +919,16 @@ class ExperimentToObservationMapper(PySparkTask):
             (col("simple.experiment_id") == col("image.experiment_id"))
             & (col("simple.parameter_stable_id") == col("image._parameterID"))
             & (
-                col("simple.sequence_id").isNotNull()
-                & col("image._sequenceID").isNotNull()
-            )
-            & (col("simple.sequence_id") == col("image._sequenceID")),
+                (
+                    col("simple.sequence_id").isNotNull()
+                    & col("image._sequenceID").isNotNull()
+                    & (col("simple.sequence_id") == col("image._sequenceID"))
+                )
+                | (
+                    col("image._sequenceID").isNull()
+                    & col("simple.sequence_id").isNull()
+                )
+            ),
         )
 
         # Add paramName, paramSeq, and paramValue columns
