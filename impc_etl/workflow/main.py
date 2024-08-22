@@ -34,6 +34,7 @@ from impc_etl.jobs.load.impc_api.impc_api_mapper import (
     ImpcPhenotypePleiotropyMapper,
     ImpcEmbryoLandingMapper,
     ImpcIDGMapper,
+    ImpcBatchQueryMapper,
 )
 from impc_etl.jobs.load.impc_api.impc_bulk_api_mapper import ImpcBulkApiMapper
 from impc_etl.jobs.load.impc_api.impc_bulk_api_mongo_load import ImpcBulkApiMongoLoader
@@ -279,6 +280,7 @@ class ImpcWebApiMapper(luigi.Task):
             ImpcPhenotypePleiotropyMapper(),
             ImpcIDGMapper(),
             ImpcEmbryoLandingMapper(),
+            ImpcBatchQueryMapper(),
         ]
 
 
