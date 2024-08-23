@@ -5058,7 +5058,9 @@ class ImpcBatchQueryMapper(PySparkTask):
             col("Hgnc Acc Id").alias("hgncGeneAccessionId"),
         ).distinct()
 
-        stats_results = stats_results.join(ortholog_mapping_df, "mgiGeneAccessionId")
+        stats_results = stats_results.join(
+            ortholog_mapping_df, "mgiGeneAccessionId", how="left_outer"
+        )
 
         mp_matches_df = spark.read.csv(mp_hp_matches_csv_path, header=True)
         mp_matches_df = mp_matches_df.select(
@@ -5091,6 +5093,7 @@ class ImpcBatchQueryMapper(PySparkTask):
                 | (col("intermediatePhenotype.id") == col("id"))
                 | (col("topLevelPhenotype.id") == col("id"))
             ),
+            how="left_outer",
         )
         stats_mp_hp_df = stats_mp_hp_df.withColumn(
             "humanPhenotype",
