@@ -1967,6 +1967,7 @@ class ImpcImagesMapper(PySparkTask):
                 "parameterName",
                 "biologicalSampleGroup",
                 "metadataGroup",
+                "phenotypingCenter",
             )
             .agg(
                 collect_set(
@@ -1998,6 +1999,7 @@ class ImpcImagesMapper(PySparkTask):
             "parameterStableId",
             "parameterName",
             "metadataGroup",
+            "phenotypingCenter",
         ).orderBy(col("observationId"))
 
         impc_images_control_df = impc_images_df.where(
@@ -2021,6 +2023,7 @@ class ImpcImagesMapper(PySparkTask):
             "parameterName",
             "biologicalSampleGroup",
             "metadataGroup",
+            "phenotypingCenter",
         ).agg(
             collect_set(
                 struct(
@@ -2127,9 +2130,9 @@ class ImpcGeneDiseasesMapper(PySparkTask):
             "row_number", row_number().over(window_spec)
         )
 
-        max_disease_df = max_disease_df.filter(col("row_number") == 1).drop(
-            "row_number"
-        )
+        max_disease_df = max_disease_df.withColumn(
+            "isMaxPhenodigmScore", col("row_number") == 1
+        ).drop("row_number")
 
         max_disease_df = max_disease_df.withColumnRenamed(
             "marker_id", "mgiGeneAccessionId"
@@ -3170,6 +3173,7 @@ class ImpcExternalLinksMapper(PySparkTask):
     name: str = "ImpcExternalLinksMapper"
 
     mouse_human_ortholog_report_tsv_path: luigi.Parameter = luigi.Parameter()
+    umass_early_lethal_report_csv_path: luigi.Parameter = luigi.Parameter()
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
@@ -3192,6 +3196,7 @@ class ImpcExternalLinksMapper(PySparkTask):
         return [
             self.input()[0].path,
             self.mouse_human_ortholog_report_tsv_path,
+            self.umass_early_lethal_report_csv_path,
             self.output().path,
         ]
 
@@ -3204,12 +3209,32 @@ class ImpcExternalLinksMapper(PySparkTask):
         # Parsing app options
         gene_parquet_path = args[0]
         mouse_human_ortholog_report_tsv_path = args[1]
-        output_path = args[2]
+        umass_early_lethal_report_csv_path = args[2]
+        output_path = args[3]
 
         gene_df = spark.read.parquet(gene_parquet_path)
         mouse_human_ortholog_report_df = spark.read.csv(
             mouse_human_ortholog_report_tsv_path, sep="\t", header=True
         )
+        umass_early_lethal_report_df = spark.read.csv(
+            umass_early_lethal_report_csv_path, header=True, multiLine=True
+        )
+        umass_early_lethal_report_df = umass_early_lethal_report_df.withColumnRenamed(
+            "MGI Number", "mgi_accession_id"
+        )
+        umass_early_lethal_report_df = umass_early_lethal_report_df.withColumnRenamed(
+            "Description only", "description"
+        )
+        umass_early_lethal_report_df = umass_early_lethal_report_df.withColumnRenamed(
+            "Link", "href"
+        )
+        umass_early_lethal_report_df = umass_early_lethal_report_df.withColumn(
+            "href", concat(lit("https://"), col("href"))
+        )
+        umass_early_lethal_report_df = umass_early_lethal_report_df.withColumn(
+            "mgi_accession_id",
+            concat_ws(":", lit("MGI"), trim("mgi_accession_id")),
+        ).select("mgi_gene_accession_id", "description", "href")
         for col_name in mouse_human_ortholog_report_df.columns:
             mouse_human_ortholog_report_df = (
                 mouse_human_ortholog_report_df.withColumnRenamed(
@@ -3255,10 +3280,17 @@ class ImpcExternalLinksMapper(PySparkTask):
             "providerName", lit("GWAS Catalog")
         )
 
+        gwas_external_links_df = gwas_external_links_df.withColumn(
+            "description", lit(None)
+        )
+
         embryo_data_df = gene_df.select(
             "mgi_accession_id",
             "marker_symbol",
-        ).where(col("marker_symbol").isin(Constants.UMASS_GENES))
+        ).distinct()
+        embryo_data_df = embryo_data_df.join(
+            umass_early_lethal_report_df, "mgi_accession_id"
+        )
 
         umass_external_links_df = embryo_data_df.withColumnRenamed(
             "mgi_accession_id", "mgiGeneAccessionId"
@@ -3267,16 +3299,10 @@ class ImpcExternalLinksMapper(PySparkTask):
             "marker_symbol", "label"
         )
         umass_external_links_df = umass_external_links_df.withColumn(
-            "href",
-            concat(
-                lit("https://websites.umass.edu/jmager/"), umass_external_links_df.label
-            ),
-        )
-        umass_external_links_df = umass_external_links_df.withColumn(
             "providerName", lit("UMASS Early Lethal Phenotypes")
         )
         umass_external_links_df = umass_external_links_df.select(
-            "mgiGeneAccessionId", "label", "href", "providerName"
+            "mgiGeneAccessionId", "label", "href", "providerName", "description"
         )
 
         external_links_df = gwas_external_links_df.union(umass_external_links_df)
