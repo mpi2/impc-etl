@@ -3225,12 +3225,13 @@ class ImpcExternalLinksMapper(PySparkTask):
         umass_early_lethal_report_df = umass_early_lethal_report_df.withColumnRenamed(
             "Description only", "description"
         )
+        umass_early_lethal_report_df = umass_early_lethal_report_df.withColumn(
+            "Link", concat(lit("https://"), col("Link"))
+        )
         umass_early_lethal_report_df = umass_early_lethal_report_df.withColumnRenamed(
             "Link", "href"
         )
-        umass_early_lethal_report_df = umass_early_lethal_report_df.withColumn(
-            "href", concat(lit("https://"), col("href"))
-        )
+
         umass_early_lethal_report_df = umass_early_lethal_report_df.withColumn(
             "mgi_accession_id",
             concat_ws(":", lit("MGI"), trim("mgi_accession_id")),
