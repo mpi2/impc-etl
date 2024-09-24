@@ -1999,7 +1999,7 @@ class ImpcImagesMapper(PySparkTask):
             "parameterStableId",
             "parameterName",
             "metadataGroup",
-            "phenotypingCentre",
+            "phenotypingCenter",
         ).orderBy(col("observationId"))
 
         impc_images_control_df = impc_images_df.where(
