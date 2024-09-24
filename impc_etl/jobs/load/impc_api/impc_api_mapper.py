@@ -3231,6 +3231,9 @@ class ImpcExternalLinksMapper(PySparkTask):
         umass_early_lethal_report_df = umass_early_lethal_report_df.withColumnRenamed(
             "Link", "href"
         )
+        umass_early_lethal_report_df = umass_early_lethal_report_df.withColumn(
+            "description", regexp_replace("description", "[\b\n\r]", " ")
+        )
 
         umass_early_lethal_report_df = umass_early_lethal_report_df.withColumn(
             "mgi_accession_id",
