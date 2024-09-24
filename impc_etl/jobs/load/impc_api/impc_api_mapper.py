@@ -3233,9 +3233,9 @@ class ImpcExternalLinksMapper(PySparkTask):
         )
 
         umass_early_lethal_report_df = umass_early_lethal_report_df.withColumn(
-            "mgi_gene_accession_id",
+            "mgi_accession_id",
             concat_ws(":", lit("MGI"), trim("mgi_accession_id")),
-        ).select("mgi_gene_accession_id", "description", "href")
+        ).select("mgi_accession_id", "description", "href")
         for col_name in mouse_human_ortholog_report_df.columns:
             mouse_human_ortholog_report_df = (
                 mouse_human_ortholog_report_df.withColumnRenamed(
