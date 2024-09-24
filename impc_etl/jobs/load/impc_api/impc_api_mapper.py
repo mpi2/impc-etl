@@ -1967,7 +1967,7 @@ class ImpcImagesMapper(PySparkTask):
                 "parameterName",
                 "biologicalSampleGroup",
                 "metadataGroup",
-                "phenotypingCenter",
+                col("phenotypingCenter").alias("phenotypingCentre"),
             )
             .agg(
                 collect_set(
@@ -1999,7 +1999,7 @@ class ImpcImagesMapper(PySparkTask):
             "parameterStableId",
             "parameterName",
             "metadataGroup",
-            "phenotypingCenter",
+            "phenotypingCentre",
         ).orderBy(col("observationId"))
 
         impc_images_control_df = impc_images_df.where(
@@ -2023,7 +2023,7 @@ class ImpcImagesMapper(PySparkTask):
             "parameterName",
             "biologicalSampleGroup",
             "metadataGroup",
-            "phenotypingCenter",
+            col("phenotypingCenter").alias("phenotypingCentre"),
         ).agg(
             collect_set(
                 struct(
