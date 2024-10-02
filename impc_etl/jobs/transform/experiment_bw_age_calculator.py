@@ -317,7 +317,7 @@ class ExperimentBWAgeCalculator(PySparkTask):
         BW observation anf the experiment date to 5 days, if there is no suitable BW association in the 5 days window
         around the experiment date, the BW association is marked as null.
         """
-        time_window = 5 if "LA_" not in procedure_group else 10
+        time_window = 5 if "LA_" not in procedure_group else 11
         if specimen_weights is None or len(specimen_weights) == 0:
             return {
                 "sourceExperimentId": None,
