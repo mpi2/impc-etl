@@ -2571,22 +2571,34 @@ class StatsResultsMapper(PySparkTask):
             ).otherwise(f.col("term_id")),
         )
 
-        gross_pathology_stats_results = gross_pathology_stats_results.groupBy(
-            *[
-                col_name
-                for col_name in required_stats_columns
-                if col_name not in ["sex", "sub_term_id", "sub_term_name"]
-            ]
-        ).agg(
-            f.collect_set(
+        gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
+            "mp_term",
+            f.array(
                 f.struct(
                     f.lit("ABNORMAL").cast(StringType()).alias("event"),
                     f.lit(None).cast(StringType()).alias("otherPossibilities"),
                     f.col("sex"),
                     f.col("term_id"),
                 )
-            ).alias("mp_term")
+            ),
         )
+
+        # gross_pathology_stats_results = gross_pathology_stats_results.groupBy(
+        #     *[
+        #         col_name
+        #         for col_name in required_stats_columns
+        #         if col_name not in ["sex", "sub_term_id", "sub_term_name"]
+        #     ]
+        # ).agg(
+        #     f.collect_set(
+        #         f.struct(
+        #             f.lit("ABNORMAL").cast(StringType()).alias("event"),
+        #             f.lit(None).cast(StringType()).alias("otherPossibilities"),
+        #             f.col("sex"),
+        #             f.col("term_id"),
+        #         )
+        #     ).alias("mp_term")
+        # )
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "mp_term",
             f.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
