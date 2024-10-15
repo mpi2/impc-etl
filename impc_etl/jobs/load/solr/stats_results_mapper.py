@@ -167,9 +167,9 @@ class StatsResultsMapper(PySparkTask):
                     col_name, f.lit(None).astype(StringType())
                 )
         stats_results_df.write.parquet(output_path)
-        # if raw_data_in_output == "include":
-        #     raw_data_df = open_stats_df.select("doc_id", "raw_data")
-        #     raw_data_df.distinct().write.parquet(output_path + "_raw_data")
+        if raw_data_in_output == "include":
+            raw_data_df = open_stats_df.select("doc_id", "raw_data")
+            raw_data_df.distinct().write.parquet(output_path + "_raw_data")
         if raw_data_in_output == "bundled":
             raw_data_df = open_stats_df.select(
                 "doc_id", "observation_id", "window_weight"
