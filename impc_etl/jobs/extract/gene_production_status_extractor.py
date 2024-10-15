@@ -97,6 +97,7 @@ class GeneProductionStatusExtractor(SmallPySparkTask):
             "Crispr Conditional Production Status": "crispr_conditional_allele_production_status",
             "Crispr Conditional Production Work Unit": "crispr_conditional_allele_production_centre",
             "Early Adult Phenotyping Status": "phenotyping_status",
+            "Phenotyping Work Unit": "phenotyping_centre",
         }
         for col_name in gentar_gene_status_df.columns:
             new_col_name = (
