@@ -28,6 +28,7 @@ from impc_etl.workflow.config import ImpcConfig
 class ImpcImagesLoader(PySparkTask):
     name = "IMPC_Images_Core_Loader"
     omero_ids_csv_path = luigi.Parameter()
+    omero_ids_3i_data_csv_path = luigi.Parameter()
     output_path = luigi.Parameter()
     imaging_media_json_info_path = luigi.Parameter()
 
@@ -43,6 +44,7 @@ class ImpcImagesLoader(PySparkTask):
             self.input()[1].path,
             self.omero_ids_csv_path,
             self.imaging_media_json_info_path,
+            self.omero_ids_3i_data_csv_path,
             self.output().path,
         ]
 
@@ -65,7 +67,8 @@ class ImpcImagesLoader(PySparkTask):
         pipeline_core_parquet_path = args[1]
         omero_ids_csv_path = args[2]
         imaging_media_json_info_path = args[3]
-        output_path = args[4]
+        omero_ids_3i_data_csv_path = args[4]
+        output_path = args[5]
 
         spark = SparkSession.builder.getOrCreate()
         observations_df = spark.read.parquet(observations_parquet_path)
@@ -88,6 +91,10 @@ class ImpcImagesLoader(PySparkTask):
             col("intermediate_mp_term").alias("impress_intermediate_mp_term"),
         ).distinct()
         omero_ids_df = spark.read.csv(omero_ids_csv_path, header=True).dropDuplicates()
+        omero_ids_3i_data_df = spark.read.csv(
+            omero_ids_3i_data_csv_path, header=True
+        ).dropDuplicates()
+        omero_ids_df = omero_ids_df.union(omero_ids_3i_data_df).dropDuplicates()
         media_info_df = (
             spark.read.json(imaging_media_json_info_path, multiLine=True)
             .dropDuplicates()
