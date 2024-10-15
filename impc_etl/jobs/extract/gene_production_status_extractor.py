@@ -89,8 +89,13 @@ class GeneProductionStatusExtractor(SmallPySparkTask):
             "MGI ID": "mgi_accession_id",
             "Assignment Status": "assignment_status",
             "ES Null Production Status": "null_allele_production_status",
+            "ES Null Production Work Unit": "null_allele_production_centre",
             "ES Conditional Production Status": "conditional_allele_production_status",
+            "ES Conditional Production Work Unit": "conditional_allele_production_centre",
             "Crispr Production Status": "crispr_allele_production_status",
+            "Crispr Production Work Unit": "crispr_allele_production_centre",
+            "Crispr Conditional Production Status": "crispr_conditional_allele_production_status",
+            "Crispr Conditional Production Work Unit": "crispr_conditional_allele_production_centre",
             "Early Adult Phenotyping Status": "phenotyping_status",
         }
         for col_name in gentar_gene_status_df.columns:
@@ -111,6 +116,8 @@ class GeneProductionStatusExtractor(SmallPySparkTask):
             "null_allele_production_status",
             "conditional_allele_production_status",
             "crispr_allele_production_status",
+            "crispr_conditional_allele_production_status",
+            "conditional_allele_production_status",
             "es_cell_production_status",
             "mouse_production_status",
             "phenotyping_status",
@@ -120,6 +127,7 @@ class GeneProductionStatusExtractor(SmallPySparkTask):
             "null_allele_production_status",
             "conditional_allele_production_status",
             "crispr_allele_production_status",
+            "crispr_conditional_allele_production_centre",
         ]
 
         allele_mouse_prod_status_map = {
