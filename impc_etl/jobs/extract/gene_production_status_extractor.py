@@ -118,7 +118,6 @@ class GeneProductionStatusExtractor(SmallPySparkTask):
             "conditional_allele_production_status",
             "crispr_allele_production_status",
             "crispr_conditional_allele_production_status",
-            "conditional_allele_production_status",
             "es_cell_production_status",
             "mouse_production_status",
             "phenotyping_status",
