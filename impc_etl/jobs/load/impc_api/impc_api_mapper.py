@@ -4015,7 +4015,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                     "phenotypeCalls": phenotype_calls,
                 }
 
-        data_points_count = {release_version: {}}
+        data_points_count = {release_version: data_quality_counts}
 
         column_to_data_type = {
             "Categorical (QC passed)": "categorical",
