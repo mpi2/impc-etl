@@ -3998,7 +3998,11 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 "phentoypeCalls": significant_calls,
             }
         }
-        for row in csv_reader:
+        old_release_counts = [
+            {k: v for k, v in row.items()}
+            for row in csv.DictReader(mp_calls_historic_csv_path, skipinitialspace=True)
+        ]
+        for row in old_release_counts:
             old_release_version = row["Category"]
             phenotyped_genes = int(row["Phenotyped genes"])
             phenotyped_lines = int(row["Phenotyped lines"])
@@ -4020,17 +4024,21 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             "Unidimensional (QC passed)": "unidimensional",
         }
 
-        with open(data_points_historic_csv_path, mode="r") as file:
-            csv_reader = csv.DictReader(file)
+        old_release_counts = [
+            {k: v for k, v in row.items()}
+            for row in csv.DictReader(
+                data_points_historic_csv_path, skipinitialspace=True
+            )
+        ]
 
-            for row in csv_reader:
-                old_release_version = row["Category"]
-                data_points_count[old_release_version] = []
+        for row in old_release_counts:
+            old_release_version = row["Category"]
+            data_points_count[old_release_version] = []
 
-                for column, data_type in column_to_data_type.items():
-                    data_points_count[old_release_version].append(
-                        {"dataType": data_type, "count": int(row[column])}
-                    )
+            for column, data_type in column_to_data_type.items():
+                data_points_count[old_release_version].append(
+                    {"dataType": data_type, "count": int(row[column])}
+                )
 
         release_metadata_dict = {
             "dataReleaseVersion": release_version,
