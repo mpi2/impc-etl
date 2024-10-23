@@ -3816,9 +3816,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
         )
 
         phenotype_annotations = (
-            phenotype_annotations_df.groupBy("topLevelPhenotype", "zygosity")
-            .agg(count("*").alias("count"))
-            .groupBy("topLevelPhenotype")
+            phenotype_annotations_df.groupBy("topLevelPhenotype")
             .agg(
                 sum("count").alias("total"),
                 collect_set(struct("zygosity", "count")).alias("counts"),
