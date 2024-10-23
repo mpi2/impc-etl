@@ -1,3 +1,4 @@
+import csv
 import re
 
 import luigi
@@ -3670,6 +3671,8 @@ class ImpcReleaseMetadataMapper(PySparkTask):
     genome_assembly_species: str = luigi.Parameter()
     genome_assembly_assembly_version: str = luigi.Parameter()
     gentar_gene_status_path: luigi.Parameter = luigi.Parameter()
+    mp_calls_historic_csv_path: str = luigi.Parameter()
+    data_points_historic_csv_path: str = luigi.Parameter()
 
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
@@ -3701,6 +3704,8 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             self.genome_assembly_species,
             self.genome_assembly_assembly_version,
             self.gentar_gene_status_path,
+            self.mp_calls_historic_csv_path,
+            self.data_points_historic_csv_path,
             self.output().path,
         ]
 
@@ -3721,7 +3726,9 @@ class ImpcReleaseMetadataMapper(PySparkTask):
         genome_assembly_species = args[7]
         genome_assembly_version = args[8]
         gentar_gene_status_path = args[9]
-        output_path = args[10]
+        mp_calls_historic_csv_path = args[10]
+        data_points_historic_csv_path = args[11]
+        output_path = args[12]
 
         observations_df = spark.read.parquet(observations_parquet_path)
         gene_phenotype_df = spark.read.parquet(gene_phenotype_parquet_path)
@@ -3982,6 +3989,48 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 lambda row: row.asDict(True)
             ).collect()
         )
+        csv_reader = csv.DictReader(mp_calls_historic_csv_path)
+
+        summary_counts = {
+            release_version: {
+                "phenotypedGenes": phenotyped_genes,
+                "phenotypedLines": phenotyped_lines,
+                "phentoypeCalls": significant_calls,
+            }
+        }
+        for row in csv_reader:
+            old_release_version = row["Category"]
+            phenotyped_genes = int(row["Phenotyped genes"])
+            phenotyped_lines = int(row["Phenotyped lines"])
+            phenotype_calls = int(row["MP calls"])
+
+            summary_counts[old_release_version] = {
+                "phenotypedGenes": phenotyped_genes,
+                "phenotypedLines": phenotyped_lines,
+                "phenotypeCalls": phenotype_calls,
+            }
+        data_points_count = {release_version: {}}
+
+        column_to_data_type = {
+            "Categorical (QC passed)": "categorical",
+            "Image record (QC passed)": "image_record",
+            "ontological_datapoints_QC_passed": "ontological",
+            "Text (QC passed)": "text",
+            "Time series (QC passed)": "time_series",
+            "Unidimensional (QC passed)": "unidimensional",
+        }
+
+        with open(data_points_historic_csv_path, mode="r") as file:
+            csv_reader = csv.DictReader(file)
+
+            for row in csv_reader:
+                old_release_version = row["Category"]
+                data_points_count[old_release_version] = []
+
+                for column, data_type in column_to_data_type.items():
+                    data_points_count[old_release_version].append(
+                        {"dataType": data_type, "count": int(row[column])}
+                    )
 
         release_metadata_dict = {
             "dataReleaseVersion": release_version,
@@ -3995,11 +4044,8 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 "species": genome_assembly_species,
                 "version": genome_assembly_version,
             },
-            "summaryCounts": {
-                "phenotypedGenes": phenotyped_genes,
-                "phenotypedLines": phenotyped_lines,
-                "phentoypeCalls": significant_calls,
-            },
+            "summaryCounts": summary_counts,
+            "dataPointCount": data_points_count,
             "sampleCounts": lines_by_phenotyping_center,
             "dataQualityChecks": data_quality_counts,
             "phenotypeAnnotations": phenotype_annotations,
