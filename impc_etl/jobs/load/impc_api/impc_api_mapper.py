@@ -3998,21 +3998,23 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 "phentoypeCalls": significant_calls,
             }
         }
-        old_release_counts = [
-            {k: v for k, v in row.items()}
-            for row in csv.DictReader(mp_calls_historic_csv_path, skipinitialspace=True)
-        ]
-        for row in old_release_counts:
-            old_release_version = row["Category"]
-            phenotyped_genes = int(row["Phenotyped genes"])
-            phenotyped_lines = int(row["Phenotyped lines"])
-            phenotype_calls = int(row["MP calls"])
+        with open(mp_calls_historic_csv_path) as f:
+            old_release_counts = [
+                {k: v for k, v in row.items()}
+                for row in csv.DictReader(f, skipinitialspace=True)
+            ]
+            for row in old_release_counts:
+                old_release_version = row["Category"]
+                phenotyped_genes = int(row["Phenotyped genes"])
+                phenotyped_lines = int(row["Phenotyped lines"])
+                phenotype_calls = int(row["MP calls"])
 
-            summary_counts[old_release_version] = {
-                "phenotypedGenes": phenotyped_genes,
-                "phenotypedLines": phenotyped_lines,
-                "phenotypeCalls": phenotype_calls,
-            }
+                summary_counts[old_release_version] = {
+                    "phenotypedGenes": phenotyped_genes,
+                    "phenotypedLines": phenotyped_lines,
+                    "phenotypeCalls": phenotype_calls,
+                }
+
         data_points_count = {release_version: {}}
 
         column_to_data_type = {
@@ -4024,21 +4026,20 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             "Unidimensional (QC passed)": "unidimensional",
         }
 
-        old_release_counts = [
-            {k: v for k, v in row.items()}
-            for row in csv.DictReader(
-                data_points_historic_csv_path, skipinitialspace=True
-            )
-        ]
+        with open(data_points_historic_csv_path) as f:
+            old_release_counts = [
+                {k: v for k, v in row.items()}
+                for row in csv.DictReader(f, skipinitialspace=True)
+            ]
 
-        for row in old_release_counts:
-            old_release_version = row["Category"]
-            data_points_count[old_release_version] = []
+            for row in old_release_counts:
+                old_release_version = row["Category"]
+                data_points_count[old_release_version] = []
 
-            for column, data_type in column_to_data_type.items():
-                data_points_count[old_release_version].append(
-                    {"dataType": data_type, "count": int(row[column])}
-                )
+                for column, data_type in column_to_data_type.items():
+                    data_points_count[old_release_version].append(
+                        {"dataType": data_type, "count": int(row[column])}
+                    )
 
         release_metadata_dict = {
             "dataReleaseVersion": release_version,
