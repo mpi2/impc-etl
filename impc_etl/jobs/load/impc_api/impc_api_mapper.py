@@ -3998,7 +3998,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 "phentoypeCalls": significant_calls,
             }
         }
-        with open(mp_calls_historic_csv_path) as f:
+        with open(mp_calls_historic_csv_path, mode="r", encoding="utf-8-sig") as f:
             old_release_counts = [
                 {k: v for k, v in row.items()}
                 for row in csv.DictReader(f, skipinitialspace=True)
@@ -4026,7 +4026,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             "Unidimensional (QC passed)": "unidimensional",
         }
 
-        with open(data_points_historic_csv_path) as f:
+        with open(data_points_historic_csv_path, mode="r", encoding="utf-8-sig") as f:
             old_release_counts = [
                 {k: v for k, v in row.items()}
                 for row in csv.DictReader(f, skipinitialspace=True)
