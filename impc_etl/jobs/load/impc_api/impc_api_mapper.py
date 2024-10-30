@@ -1378,6 +1378,8 @@ class ImpcGenePhenotypeHitsMapper(PySparkTask):
             "intermediate_mp_term_name",
             "top_level_mp_term_id",
             "top_level_mp_term_name",
+            "assertion_type",
+            "data_type",
         )
 
         gp_df = gp_df.withColumn(
