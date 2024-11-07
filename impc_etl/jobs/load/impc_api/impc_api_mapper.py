@@ -3869,6 +3869,13 @@ class ImpcReleaseMetadataMapper(PySparkTask):
 
             genes_by_production_status_overall_df = (
                 genes_by_production_status_overall_df.withColumn(
+                    status_col,
+                    split(col(status_col), "\|").getItem(1),
+                )
+            )
+
+            genes_by_production_status_overall_df = (
+                genes_by_production_status_overall_df.withColumn(
                     "production_status_order",
                     udf(lambda status: status_order_map.get(status.lower(), 0))(
                         status_col
