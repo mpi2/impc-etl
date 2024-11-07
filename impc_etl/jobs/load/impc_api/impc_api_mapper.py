@@ -3883,7 +3883,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 )
             )
 
-            window_spec = Window.partitionBy(status_col).orderBy(
+            window_spec = Window.partitionBy("mgi_accession_id").orderBy(
                 desc("production_status_order")
             )
             genes_by_production_status_ranked = (
