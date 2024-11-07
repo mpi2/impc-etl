@@ -55,6 +55,7 @@ from pyspark.sql.functions import (
     filter,
     trim,
     explode_outer,
+    desc,
 )
 
 from impc_etl.config.constants import Constants
@@ -3672,7 +3673,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
     statistical_analysis_package_version: str = luigi.Parameter()
     genome_assembly_species: str = luigi.Parameter()
     genome_assembly_assembly_version: str = luigi.Parameter()
-    gentar_gene_status_path: luigi.Parameter = luigi.Parameter()
+    gentar_gene_status_json_path: luigi.Parameter = luigi.Parameter()
     mp_calls_historic_csv_path: str = luigi.Parameter()
     data_points_historic_csv_path: str = luigi.Parameter()
 
@@ -3705,7 +3706,7 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             self.statistical_analysis_package_version,
             self.genome_assembly_species,
             self.genome_assembly_assembly_version,
-            self.gentar_gene_status_path,
+            self.gentar_gene_status_json_path,
             self.mp_calls_historic_csv_path,
             self.data_points_historic_csv_path,
             self.output().path,
@@ -3727,16 +3728,14 @@ class ImpcReleaseMetadataMapper(PySparkTask):
         statistical_analysis_package_version = args[6]
         genome_assembly_species = args[7]
         genome_assembly_version = args[8]
-        gentar_gene_status_path = args[9]
+        gentar_gene_status_json_path = args[9]
         mp_calls_historic_csv_path = args[10]
         data_points_historic_csv_path = args[11]
         output_path = args[12]
 
         observations_df = spark.read.parquet(observations_parquet_path)
         gene_phenotype_df = spark.read.parquet(gene_phenotype_parquet_path)
-        gentar_gene_status_df = spark.read.csv(
-            gentar_gene_status_path, header=True, sep="\t"
-        )
+        gentar_gene_status_df = spark.read.json(gentar_gene_status_json_path)
 
         with open(release_notes_md_path, "r", encoding="utf-8") as file:
             md_content = file.read()
@@ -3832,15 +3831,10 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             "MGI ID": "mgi_accession_id",
             "Assignment Status": "assignment_status",
             "ES Null Production Status": "null_allele_production_status",
-            "ES Null Production Work Unit": "null_allele_production_center",
             "ES Conditional Production Status": "conditional_allele_production_status",
-            "ES Conditional Production Work Unit": "conditional_allele_production_center",
             "Crispr Production Status": "crispr_allele_production_status",
-            "Crispr Production Work Unit": "crispr_allele_production_center",
             "Crispr Conditional Production Status": "crispr_conditional_allele_production_status",
-            "Crispr Conditional Production Work Unit": "crispr_conditional_allele_production_center",
             "Early Adult Phenotyping Status": "phenotyping_status",
-            "Phenotyping Work Unit": "phenotyping_center",
         }
         for col_name in gentar_gene_status_df.columns:
             new_col_name = (
@@ -3852,111 +3846,109 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 col_name, new_col_name
             )
 
-        allele_mouse_prod_status_map = {
-            "Micro-injection in progress": 1,
-            "Chimeras obtained": 2,
-            "Mouse Allele Modification Genotype Confirmed": 3,
-            "Rederivation Started": 4,
-            "Rederivation Complete": 5,
-            "Cre Excision Started": 6,
-            "Cre Excision Complete": 7,
-            "Genotype confirmed": 8,
-            "Phenotype Attempt Registered": 9,
+        def get_overall_status_count(status_col, status_order_map):
+            genes_by_production_status_overall_df = (
+                gentar_gene_status_df.select("mgi_accession_id", status_col)
+                .where(size(status_col) > 0)
+                .distinct()
+            )
+
+            genes_by_production_status_overall_df = (
+                genes_by_production_status_overall_df.withColumn(
+                    status_col,
+                    explode(status_col),
+                )
+            )
+
+            genes_by_production_status_overall_df = (
+                genes_by_production_status_overall_df.withColumn(
+                    "production_centre",
+                    split(col(status_col), "\|").getItem(0),
+                )
+            )
+
+            genes_by_production_status_overall_df = (
+                genes_by_production_status_overall_df.withColumn(
+                    "production_status_order",
+                    udf(lambda status: status_order_map.get(status.lower(), 0))(
+                        status_col
+                    ),
+                )
+            )
+
+            window_spec = Window.partitionBy(status_col).orderBy(
+                desc("production_status_order")
+            )
+            genes_by_production_status_ranked = (
+                genes_by_production_status_overall_df.withColumn(
+                    "rank", row_number().over(window_spec)
+                )
+            )
+
+            genes_by_production_status_overall_df = (
+                genes_by_production_status_ranked.filter(col("rank") == 1).drop("rank")
+            )
+
+            genes_by_production_status_overall = (
+                genes_by_production_status_overall_df.groupBy(status_col)
+                .agg(countDistinct("mgi_accession_id").alias("count"))
+                .rdd.map(lambda row: row.asDict())
+                .collect()
+            )
+            return genes_by_production_status_overall
+
+        es_prod_status_map = {
+            "attempt in progress": 1,
+            "micro-injection in progress": 2,
+            "chimeras/founder obtained": 3,
+            "rederivation started": 4,
+            "rederivation complete": 5,
+            "cre excision started": 6,
+            "cre excision complete": 7,
+            "genotype in progress": 8,
+            "mouse allele modification genotype confirmed": 9,
+            "genotype confirmed": 10,
+            "phenotype attempt registered": 11,
+        }
+        genes_by_production_status_es_null_overall = get_overall_status_count(
+            "null_allele_production_status", es_prod_status_map
+        )
+
+        genes_by_production_status_es_conditional_overall = get_overall_status_count(
+            "conditional_allele_production_status", es_prod_status_map
+        )
+
+        crispr_prod_status_map = {
+            "attempt in progress": 1,
+            "embryos obtained": 2,
+            "founders obtained": 3,
+            "genotype in progress": 4,
+            "mouse allele modification genotype confirmed": 5,
+            "genotype confirmed": 6,
         }
 
-        def choose_latest_production_status(row: Row):
-            latest_status_order = 0
-            latest_status = None
-            latest_center = None
-            for status_col in [
-                "null_allele_production_status",
-                "conditional_allele_production_status",
-                "crispr_allele_production_status",
-                "crispr_conditional_allele_production_status",
-            ]:
-                if (
-                    row[status_col] in allele_mouse_prod_status_map
-                    and allele_mouse_prod_status_map[row[status_col]]
-                    > latest_status_order
-                ):
-                    latest_status_order = allele_mouse_prod_status_map[row[status_col]]
-                    latest_status = row[status_col]
-                    latest_center = row[status_col.replace("status", "center")]
-            return latest_status
-
-        def choose_latest_production_center(row: Row):
-            latest_status_order = 0
-            latest_status = None
-            latest_center = None
-            for status_col in [
-                "null_allele_production_status",
-                "conditional_allele_production_status",
-                "crispr_allele_production_status",
-                "crispr_conditional_allele_production_status",
-            ]:
-                if (
-                    row[status_col] in allele_mouse_prod_status_map
-                    and allele_mouse_prod_status_map[row[status_col]]
-                    > latest_status_order
-                ):
-                    latest_center = row[status_col.replace("status", "center")]
-            return latest_center
-
-        genotyping_status_df = gentar_gene_status_df.withColumn(
-            "latest_status",
-            udf(choose_latest_production_status, StringType())(
-                struct(
-                    *[gentar_gene_status_df[x] for x in gentar_gene_status_df.columns]
-                )
-            ),
-        )
-        genotyping_status_df = genotyping_status_df.withColumn(
-            "latest_center",
-            udf(choose_latest_production_center, StringType())(
-                struct(
-                    *[gentar_gene_status_df[x] for x in gentar_gene_status_df.columns]
-                )
-            ),
-        )
-        genotyping_status = (
-            genotyping_status_df.groupBy(col("latest_status").alias("status"))
-            .agg(countDistinct("mgi_accession_id").alias("count"))
-            .rdd.map(lambda row: row.asDict())
-            .collect()
+        genes_by_production_status_crispr_null_overall = get_overall_status_count(
+            "crispr_allele_production_status", crispr_prod_status_map
         )
 
-        genotyping_status_by_center = (
-            genotyping_status_df.withColumn(
-                "latest_center", explode(split(trim("latest_center"), ",\s+"))
+        genes_by_production_status_crispr_conditional_overall = (
+            get_overall_status_count(
+                "crispr_conditional_allele_production_status", crispr_prod_status_map
             )
-            .groupBy(
-                col("latest_status").alias("status"),
-                col("latest_center").alias("center"),
-            )
-            .agg(countDistinct("mgi_accession_id").alias("count"))
-            .rdd.map(lambda row: row.asDict())
-            .collect()
         )
 
-        phenotyping_status = (
-            genotyping_status_df.groupBy(col("phenotyping_status").alias("status"))
-            .agg(countDistinct("mgi_accession_id").alias("count"))
-            .rdd.map(lambda row: row.asDict())
-            .collect()
-        )
+        phenotyping_status_map = {
+            "phenotyping registered": 1,
+            "phenotyping started": 2,
+            "rederivation started": 3,
+            "rederivation complete": 4,
+            "phenotyping complete": 5,
+            "phenotyping finished": 6,
+            "phenotyping all data sent": 7,
+        }
 
-        phenotyping_status_by_center = (
-            genotyping_status_df.withColumn(
-                "phenotyping_center", explode(split(trim("phenotyping_center"), ",\s+"))
-            )
-            .select("phenotyping_status", "phenotyping_center", "mgi_accession_id")
-            .groupBy(
-                col("phenotyping_status").alias("status"),
-                col("phenotyping_center").alias("center"),
-            )
-            .agg(countDistinct("mgi_accession_id").alias("count"))
-            .rdd.map(lambda row: row.asDict())
-            .collect()
+        genes_by_phenotyping_status_overall = get_overall_status_count(
+            "phenotyping_status", phenotyping_status_map
         )
 
         phenotype_associations_by_procedure_df = gene_phenotype_df.withColumn(
@@ -4059,12 +4051,33 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             "dataQualityChecks": data_quality_counts,
             "phenotypeAnnotations": phenotype_annotations,
             "productionStatusOverall": [
-                {"statusType": "genotyping", "counts": genotyping_status},
-                {"statusType": "phenotyping", "counts": phenotyping_status},
+                {
+                    "statusType": "productionESCellNull",
+                    "counts": genes_by_production_status_es_null_overall,
+                },
+                {
+                    "statusType": "productionESCellConditional",
+                    "counts": genes_by_production_status_es_conditional_overall,
+                },
+                {
+                    "statusType": "productionCrisprNull",
+                    "counts": genes_by_production_status_crispr_null_overall,
+                },
+                {
+                    "statusType": "productionCrisprConditional",
+                    "counts": genes_by_production_status_crispr_conditional_overall,
+                },
+                {
+                    "statusType": "phenotyping",
+                    "counts": genes_by_phenotyping_status_overall,
+                },
             ],
             "productionStatusByCenter": [
-                {"statusType": "genotyping", "counts": genotyping_status_by_center},
-                {"statusType": "phenotyping", "counts": phenotyping_status_by_center},
+                {"statusType": "productionESCellNull", "counts": []},
+                {"statusType": "productionESCellConditional", "counts": []},
+                {"statusType": "productionCrisprNull", "counts": []},
+                {"statusType": "productionCrisprConditional", "counts": []},
+                {"statusType": "phenotyping", "counts": []},
             ],
             "phenotypeAssociationsByProcedure": phenotype_associations_by_procedure,
         }
