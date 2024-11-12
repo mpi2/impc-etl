@@ -3904,6 +3904,66 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             )
             return genes_by_production_status_overall
 
+        def get_by_center_status_count(status_col, status_order_map):
+            genes_by_production_status_by_center_df = (
+                gentar_gene_status_df.select("mgi_accession_id", status_col)
+                .where(size(status_col) > 0)
+                .distinct()
+            )
+
+            genes_by_production_status_by_center_df = (
+                genes_by_production_status_by_center_df.withColumn(
+                    status_col,
+                    explode(status_col),
+                )
+            )
+
+            genes_by_production_status_by_center_df = (
+                genes_by_production_status_by_center_df.withColumn(
+                    "production_centre",
+                    split(col(status_col), "\|").getItem(0),
+                )
+            )
+
+            genes_by_production_status_by_center_df = (
+                genes_by_production_status_by_center_df.withColumn(
+                    status_col,
+                    split(col(status_col), "\|").getItem(1),
+                )
+            )
+
+            genes_by_production_status_by_center_df = (
+                genes_by_production_status_by_center_df.withColumn(
+                    "production_status_order",
+                    udf(lambda status: status_order_map.get(status.lower(), 0))(
+                        status_col
+                    ),
+                )
+            )
+
+            window_spec = Window.partitionBy(
+                "mgi_accession_id", "production_centre"
+            ).orderBy(desc("production_status_order"))
+            genes_by_production_status_ranked = (
+                genes_by_production_status_by_center_df.withColumn(
+                    "rank", row_number().over(window_spec)
+                )
+            )
+
+            genes_by_production_status_by_center_df = (
+                genes_by_production_status_ranked.filter(col("rank") == 1).drop("rank")
+            )
+
+            genes_by_production_status_by_center = (
+                genes_by_production_status_by_center_df.groupBy(
+                    status_col, "production_centre"
+                )
+                .agg(countDistinct("mgi_accession_id").alias("count"))
+                .rdd.map(lambda row: row.asDict())
+                .collect()
+            )
+            return genes_by_production_status_by_center
+
         es_prod_status_map = {
             "attempt in progress": 1,
             "micro-injection in progress": 2,
@@ -3921,8 +3981,18 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             "null_allele_production_status", es_prod_status_map
         )
 
+        genes_by_production_status_es_null_by_center = get_by_center_status_count(
+            "null_allele_production_status", es_prod_status_map
+        )
+
         genes_by_production_status_es_conditional_overall = get_overall_status_count(
             "conditional_allele_production_status", es_prod_status_map
+        )
+
+        genes_by_production_status_es_conditional_by_center = (
+            get_by_center_status_count(
+                "conditional_allele_production_status", es_prod_status_map
+            )
         )
 
         crispr_prod_status_map = {
@@ -3938,8 +4008,18 @@ class ImpcReleaseMetadataMapper(PySparkTask):
             "crispr_allele_production_status", crispr_prod_status_map
         )
 
+        genes_by_production_status_crispr_null_by_center = get_by_center_status_count(
+            "crispr_allele_production_status", crispr_prod_status_map
+        )
+
         genes_by_production_status_crispr_conditional_overall = (
             get_overall_status_count(
+                "crispr_conditional_allele_production_status", crispr_prod_status_map
+            )
+        )
+
+        genes_by_production_status_crispr_conditional_by_center = (
+            get_by_center_status_count(
                 "crispr_conditional_allele_production_status", crispr_prod_status_map
             )
         )
@@ -3955,6 +4035,10 @@ class ImpcReleaseMetadataMapper(PySparkTask):
         }
 
         genes_by_phenotyping_status_overall = get_overall_status_count(
+            "phenotyping_status", phenotyping_status_map
+        )
+
+        genes_by_phenotyping_status_by_center = get_by_center_status_count(
             "phenotyping_status", phenotyping_status_map
         )
 
@@ -3988,7 +4072,6 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 lambda row: row.asDict(True)
             ).collect()
         )
-        csv_reader = csv.DictReader(mp_calls_historic_csv_path)
 
         summary_counts = {
             release_version: {
@@ -4080,11 +4163,26 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 },
             ],
             "productionStatusByCenter": [
-                {"statusType": "productionESCellNull", "counts": []},
-                {"statusType": "productionESCellConditional", "counts": []},
-                {"statusType": "productionCrisprNull", "counts": []},
-                {"statusType": "productionCrisprConditional", "counts": []},
-                {"statusType": "phenotyping", "counts": []},
+                {
+                    "statusType": "productionESCellNull",
+                    "counts": genes_by_production_status_es_null_by_center,
+                },
+                {
+                    "statusType": "productionESCellConditional",
+                    "counts": genes_by_production_status_es_conditional_by_center,
+                },
+                {
+                    "statusType": "productionCrisprNull",
+                    "counts": genes_by_production_status_crispr_null_by_center,
+                },
+                {
+                    "statusType": "productionCrisprConditional",
+                    "counts": genes_by_production_status_crispr_conditional_by_center,
+                },
+                {
+                    "statusType": "phenotyping",
+                    "counts": genes_by_phenotyping_status_by_center,
+                },
             ],
             "phenotypeAssociationsByProcedure": phenotype_associations_by_procedure,
         }
