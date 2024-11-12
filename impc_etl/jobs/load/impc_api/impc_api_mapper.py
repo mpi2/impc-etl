@@ -3896,8 +3896,14 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 genes_by_production_status_ranked.filter(col("rank") == 1).drop("rank")
             )
 
+            genes_by_production_status_overall_df = (
+                genes_by_production_status_overall_df.withColumnRenamed(
+                    status_col, "status"
+                )
+            )
+
             genes_by_production_status_overall = (
-                genes_by_production_status_overall_df.groupBy(status_col)
+                genes_by_production_status_overall_df.groupBy("status")
                 .agg(countDistinct("mgi_accession_id").alias("count"))
                 .rdd.map(lambda row: row.asDict())
                 .collect()
@@ -3954,10 +3960,19 @@ class ImpcReleaseMetadataMapper(PySparkTask):
                 genes_by_production_status_ranked.filter(col("rank") == 1).drop("rank")
             )
 
-            genes_by_production_status_by_center = (
-                genes_by_production_status_by_center_df.groupBy(
-                    status_col, "production_centre"
+            genes_by_production_status_by_center_df = (
+                genes_by_production_status_by_center_df.withColumnRenamed(
+                    status_col, "status"
                 )
+            )
+            genes_by_production_status_by_center_df = (
+                genes_by_production_status_by_center_df.withColumnRenamed(
+                    "production_centre", "centre"
+                )
+            )
+
+            genes_by_production_status_by_center = (
+                genes_by_production_status_by_center_df.groupBy("status", "centre")
                 .agg(countDistinct("mgi_accession_id").alias("count"))
                 .rdd.map(lambda row: row.asDict())
                 .collect()
