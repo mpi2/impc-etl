@@ -932,7 +932,7 @@ class ImpcKgMouseGeneMapper(PySparkTask):
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return [GeneLoader(), ExtractGeneRef()]
+        return [GeneLoader(), ExtractGeneRef(), ExtractAlleleRef()]
 
     def output(self):
         """
@@ -948,6 +948,7 @@ class ImpcKgMouseGeneMapper(PySparkTask):
         return [
             self.input()[0].path,
             self.input()[1].path,
+            self.input()[2].path,
             self.output().path,
         ]
 
@@ -960,16 +961,33 @@ class ImpcKgMouseGeneMapper(PySparkTask):
         # Parsing app options
         gene_parquet_path = args[0]
         gene_ref_parquet_path = args[1]
-        output_path = args[2]
+        allele_ref_parquet_path = args[2]
+        output_path = args[3]
 
         gene_df = spark.read.parquet(gene_parquet_path)
         gene_ref_df = spark.read.parquet(gene_ref_parquet_path)
+        allele_ref_df = spark.read.parquet(allele_ref_parquet_path)
 
         gene_df = _add_unique_id(
             gene_df,
             "mouse_gene_id",
             ["mgi_accession_id"],
         )
+
+        allele_ref_df = allele_ref_df.select(
+            "mgi_marker_acc_id", "mgi_allele_acc_id"
+        ).distinct()
+        allele_ref_df = allele_ref_df.withColumnRenamed(
+            "mgi_marker_acc_id", "mgi_accession_id"
+        )
+
+        allele_ref_df = allele_ref_df.groupBy("mgi_accession_id").agg(
+            collect_set("mgi_allele_acc_id").alias("mouse_allele_acc_ids")
+        )
+
+        gene_df = gene_df.join(allele_ref_df, "mgi_accession_id", "left_outer")
+
+        gene_df = _map_unique_ids(gene_df, "mouse_alleles", "mouse_allele_acc_ids")
 
         gene_ref_df = gene_ref_df.select("mgi_gene_acc_id", "human_gene_acc_id")
 
@@ -1003,6 +1021,7 @@ class ImpcKgMouseGeneMapper(PySparkTask):
             "ccds_id",
             "ncbi_id",
             "human_gene_orthologues",
+            "mouse_alleles",
         ]
         output_df = gene_df.select(*output_cols).distinct()
         for col_name in output_df.columns:
