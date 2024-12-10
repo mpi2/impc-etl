@@ -59,6 +59,8 @@ class ImpcBulkApiMongoLoader(PySparkTask):
             f"{self.mongodb_connection_uri}/admin?replicaSet={self.mongodb_replica_set}",
         ).option("database", str(self.mongodb_database)).option(
             "collection", collection_name
+        ).option(
+            "writeConcern.w", "majority"
         ).save()
 
     def main(self, sc: SparkContext, *args: Any):
