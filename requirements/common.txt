@@ -1,5 +1,5 @@
 click
-requests==2.26.0
+requests==2.32.2
 findspark
 luigi
 setuptools_scm
