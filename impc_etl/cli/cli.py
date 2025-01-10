@@ -23,6 +23,14 @@ def generate_jpegs(input_dir, output_dir):
     if os.path.exists(output_dir):
         click.echo(f"Error: The output directory '{output_dir}' already exists.", err=True)
         raise SystemExit(1)
+    
+    os.mkdir(output_dir)
+
+    click.echo(f"Generating list of input files for input directory {input_dir}")
+    for root, dirs, files in os.walk(input_dir):
+        for name in files:
+            with open(os.path.join(output_dir, "input_files.txt"), "a", encoding="utf-8") as f:
+                f.write(os.path.join(root, name) + "\n")
 
     click.echo(f"Generating JPEG files from {input_dir} to {output_dir}")
 
