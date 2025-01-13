@@ -15,9 +15,9 @@ def cli():
 @click.command()
 @click.argument('input_dir', type=click.Path(exists=True, file_okay=False, dir_okay=True))
 @click.argument('output_dir', type=click.Path(file_okay=False, dir_okay=True))
-def generate_jpegs(input_dir, output_dir):
-    """
-    Generate JPEG images from an images directory which can have different sizes and file formats.
+@click.option('--batch-size', default=1000, type=int, help='Batch size for processing (default: 1000)')
+def generate_jpegs(input_dir, output_dir, batch_size):
+    """Generate JPEG images from an images directory which can have different sizes and file formats.
     For each image found on the input it should generate a JPEG image with a full resolution, and one image to be used as thumbnail.
     - Requires an input directory and an output directory.
     - Should allow to define suffixes for naming the full resolution and the thumbnail images to be generated.
