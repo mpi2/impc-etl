@@ -4,6 +4,8 @@ Command line Interface for impc_etl package.
 import click
 import os
 
+from pathlib import Path
+
 
 @click.group()
 def cli():
@@ -26,11 +28,17 @@ def generate_jpegs(input_dir, output_dir):
     
     os.mkdir(output_dir)
 
+    input_dir = Path(input_dir)
+    output_dir = Path(output_dir)
+    total_files = 0
+
     click.echo(f"Generating list of input files for input directory {input_dir}")
-    for root, dirs, files in os.walk(input_dir):
-        for name in files:
-            with open(os.path.join(output_dir, "input_files.txt"), "a", encoding="utf-8") as f:
-                f.write(os.path.join(root, name) + "\n")
+    with open(os.path.join(output_dir, "manifest.tsv"), "w", encoding="utf-8") as f:
+        for input_path in input_dir.rglob("*"):
+            if input_path.is_file():
+                output_path = output_dir / input_path.relative_to(input_dir)
+                f.write(f"{input_path.resolve()}\t{output_path.resolve()}\n")
+                total_files += 1
 
     click.echo(f"Generating JPEG files from {input_dir} to {output_dir}")
 
