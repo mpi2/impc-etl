@@ -8,9 +8,9 @@ Jobs to generate JPEG images for all the IMPC Imaging data.
 import subprocess
 import click
 
+
 def convert_image(input_path: str, output_path: str, width: int = None, quality: int = None):
-    """
-    Converts an image using the system 'convert' command.
+    """Converts an image using the system 'convert' command.
 
     Parameters:
         input_path (str): The path to the input image file.
@@ -42,10 +42,10 @@ def convert_image(input_path: str, output_path: str, width: int = None, quality:
     # Execute the command.
     try:
         subprocess.run(command, check=True)
-        print(f"Image successfully converted and saved to {output_path}")
     except subprocess.CalledProcessError as e:
         print(f"Error: Failed to convert image. {e}")
         raise
+
 
 @click.command()
 @click.option("--manifest", type=click.Path(exists=True, file_okay=True, dir_okay=False))
@@ -77,6 +77,8 @@ def process_images(
     for input_file, output_file_basename in file_names:
         output_file = output_file_basename + full_suffix + ".jpg"
         thumbnail_file = output_file_basename + thumbnail_suffix + ".jpg"
+        convert_image(input_file, output_file, width=None, quality=100)
+        convert_image(input_file, thumbnail_file, width=thumbnail_width, quality=thumbnail_quality)
         print(input_file, output_file_basename)
 
     # Placeholder for actual processing logic.
