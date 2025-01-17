@@ -31,7 +31,7 @@ def generate_jpegs(input_dir, output_dir, batch_size, full_suffix, thumbnail_suf
     if os.path.exists(output_dir):
         click.echo(f"Error: The output directory '{output_dir}' already exists.", err=True)
         raise SystemExit(1)
-    
+
     os.mkdir(output_dir)
 
     input_dir = Path(input_dir)
@@ -63,7 +63,7 @@ def generate_jpegs(input_dir, output_dir, batch_size, full_suffix, thumbnail_suf
                 f"--thumbnail-quality={thumbnail_quality}"
             ],
             check=True,
-            capture_output=True,
+            # capture_output=True,
             text=True
         )
 
