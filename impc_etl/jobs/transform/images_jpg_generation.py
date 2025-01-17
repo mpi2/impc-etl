@@ -22,6 +22,9 @@ def process_images(manifest, batch_from, batch_to, full_suffix, thumbnail_suffix
     BATCH_FROM: Starting batch number.
     BATCH_TO: Ending batch number.
     """
+    file_names = open(manifest, "r").readlines()[batch_from:batch_to]
+    file_names = [x.strip().split("\t") for x in file_names]
+    print(file_names)
     click.echo(f"Manifest file: {manifest}")
     click.echo(f"Processing batches from {batch_from} to {batch_to}")
     click.echo(f"Full size suffix: {full_suffix}")
