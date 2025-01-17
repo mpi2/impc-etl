@@ -44,7 +44,7 @@ def generate_jpegs(input_dir, output_dir, batch_size, full_suffix, thumbnail_suf
         for input_path in input_dir.rglob("*"):
             if input_path.is_file():
                 output_path = output_dir / input_path.relative_to(input_dir)
-                f.write(f"{input_path.resolve()}\t{output_path.resolve()}\n")
+                f.write(f"{input_path.resolve()}\t{(output_path.parent/output_path.stem).resolve()}\n")
                 total_files += 1
 
     click.echo(f"Generating JPEG files from {input_dir} to {output_dir}")
