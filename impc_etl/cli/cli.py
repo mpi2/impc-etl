@@ -41,6 +41,8 @@ def generate_jpegs(input_dir, output_dir, batch_size):
                 total_files += 1
 
     click.echo(f"Generating JPEG files from {input_dir} to {output_dir}")
+    for batch_start in range(0, total_files, batch_size):
+        click.echo(f"Submit {batch_start} of {total_files}")
 
 
 cli.add_command(generate_jpegs)
