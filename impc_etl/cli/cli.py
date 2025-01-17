@@ -22,7 +22,15 @@ def cli():
 @click.option("--thumbnail-suffix", default="_thumbmail", type=str, help="Thumbnail suffix")
 @click.option("--thumbnail-width", default=200, type=int, help="Width of thumbnail (default: 200)")
 @click.option("--thumbnail-quality", default=80, type=int, help="Quality of thumbnail (default: 80)")
-def generate_jpegs(input_dir, output_dir, batch_size, full_suffix, thumbnail_suffix, thumbnail_width, thumbnail_quality):
+def generate_jpegs(
+    input_dir: str,
+    output_dir: str,
+    batch_size: int,
+    full_suffix: str,
+    thumbnail_suffix: str,
+    thumbnail_width: int,
+    thumbnail_quality: int
+) -> None:
     """Generate JPEG images from an images directory which can have different sizes and file formats.
     For each image found on the input it should generate a JPEG image with a full resolution, and one image to be used as thumbnail.
     - Requires an input directory and an output directory.

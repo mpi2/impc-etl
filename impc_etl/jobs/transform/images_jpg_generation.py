@@ -55,7 +55,15 @@ def convert_image(input_path: str, output_path: str, width: int = None, quality:
 @click.option("--thumbnail-suffix", type=str, required=True, help="Thumbnail suffix")
 @click.option("--thumbnail-width", type=int, required=True, help="Width of thumbnail")
 @click.option("--thumbnail-quality", type=int, required=True, help="Quality of thumbnail")
-def process_images(manifest, batch_from, batch_to, full_suffix, thumbnail_suffix, thumbnail_width, thumbnail_quality):
+def process_images(
+    manifest: str,
+    batch_from: int,
+    batch_to: int,
+    full_suffix: str,
+    thumbnail_suffix: str,
+    thumbnail_width: int,
+    thumbnail_quality: int
+) -> None:
     """Processes images in the given manifest within the specified batch range."""
     click.echo(f"Manifest file: {manifest}")
     click.echo(f"Processing batches from {batch_from} to {batch_to}")
@@ -71,10 +79,8 @@ def process_images(manifest, batch_from, batch_to, full_suffix, thumbnail_suffix
         thumbnail_file = output_file_basename + thumbnail_suffix + ".jpg"
         print(input_file, output_file_basename)
 
-
     # Placeholder for actual processing logic.
     click.echo("Processing images... (this is a placeholder)")
-
 
 if __name__ == "__main__":
     process_images()
