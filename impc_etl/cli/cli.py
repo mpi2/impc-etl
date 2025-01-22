@@ -19,7 +19,7 @@ def cli():
 @click.argument("output_dir", type=click.Path(file_okay=False, dir_okay=True))
 @click.option("--batch-size", default=1000, type=int, help="Batch size for processing (default: 1000)")
 @click.option("--full-suffix", default="_full", type=str, help="Full size image suffix")
-@click.option("--thumbnail-suffix", default="_thumbmail", type=str, help="Thumbnail suffix")
+@click.option("--thumbnail-suffix", default="_thumbnail", type=str, help="Thumbnail suffix")
 @click.option("--thumbnail-width", default=200, type=int, help="Width of thumbnail (default: 200)")
 @click.option("--thumbnail-quality", default=80, type=int, help="Quality of thumbnail (default: 80)")
 def generate_jpegs(

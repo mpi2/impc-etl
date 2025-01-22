@@ -5,6 +5,7 @@ Jobs to generate JPEG images for all the IMPC Imaging data.
 - Should have a function to generate a thumbnail image
 """
 
+from pathlib import Path
 import subprocess
 import click
 
@@ -26,7 +27,7 @@ def convert_image(input_path: str, output_path: str, width: int = None, quality:
         raise ValueError("Both input_path and output_path must be specified.")
 
     # Construct the command.
-    command = ["convert", input_path]
+    command = ["magick", input_path]
 
     # Add width resizing if specified.
     if width:
@@ -74,15 +75,16 @@ def process_images(
 
     file_names = open(manifest, "r").readlines()[batch_from:batch_to]
     file_names = [x.strip().split("\t") for x in file_names]
+
+    click.echo("Processing images...")
     for input_file, output_file_basename in file_names:
+        output_dir = Path(output_file_basename).parent
+        output_dir.mkdir(parents=True, exist_ok=True)
         output_file = output_file_basename + full_suffix + ".jpg"
         thumbnail_file = output_file_basename + thumbnail_suffix + ".jpg"
         convert_image(input_file, output_file, width=None, quality=100)
         convert_image(input_file, thumbnail_file, width=thumbnail_width, quality=thumbnail_quality)
         print(input_file, output_file_basename)
-
-    # Placeholder for actual processing logic.
-    click.echo("Processing images... (this is a placeholder)")
 
 if __name__ == "__main__":
     process_images()
