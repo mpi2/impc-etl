@@ -31,7 +31,7 @@ def convert_image(input_path: str, output_path: str, width: int = None, quality:
 
     # Add width resizing if specified.
     if width:
-        command.extend(["-resize", f"{width}x"])
+        command.extend(["-resize", f"{width}x{width}"])
 
     # Add quality setting if specified.
     if quality:
