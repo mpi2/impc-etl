@@ -28,7 +28,7 @@ def convert_image(input_path: str, output_path: str, width: int = None, quality:
         raise ValueError("Both input_path and output_path must be specified.")
 
     # Construct the command.
-    command = ["magick", input_path]
+    command = ["convert", input_path]
 
     # Add width resizing if specified.
     if width:
