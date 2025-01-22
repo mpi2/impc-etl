@@ -6,6 +6,7 @@ Jobs to generate JPEG images for all the IMPC Imaging data.
 """
 
 from pathlib import Path
+import shutil
 import subprocess
 import click
 
@@ -82,7 +83,10 @@ def process_images(
         output_dir.mkdir(parents=True, exist_ok=True)
         output_file = output_file_basename + full_suffix + ".jpg"
         thumbnail_file = output_file_basename + thumbnail_suffix + ".jpg"
-        convert_image(input_file, output_file, width=None, quality=100)
+        if Path(input_file).suffix.lower() in [".jpg", ".jpeg"]:
+            shutil.copy2(input_file, output_dir)
+        else:
+            convert_image(input_file, output_file, width=None, quality=100)
         convert_image(input_file, thumbnail_file, width=thumbnail_width, quality=thumbnail_quality)
         print(input_file, output_file_basename)
 
