@@ -83,8 +83,8 @@ def process_images(
         output_dir.mkdir(parents=True, exist_ok=True)
         output_file = output_file_basename + full_suffix + ".jpg"
         thumbnail_file = output_file_basename + thumbnail_suffix + ".jpg"
-        if Path(input_file).suffix.lower() in [".jpg", ".jpeg"]:
-            shutil.copy2(input_file, output_dir)
+        if Path(input_file).suffix.lower() in [".jpg", ".jpeg"] and (input_file != output_file):
+            shutil.copy2(input_file, output_file)
         else:
             convert_image(input_file, output_file, width=None, quality=100)
         convert_image(input_file, thumbnail_file, width=thumbnail_width, quality=thumbnail_quality)
