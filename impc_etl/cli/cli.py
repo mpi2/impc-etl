@@ -17,11 +17,12 @@ def cli():
 @click.command()
 @click.argument("input_dir", type=click.Path(exists=True, file_okay=False, dir_okay=True))
 @click.argument("output_dir", type=click.Path(file_okay=False, dir_okay=True))
-@click.option("--batch-size", default=1000, type=int, help="Batch size for processing (default: 1000)")
+@click.option("--batch-size", default=1000, show_default=True, type=int, help="Batch size for processing")
 @click.option("--full-suffix", default="_full", type=str, help="Full size image suffix")
 @click.option("--thumbnail-suffix", default="_thumbnail", type=str, help="Thumbnail suffix")
-@click.option("--thumbnail-width", default=200, type=int, help="Width of thumbnail (default: 200)")
-@click.option("--thumbnail-quality", default=80, type=int, help="Quality of thumbnail (default: 80)")
+@click.option("--thumbnail-width", default=200, show_default=True, type=int, help="Width of thumbnail")
+@click.option("--thumbnail-quality", default=80, show_default=True, type=int, help="Quality of thumbnail")
+@click.option("--start-processing",  is_flag=True, show_default=True, default=False, help="Whether to run the processing")
 def generate_jpegs(
     input_dir: str,
     output_dir: str,
