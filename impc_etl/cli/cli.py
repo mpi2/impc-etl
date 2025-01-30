@@ -54,7 +54,7 @@ def generate_jpegs(
     click.echo(f"Generating list of input files for input directory {input_dir}")
     with open(manifest.resolve(), "w", encoding="utf-8") as f:
         for input_path in input_dir.rglob("*"):
-            if input_path.is_file():
+            if input_path.is_file() and (input_path != manifest):
                 output_path = output_dir / input_path.relative_to(input_dir)
                 f.write(f"{input_path.resolve()}\t{(output_path.parent/output_path.stem).resolve()}\n")
                 total_files += 1
