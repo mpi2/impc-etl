@@ -88,7 +88,6 @@ def process_images(
         else:
             convert_image(input_file, output_file, width=None, quality=100)
         convert_image(input_file, thumbnail_file, width=thumbnail_width, quality=thumbnail_quality)
-        print(input_file, output_file_basename)
 
 if __name__ == "__main__":
     process_images()
