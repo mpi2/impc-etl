@@ -30,7 +30,8 @@ def generate_jpegs(
     full_suffix: str,
     thumbnail_suffix: str,
     thumbnail_width: int,
-    thumbnail_quality: int
+    thumbnail_quality: int,
+    start_processing: bool
 ) -> None:
     """Generate JPEG images from an images directory which can have different sizes and file formats.
     For each image found on the input it should generate a JPEG image with a full resolution, and one image to be used as thumbnail.
@@ -56,25 +57,26 @@ def generate_jpegs(
                 f.write(f"{input_path.resolve()}\t{(output_path.parent/output_path.stem).resolve()}\n")
                 total_files += 1
 
-    click.echo(f"Generating JPEG files from {input_dir} to {output_dir}")
-    for batch_start in range(0, total_files, batch_size):
-        click.echo(f"Submit {batch_start} of {total_files}")
-        result = subprocess.run(
-            [
-                "python3",
-                "../jobs/transform/images_jpg_generation.py",
-                f"--manifest={manifest.resolve()}",
-                f"--batch-from={batch_start}",
-                f"--batch-to={batch_start + batch_size}",
-                f"--full-suffix={full_suffix}",
-                f"--thumbnail-suffix={thumbnail_suffix}",
-                f"--thumbnail-width={thumbnail_width}",
-                f"--thumbnail-quality={thumbnail_quality}"
-            ],
-            check=True,
-            # capture_output=True,
-            text=True
-        )
+    if start_processing:
+        click.echo(f"Generating JPEG files from {input_dir} to {output_dir}")
+        for batch_start in range(0, total_files, batch_size):
+            click.echo(f"Submit {batch_start} of {total_files}")
+            result = subprocess.run(
+                [
+                    "python3",
+                    "../jobs/transform/images_jpg_generation.py",
+                    f"--manifest={manifest.resolve()}",
+                    f"--batch-from={batch_start}",
+                    f"--batch-to={batch_start + batch_size}",
+                    f"--full-suffix={full_suffix}",
+                    f"--thumbnail-suffix={thumbnail_suffix}",
+                    f"--thumbnail-width={thumbnail_width}",
+                    f"--thumbnail-quality={thumbnail_quality}"
+                ],
+                check=True,
+                # capture_output=True,
+                text=True
+            )
 
 
 cli.add_command(generate_jpegs)
