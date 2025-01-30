@@ -16,16 +16,16 @@ def cli():
 
 @click.command()
 @click.argument("input_dir", type=click.Path(exists=True, file_okay=False, dir_okay=True))
-@click.argument("output_dir", type=click.Path(file_okay=False, dir_okay=True))
+@click.option("--output-dir", type=str)
 @click.option("--batch-size", default=1000, show_default=True, type=int, help="Batch size for processing")
-@click.option("--full-suffix", default="_full", type=str, help="Full size image suffix")
+@click.option("--full-suffix", default="", type=str, help="Full size image suffix")
 @click.option("--thumbnail-suffix", default="_thumbnail", type=str, help="Thumbnail suffix")
 @click.option("--thumbnail-width", default=200, show_default=True, type=int, help="Width of thumbnail")
 @click.option("--thumbnail-quality", default=80, show_default=True, type=int, help="Quality of thumbnail")
 @click.option("--start-processing",  is_flag=True, show_default=True, default=False, help="Whether to run the processing")
 def generate_jpegs(
     input_dir: str,
-    output_dir: str,
+    output_dir: str | None,
     batch_size: int,
     full_suffix: str,
     thumbnail_suffix: str,
@@ -38,11 +38,13 @@ def generate_jpegs(
     - Requires an input directory and an output directory.
     - Should allow to define suffixes for naming the full resolution and the thumbnail images to be generated.
     """
-    if os.path.exists(output_dir):
-        click.echo(f"Error: The output directory '{output_dir}' already exists.", err=True)
-        raise SystemExit(1)
-
-    os.mkdir(output_dir)
+    if output_dir is None:
+        output_dir = input_dir
+    else:
+        if os.path.exists(output_dir):
+            click.echo(f"Error: The output directory '{output_dir}' already exists.", err=True)
+            raise SystemExit(1)
+        os.mkdir(output_dir )
 
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
