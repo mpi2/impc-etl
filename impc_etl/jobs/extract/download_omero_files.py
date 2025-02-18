@@ -1,11 +1,9 @@
 import os
-import requests
-import json
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import multiprocessing
-import click
 import urllib.parse
-from urllib.parse import unquote
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import click
+import requests
 
 
 def query_solr(solr_url, pipeline_stable_id, procedure_stable_id):
@@ -152,6 +150,55 @@ def download_and_save(json_list, base_dir, log_failed, log_success):
         with open(log_success, "w") as log:
             log.write("\n".join(success_downloads))
         print(f"Successful downloads logged in {log_success}")
+
+
+def extract_combinations(solr_url):
+    """
+    Query Solr to get the list of unique pipeline_stable_id and procedure_stable_id combinations.
+    """
+    try:
+        query_params = {
+            "q": "*:*",
+            "facet": "on",
+            "facet.pivot": "pipeline_stable_id,procedure_stable_id",
+            "rows": "0",
+            "wt": "json",
+        }
+        response = requests.get(f"{solr_url}/select", params=query_params)
+        response.raise_for_status()
+
+        data = response.json()
+        pivot_data = (
+            data.get("facet_counts", {})
+            .get("facet_pivot", {})
+            .get("pipeline_stable_id,procedure_stable_id", [])
+        )
+
+        combinations = [
+            (item["value"], sub_item["value"])
+            for item in pivot_data
+            for sub_item in item.get("pivot", [])
+        ]
+        return combinations
+    except requests.RequestException as e:
+        print(f"Failed to query Solr: {e}")
+        return []
+
+
+@click.command()
+@click.argument("solr_url")
+@click.argument("output_file", type=click.Path())
+def list_combinations(solr_url, output_file):
+    """
+    List all available pipeline_stable_id and procedure_stable_id combinations from Solr and save to a file.
+    """
+    combinations = extract_combinations(solr_url)
+
+    with open(output_file, "w") as f:
+        for combo in combinations:
+            f.write(", ".join(combo) + "\n")
+
+    print(f"Combinations saved to {output_file}")
 
 
 @click.command()

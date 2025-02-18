@@ -1,17 +1,18 @@
 """
 Utils package
 """
-from typing import List, Dict
-from collections import OrderedDict
-from pyspark.sql import DataFrame, SparkSession, Row
-from pyspark.sql.types import StructType
-from pyspark.sql.functions import col
-from pyspark import SparkContext
 import re
+from collections import OrderedDict
 from datetime import datetime
-from impc_etl.config.constants import Constants
+from typing import List, Dict
+
+from pyspark import SparkContext
+from pyspark.sql import DataFrame, SparkSession, Row
+from pyspark.sql.functions import col
+from pyspark.sql.types import StructType
 from pyspark.sql.utils import AnalysisException
 
+from impc_etl.config.constants import Constants
 
 EPOCH = datetime.utcfromtimestamp(0)
 
@@ -106,3 +107,13 @@ def has_column(df, col):
         return True
     except AnalysisException:
         return False
+
+
+def to_snake_case(name: str) -> str:
+    """
+    Convert a camel case string to snake case
+    :param name: camel case string
+    :return: snake case string
+    """
+    name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+    return re.sub("([a-z0-9])([A-Z])", r"\1_\2", name).lower()
