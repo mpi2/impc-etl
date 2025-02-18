@@ -8,8 +8,14 @@
 #SBATCH --time=02:00:00             # Maximum runtime
 #SBATCH --partition=standard        # Partition name (adjust as necessary)
 
-# Define manifest file
-MANIFEST_FILE="/hps/nobackup/tudor/komp/bia-xry-files/download_manifest.tsv"
+# Ensure a manifest file argument is provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <manifest_file>"
+    exit 1
+fi
+
+# Get the manifest file from arguments
+MANIFEST_FILE="$1"
 
 # Batch size per task
 BATCH_SIZE=100
@@ -21,7 +27,7 @@ BATCH_TO=$(( BATCH_FROM + BATCH_SIZE - 1 ))
 echo "Processing batches from $BATCH_FROM to $BATCH_TO"
 
 # Run the command with the calculated batch range
-python3 ../impc_etl/jobs/transform/images_jpg_generation.py \
+python3 ../impc_etl/jobs/extract/download_omero_files.py \
     --manifest "$MANIFEST_FILE" \
     --batch-from $BATCH_FROM \
     --batch-to $BATCH_TO \

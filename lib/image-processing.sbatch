@@ -8,8 +8,14 @@
 #SBATCH --time=02:00:00             # Maximum runtime
 #SBATCH --partition=standard        # Partition name (adjust as necessary)
 
-# Define manifest file
-MANIFEST_FILE="/hps/nobackup/tudor/komp/bia-xry-files-web-friendly/manifest.tsv"
+# Ensure a manifest file argument is provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <manifest_file>"
+    exit 1
+fi
+
+# Get the manifest file from arguments
+MANIFEST_FILE="$1"
 
 # Batch size per task
 BATCH_SIZE=100

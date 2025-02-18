@@ -196,7 +196,7 @@ def list_combinations(solr_url, output_file):
 
     with open(output_file, "w") as f:
         for combo in combinations:
-            f.write(", ".join(combo) + "\n")
+            f.write("\t".join(combo) + "\n")
 
     print(f"Combinations saved to {output_file}")
 
