@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=process_images    # Job name
-#SBATCH --array=1-143%3              # Array of 1000 tasks
+#SBATCH --job-name=download_images    # Job name
+#SBATCH --array=1-150%3              # Array of 1000 tasks
 #SBATCH --output=logs/job_%A_%a.out # Standard output (one file per task)
 #SBATCH --error=logs/job_%A_%a.err  # Standard error (one file per task)
 #SBATCH --cpus-per-task=5           # Number of CPU cores per task
@@ -9,7 +9,7 @@
 #SBATCH --partition=standard        # Partition name (adjust as necessary)
 
 # Ensure a manifest file argument is provided
-if [ "$#" -ne 1 ]; then
+if [ -z "$1" ] || [ -z "$2" ]; then
     echo "Usage: $0 <manifest_file>"
     exit 1
 fi
@@ -21,7 +21,7 @@ MANIFEST_FILE="$1"
 BASE_DIR="$2"
 
 # Batch size per task
-BATCH_SIZE=100
+BATCH_SIZE=10
 
 # Calculate the start and end batch for this task
 BATCH_FROM=$(( (SLURM_ARRAY_TASK_ID - 1) * BATCH_SIZE + 1 ))
@@ -30,9 +30,6 @@ BATCH_TO=$(( BATCH_FROM + BATCH_SIZE - 1 ))
 echo "Processing batches from $BATCH_FROM to $BATCH_TO"
 
 # Run the command with the calculated batch range
-python3 ../impc_etl/jobs/extract/download_omero_files.py \
-    --solr-url "https://www.ebi.ac.uk/mi/impc/solr/impc_images" \
-    --base-dir "$BASE_DIR" \
-    --manifest "$MANIFEST_FILE" \
+python3 /hps/software/users/tudor/impc/impc-etl/impc_etl/jobs/extract/download_omero_files.py download-batch "https://www.ebi.ac.uk/mi/impc/solr/impc_images" "$MANIFEST_FILE" "$BASE_DIR" \
     --batch-from $BATCH_FROM \
     --batch-to $BATCH_TO
