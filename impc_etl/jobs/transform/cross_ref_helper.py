@@ -183,6 +183,20 @@ def generate_metadata_group(
         ).otherwise(col("metadataItems")),
     )
 
+    # Add the sequence id to the metadata group when the procedure is HMGULA_MIN_002.
+    # This is because in that given case we would like to generate a metadata split among observations
+    # Done on different time points see https://github.com/mpi2/impc-etl/issues/286
+    experiment_metadata_input = experiment_metadata_input.withColumn(
+        "metadataItems",
+        when(
+            col("_procedureID") == "HMGULA_MIN_002",
+            array_union(
+                col("metadataItems"),
+                array(concat(lit("Sequence ID = "), col("_sequenceIDStr"))),
+            ),
+        ).otherwise(col("metadataItems")),
+    )
+
     # Create a string with the concatenation of the metadata items "parameter = value" separated by '::'.
     experiment_metadata = experiment_metadata_input.groupBy(
         "unique_id", production_centre_col, phenotyping_centre_col
