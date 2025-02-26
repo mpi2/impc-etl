@@ -189,7 +189,8 @@ def generate_metadata_group(
     experiment_metadata_input = experiment_metadata_input.withColumn(
         "metadataItems",
         when(
-            col("_procedureID") == "HMGULA_MIN_002",
+            (col("_procedureID") == "HMGULA_MIN_002")
+            & (col("_sequenceIDStr").isNotNull()),
             array_union(
                 col("metadataItems"),
                 array(concat(lit("Sequence ID = "), col("_sequenceIDStr"))),
