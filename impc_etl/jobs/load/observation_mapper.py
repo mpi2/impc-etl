@@ -14,7 +14,7 @@ from typing import Any
 import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
-from pyspark.sql import DataFrame, SparkSession, Window
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import (
     concat,
     col,
@@ -25,7 +25,6 @@ from pyspark.sql.functions import (
     regexp_replace,
     regexp_extract,
     collect_list,
-    max,
     md5,
     unix_timestamp,
     from_unixtime,
@@ -33,7 +32,6 @@ from pyspark.sql.functions import (
     array,
     substring,
     upper,
-    concat_ws,
     explode_outer,
 )
 from pyspark.sql.types import DoubleType, StringType, IntegerType, LongType
@@ -202,13 +200,7 @@ class ExperimentToObservationMapper(PySparkTask):
             "parameter.analysisWithBodyweight",
         ).distinct()
         not_use_body_weight_parameters = parameters.where(
-            col("analysisWithBodyweight").isin(
-                [
-                    "do_not_use_body_weight_covariate",
-                    "is_body_weight",
-                    "is_fasted_body_weight",
-                ]
-            )
+            col("analysisWithBodyweight") != "analyse_with_body_weight"
         )
         not_use_body_weight_parameters = not_use_body_weight_parameters.alias("bw")
         observations_df = observations_df.alias("obs")
@@ -1104,7 +1096,9 @@ class ExperimentToObservationMapper(PySparkTask):
                 "parameter.analysisWithBodyweight",
             ).distinct()
             body_weight_parameters = parameters.where(
-                col("analysisWithBodyweight") == "is_body_weight"
+                col("analysisWithBodyweight").isin(
+                    ["is_body_weight", "drop_body_weight_from_analysis"]
+                )
             )
             if "ESLIM" in parameter_stable_id:
                 body_weight_parameters = body_weight_parameters.where(

@@ -136,9 +136,7 @@ class ExperimentBWAgeCalculator(PySparkTask):
 
         # Filter the IMPReSS using the analysisWithBodyweight flag
         weight_parameters = parameters.where(
-            col("analysisWithBodyweight").isin(
-                ["is_body_weight", "is_fasted_body_weight"]
-            )
+            col("analysisWithBodyweight") == "is_body_weight"
         )
 
         # Join both the  observations DF and the BW parameters DF to obtain the observations that are BW
@@ -156,10 +154,6 @@ class ExperimentBWAgeCalculator(PySparkTask):
                 )
             ),
         )
-        # Create a boolean flag for fasted BW procedures
-        weight_observations = weight_observations.withColumn(
-            "weightFasted", col("analysisWithBodyweight") == "is_fasted_body_weight"
-        )
 
         weight_observations = weight_observations.select(
             "specimenID",
@@ -168,7 +162,6 @@ class ExperimentBWAgeCalculator(PySparkTask):
             col("_dateOfExperiment").alias("weightDate"),
             col("simpleParameter._parameterID").alias("weightParameterID"),
             col("simpleParameter.value").alias("weightValue"),
-            "weightFasted",
         )
         weight_observations = weight_observations.where(col("weightValue").isNotNull())
 
@@ -191,7 +184,6 @@ class ExperimentBWAgeCalculator(PySparkTask):
                     "weightParameterID",
                     "weightValue",
                     "weightDaysOld",
-                    "weightFasted",
                 )
             ).alias("weight_observations")
         )
