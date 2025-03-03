@@ -2582,7 +2582,6 @@ class StatsResultsMapper(PySparkTask):
                 "parameter_stable_id",
                 "phenotyping_center",
                 "metadata_group",
-                "zygosity",
             ],
             "left_outer",
         )
