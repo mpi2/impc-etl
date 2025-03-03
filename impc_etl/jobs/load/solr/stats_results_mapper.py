@@ -13,8 +13,6 @@ from pyspark.sql.types import (
     StructType,
     StructField,
     StringType,
-    IntegerType,
-    DoubleType,
     ArrayType,
     Row,
 )
@@ -2529,6 +2527,76 @@ class StatsResultsMapper(PySparkTask):
             & f.col("parameter_stable_id").like("%PAT%")
             & (f.expr("exists(sub_term_id, term -> term LIKE 'MP:%')"))
         )
+        gross_pathology_wt_hit_rate = observations_df.where(
+            (f.col("biological_sample_group") == "control")
+            & f.col("parameter_stable_id").like("%PAT%")
+        )
+        gross_pathology_wt_hit_rate = gross_pathology_wt_hit_rate.groupBy(
+            "pipeline_stable_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "phenotyping_center",
+            "strain_accession_id",
+            "metadata_group",
+        ).agg(
+            (
+                f.countDistinct(
+                    f.when(
+                        f.expr("exists(sub_term_id, term -> term LIKE 'MP:%')"),
+                        f.col("specimen_id"),
+                    ).otherwise(f.lit(None))
+                )
+                / f.countDistinct("specimen_id")
+            ).alias("wt_hit_rate")
+        )
+
+        gross_pathology_ko_hit_rate = observations_df.where(
+            (f.col("biological_sample_group") == "experimental")
+            & f.col("parameter_stable_id").like("%PAT%")
+        )
+        gross_pathology_ko_hit_rate = gross_pathology_ko_hit_rate.groupBy(
+            "pipeline_stable_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "phenotyping_center",
+            "colony_id",
+            "metadata_group",
+            "zygosity",
+        ).agg(
+            (
+                f.countDistinct(
+                    f.when(
+                        f.expr("exists(sub_term_id, term -> term LIKE 'MP:%')"),
+                        f.col("specimen_id"),
+                    ).otherwise(f.lit(None))
+                )
+                / f.countDistinct("specimen_id")
+            ).alias("ko_hit_rate")
+        )
+
+        gross_pathology_significance_scores = gross_pathology_ko_hit_rate.join(
+            gross_pathology_wt_hit_rate,
+            [
+                "pipeline_stable_id",
+                "procedure_stable_id",
+                "parameter_stable_id",
+                "phenotyping_center",
+                "metadata_group",
+                "zygosity",
+            ],
+            "left_outer",
+        )
+
+        gross_pathology_significance_scores = (
+            gross_pathology_significance_scores.withColumn(
+                "significance",
+                f.when(
+                    f.col("ko_hit_rate") >= (0.25 + f.col("wt_hit_rate")),
+                    True,
+                ).otherwise(False),
+            )
+        )
+
         required_stats_columns = STATS_OBSERVATIONS_JOIN + [
             "sex",
             "procedure_stable_id",
@@ -2560,6 +2628,19 @@ class StatsResultsMapper(PySparkTask):
             "term_id", f.explode_outer("sub_term_id")
         )
 
+        gross_pathology_stats_results = gross_pathology_stats_results.join(
+            gross_pathology_significance_scores,
+            [
+                "pipeline_stable_id",
+                "procedure_stable_id",
+                "parameter_stable_id",
+                "phenotyping_center",
+                "colony_id",
+                "metadata_group",
+                "zygosity",
+            ],
+        )
+
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "term_id",
             f.when(
@@ -2568,37 +2649,30 @@ class StatsResultsMapper(PySparkTask):
                 )
                 | f.expr("exists(sub_term_name, term -> term = 'normal')"),
                 f.lit(None),
-            ).otherwise(f.col("term_id")),
+            ).otherwise(
+                f.when(
+                    f.col("significance") == True,
+                    f.col("term_id"),
+                ).otherwise(f.lit(None))
+            ),
         )
 
-        gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
-            "mp_term",
-            f.array(
+        gross_pathology_stats_results = gross_pathology_stats_results.groupBy(
+            *[
+                col_name
+                for col_name in required_stats_columns
+                if col_name not in ["sex", "sub_term_id", "sub_term_name"]
+            ]
+        ).agg(
+            f.collect_set(
                 f.struct(
                     f.lit("ABNORMAL").cast(StringType()).alias("event"),
                     f.lit(None).cast(StringType()).alias("otherPossibilities"),
                     f.col("sex"),
                     f.col("term_id"),
                 )
-            ),
+            ).alias("mp_term")
         )
-
-        # gross_pathology_stats_results = gross_pathology_stats_results.groupBy(
-        #     *[
-        #         col_name
-        #         for col_name in required_stats_columns
-        #         if col_name not in ["sex", "sub_term_id", "sub_term_name"]
-        #     ]
-        # ).agg(
-        #     f.collect_set(
-        #         f.struct(
-        #             f.lit("ABNORMAL").cast(StringType()).alias("event"),
-        #             f.lit(None).cast(StringType()).alias("otherPossibilities"),
-        #             f.col("sex"),
-        #             f.col("term_id"),
-        #         )
-        #     ).alias("mp_term")
-        # )
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "mp_term",
             f.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
