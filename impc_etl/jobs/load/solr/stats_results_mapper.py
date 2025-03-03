@@ -2636,6 +2636,7 @@ class StatsResultsMapper(PySparkTask):
                 "phenotyping_center",
                 "colony_id",
                 "metadata_group",
+                "strain_accession_id",
                 "zygosity",
             ],
         )
