@@ -2214,6 +2214,81 @@ class ImpcStatsBundleMapper(PySparkTask):
                 )
             )
         )
+        gross_pathology_wt_hit_rate = observations_df.where(
+            (pyspark.sql.functions.col("biological_sample_group") == "control")
+            & pyspark.sql.functions.col("parameter_stable_id").like("%PAT%")
+        )
+        gross_pathology_wt_hit_rate = gross_pathology_wt_hit_rate.groupBy(
+            "pipeline_stable_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "phenotyping_center",
+            "strain_accession_id",
+            "metadata_group",
+        ).agg(
+            (
+                pyspark.sql.functions.countDistinct(
+                    pyspark.sql.functions.when(
+                        pyspark.sql.functions.expr(
+                            "exists(sub_term_id, term -> term LIKE 'MP:%')"
+                        ),
+                        pyspark.sql.functions.col("specimen_id"),
+                    ).otherwise(lit(None))
+                )
+                / pyspark.sql.functions.countDistinct("specimen_id")
+            ).alias("wt_hit_rate")
+        )
+
+        gross_pathology_ko_hit_rate = observations_df.where(
+            (pyspark.sql.functions.col("biological_sample_group") == "experimental")
+            & pyspark.sql.functions.col("parameter_stable_id").like("%PAT%")
+        )
+        gross_pathology_ko_hit_rate = gross_pathology_ko_hit_rate.groupBy(
+            "pipeline_stable_id",
+            "procedure_stable_id",
+            "parameter_stable_id",
+            "phenotyping_center",
+            "colony_id",
+            "metadata_group",
+            "zygosity",
+        ).agg(
+            (
+                pyspark.sql.functions.countDistinct(
+                    pyspark.sql.functions.when(
+                        pyspark.sql.functions.expr(
+                            "exists(sub_term_id, term -> term LIKE 'MP:%')"
+                        ),
+                        pyspark.sql.functions.col("specimen_id"),
+                    ).otherwise(lit(None))
+                )
+                / pyspark.sql.functions.countDistinct("specimen_id")
+            ).alias("ko_hit_rate")
+        )
+
+        gross_pathology_significance_scores = gross_pathology_ko_hit_rate.join(
+            gross_pathology_wt_hit_rate,
+            [
+                "pipeline_stable_id",
+                "procedure_stable_id",
+                "parameter_stable_id",
+                "phenotyping_center",
+                "metadata_group",
+                "zygosity",
+            ],
+            "left_outer",
+        )
+
+        gross_pathology_significance_scores = (
+            gross_pathology_significance_scores.withColumn(
+                "significance",
+                pyspark.sql.functions.when(
+                    pyspark.sql.functions.col("ko_hit_rate")
+                    >= (0.25 + pyspark.sql.functions.col("wt_hit_rate")),
+                    True,
+                ).otherwise(False),
+            )
+        )
+
         required_stats_columns = STATS_OBSERVATIONS_JOIN + [
             "sex",
             "procedure_stable_id",
@@ -2245,6 +2320,19 @@ class ImpcStatsBundleMapper(PySparkTask):
             "term_id", pyspark.sql.functions.explode_outer("sub_term_id")
         )
 
+        gross_pathology_stats_results = gross_pathology_stats_results.join(
+            gross_pathology_significance_scores,
+            [
+                "pipeline_stable_id",
+                "procedure_stable_id",
+                "parameter_stable_id",
+                "phenotyping_center",
+                "colony_id",
+                "metadata_group",
+                "zygosity",
+            ],
+        )
+
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "term_id",
             pyspark.sql.functions.when(
@@ -2255,7 +2343,12 @@ class ImpcStatsBundleMapper(PySparkTask):
                     "exists(sub_term_name, term -> term = 'normal')"
                 ),
                 pyspark.sql.functions.lit(None),
-            ).otherwise(pyspark.sql.functions.col("term_id")),
+            ).otherwise(
+                pyspark.sql.functions.when(
+                    pyspark.sql.functions.col("significance") == True,
+                    pyspark.sql.functions.col("term_id"),
+                ).otherwise(lit(None))
+            ),
         )
 
         gross_pathology_stats_results = gross_pathology_stats_results.groupBy(
