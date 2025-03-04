@@ -2542,7 +2542,9 @@ class StatsResultsMapper(PySparkTask):
             (
                 f.countDistinct(
                     f.when(
-                        f.expr("exists(sub_term_id, term -> term LIKE 'MP:%')"),
+                        f.expr(
+                            "exists(sub_term_id, term -> term LIKE 'MP:%' AND term <> 'MP:0002169')"
+                        ),
                         f.col("specimen_id"),
                     ).otherwise(f.lit(None))
                 )
@@ -2566,7 +2568,9 @@ class StatsResultsMapper(PySparkTask):
             (
                 f.countDistinct(
                     f.when(
-                        f.expr("exists(sub_term_id, term -> term LIKE 'MP:%')"),
+                        f.expr(
+                            "exists(sub_term_id, term -> term LIKE 'MP:%' AND term <> 'MP:0002169')"
+                        ),
                         f.col("specimen_id"),
                     ).otherwise(f.lit(None))
                 )
