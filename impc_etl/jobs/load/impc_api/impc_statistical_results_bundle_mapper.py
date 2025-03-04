@@ -5,12 +5,10 @@ import sys
 from typing import List
 
 import luigi
-import pyspark
-import pyspark.sql.functions
+import pyspark.sql.functions as f
 from luigi.contrib.spark import PySparkTask
 from pymongo import MongoClient
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import lit
 from pyspark.sql.types import (
     StructType,
     StructField,
@@ -157,7 +155,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         for col_name in stats_results_df.columns:
             if dict(stats_results_df.dtypes)[col_name] == "null":
                 stats_results_df = stats_results_df.withColumn(
-                    col_name, lit(None).astype(StringType())
+                    col_name, f.lit(None).astype(StringType())
                 )
         stats_results_df.distinct().write.parquet(output_path)
         raw_data_df = open_stats_df.select("doc_id", "raw_data").distinct()
@@ -196,51 +194,37 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         embryo_stat_packets = open_stats_complete_df.where(
             (
-                (pyspark.sql.functions.col("procedure_group").contains("IMPC_GPL"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GEL"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GPM"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GEM"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GPO"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GEO"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GPP"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GEP"))
+                (f.col("procedure_group").contains("IMPC_GPL"))
+                | (f.col("procedure_group").contains("IMPC_GEL"))
+                | (f.col("procedure_group").contains("IMPC_GPM"))
+                | (f.col("procedure_group").contains("IMPC_GEM"))
+                | (f.col("procedure_group").contains("IMPC_GPO"))
+                | (f.col("procedure_group").contains("IMPC_GEO"))
+                | (f.col("procedure_group").contains("IMPC_GPP"))
+                | (f.col("procedure_group").contains("IMPC_GEP"))
             )
         )
 
         open_stats_df = open_stats_complete_df.where(
             ~(
-                pyspark.sql.functions.col("procedure_stable_id").contains(
-                    "IMPC_FER_001"
-                )
-                | (
-                    pyspark.sql.functions.col("procedure_stable_id").contains(
-                        "IMPC_VIA_001"
-                    )
-                )
-                | (
-                    pyspark.sql.functions.col("procedure_stable_id").contains(
-                        "IMPC_VIA_002"
-                    )
-                )
-                | (pyspark.sql.functions.col("procedure_group").contains("_PAT"))
-                | (pyspark.sql.functions.col("procedure_group").contains("_EVL"))
-                | (pyspark.sql.functions.col("procedure_group").contains("_EVM"))
-                | (pyspark.sql.functions.col("procedure_group").contains("_EVO"))
-                | (pyspark.sql.functions.col("procedure_group").contains("_EVP"))
-                | (pyspark.sql.functions.col("procedure_group").contains("_ELZ"))
-                | (
-                    pyspark.sql.functions.col("procedure_name").startswith(
-                        "Histopathology"
-                    )
-                )
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GPL"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GEL"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GPM"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GEM"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GPO"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GEO"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GPP"))
-                | (pyspark.sql.functions.col("procedure_group").contains("IMPC_GEP"))
+                f.col("procedure_stable_id").contains("IMPC_FER_001")
+                | (f.col("procedure_stable_id").contains("IMPC_VIA_001"))
+                | (f.col("procedure_stable_id").contains("IMPC_VIA_002"))
+                | (f.col("procedure_group").contains("_PAT"))
+                | (f.col("procedure_group").contains("_EVL"))
+                | (f.col("procedure_group").contains("_EVM"))
+                | (f.col("procedure_group").contains("_EVO"))
+                | (f.col("procedure_group").contains("_EVP"))
+                | (f.col("procedure_group").contains("_ELZ"))
+                | (f.col("procedure_name").startswith("Histopathology"))
+                | (f.col("procedure_group").contains("IMPC_GPL"))
+                | (f.col("procedure_group").contains("IMPC_GEL"))
+                | (f.col("procedure_group").contains("IMPC_GPM"))
+                | (f.col("procedure_group").contains("IMPC_GEM"))
+                | (f.col("procedure_group").contains("IMPC_GPO"))
+                | (f.col("procedure_group").contains("IMPC_GEO"))
+                | (f.col("procedure_group").contains("IMPC_GPP"))
+                | (f.col("procedure_group").contains("IMPC_GEP"))
             )
         )
 
@@ -248,9 +232,7 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         for col_name in open_stats_df.columns:
             if col_name not in fertility_stats.columns:
-                fertility_stats = fertility_stats.withColumn(
-                    col_name, pyspark.sql.functions.lit(None)
-                )
+                fertility_stats = fertility_stats.withColumn(col_name, f.lit(None))
         fertility_stats = fertility_stats.select(open_stats_df.columns)
 
         open_stats_df = open_stats_df.union(fertility_stats)
@@ -258,9 +240,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         viability_stats = self._viability_stats_results(observations_df, pipeline_df)
         for col_name in open_stats_df.columns:
             if col_name not in viability_stats.columns:
-                viability_stats = viability_stats.withColumn(
-                    col_name, pyspark.sql.functions.lit(None)
-                )
+                viability_stats = viability_stats.withColumn(col_name, f.lit(None))
         viability_stats = viability_stats.select(open_stats_df.columns)
         open_stats_df = open_stats_df.union(viability_stats)
 
@@ -268,7 +248,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         for col_name in open_stats_df.columns:
             if col_name not in gross_pathology_stats.columns:
                 gross_pathology_stats = gross_pathology_stats.withColumn(
-                    col_name, pyspark.sql.functions.lit(None)
+                    col_name, f.lit(None)
                 )
         gross_pathology_stats = gross_pathology_stats.select(open_stats_df.columns)
         open_stats_df = open_stats_df.union(gross_pathology_stats)
@@ -277,7 +257,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         for col_name in open_stats_df.columns:
             if col_name not in histopathology_stats.columns:
                 histopathology_stats = histopathology_stats.withColumn(
-                    col_name, pyspark.sql.functions.lit(None)
+                    col_name, f.lit(None)
                 )
         histopathology_stats = histopathology_stats.select(
             open_stats_df.columns
@@ -290,7 +270,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         for col_name in open_stats_df.columns:
             if col_name not in embryo_viability_stats.columns:
                 embryo_viability_stats = embryo_viability_stats.withColumn(
-                    col_name, pyspark.sql.functions.lit(None)
+                    col_name, f.lit(None)
                 )
         embryo_viability_stats = embryo_viability_stats.select(open_stats_df.columns)
         open_stats_df = open_stats_df.union(embryo_viability_stats)
@@ -300,9 +280,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         )
         for col_name in open_stats_df.columns:
             if col_name not in embryo_stats.columns:
-                embryo_stats = embryo_stats.withColumn(
-                    col_name, pyspark.sql.functions.lit(None)
-                )
+                embryo_stats = embryo_stats.withColumn(col_name, f.lit(None))
         embryo_stats = embryo_stats.select(open_stats_df.columns)
         open_stats_df = open_stats_df.union(embryo_stats)
 
@@ -315,7 +293,7 @@ class ImpcStatsBundleMapper(PySparkTask):
                 for col_name in observations_metadata_df.columns
                 if col_name != "sex"
             ]
-        ).agg(pyspark.sql.functions.collect_set("sex").alias("sex"))
+        ).agg(f.collect_set("sex").alias("sex"))
 
         aggregation_expresion = []
 
@@ -323,21 +301,17 @@ class ImpcStatsBundleMapper(PySparkTask):
             if col_name not in ["datasource_name", "production_center"]:
                 if col_name == "sex":
                     aggregation_expresion.append(
-                        pyspark.sql.functions.array_distinct(
-                            pyspark.sql.functions.flatten(
-                                pyspark.sql.functions.collect_set(col_name)
-                            )
-                        ).alias(col_name)
+                        f.array_distinct(f.flatten(f.collect_set(col_name))).alias(
+                            col_name
+                        )
                     )
                 elif col_name in ["strain_name", "genetic_background"]:
                     aggregation_expresion.append(
-                        pyspark.sql.functions.first(
-                            pyspark.sql.functions.col(col_name)
-                        ).alias(col_name)
+                        f.first(f.col(col_name)).alias(col_name)
                     )
                 else:
                     aggregation_expresion.append(
-                        pyspark.sql.functions.collect_set(col_name).alias(col_name)
+                        f.collect_set(col_name).alias(col_name)
                     )
 
         observations_metadata_df = observations_metadata_df.groupBy(
@@ -352,49 +326,37 @@ class ImpcStatsBundleMapper(PySparkTask):
         )
         open_stats_df = open_stats_df.withColumn(
             "pipeline_stable_id",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("procedure_stable_id") == "ESLIM_022_001",
-                pyspark.sql.functions.lit("ESLIM_001"),
-            ).otherwise(pyspark.sql.functions.col("pipeline_stable_id")),
+            f.when(
+                f.col("procedure_stable_id") == "ESLIM_022_001",
+                f.lit("ESLIM_001"),
+            ).otherwise(f.col("pipeline_stable_id")),
         )
         open_stats_df = open_stats_df.withColumn(
             "procedure_stable_id",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("procedure_stable_id").contains("~"),
-                pyspark.sql.functions.split(
-                    pyspark.sql.functions.col("procedure_stable_id"), "~"
-                ),
-            ).otherwise(
-                pyspark.sql.functions.array(
-                    pyspark.sql.functions.col("procedure_stable_id")
-                )
-            ),
+            f.when(
+                f.col("procedure_stable_id").contains("~"),
+                f.split(f.col("procedure_stable_id"), "~"),
+            ).otherwise(f.array(f.col("procedure_stable_id"))),
         )
         open_stats_df = open_stats_df.alias("stats")
 
         mp_ancestors_df = ontology_df.select(
             "id",
-            pyspark.sql.functions.struct(
-                "parent_ids", "intermediate_ids", "top_level_ids"
-            ).alias("ancestors"),
+            f.struct("parent_ids", "intermediate_ids", "top_level_ids").alias(
+                "ancestors"
+            ),
         )
         mp_ancestors_df_1 = mp_ancestors_df.alias("mp_term_1")
         mp_ancestors_df_2 = mp_ancestors_df.alias("mp_term_2")
         open_stats_df = open_stats_df.join(
             mp_ancestors_df_1,
-            (
-                pyspark.sql.functions.expr("mp_term[0].term_id")
-                == pyspark.sql.functions.col("mp_term_1.id")
-            ),
+            (f.expr("mp_term[0].term_id") == f.col("mp_term_1.id")),
             "left_outer",
         )
 
         open_stats_df = open_stats_df.join(
             mp_ancestors_df_2,
-            (
-                pyspark.sql.functions.expr("mp_term[1].term_id")
-                == pyspark.sql.functions.col("mp_term_2.id")
-            ),
+            (f.expr("mp_term[1].term_id") == f.col("mp_term_2.id")),
             "left_outer",
         )
 
@@ -408,7 +370,7 @@ class ImpcStatsBundleMapper(PySparkTask):
                 ]
             )
         )
-        select_collapsed_mp_term_udf = pyspark.sql.functions.udf(
+        select_collapsed_mp_term_udf = f.udf(
             lambda mp_term_array, pipeline, procedure_group, parameter, data_type, first_term_ancestors, second_term_ancestors: self._select_collapsed_mp_term(
                 mp_term_array,
                 pipeline,
@@ -423,15 +385,11 @@ class ImpcStatsBundleMapper(PySparkTask):
         )
         open_stats_df = open_stats_df.withColumn(
             "collapsed_mp_term",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.expr(
+            f.when(
+                f.expr(
                     "exists(mp_term.sex, sex -> sex = 'male') AND exists(mp_term.sex, sex -> sex = 'female')"
                 )
-                & (
-                    pyspark.sql.functions.col("data_type").isin(
-                        ["categorical", "unidimensional"]
-                    )
-                ),
+                & (f.col("data_type").isin(["categorical", "unidimensional"])),
                 select_collapsed_mp_term_udf(
                     "mp_term",
                     "pipeline_stable_id",
@@ -441,15 +399,13 @@ class ImpcStatsBundleMapper(PySparkTask):
                     "mp_term_1.ancestors",
                     "mp_term_2.ancestors",
                 ),
-            ).otherwise(pyspark.sql.functions.col("mp_term")),
+            ).otherwise(f.col("mp_term")),
         )
         open_stats_df = open_stats_df.drop("mp_term_1.*", "mp_term_2.*")
         open_stats_df = open_stats_df.withColumn(
-            "collapsed_mp_term", pyspark.sql.functions.expr("collapsed_mp_term[0]")
+            "collapsed_mp_term", f.expr("collapsed_mp_term[0]")
         )
-        open_stats_df = open_stats_df.withColumn(
-            "significant", pyspark.sql.functions.lit(False)
-        )
+        open_stats_df = open_stats_df.withColumn("significant", f.lit(False))
 
         open_stats_df = open_stats_df.join(
             threei_df,
@@ -466,48 +422,44 @@ class ImpcStatsBundleMapper(PySparkTask):
         open_stats_df = self.map_three_i(open_stats_df)
         open_stats_df = open_stats_df.withColumn(
             "collapsed_mp_term",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("threei_collapsed_mp_term").isNotNull(),
-                pyspark.sql.functions.col("threei_collapsed_mp_term"),
-            ).otherwise(pyspark.sql.functions.col("collapsed_mp_term")),
+            f.when(
+                f.col("threei_collapsed_mp_term").isNotNull(),
+                f.col("threei_collapsed_mp_term"),
+            ).otherwise(f.col("collapsed_mp_term")),
         )
 
         open_stats_df = open_stats_df.drop("threei_collapsed_mp_term")
 
         open_stats_df = open_stats_df.withColumn(
             "mp_term_id",
-            pyspark.sql.functions.regexp_replace("collapsed_mp_term.term_id", " ", ""),
+            f.regexp_replace("collapsed_mp_term.term_id", " ", ""),
         )
         for bad_mp in BAD_MP_MAP.keys():
             open_stats_df = open_stats_df.withColumn(
                 "mp_term_id",
-                pyspark.sql.functions.when(
-                    pyspark.sql.functions.col("mp_term_id") == bad_mp,
-                    pyspark.sql.functions.lit(BAD_MP_MAP[bad_mp]),
-                ).otherwise(pyspark.sql.functions.col("mp_term_id")),
+                f.when(
+                    f.col("mp_term_id") == bad_mp,
+                    f.lit(BAD_MP_MAP[bad_mp]),
+                ).otherwise(f.col("mp_term_id")),
             )
         open_stats_df = open_stats_df.withColumn(
-            "mp_term_event", pyspark.sql.functions.col("collapsed_mp_term.event")
+            "mp_term_event", f.col("collapsed_mp_term.event")
         )
         open_stats_df = open_stats_df.withColumn(
-            "mp_term_sex", pyspark.sql.functions.col("collapsed_mp_term.sex")
+            "mp_term_sex", f.col("collapsed_mp_term.sex")
         )
         open_stats_df = open_stats_df.withColumnRenamed("mp_term", "full_mp_term")
         open_stats_df = open_stats_df.withColumn(
             "full_mp_term",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("full_mp_term").isNull()
-                & pyspark.sql.functions.col("collapsed_mp_term").isNotNull(),
-                pyspark.sql.functions.array(
-                    pyspark.sql.functions.col("collapsed_mp_term")
-                ),
+            f.when(
+                f.col("full_mp_term").isNull() & f.col("collapsed_mp_term").isNotNull(),
+                f.array(f.col("collapsed_mp_term")),
             )
             .when(
-                pyspark.sql.functions.col("full_mp_term").isNull()
-                & pyspark.sql.functions.col("collapsed_mp_term").isNull(),
-                pyspark.sql.functions.lit(None),
+                f.col("full_mp_term").isNull() & f.col("collapsed_mp_term").isNull(),
+                f.lit(None),
             )
-            .otherwise(pyspark.sql.functions.col("full_mp_term")),
+            .otherwise(f.col("full_mp_term")),
         )
 
         if extract_windowed_data:
@@ -521,9 +473,7 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         for col_name in stats_results_column_list:
             if col_name not in open_stats_df.columns:
-                open_stats_df = open_stats_df.withColumn(
-                    col_name, pyspark.sql.functions.lit(None)
-                )
+                open_stats_df = open_stats_df.withColumn(col_name, f.lit(None))
 
         ontology_df = ontology_df.withColumnRenamed("id", "mp_term_id")
         open_stats_df = self.map_to_stats(
@@ -554,11 +504,7 @@ class ImpcStatsBundleMapper(PySparkTask):
             )
             .agg(
                 *[
-                    pyspark.sql.functions.array_distinct(
-                        pyspark.sql.functions.flatten(
-                            pyspark.sql.functions.collect_set(col_name)
-                        )
-                    ).alias(col_name)
+                    f.array_distinct(f.flatten(f.collect_set(col_name))).alias(col_name)
                     if col_name
                     in [
                         "mp_id",
@@ -568,7 +514,7 @@ class ImpcStatsBundleMapper(PySparkTask):
                         "intermediate_mp_id",
                         "intermediate_mp_term",
                     ]
-                    else pyspark.sql.functions.collect_set(col_name).alias(col_name)
+                    else f.collect_set(col_name).alias(col_name)
                     for col_name in list(set(PIPELINE_STATS_MAP.values()))
                     if col_name != "pipeline_stable_key"
                 ]
@@ -580,7 +526,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         )
         pipeline_core_df = pipeline_core_df.withColumn(
             "procedure_stable_id",
-            pyspark.sql.functions.array(pyspark.sql.functions.col("proc_id")),
+            f.array(f.col("proc_id")),
         )
         # Fix for VIA_002 missing mp terms
         pipeline_core_df = self._add_via_002_mp_term_options(pipeline_core_df)
@@ -595,32 +541,32 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         open_stats_df = open_stats_df.withColumn(
             "top_level_mp_term_id",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("top_level_mp_term_id").isNull(),
-                pyspark.sql.functions.col("top_level_mp_id_options"),
-            ).otherwise(pyspark.sql.functions.col("top_level_mp_term_id")),
+            f.when(
+                f.col("top_level_mp_term_id").isNull(),
+                f.col("top_level_mp_id_options"),
+            ).otherwise(f.col("top_level_mp_term_id")),
         )
         open_stats_df = open_stats_df.withColumn(
             "top_level_mp_term_name",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("top_level_mp_term_name").isNull(),
-                pyspark.sql.functions.col("top_level_mp_term_options"),
-            ).otherwise(pyspark.sql.functions.col("top_level_mp_term_name")),
+            f.when(
+                f.col("top_level_mp_term_name").isNull(),
+                f.col("top_level_mp_term_options"),
+            ).otherwise(f.col("top_level_mp_term_name")),
         )
 
         open_stats_df = open_stats_df.withColumn(
             "intermediate_mp_term_id",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("intermediate_mp_term_id").isNull(),
-                pyspark.sql.functions.col("intermediate_mp_id_options"),
-            ).otherwise(pyspark.sql.functions.col("intermediate_mp_term_id")),
+            f.when(
+                f.col("intermediate_mp_term_id").isNull(),
+                f.col("intermediate_mp_id_options"),
+            ).otherwise(f.col("intermediate_mp_term_id")),
         )
         open_stats_df = open_stats_df.withColumn(
             "intermediate_mp_term_name",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("intermediate_mp_term_name").isNull(),
-                pyspark.sql.functions.col("intermediate_mp_term_options"),
-            ).otherwise(pyspark.sql.functions.col("intermediate_mp_term_name")),
+            f.when(
+                f.col("intermediate_mp_term_name").isNull(),
+                f.col("intermediate_mp_term_options"),
+            ).otherwise(f.col("intermediate_mp_term_name")),
         )
 
         allele_df = allele_df.select(
@@ -631,29 +577,25 @@ class ImpcStatsBundleMapper(PySparkTask):
             open_stats_df, allele_df, ["allele_symbol"], ALLELE_STATS_MAP, "allele"
         )
 
-        open_stats_df = open_stats_df.withColumn(
-            "sex", pyspark.sql.functions.col("mp_term_sex")
-        )
+        open_stats_df = open_stats_df.withColumn("sex", f.col("mp_term_sex"))
         open_stats_df = open_stats_df.withColumn(
             "phenotype_sex",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("phenotype_sex").isNull(),
-                pyspark.sql.functions.lit(None),
+            f.when(
+                f.col("phenotype_sex").isNull(),
+                f.lit(None),
             )
             .when(
-                pyspark.sql.functions.col("phenotype_sex").contains(
-                    "Both sexes included"
-                ),
-                pyspark.sql.functions.array(
-                    pyspark.sql.functions.lit("male"),
-                    pyspark.sql.functions.lit("female"),
+                f.col("phenotype_sex").contains("Both sexes included"),
+                f.array(
+                    f.lit("male"),
+                    f.lit("female"),
                 ),
             )
             .otherwise(
-                pyspark.sql.functions.array(
-                    pyspark.sql.functions.lower(
-                        pyspark.sql.functions.regexp_extract(
-                            pyspark.sql.functions.col("phenotype_sex"),
+                f.array(
+                    f.lower(
+                        f.regexp_extract(
+                            f.col("phenotype_sex"),
                             r"Only one sex included in the analysis; (.*)\[.*\]",
                             1,
                         )
@@ -663,28 +605,23 @@ class ImpcStatsBundleMapper(PySparkTask):
         )
         open_stats_df = open_stats_df.withColumn(
             "phenotype_sex",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("phenotype_sex").isNull()
-                & pyspark.sql.functions.col("mp_term_sex").isNotNull(),
-                pyspark.sql.functions.when(
-                    pyspark.sql.functions.col("mp_term_sex") == "not_considered",
-                    pyspark.sql.functions.array(
-                        pyspark.sql.functions.lit("male"),
-                        pyspark.sql.functions.lit("female"),
+            f.when(
+                f.col("phenotype_sex").isNull() & f.col("mp_term_sex").isNotNull(),
+                f.when(
+                    f.col("mp_term_sex") == "not_considered",
+                    f.array(
+                        f.lit("male"),
+                        f.lit("female"),
                     ),
-                ).otherwise(
-                    pyspark.sql.functions.array(
-                        pyspark.sql.functions.col("mp_term_sex")
-                    )
-                ),
-            ).otherwise(pyspark.sql.functions.col("phenotype_sex")),
+                ).otherwise(f.array(f.col("mp_term_sex"))),
+            ).otherwise(f.col("phenotype_sex")),
         )
         open_stats_df = open_stats_df.withColumn(
             "zygosity",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("zygosity") == "homozygous",
-                pyspark.sql.functions.lit("homozygote"),
-            ).otherwise(pyspark.sql.functions.col("zygosity")),
+            f.when(
+                f.col("zygosity") == "homozygous",
+                f.lit("homozygote"),
+            ).otherwise(f.col("zygosity")),
         )
 
         open_stats_df = self.map_ontology_prefix(open_stats_df, "MA:", "anatomy_")
@@ -692,82 +629,74 @@ class ImpcStatsBundleMapper(PySparkTask):
         open_stats_df = self.map_ontology_prefix(open_stats_df, "EMAPA:", "anatomy_")
         open_stats_df = open_stats_df.withColumn(
             "significant",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("mp_term_id").isNotNull(),
-                pyspark.sql.functions.lit(True),
-            ).otherwise(pyspark.sql.functions.lit(False)),
+            f.when(
+                f.col("mp_term_id").isNotNull(),
+                f.lit(True),
+            ).otherwise(f.lit(False)),
         )
         open_stats_df = open_stats_df.withColumn(
             "p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("statistical_method").startswith(
-                    "Reference Range"
+            f.when(
+                f.col("statistical_method").startswith("Reference Range"),
+                f.least(
+                    f.col("female_pvalue_low_normal_vs_high"),
+                    f.col("female_pvalue_low_vs_normal_high"),
+                    f.col("male_pvalue_low_normal_vs_high"),
+                    f.col("male_pvalue_low_vs_normal_high"),
+                    f.col("genotype_pvalue_low_normal_vs_high"),
+                    f.col("genotype_pvalue_low_vs_normal_high"),
                 ),
-                pyspark.sql.functions.least(
-                    pyspark.sql.functions.col("female_pvalue_low_normal_vs_high"),
-                    pyspark.sql.functions.col("female_pvalue_low_vs_normal_high"),
-                    pyspark.sql.functions.col("male_pvalue_low_normal_vs_high"),
-                    pyspark.sql.functions.col("male_pvalue_low_vs_normal_high"),
-                    pyspark.sql.functions.col("genotype_pvalue_low_normal_vs_high"),
-                    pyspark.sql.functions.col("genotype_pvalue_low_vs_normal_high"),
-                ),
-            ).otherwise(pyspark.sql.functions.col("p_value")),
+            ).otherwise(f.col("p_value")),
         )
         open_stats_df = open_stats_df.withColumn(
             "effect_size",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("statistical_method").startswith(
-                    "Reference Range"
+            f.when(
+                f.col("statistical_method").startswith("Reference Range"),
+                f.greatest(
+                    f.col("female_effect_size_low_normal_vs_high"),
+                    f.col("female_effect_size_low_vs_normal_high"),
+                    f.col("male_effect_size_low_normal_vs_high"),
+                    f.col("male_effect_size_low_vs_normal_high"),
+                    f.col("genotype_effect_size_low_normal_vs_high"),
+                    f.col("genotype_effect_size_low_vs_normal_high"),
                 ),
-                pyspark.sql.functions.greatest(
-                    pyspark.sql.functions.col("female_effect_size_low_normal_vs_high"),
-                    pyspark.sql.functions.col("female_effect_size_low_vs_normal_high"),
-                    pyspark.sql.functions.col("male_effect_size_low_normal_vs_high"),
-                    pyspark.sql.functions.col("male_effect_size_low_vs_normal_high"),
-                    pyspark.sql.functions.col(
-                        "genotype_effect_size_low_normal_vs_high"
-                    ),
-                    pyspark.sql.functions.col(
-                        "genotype_effect_size_low_vs_normal_high"
-                    ),
-                ),
-            ).otherwise(pyspark.sql.functions.col("effect_size")),
+            ).otherwise(f.col("effect_size")),
         )
         open_stats_df = self.map_ontology_prefix(open_stats_df, "MPATH:", "mpath_")
         mpath_metadata_df = mpath_metadata_df.select(
-            pyspark.sql.functions.col("acc").alias("mpath_term_id"),
-            pyspark.sql.functions.col("name").alias("mpath_metadata_term_name"),
+            f.col("acc").alias("mpath_term_id"),
+            f.col("name").alias("mpath_metadata_term_name"),
         ).distinct()
         open_stats_df = open_stats_df.join(
             mpath_metadata_df, "mpath_term_id", "left_outer"
         )
         open_stats_df = open_stats_df.withColumn(
-            "mpath_term_name", pyspark.sql.functions.col("mpath_metadata_term_name")
+            "mpath_term_name", f.col("mpath_metadata_term_name")
         )
         open_stats_df = open_stats_df.withColumn(
             "metadata",
-            pyspark.sql.functions.expr(
+            f.expr(
                 "transform(metadata, metadata_values -> concat_ws('|', metadata_values))"
             ),
         )
         open_stats_df = open_stats_df.withColumn(
             "significant",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("data_type") == "time_series",
-                pyspark.sql.functions.lit(False),
-            ).otherwise(pyspark.sql.functions.col("significant")),
+            f.when(
+                f.col("data_type") == "time_series",
+                f.lit(False),
+            ).otherwise(f.col("significant")),
         )
         open_stats_df = open_stats_df.withColumn(
             "status",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("data_type") == "time_series",
-                pyspark.sql.functions.lit("NotProcessed"),
-            ).otherwise(pyspark.sql.functions.col("status")),
+            f.when(
+                f.col("data_type") == "time_series",
+                f.lit("NotProcessed"),
+            ).otherwise(f.col("status")),
         )
 
         open_stats_df = open_stats_df.withColumn(
             "procedure_stable_id_str",
-            pyspark.sql.functions.concat_ws(",", "procedure_stable_id"),
+            f.concat_ws(",", "procedure_stable_id"),
         )
         identifying_cols = [
             "colony_id",
@@ -782,15 +711,15 @@ class ImpcStatsBundleMapper(PySparkTask):
             "sex",
         ]
         identifying_cols = [
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col(col_name).isNotNull(),
-                pyspark.sql.functions.col(col_name),
-            ).otherwise(pyspark.sql.functions.lit(""))
+            f.when(
+                f.col(col_name).isNotNull(),
+                f.col(col_name),
+            ).otherwise(f.lit(""))
             for col_name in identifying_cols
         ]
         open_stats_df = open_stats_df.withColumn(
             "doc_id",
-            pyspark.sql.functions.md5(pyspark.sql.functions.concat(*identifying_cols)),
+            f.md5(f.concat(*identifying_cols)),
         )
         if raw_data_in_output == "include" or raw_data_in_output == "bundled":
             specimen_dobs = (
@@ -811,8 +740,8 @@ class ImpcStatsBundleMapper(PySparkTask):
             )
         open_stats_df = open_stats_df.withColumn(
             "data_type",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("procedure_group").rlike(
+            f.when(
+                f.col("procedure_group").rlike(
                     "|".join(
                         [
                             "IMPC_GPL",
@@ -826,9 +755,9 @@ class ImpcStatsBundleMapper(PySparkTask):
                         ]
                     )
                 )
-                & (pyspark.sql.functions.col("data_type") == "categorical"),
-                pyspark.sql.functions.lit("embryo"),
-            ).otherwise(pyspark.sql.functions.col("data_type")),
+                & (f.col("data_type") == "categorical"),
+                f.lit("embryo"),
+            ).otherwise(f.col("data_type")),
         )
         return open_stats_df
 
@@ -843,9 +772,7 @@ class ImpcStatsBundleMapper(PySparkTask):
     def _parse_raw_data(
         self, open_stats_df, extract_windowed_data, specimen_dob_dict, compress=True
     ):
-        compress_and_encode = pyspark.sql.functions.udf(
-            self._compress_and_encode, StringType()
-        )
+        compress_and_encode = f.udf(self._compress_and_encode, StringType())
         open_stats_df = open_stats_df.withColumnRenamed(
             "observations_biological_sample_group", "biological_sample_group"
         )
@@ -879,83 +806,59 @@ class ImpcStatsBundleMapper(PySparkTask):
         ]:
             open_stats_df = open_stats_df.withColumn(
                 col_name,
-                pyspark.sql.functions.when(
+                f.when(
                     (
-                        pyspark.sql.functions.col("data_type").isin(
+                        f.col("data_type").isin(
                             ["unidimensional", "time_series", "categorical"]
                         )
-                        & (pyspark.sql.functions.col(col_name).isNotNull())
+                        & (f.col(col_name).isNotNull())
                     ),
-                    pyspark.sql.functions.col(col_name),
-                ).otherwise(pyspark.sql.functions.lit(None)),
+                    f.col(col_name),
+                ).otherwise(f.lit(None)),
             )
         open_stats_df = open_stats_df.withColumn(
             "body_weight",
-            pyspark.sql.functions.when(
+            f.when(
                 (
-                    pyspark.sql.functions.col("data_type").isin(
+                    f.col("data_type").isin(
                         ["unidimensional", "time_series", "categorical"]
                     )
-                    & (pyspark.sql.functions.col("body_weight").isNotNull())
+                    & (f.col("body_weight").isNotNull())
                 ),
-                pyspark.sql.functions.col("body_weight"),
-            ).otherwise(
-                pyspark.sql.functions.expr(
-                    "transform(external_sample_id, sample_id -> NULL)"
-                )
-            ),
+                f.col("body_weight"),
+            ).otherwise(f.expr("transform(external_sample_id, sample_id -> NULL)")),
         )
         open_stats_df = open_stats_df.withColumn(
             "data_point",
-            pyspark.sql.functions.when(
-                (
-                    pyspark.sql.functions.col("data_type").isin(
-                        ["unidimensional", "time_series"]
-                    )
-                )
-                & (pyspark.sql.functions.col("observations_response").isNotNull()),
-                pyspark.sql.functions.col("observations_response"),
-            ).otherwise(
-                pyspark.sql.functions.expr(
-                    "transform(external_sample_id, sample_id -> NULL)"
-                )
-            ),
+            f.when(
+                (f.col("data_type").isin(["unidimensional", "time_series"]))
+                & (f.col("observations_response").isNotNull()),
+                f.col("observations_response"),
+            ).otherwise(f.expr("transform(external_sample_id, sample_id -> NULL)")),
         )
         open_stats_df = open_stats_df.withColumn(
             "category",
-            pyspark.sql.functions.when(
-                (pyspark.sql.functions.col("data_type") == "categorical")
-                & (pyspark.sql.functions.col("observations_response").isNotNull()),
-                pyspark.sql.functions.col("observations_response"),
-            ).otherwise(
-                pyspark.sql.functions.expr(
-                    "transform(external_sample_id, sample_id -> NULL)"
-                )
-            ),
+            f.when(
+                (f.col("data_type") == "categorical")
+                & (f.col("observations_response").isNotNull()),
+                f.col("observations_response"),
+            ).otherwise(f.expr("transform(external_sample_id, sample_id -> NULL)")),
         )
         open_stats_df = open_stats_df.withColumn(
             "time_point",
-            pyspark.sql.functions.when(
-                (pyspark.sql.functions.col("data_type") == "time_series")
-                & (pyspark.sql.functions.col("time_point").isNotNull()),
-                pyspark.sql.functions.col("time_point"),
-            ).otherwise(
-                pyspark.sql.functions.expr(
-                    "transform(external_sample_id, sample_id -> NULL)"
-                )
-            ),
+            f.when(
+                (f.col("data_type") == "time_series")
+                & (f.col("time_point").isNotNull()),
+                f.col("time_point"),
+            ).otherwise(f.expr("transform(external_sample_id, sample_id -> NULL)")),
         )
         open_stats_df = open_stats_df.withColumn(
             "discrete_point",
-            pyspark.sql.functions.when(
-                (pyspark.sql.functions.col("data_type") == "time_series")
-                & (pyspark.sql.functions.col("discrete_point").isNotNull()),
-                pyspark.sql.functions.col("discrete_point"),
-            ).otherwise(
-                pyspark.sql.functions.expr(
-                    "transform(external_sample_id, sample_id -> NULL)"
-                )
-            ),
+            f.when(
+                (f.col("data_type") == "time_series")
+                & (f.col("discrete_point").isNotNull()),
+                f.col("discrete_point"),
+            ).otherwise(f.expr("transform(external_sample_id, sample_id -> NULL)")),
         )
 
         date_of_birth_udf = (
@@ -966,24 +869,18 @@ class ImpcStatsBundleMapper(PySparkTask):
             if specimen_list is not None
             else []
         )
-        date_of_birth_udf = pyspark.sql.functions.udf(
-            date_of_birth_udf, ArrayType(StringType())
-        )
+        date_of_birth_udf = f.udf(date_of_birth_udf, ArrayType(StringType()))
         open_stats_df = open_stats_df.withColumn(
             "date_of_birth", date_of_birth_udf("external_sample_id")
         )
         if extract_windowed_data:
             open_stats_df = open_stats_df.withColumn(
                 "window_weight",
-                pyspark.sql.functions.when(
-                    (pyspark.sql.functions.col("data_type") == "unidimensional")
-                    & (pyspark.sql.functions.col("window_weight").isNotNull()),
-                    pyspark.sql.functions.col("window_weight"),
-                ).otherwise(
-                    pyspark.sql.functions.expr(
-                        "transform(external_sample_id, sample_id -> NULL)"
-                    )
-                ),
+                f.when(
+                    (f.col("data_type") == "unidimensional")
+                    & (f.col("window_weight").isNotNull()),
+                    f.col("window_weight"),
+                ).otherwise(f.expr("transform(external_sample_id, sample_id -> NULL)")),
             )
         raw_data_cols = [
             "biological_sample_group",
@@ -999,7 +896,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         if extract_windowed_data:
             raw_data_cols.append("window_weight")
         open_stats_df = open_stats_df.withColumn(
-            "raw_data", pyspark.sql.functions.arrays_zip(*raw_data_cols)
+            "raw_data", f.arrays_zip(*raw_data_cols)
         )
 
         # to_json_udf = udf(
@@ -1013,15 +910,11 @@ class ImpcStatsBundleMapper(PySparkTask):
         #     ),
         #     StringType(),
         # )
-        open_stats_df = open_stats_df.withColumn(
-            "raw_data", pyspark.sql.functions.to_json("raw_data")
-        )
+        open_stats_df = open_stats_df.withColumn("raw_data", f.to_json("raw_data"))
         for idx, col_name in enumerate(raw_data_cols):
             open_stats_df = open_stats_df.withColumn(
                 "raw_data",
-                pyspark.sql.functions.regexp_replace(
-                    "raw_data", f'"{idx}":', f'"{col_name}":'
-                ),
+                f.regexp_replace("raw_data", f'"{idx}":', f'"{col_name}":'),
             )
         if compress:
             open_stats_df = open_stats_df.withColumn(
@@ -1037,23 +930,23 @@ class ImpcStatsBundleMapper(PySparkTask):
             mp_col_name = col_name.replace(field_prefix, "mp_")
             open_stats_df = open_stats_df.withColumn(
                 col_name,
-                pyspark.sql.functions.when(
-                    pyspark.sql.functions.col(col_name).isNull(),
-                    pyspark.sql.functions.when(
-                        pyspark.sql.functions.col("mp_term_id").startswith(term_prefix),
-                        pyspark.sql.functions.col(mp_col_name),
-                    ).otherwise(pyspark.sql.functions.lit(None)),
-                ).otherwise(pyspark.sql.functions.col(col_name)),
+                f.when(
+                    f.col(col_name).isNull(),
+                    f.when(
+                        f.col("mp_term_id").startswith(term_prefix),
+                        f.col(mp_col_name),
+                    ).otherwise(f.lit(None)),
+                ).otherwise(f.col(col_name)),
             )
         mapped_id = field_prefix + "term_id"
         for col_name in mapped_columns:
             mp_col_name = col_name.replace(field_prefix, "mp_")
             open_stats_df = open_stats_df.withColumn(
                 mp_col_name,
-                pyspark.sql.functions.when(
-                    pyspark.sql.functions.col(mapped_id).isNotNull(),
-                    pyspark.sql.functions.lit(None),
-                ).otherwise(pyspark.sql.functions.col(mp_col_name)),
+                f.when(
+                    f.col(mapped_id).isNotNull(),
+                    f.lit(None),
+                ).otherwise(f.col(mp_col_name)),
             )
         return open_stats_df
 
@@ -1071,7 +964,7 @@ class ImpcStatsBundleMapper(PySparkTask):
             open_stats_df = open_stats_df.join(metadata_df, join_columns, "left_outer")
         for column_name, source_column in source_stats_map.items():
             open_stats_df = open_stats_df.withColumn(
-                column_name, pyspark.sql.functions.col(f"{source_name}_{source_column}")
+                column_name, f.col(f"{source_name}_{source_column}")
             )
         for source_column in source_stats_map.values():
             open_stats_df = open_stats_df.drop(f"{source_name}_{source_column}")
@@ -1081,92 +974,83 @@ class ImpcStatsBundleMapper(PySparkTask):
         threei_df = threei_df.dropDuplicates()
         for col_name, threei_column in THREEI_STATS_MAP.items():
             threei_df = threei_df.withColumnRenamed(threei_column, col_name)
-        threei_df = threei_df.withColumn(
-            "resource_name", pyspark.sql.functions.lit("3i")
-        )
+        threei_df = threei_df.withColumn("resource_name", f.lit("3i"))
         threei_df = threei_df.withColumn(
             "procedure_stable_id",
-            pyspark.sql.functions.array(
-                pyspark.sql.functions.col("procedure_stable_id")
-            ),
+            f.array(f.col("procedure_stable_id")),
         )
         threei_df = threei_df.withColumn(
             "sex",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("sex") == "both",
-                pyspark.sql.functions.lit("not_considered"),
-            ).otherwise(pyspark.sql.functions.lower(pyspark.sql.functions.col("sex"))),
+            f.when(
+                f.col("sex") == "both",
+                f.lit("not_considered"),
+            ).otherwise(f.lower(f.col("sex"))),
         )
         threei_df = threei_df.withColumn(
             "zygosity",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("zygosity") == "Hom",
-                pyspark.sql.functions.lit("homozygote"),
+            f.when(
+                f.col("zygosity") == "Hom",
+                f.lit("homozygote"),
             )
             .when(
-                pyspark.sql.functions.col("zygosity") == "Hemi",
-                pyspark.sql.functions.lit("hemizygote"),
+                f.col("zygosity") == "Hemi",
+                f.lit("hemizygote"),
             )
-            .otherwise(pyspark.sql.functions.lit("heterozygote")),
+            .otherwise(f.lit("heterozygote")),
         )
         threei_df = threei_df.withColumn(
-            "term_id", pyspark.sql.functions.regexp_replace("mp_id", r"\[", "")
+            "term_id", f.regexp_replace("mp_id", r"\[", "")
         )
 
         threei_df = threei_df.withColumn(
             "threei_collapsed_mp_term",
-            pyspark.sql.functions.when(
-                (pyspark.sql.functions.col("mp_id") != "NA")
-                & (pyspark.sql.functions.col("mp_id").isNotNull()),
-                pyspark.sql.functions.struct(
-                    pyspark.sql.functions.lit(None).cast(StringType()).alias("event"),
-                    pyspark.sql.functions.lit(None)
-                    .cast(StringType())
-                    .alias("otherPossibilities"),
+            f.when(
+                (f.col("mp_id") != "NA") & (f.col("mp_id").isNotNull()),
+                f.struct(
+                    f.lit(None).cast(StringType()).alias("event"),
+                    f.lit(None).cast(StringType()).alias("otherPossibilities"),
                     "sex",
-                    pyspark.sql.functions.col("term_id").alias("term_id"),
+                    f.col("term_id").alias("term_id"),
                 ),
-            ).otherwise(pyspark.sql.functions.lit(None)),
+            ).otherwise(f.lit(None)),
         )
         threei_df = threei_df.withColumn(
             "threei_p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("classification_tag") == "Significant",
-                pyspark.sql.functions.lit(0.0),
-            ).otherwise(pyspark.sql.functions.lit(1.0)),
+            f.when(
+                f.col("classification_tag") == "Significant",
+                f.lit(0.0),
+            ).otherwise(f.lit(1.0)),
         )
         threei_df = threei_df.withColumn(
             "threei_genotype_effect_p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("classification_tag") == "Significant",
-                pyspark.sql.functions.lit(0.0),
-            ).otherwise(pyspark.sql.functions.lit(1.0)),
+            f.when(
+                f.col("classification_tag") == "Significant",
+                f.lit(0.0),
+            ).otherwise(f.lit(1.0)),
         )
         threei_df = threei_df.withColumn(
             "threei_genotype_effect_parameter_estimate",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("classification_tag") == "Significant",
-                pyspark.sql.functions.lit(1.0),
-            ).otherwise(pyspark.sql.functions.lit(0.0)),
+            f.when(
+                f.col("classification_tag") == "Significant",
+                f.lit(1.0),
+            ).otherwise(f.lit(0.0)),
         )
         threei_df = threei_df.withColumn(
             "threei_significant",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("classification_tag") == "Significant",
-                pyspark.sql.functions.lit(True),
-            ).otherwise(pyspark.sql.functions.lit(False)),
+            f.when(
+                f.col("classification_tag") == "Significant",
+                f.lit(True),
+            ).otherwise(f.lit(False)),
         )
         threei_df = threei_df.withColumn(
             "threei_status",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("classification_tag").isin(
-                    ["Significant", "Not Significant"]
-                ),
-                pyspark.sql.functions.lit("Successful"),
-            ).otherwise(pyspark.sql.functions.lit("NotProcessed")),
+            f.when(
+                f.col("classification_tag").isin(["Significant", "Not Significant"]),
+                f.lit("Successful"),
+            ).otherwise(f.lit("NotProcessed")),
         )
         threei_df = threei_df.withColumn(
-            "threei_statistical_method", pyspark.sql.functions.lit("Supplied as data")
+            "threei_statistical_method", f.lit("Supplied as data")
         )
         threei_df = threei_df.drop(
             "sex",
@@ -1184,58 +1068,54 @@ class ImpcStatsBundleMapper(PySparkTask):
     def map_three_i(self, open_stats_df):
         open_stats_df = open_stats_df.withColumn(
             "genotype_effect_parameter_estimate",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col(
-                    "threei_genotype_effect_parameter_estimate"
-                ).isNotNull(),
-                pyspark.sql.functions.col("threei_genotype_effect_parameter_estimate"),
-            ).otherwise(
-                pyspark.sql.functions.col("genotype_effect_parameter_estimate")
-            ),
+            f.when(
+                f.col("threei_genotype_effect_parameter_estimate").isNotNull(),
+                f.col("threei_genotype_effect_parameter_estimate"),
+            ).otherwise(f.col("genotype_effect_parameter_estimate")),
         )
         open_stats_df = open_stats_df.drop("threei_genotype_effect_parameter_estimate")
 
         open_stats_df = open_stats_df.withColumn(
             "significant",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("threei_significant").isNotNull(),
-                pyspark.sql.functions.col("threei_significant"),
-            ).otherwise(pyspark.sql.functions.col("significant")),
+            f.when(
+                f.col("threei_significant").isNotNull(),
+                f.col("threei_significant"),
+            ).otherwise(f.col("significant")),
         )
         open_stats_df = open_stats_df.drop("threei_significant")
 
         open_stats_df = open_stats_df.withColumn(
             "status",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("threei_status").isNotNull(),
-                pyspark.sql.functions.col("threei_status"),
-            ).otherwise(pyspark.sql.functions.col("status")),
+            f.when(
+                f.col("threei_status").isNotNull(),
+                f.col("threei_status"),
+            ).otherwise(f.col("status")),
         )
         open_stats_df = open_stats_df.drop("threei_status")
         open_stats_df = open_stats_df.withColumn(
             "statistical_method",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("threei_statistical_method").isNotNull(),
-                pyspark.sql.functions.col("threei_statistical_method"),
-            ).otherwise(pyspark.sql.functions.col("statistical_method")),
+            f.when(
+                f.col("threei_statistical_method").isNotNull(),
+                f.col("threei_statistical_method"),
+            ).otherwise(f.col("statistical_method")),
         )
         open_stats_df = open_stats_df.drop("threei_statistical_method")
 
         open_stats_df = open_stats_df.withColumn(
             "p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("threei_p_value").isNotNull(),
-                pyspark.sql.functions.col("threei_p_value"),
-            ).otherwise(pyspark.sql.functions.col("p_value")),
+            f.when(
+                f.col("threei_p_value").isNotNull(),
+                f.col("threei_p_value"),
+            ).otherwise(f.col("p_value")),
         )
         open_stats_df = open_stats_df.drop("threei_p_value")
 
         open_stats_df = open_stats_df.withColumn(
             "genotype_effect_p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("threei_genotype_effect_p_value").isNotNull(),
-                pyspark.sql.functions.col("threei_genotype_effect_p_value"),
-            ).otherwise(pyspark.sql.functions.col("genotype_effect_p_value")),
+            f.when(
+                f.col("threei_genotype_effect_p_value").isNotNull(),
+                f.col("threei_genotype_effect_p_value"),
+            ).otherwise(f.col("genotype_effect_p_value")),
         )
         open_stats_df = open_stats_df.drop("threei_genotype_effect_p_value")
         return open_stats_df
@@ -1243,7 +1123,7 @@ class ImpcStatsBundleMapper(PySparkTask):
     def _fertility_stats_results(
         self, observations_df: DataFrame, pipeline_df: DataFrame
     ):
-        fertility_condition = pyspark.sql.functions.col("parameter_stable_id").isin(
+        fertility_condition = f.col("parameter_stable_id").isin(
             ["IMPC_FER_001_001", "IMPC_FER_019_001"]
         )
 
@@ -1279,22 +1159,22 @@ class ImpcStatsBundleMapper(PySparkTask):
         )
         fertility_stats_results = fertility_stats_results.withColumn(
             "category",
-            pyspark.sql.functions.lower(pyspark.sql.functions.col("category")),
+            f.lower(f.col("category")),
         )
         fertility_stats_results = fertility_stats_results.withColumn(
-            "data_type", pyspark.sql.functions.lit("line")
+            "data_type", f.lit("line")
         )
         fertility_stats_results = fertility_stats_results.withColumn(
-            "effect_size", pyspark.sql.functions.lit(1.0)
+            "effect_size", f.lit(1.0)
         )
         fertility_stats_results = fertility_stats_results.withColumn(
-            "statistical_method", pyspark.sql.functions.lit("Supplied as data")
+            "statistical_method", f.lit("Supplied as data")
         )
         fertility_stats_results = fertility_stats_results.withColumn(
-            "status", pyspark.sql.functions.lit("Successful")
+            "status", f.lit("Successful")
         )
         fertility_stats_results = fertility_stats_results.withColumn(
-            "p_value", pyspark.sql.functions.lit(0.0)
+            "p_value", f.lit(0.0)
         )
 
         # fertility_stats_results = fertility_stats_results.join(
@@ -1310,59 +1190,53 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         fertility_stats_results = fertility_stats_results.withColumn(
             "termAcc",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("category") == "infertile",
-                pyspark.sql.functions.when(
-                    pyspark.sql.functions.col("parameter_stable_id")
-                    == "IMPC_FER_001_001",
-                    pyspark.sql.functions.lit("MP:0001925"),
-                ).otherwise(pyspark.sql.functions.lit("MP:0001926")),
-            ).otherwise(pyspark.sql.functions.lit(None)),
+            f.when(
+                f.col("category") == "infertile",
+                f.when(
+                    f.col("parameter_stable_id") == "IMPC_FER_001_001",
+                    f.lit("MP:0001925"),
+                ).otherwise(f.lit("MP:0001926")),
+            ).otherwise(f.lit(None)),
         )
 
         fertility_stats_results = fertility_stats_results.groupBy(
             required_stats_columns
             + ["data_type", "status", "effect_size", "statistical_method", "p_value"]
         ).agg(
-            pyspark.sql.functions.collect_set("category").alias("categories"),
-            pyspark.sql.functions.collect_set(
-                pyspark.sql.functions.struct(
-                    pyspark.sql.functions.lit("ABNORMAL")
-                    .cast(StringType())
-                    .alias("event"),
-                    pyspark.sql.functions.lit(None)
-                    .cast(StringType())
-                    .alias("otherPossibilities"),
+            f.collect_set("category").alias("categories"),
+            f.collect_set(
+                f.struct(
+                    f.lit("ABNORMAL").cast(StringType()).alias("event"),
+                    f.lit(None).cast(StringType()).alias("otherPossibilities"),
                     "sex",
-                    pyspark.sql.functions.col("termAcc").alias("term_id"),
+                    f.col("termAcc").alias("term_id"),
                 )
             ).alias("mp_term"),
         )
         fertility_stats_results = fertility_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
+            f.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
         )
         fertility_stats_results = fertility_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.size(pyspark.sql.functions.col("mp_term.term_id"))
-                == 0,
-                pyspark.sql.functions.lit(None),
-            ).otherwise(pyspark.sql.functions.col("mp_term")),
+            f.when(
+                f.size(f.col("mp_term.term_id")) == 0,
+                f.lit(None),
+            ).otherwise(f.col("mp_term")),
         )
         fertility_stats_results = fertility_stats_results.withColumn(
             "p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("mp_term").isNull(),
-                pyspark.sql.functions.lit(1.0),
-            ).otherwise(pyspark.sql.functions.col("p_value")),
+            f.when(
+                f.col("mp_term").isNull(),
+                f.lit(1.0),
+            ).otherwise(f.col("p_value")),
         )
         fertility_stats_results = fertility_stats_results.withColumn(
             "effect_size",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("mp_term").isNull(),
-                pyspark.sql.functions.lit(0.0),
-            ).otherwise(pyspark.sql.functions.col("effect_size")),
+            f.when(
+                f.col("mp_term").isNull(),
+                f.lit(0.0),
+            ).otherwise(f.col("effect_size")),
         )
         return fertility_stats_results
 
@@ -1390,15 +1264,15 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         mp_chooser = mp_chooser.withColumn(
             "category",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("optionText").isNull(),
-                pyspark.sql.functions.col("selectionOutcome"),
-            ).otherwise(pyspark.sql.functions.col("optionText")),
+            f.when(
+                f.col("optionText").isNull(),
+                f.col("selectionOutcome"),
+            ).otherwise(f.col("optionText")),
         )
 
         mp_chooser = mp_chooser.withColumn(
             "category",
-            pyspark.sql.functions.lower(pyspark.sql.functions.col("category")),
+            f.lower(f.col("category")),
         )
         mp_chooser = mp_chooser.drop("optionText", "selectionOutcome")
 
@@ -1417,7 +1291,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         ]
         embryo_stats_results = (
             observations_df.where(
-                pyspark.sql.functions.col("procedure_group").rlike(
+                f.col("procedure_group").rlike(
                     "|".join(
                         [
                             "IMPC_GPL",
@@ -1431,18 +1305,15 @@ class ImpcStatsBundleMapper(PySparkTask):
                         ]
                     )
                 )
-                & (
-                    pyspark.sql.functions.col("biological_sample_group")
-                    == "experimental"
-                )
-                & (pyspark.sql.functions.col("observation_type") == "categorical")
+                & (f.col("biological_sample_group") == "experimental")
+                & (f.col("observation_type") == "categorical")
             )
             .withColumnRenamed("gene_accession_id", "marker_accession_id")
             .withColumnRenamed("gene_symbol", "marker_symbol")
             .select(required_stats_columns)
         )
         embryo_control_data = observations_df.where(
-            pyspark.sql.functions.col("procedure_group").rlike(
+            f.col("procedure_group").rlike(
                 "|".join(
                     [
                         "IMPC_GPL",
@@ -1456,9 +1327,9 @@ class ImpcStatsBundleMapper(PySparkTask):
                     ]
                 )
             )
-            & (pyspark.sql.functions.col("biological_sample_group") == "control")
-            & (pyspark.sql.functions.col("observation_type") == "categorical")
-            & (pyspark.sql.functions.col("category").isin(["yes", "no"]))
+            & (f.col("biological_sample_group") == "control")
+            & (f.col("observation_type") == "categorical")
+            & (f.col("category").isin(["yes", "no"]))
         )
         embryo_control_data = embryo_control_data.select(
             "procedure_stable_id", "parameter_stable_id", "category"
@@ -1468,17 +1339,15 @@ class ImpcStatsBundleMapper(PySparkTask):
         ).count()
         window = Window.partitionBy(
             "procedure_stable_id", "parameter_stable_id"
-        ).orderBy(pyspark.sql.functions.col("count").desc())
+        ).orderBy(f.col("count").desc())
         embryo_normal_data = embryo_control_data.select(
             "procedure_stable_id",
             "parameter_stable_id",
-            pyspark.sql.functions.first("category")
-            .over(window)
-            .alias("normal_category"),
+            f.first("category").over(window).alias("normal_category"),
         ).distinct()
         embryo_stats_results = embryo_stats_results.withColumn(
             "category",
-            pyspark.sql.functions.lower(pyspark.sql.functions.col("category")),
+            f.lower(f.col("category")),
         )
         embryo_stats_results = embryo_stats_results.join(
             embryo_normal_data,
@@ -1488,26 +1357,23 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         embryo_stats_results = embryo_stats_results.withColumn(
             "category",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("category").isin(["yes", "no"])
-                & (
-                    pyspark.sql.functions.col("category")
-                    != pyspark.sql.functions.col("normal_category")
-                ),
-                pyspark.sql.functions.lit("abnormal"),
-            ).otherwise(pyspark.sql.functions.col("category")),
+            f.when(
+                f.col("category").isin(["yes", "no"])
+                & (f.col("category") != f.col("normal_category")),
+                f.lit("abnormal"),
+            ).otherwise(f.col("category")),
         )
 
         embryo_stats_results = embryo_stats_results.drop("normal_category")
 
         embryo_stats_results = embryo_stats_results.withColumn(
-            "data_type", pyspark.sql.functions.lit("categorical")
+            "data_type", f.lit("categorical")
         )
         embryo_stats_results = embryo_stats_results.withColumn(
-            "status", pyspark.sql.functions.lit("Successful")
+            "status", f.lit("Successful")
         )
         embryo_stats_results = embryo_stats_results.withColumn(
-            "statistical_method", pyspark.sql.functions.lit("Supplied as data")
+            "statistical_method", f.lit("Supplied as data")
         )
 
         embryo_stats_results = embryo_stats_results.join(
@@ -1529,67 +1395,57 @@ class ImpcStatsBundleMapper(PySparkTask):
         group_by_cols += ["data_type", "status", "statistical_method"]
 
         embryo_stats_results = embryo_stats_results.groupBy(group_by_cols).agg(
-            pyspark.sql.functions.collect_set("sex").alias("sex"),
-            pyspark.sql.functions.collect_set("category").alias("categories"),
-            pyspark.sql.functions.collect_set(
-                pyspark.sql.functions.struct(
-                    pyspark.sql.functions.lit("ABNORMAL")
-                    .cast(StringType())
-                    .alias("event"),
-                    pyspark.sql.functions.lit(None)
-                    .cast(StringType())
-                    .alias("otherPossibilities"),
-                    pyspark.sql.functions.col("sex"),
-                    pyspark.sql.functions.col("termAcc").alias("term_id"),
+            f.collect_set("sex").alias("sex"),
+            f.collect_set("category").alias("categories"),
+            f.collect_set(
+                f.struct(
+                    f.lit("ABNORMAL").cast(StringType()).alias("event"),
+                    f.lit(None).cast(StringType()).alias("otherPossibilities"),
+                    f.col("sex"),
+                    f.col("termAcc").alias("term_id"),
                 ),
             ).alias("mp_term"),
-            pyspark.sql.functions.collect_list(
-                pyspark.sql.functions.col("termAcc")
-            ).alias("abnormalCalls"),
+            f.collect_list(f.col("termAcc")).alias("abnormalCalls"),
         )
 
         embryo_stats_results = embryo_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
+            f.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
         )
         embryo_stats_results = embryo_stats_results.withColumn(
             "abnormalCallsCount",
-            pyspark.sql.functions.size(
-                pyspark.sql.functions.expr(
-                    "filter(abnormalCalls, mp -> mp IS NOT NULL)"
-                )
-            ),
+            f.size(f.expr("filter(abnormalCalls, mp -> mp IS NOT NULL)")),
         )
         embryo_stats_results = embryo_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.when(
+            f.when(
                 (
-                    (pyspark.sql.functions.col("zygosity") == "homozygote")
-                    | (pyspark.sql.functions.col("zygosity") == "hemizygote")
+                    (f.col("zygosity") == "homozygote")
+                    | (f.col("zygosity") == "hemizygote")
                 )
-                & (pyspark.sql.functions.col("abnormalCallsCount") >= 2),
-                pyspark.sql.functions.col("mp_term"),
+                & (f.col("abnormalCallsCount") >= 2),
+                f.col("mp_term"),
             )
             .when(
-                (pyspark.sql.functions.col("zygosity") == "heterozygote")
-                & (pyspark.sql.functions.col("abnormalCallsCount") >= 4),
-                pyspark.sql.functions.col("mp_term"),
+                (f.col("zygosity") == "heterozygote")
+                & (f.col("abnormalCallsCount") >= 4),
+                f.col("mp_term"),
             )
-            .otherwise(pyspark.sql.functions.lit(None)),
+            .otherwise(f.lit(None)),
         )
         embryo_stats_results = embryo_stats_results.withColumn(
             "p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("mp_term").isNull(),
-                pyspark.sql.functions.lit(1.0),
-            ).otherwise(pyspark.sql.functions.lit(0.0)),
+            f.when(
+                f.col("mp_term").isNull(),
+                f.lit(1.0),
+            ).otherwise(f.lit(0.0)),
         )
         embryo_stats_results = embryo_stats_results.withColumn(
             "effect_size",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("mp_term").isNull(),
-                pyspark.sql.functions.lit(0.0),
-            ).otherwise(pyspark.sql.functions.lit(1.0)),
+            f.when(
+                f.col("mp_term").isNull(),
+                f.lit(0.0),
+            ).otherwise(f.lit(1.0)),
         )
         embryo_stats_results = embryo_stats_results.groupBy(
             *[
@@ -1598,11 +1454,9 @@ class ImpcStatsBundleMapper(PySparkTask):
                 if col_name not in ["mp_term", "p_value", "effect_size"]
             ]
         ).agg(
-            pyspark.sql.functions.flatten(
-                pyspark.sql.functions.collect_set("mp_term")
-            ).alias("mp_term"),
-            pyspark.sql.functions.min("p_value").alias("p_value"),
-            pyspark.sql.functions.max("effect_size").alias("effect_size"),
+            f.flatten(f.collect_set("mp_term")).alias("mp_term"),
+            f.min("p_value").alias("p_value"),
+            f.max("effect_size").alias("effect_size"),
         )
         for col_name in embryo_stats_packets.columns:
             if (
@@ -1634,7 +1488,7 @@ class ImpcStatsBundleMapper(PySparkTask):
             .withColumnRenamed("optionText", "category")
         ).withColumn(
             "category",
-            pyspark.sql.functions.lower(pyspark.sql.functions.col("category")),
+            f.lower(f.col("category")),
         )
 
         required_stats_columns = STATS_OBSERVATIONS_JOIN + [
@@ -1652,7 +1506,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         ]
         embryo_viability_stats_results = (
             observations_df.where(
-                pyspark.sql.functions.col("parameter_stable_id").isin(
+                f.col("parameter_stable_id").isin(
                     [
                         "IMPC_EVL_001_001",
                         "IMPC_EVM_001_001",
@@ -1667,17 +1521,17 @@ class ImpcStatsBundleMapper(PySparkTask):
         )
         embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
             "category",
-            pyspark.sql.functions.lower(pyspark.sql.functions.col("category")),
+            f.lower(f.col("category")),
         )
 
         embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
-            "data_type", pyspark.sql.functions.lit("embryo")
+            "data_type", f.lit("embryo")
         )
         embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
-            "status", pyspark.sql.functions.lit("Successful")
+            "status", f.lit("Successful")
         )
         embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
-            "statistical_method", pyspark.sql.functions.lit("Supplied as data")
+            "statistical_method", f.lit("Supplied as data")
         )
 
         embryo_viability_stats_results = embryo_viability_stats_results.join(
@@ -1694,48 +1548,41 @@ class ImpcStatsBundleMapper(PySparkTask):
         embryo_viability_stats_results = embryo_viability_stats_results.groupBy(
             required_stats_columns + ["data_type", "status", "statistical_method"]
         ).agg(
-            pyspark.sql.functions.collect_set("category").alias("categories"),
-            pyspark.sql.functions.collect_set(
-                pyspark.sql.functions.struct(
-                    pyspark.sql.functions.lit("ABNORMAL")
-                    .cast(StringType())
-                    .alias("event"),
-                    pyspark.sql.functions.lit(None)
-                    .cast(StringType())
-                    .alias("otherPossibilities"),
-                    pyspark.sql.functions.lit("not_considered")
-                    .cast(StringType())
-                    .alias("sex"),
-                    pyspark.sql.functions.col("termAcc").alias("term_id"),
+            f.collect_set("category").alias("categories"),
+            f.collect_set(
+                f.struct(
+                    f.lit("ABNORMAL").cast(StringType()).alias("event"),
+                    f.lit(None).cast(StringType()).alias("otherPossibilities"),
+                    f.lit("not_considered").cast(StringType()).alias("sex"),
+                    f.col("termAcc").alias("term_id"),
                 )
             ).alias("mp_term"),
         )
 
         embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
+            f.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
         )
         embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.size(pyspark.sql.functions.col("mp_term.term_id"))
-                == 0,
-                pyspark.sql.functions.lit(None),
-            ).otherwise(pyspark.sql.functions.col("mp_term")),
+            f.when(
+                f.size(f.col("mp_term.term_id")) == 0,
+                f.lit(None),
+            ).otherwise(f.col("mp_term")),
         )
         embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
             "p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("mp_term").isNull(),
-                pyspark.sql.functions.lit(1.0),
-            ).otherwise(pyspark.sql.functions.lit(0.0)),
+            f.when(
+                f.col("mp_term").isNull(),
+                f.lit(1.0),
+            ).otherwise(f.lit(0.0)),
         )
         embryo_viability_stats_results = embryo_viability_stats_results.withColumn(
             "effect_size",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("mp_term").isNull(),
-                pyspark.sql.functions.lit(0.0),
-            ).otherwise(pyspark.sql.functions.lit(1.0)),
+            f.when(
+                f.col("mp_term").isNull(),
+                f.lit(0.0),
+            ).otherwise(f.lit(1.0)),
         )
 
         return embryo_viability_stats_results
@@ -1758,7 +1605,7 @@ class ImpcStatsBundleMapper(PySparkTask):
             .withColumnRenamed("optionText", "category")
         ).withColumn(
             "category",
-            pyspark.sql.functions.lower(pyspark.sql.functions.col("category")),
+            f.lower(f.col("category")),
         )
 
         required_stats_columns = STATS_OBSERVATIONS_JOIN + [
@@ -1778,18 +1625,12 @@ class ImpcStatsBundleMapper(PySparkTask):
         viability_stats_results = (
             observations_df.where(
                 (
-                    (
-                        pyspark.sql.functions.col("parameter_stable_id")
-                        == "IMPC_VIA_001_001"
-                    )
-                    & (
-                        pyspark.sql.functions.col("procedure_stable_id")
-                        == "IMPC_VIA_001"
-                    )
+                    (f.col("parameter_stable_id") == "IMPC_VIA_001_001")
+                    & (f.col("procedure_stable_id") == "IMPC_VIA_001")
                 )
                 | (
                     (
-                        pyspark.sql.functions.col("parameter_stable_id").isin(
+                        f.col("parameter_stable_id").isin(
                             [
                                 "IMPC_VIA_063_001",
                                 "IMPC_VIA_064_001",
@@ -1799,10 +1640,7 @@ class ImpcStatsBundleMapper(PySparkTask):
                             ]
                         )
                     )
-                    & (
-                        pyspark.sql.functions.col("procedure_stable_id")
-                        == "IMPC_VIA_002"
-                    )
+                    & (f.col("procedure_stable_id") == "IMPC_VIA_002")
                 )
             )
             .withColumnRenamed("gene_accession_id", "marker_accession_id")
@@ -1812,7 +1650,7 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         viability_stats_results = viability_stats_results.withColumn(
             "category",
-            pyspark.sql.functions.lower(pyspark.sql.functions.col("category")),
+            f.lower(f.col("category")),
         )
 
         json_outcome_schema = StructType(
@@ -1825,79 +1663,76 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         viability_stats_results = viability_stats_results.withColumn(
             "viability_outcome",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("procedure_stable_id") == "IMPC_VIA_002",
-                pyspark.sql.functions.from_json(
-                    pyspark.sql.functions.col("text_value"), json_outcome_schema
-                ),
-            ).otherwise(pyspark.sql.functions.lit(None)),
+            f.when(
+                f.col("procedure_stable_id") == "IMPC_VIA_002",
+                f.from_json(f.col("text_value"), json_outcome_schema),
+            ).otherwise(f.lit(None)),
         )
 
         viability_p_values = observations_df.where(
-            pyspark.sql.functions.col("parameter_stable_id") == "IMPC_VIA_032_001"
+            f.col("parameter_stable_id") == "IMPC_VIA_032_001"
         ).select(
             "procedure_stable_id",
             "colony_id",
-            pyspark.sql.functions.col("data_point").alias("p_value"),
+            f.col("data_point").alias("p_value"),
         )
 
         viability_male_mutants = observations_df.where(
-            pyspark.sql.functions.col("parameter_stable_id") == "IMPC_VIA_010_001"
+            f.col("parameter_stable_id") == "IMPC_VIA_010_001"
         ).select(
             "procedure_stable_id",
             "colony_id",
-            pyspark.sql.functions.col("data_point").alias("male_mutants"),
+            f.col("data_point").alias("male_mutants"),
         )
 
         viability_female_mutants = observations_df.where(
-            pyspark.sql.functions.col("parameter_stable_id") == "IMPC_VIA_014_001"
+            f.col("parameter_stable_id") == "IMPC_VIA_014_001"
         ).select(
             "procedure_stable_id",
             "colony_id",
-            pyspark.sql.functions.col("data_point").alias("female_mutants"),
+            f.col("data_point").alias("female_mutants"),
         )
 
         viability_stats_results = viability_stats_results.withColumn(
-            "data_type", pyspark.sql.functions.lit("line")
+            "data_type", f.lit("line")
         )
         viability_stats_results = viability_stats_results.withColumn(
-            "effect_size", pyspark.sql.functions.lit(1.0)
+            "effect_size", f.lit(1.0)
         )
         viability_stats_results = viability_stats_results.join(
             viability_p_values, ["colony_id", "procedure_stable_id"], "left_outer"
         )
         viability_stats_results = viability_stats_results.withColumn(
             "p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("procedure_stable_id") == "IMPC_VIA_002",
-                pyspark.sql.functions.col("viability_outcome.P"),
-            ).otherwise(pyspark.sql.functions.col("p_value")),
+            f.when(
+                f.col("procedure_stable_id") == "IMPC_VIA_002",
+                f.col("viability_outcome.P"),
+            ).otherwise(f.col("p_value")),
         )
         viability_stats_results = viability_stats_results.withColumn(
             "p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("p_value").isNull()
-                & ~pyspark.sql.functions.col("category").contains("Viable"),
-                pyspark.sql.functions.lit(0.0),
-            ).otherwise(pyspark.sql.functions.col("p_value")),
+            f.when(
+                f.col("p_value").isNull() & ~f.col("category").contains("Viable"),
+                f.lit(0.0),
+            ).otherwise(f.col("p_value")),
         )
         viability_stats_results = viability_stats_results.withColumn(
-            "male_controls", pyspark.sql.functions.lit(None)
+            "male_controls", f.lit(None)
         )
         viability_stats_results = viability_stats_results.join(
             viability_male_mutants, ["colony_id", "procedure_stable_id"], "left_outer"
         )
         viability_stats_results = viability_stats_results.withColumn(
             "male_mutants",
-            pyspark.sql.functions.when(
-                (pyspark.sql.functions.col("procedure_stable_id") == "IMPC_VIA_002")
-                & (pyspark.sql.functions.col("parameter_name").contains(" males ")),
-                pyspark.sql.functions.col("viability_outcome.n"),
-            ).otherwise(pyspark.sql.functions.col("male_mutants")),
+            f.when(
+                (f.col("procedure_stable_id") == "IMPC_VIA_002")
+                & (f.col("parameter_name").contains(" males ")),
+                f.col("viability_outcome.n"),
+            ).otherwise(f.col("male_mutants")),
         )
 
         viability_stats_results = viability_stats_results.withColumn(
-            "female_controls", pyspark.sql.functions.lit(None)
+            "female_controls", f.lit(None)
         )
         viability_stats_results = viability_stats_results.join(
             viability_female_mutants, ["colony_id", "procedure_stable_id"], "left_outer"
@@ -1905,23 +1740,23 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         viability_stats_results = viability_stats_results.withColumn(
             "female_mutants",
-            pyspark.sql.functions.when(
-                (pyspark.sql.functions.col("procedure_stable_id") == "IMPC_VIA_002")
-                & (pyspark.sql.functions.col("parameter_name").contains(" females ")),
-                pyspark.sql.functions.col("viability_outcome.n"),
-            ).otherwise(pyspark.sql.functions.col("female_mutants")),
+            f.when(
+                (f.col("procedure_stable_id") == "IMPC_VIA_002")
+                & (f.col("parameter_name").contains(" females ")),
+                f.col("viability_outcome.n"),
+            ).otherwise(f.col("female_mutants")),
         )
 
         viability_stats_results = viability_stats_results.withColumn(
             "statistical_method",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("procedure_stable_id") == "IMPC_VIA_002",
-                pyspark.sql.functions.lit("Binomial distribution probability"),
-            ).otherwise(pyspark.sql.functions.lit("Supplied as data")),
+            f.when(
+                f.col("procedure_stable_id") == "IMPC_VIA_002",
+                f.lit("Binomial distribution probability"),
+            ).otherwise(f.lit("Supplied as data")),
         )
 
         viability_stats_results = viability_stats_results.withColumn(
-            "status", pyspark.sql.functions.lit("Successful")
+            "status", f.lit("Successful")
         )
 
         viability_stats_results = viability_stats_results.join(
@@ -1948,140 +1783,115 @@ class ImpcStatsBundleMapper(PySparkTask):
                 "viability_outcome",
             ]
         ).agg(
-            pyspark.sql.functions.collect_set("category").alias("categories"),
-            pyspark.sql.functions.collect_set(
-                pyspark.sql.functions.struct(
-                    pyspark.sql.functions.lit("ABNORMAL")
-                    .cast(StringType())
-                    .alias("event"),
-                    pyspark.sql.functions.lit(None)
-                    .cast(StringType())
-                    .alias("otherPossibilities"),
-                    pyspark.sql.functions.lit("not_considered")
-                    .cast(StringType())
-                    .alias("sex"),
-                    pyspark.sql.functions.col("termAcc").alias("term_id"),
+            f.collect_set("category").alias("categories"),
+            f.collect_set(
+                f.struct(
+                    f.lit("ABNORMAL").cast(StringType()).alias("event"),
+                    f.lit(None).cast(StringType()).alias("otherPossibilities"),
+                    f.lit("not_considered").cast(StringType()).alias("sex"),
+                    f.col("termAcc").alias("term_id"),
                 )
             ).alias("mp_term"),
         )
 
         viability_stats_results = viability_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.when(
-                (pyspark.sql.functions.col("procedure_stable_id") == "IMPC_VIA_002"),
-                pyspark.sql.functions.array(
-                    pyspark.sql.functions.struct(
-                        pyspark.sql.functions.lit("ABNORMAL")
-                        .cast(StringType())
-                        .alias("event"),
-                        pyspark.sql.functions.lit(None)
-                        .cast(StringType())
-                        .alias("otherPossibilities"),
-                        pyspark.sql.functions.when(
-                            pyspark.sql.functions.col("parameter_name").contains(
-                                " males "
-                            ),
-                            pyspark.sql.functions.lit("male"),
+            f.when(
+                (f.col("procedure_stable_id") == "IMPC_VIA_002"),
+                f.array(
+                    f.struct(
+                        f.lit("ABNORMAL").cast(StringType()).alias("event"),
+                        f.lit(None).cast(StringType()).alias("otherPossibilities"),
+                        f.when(
+                            f.col("parameter_name").contains(" males "),
+                            f.lit("male"),
                         )
                         .when(
-                            pyspark.sql.functions.col("parameter_name").contains(
-                                " females "
-                            ),
-                            pyspark.sql.functions.lit("female"),
+                            f.col("parameter_name").contains(" females "),
+                            f.lit("female"),
                         )
-                        .otherwise(pyspark.sql.functions.lit("not_considered"))
+                        .otherwise(f.lit("not_considered"))
                         .cast(StringType())
                         .alias("sex"),
-                        pyspark.sql.functions.when(
-                            pyspark.sql.functions.col(
-                                "viability_outcome.outcome"
-                            ).contains("subviable"),
-                            pyspark.sql.functions.lit("MP:0011110"),
+                        f.when(
+                            f.col("viability_outcome.outcome").contains("subviable"),
+                            f.lit("MP:0011110"),
                         )
                         .when(
-                            pyspark.sql.functions.col(
-                                "viability_outcome.outcome"
-                            ).contains("lethal"),
-                            pyspark.sql.functions.lit("MP:0011100"),
+                            f.col("viability_outcome.outcome").contains("lethal"),
+                            f.lit("MP:0011100"),
                         )
-                        .otherwise(pyspark.sql.functions.lit(None).cast(StringType()))
+                        .otherwise(f.lit(None).cast(StringType()))
                         .cast(StringType())
                         .alias("term_id"),
                     )
                 ),
-            ).otherwise(pyspark.sql.functions.col("mp_term")),
+            ).otherwise(f.col("mp_term")),
         )
 
         viability_stats_results = viability_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
+            f.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
         )
         viability_stats_results = viability_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.size(pyspark.sql.functions.col("mp_term.term_id"))
-                == 0,
-                pyspark.sql.functions.lit(None),
-            ).otherwise(pyspark.sql.functions.col("mp_term")),
+            f.when(
+                f.size(f.col("mp_term.term_id")) == 0,
+                f.lit(None),
+            ).otherwise(f.col("mp_term")),
         )
         viability_stats_results = viability_stats_results.withColumn(
             "p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("mp_term").isNull(),
-                pyspark.sql.functions.lit(1.0),
-            ).otherwise(pyspark.sql.functions.col("p_value")),
+            f.when(
+                f.col("mp_term").isNull(),
+                f.lit(1.0),
+            ).otherwise(f.col("p_value")),
         )
         viability_stats_results = viability_stats_results.withColumn(
             "effect_size",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("mp_term").isNull(),
-                pyspark.sql.functions.lit(0.0),
-            ).otherwise(pyspark.sql.functions.col("effect_size")),
+            f.when(
+                f.col("mp_term").isNull(),
+                f.lit(0.0),
+            ).otherwise(f.col("effect_size")),
         )
         return viability_stats_results
 
     def _histopathology_stats_results(self, observations_df: DataFrame):
         histopathology_stats_results = observations_df.where(
-            pyspark.sql.functions.expr(
-                "exists(sub_term_id, term -> term LIKE 'MPATH:%')"
-            )
+            f.expr("exists(sub_term_id, term -> term LIKE 'MPATH:%')")
         )
         histopathology_stats_results = histopathology_stats_results.withColumn(
             "term_set",
-            pyspark.sql.functions.array_sort(
-                pyspark.sql.functions.array_distinct("sub_term_name")
-            ),
+            f.array_sort(f.array_distinct("sub_term_name")),
         )
         histopathology_stats_results = histopathology_stats_results.withColumn(
             "is_normal",
-            (pyspark.sql.functions.size("term_set") == 1)
-            & pyspark.sql.functions.expr("exists(term_set, term -> term = 'normal')"),
+            (f.size("term_set") == 1)
+            & f.expr("exists(term_set, term -> term = 'normal')"),
         )
         histopathology_stats_results = histopathology_stats_results.withColumn(
             "tissue_name",
-            pyspark.sql.functions.regexp_extract("parameter_name", "(.*)( - .*)", 1),
+            f.regexp_extract("parameter_name", "(.*)( - .*)", 1),
         )
 
         histopathology_significance_scores = observations_df.where(
-            pyspark.sql.functions.col("parameter_name").endswith("Significance score")
-        ).where(pyspark.sql.functions.col("biological_sample_group") == "experimental")
+            f.col("parameter_name").endswith("Significance score")
+        ).where(f.col("biological_sample_group") == "experimental")
 
         histopathology_significance_scores = (
             histopathology_significance_scores.withColumn(
                 "tissue_name",
-                pyspark.sql.functions.regexp_extract(
-                    "parameter_name", "(.*)( - .*)", 1
-                ),
+                f.regexp_extract("parameter_name", "(.*)( - .*)", 1),
             )
         )
 
         histopathology_significance_scores = (
             histopathology_significance_scores.withColumn(
                 "significance",
-                pyspark.sql.functions.when(
-                    pyspark.sql.functions.col("category") == "1",
-                    pyspark.sql.functions.lit(True),
-                ).otherwise(pyspark.sql.functions.lit(False)),
+                f.when(
+                    f.col("category") == "1",
+                    f.lit(True),
+                ).otherwise(f.lit(False)),
             )
         )
 
@@ -2101,11 +1911,10 @@ class ImpcStatsBundleMapper(PySparkTask):
         )
         histopathology_stats_results = histopathology_stats_results.withColumn(
             "significance",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("significance")
-                & ~pyspark.sql.functions.col("is_normal"),
-                pyspark.sql.functions.lit(True),
-            ).otherwise(pyspark.sql.functions.lit(False)),
+            f.when(
+                f.col("significance") & ~f.col("is_normal"),
+                f.lit(True),
+            ).otherwise(f.lit(False)),
         )
 
         required_stats_columns = STATS_OBSERVATIONS_JOIN + [
@@ -2134,10 +1943,10 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         histopathology_stats_results = histopathology_stats_results.withColumn(
             "sub_term_id",
-            pyspark.sql.functions.expr("filter(sub_term_id, mp -> mp LIKE 'MPATH:%')"),
+            f.expr("filter(sub_term_id, mp -> mp LIKE 'MPATH:%')"),
         )
         histopathology_stats_results = histopathology_stats_results.withColumn(
-            "term_id", pyspark.sql.functions.explode_outer("sub_term_id")
+            "term_id", f.explode_outer("sub_term_id")
         )
 
         histopathology_stats_results = histopathology_stats_results.groupBy(
@@ -2147,57 +1956,50 @@ class ImpcStatsBundleMapper(PySparkTask):
                 if col_name not in ["sex", "term_id"]
             ]
         ).agg(
-            pyspark.sql.functions.collect_set(
-                pyspark.sql.functions.struct(
-                    pyspark.sql.functions.lit("ABNORMAL")
-                    .cast(StringType())
-                    .alias("event"),
-                    pyspark.sql.functions.lit(None)
-                    .cast(StringType())
-                    .alias("otherPossibilities"),
-                    pyspark.sql.functions.col("sex"),
-                    pyspark.sql.functions.col("term_id"),
+            f.collect_set(
+                f.struct(
+                    f.lit("ABNORMAL").cast(StringType()).alias("event"),
+                    f.lit(None).cast(StringType()).alias("otherPossibilities"),
+                    f.col("sex"),
+                    f.col("term_id"),
                 )
             ).alias("mp_term")
         )
         histopathology_stats_results = histopathology_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
+            f.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
         )
         histopathology_stats_results = histopathology_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("significance").isNull()
-                | ~pyspark.sql.functions.col("significance"),
-                pyspark.sql.functions.lit(None),
-            ).otherwise(pyspark.sql.functions.col("mp_term")),
+            f.when(
+                f.col("significance").isNull() | ~f.col("significance"),
+                f.lit(None),
+            ).otherwise(f.col("mp_term")),
         )
 
         histopathology_stats_results = histopathology_stats_results.withColumn(
-            "statistical_method", pyspark.sql.functions.lit("Supplied as data")
+            "statistical_method", f.lit("Supplied as data")
         )
         histopathology_stats_results = histopathology_stats_results.withColumn(
-            "status", pyspark.sql.functions.lit("Successful")
+            "status", f.lit("Successful")
         )
         histopathology_stats_results = histopathology_stats_results.withColumn(
             "p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("significance").isNull()
-                | ~pyspark.sql.functions.col("significance"),
-                pyspark.sql.functions.lit(1.0),
-            ).otherwise(pyspark.sql.functions.lit(0.0)),
+            f.when(
+                f.col("significance").isNull() | ~f.col("significance"),
+                f.lit(1.0),
+            ).otherwise(f.lit(0.0)),
         )
         histopathology_stats_results = histopathology_stats_results.withColumn(
             "effect_size",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("significance").isNull()
-                | ~pyspark.sql.functions.col("significance"),
-                pyspark.sql.functions.lit(0.0),
-            ).otherwise(pyspark.sql.functions.lit(1.0)),
+            f.when(
+                f.col("significance").isNull() | ~f.col("significance"),
+                f.lit(0.0),
+            ).otherwise(f.lit(1.0)),
         )
 
         histopathology_stats_results = histopathology_stats_results.withColumn(
-            "data_type", pyspark.sql.functions.lit("histopathology")
+            "data_type", f.lit("histopathology")
         )
         histopathology_stats_results = histopathology_stats_results.drop("significance")
         histopathology_stats_results = histopathology_stats_results.dropDuplicates()
@@ -2206,17 +2008,13 @@ class ImpcStatsBundleMapper(PySparkTask):
 
     def _gross_pathology_stats_results(self, observations_df: DataFrame):
         gross_pathology_stats_results = observations_df.where(
-            (pyspark.sql.functions.col("biological_sample_group") != "control")
-            & pyspark.sql.functions.col("parameter_stable_id").like("%PAT%")
-            & (
-                pyspark.sql.functions.expr(
-                    "exists(sub_term_id, term -> term LIKE 'MP:%')"
-                )
-            )
+            (f.col("biological_sample_group") != "control")
+            & f.col("parameter_stable_id").like("%PAT%")
+            & (f.expr("exists(sub_term_id, term -> term LIKE 'MP:%')"))
         )
         gross_pathology_wt_hit_rate = observations_df.where(
-            (pyspark.sql.functions.col("biological_sample_group") == "control")
-            & pyspark.sql.functions.col("parameter_stable_id").like("%PAT%")
+            (f.col("biological_sample_group") == "control")
+            & f.col("parameter_stable_id").like("%PAT%")
         )
         gross_pathology_wt_hit_rate = gross_pathology_wt_hit_rate.groupBy(
             "pipeline_stable_id",
@@ -2227,21 +2025,21 @@ class ImpcStatsBundleMapper(PySparkTask):
             "metadata_group",
         ).agg(
             (
-                pyspark.sql.functions.countDistinct(
-                    pyspark.sql.functions.when(
-                        pyspark.sql.functions.expr(
-                            "exists(sub_term_id, term -> term LIKE 'MP:%')"
+                f.countDistinct(
+                    f.when(
+                        f.expr(
+                            "exists(sub_term_id, term -> term LIKE 'MP:%' AND term <> 'MP:0002169')"
                         ),
-                        pyspark.sql.functions.col("specimen_id"),
-                    ).otherwise(lit(None))
+                        f.col("specimen_id"),
+                    ).otherwise(f.lit(None))
                 )
-                / pyspark.sql.functions.countDistinct("specimen_id")
+                / f.countDistinct("specimen_id")
             ).alias("wt_hit_rate")
         )
 
         gross_pathology_ko_hit_rate = observations_df.where(
-            (pyspark.sql.functions.col("biological_sample_group") == "experimental")
-            & pyspark.sql.functions.col("parameter_stable_id").like("%PAT%")
+            (f.col("biological_sample_group") == "experimental")
+            & f.col("parameter_stable_id").like("%PAT%")
         )
         gross_pathology_ko_hit_rate = gross_pathology_ko_hit_rate.groupBy(
             "pipeline_stable_id",
@@ -2253,15 +2051,15 @@ class ImpcStatsBundleMapper(PySparkTask):
             "zygosity",
         ).agg(
             (
-                pyspark.sql.functions.countDistinct(
-                    pyspark.sql.functions.when(
-                        pyspark.sql.functions.expr(
-                            "exists(sub_term_id, term -> term LIKE 'MP:%')"
+                f.countDistinct(
+                    f.when(
+                        f.expr(
+                            "exists(sub_term_id, term -> term LIKE 'MP:%' AND term <> 'MP:0002169')"
                         ),
-                        pyspark.sql.functions.col("specimen_id"),
-                    ).otherwise(lit(None))
+                        f.col("specimen_id"),
+                    ).otherwise(f.lit(None))
                 )
-                / pyspark.sql.functions.countDistinct("specimen_id")
+                / f.countDistinct("specimen_id")
             ).alias("ko_hit_rate")
         )
 
@@ -2273,7 +2071,6 @@ class ImpcStatsBundleMapper(PySparkTask):
                 "parameter_stable_id",
                 "phenotyping_center",
                 "metadata_group",
-                "zygosity",
             ],
             "left_outer",
         )
@@ -2281,9 +2078,8 @@ class ImpcStatsBundleMapper(PySparkTask):
         gross_pathology_significance_scores = (
             gross_pathology_significance_scores.withColumn(
                 "significance",
-                pyspark.sql.functions.when(
-                    pyspark.sql.functions.col("ko_hit_rate")
-                    >= (0.25 + pyspark.sql.functions.col("wt_hit_rate")),
+                f.when(
+                    f.col("ko_hit_rate") >= (0.25 + f.col("wt_hit_rate")),
                     True,
                 ).otherwise(False),
             )
@@ -2314,10 +2110,10 @@ class ImpcStatsBundleMapper(PySparkTask):
 
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "sub_term_id",
-            pyspark.sql.functions.expr("filter(sub_term_id, mp -> mp LIKE 'MP:%')"),
+            f.expr("filter(sub_term_id, mp -> mp LIKE 'MP:%')"),
         )
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
-            "term_id", pyspark.sql.functions.explode_outer("sub_term_id")
+            "term_id", f.explode_outer("sub_term_id")
         )
 
         gross_pathology_stats_results = gross_pathology_stats_results.join(
@@ -2329,25 +2125,24 @@ class ImpcStatsBundleMapper(PySparkTask):
                 "phenotyping_center",
                 "colony_id",
                 "metadata_group",
+                "strain_accession_id",
                 "zygosity",
             ],
         )
 
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "term_id",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.expr(
+            f.when(
+                f.expr(
                     "exists(sub_term_name, term -> term = 'no abnormal phenotype detected')"
                 )
-                | pyspark.sql.functions.expr(
-                    "exists(sub_term_name, term -> term = 'normal')"
-                ),
-                pyspark.sql.functions.lit(None),
+                | f.expr("exists(sub_term_name, term -> term = 'normal')"),
+                f.lit(None),
             ).otherwise(
-                pyspark.sql.functions.when(
-                    pyspark.sql.functions.col("significance") == True,
-                    pyspark.sql.functions.col("term_id"),
-                ).otherwise(lit(None))
+                f.when(
+                    f.col("significance") == True,
+                    f.col("term_id"),
+                ).otherwise(f.lit(None))
             ),
         )
 
@@ -2358,54 +2153,49 @@ class ImpcStatsBundleMapper(PySparkTask):
                 if col_name not in ["sex", "sub_term_id", "sub_term_name"]
             ]
         ).agg(
-            pyspark.sql.functions.collect_set(
-                pyspark.sql.functions.struct(
-                    pyspark.sql.functions.lit("ABNORMAL")
-                    .cast(StringType())
-                    .alias("event"),
-                    pyspark.sql.functions.lit(None)
-                    .cast(StringType())
-                    .alias("otherPossibilities"),
-                    pyspark.sql.functions.col("sex"),
-                    pyspark.sql.functions.col("term_id"),
+            f.collect_set(
+                f.struct(
+                    f.lit("ABNORMAL").cast(StringType()).alias("event"),
+                    f.lit(None).cast(StringType()).alias("otherPossibilities"),
+                    f.col("sex"),
+                    f.col("term_id"),
                 )
             ).alias("mp_term")
         )
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
+            f.expr("filter(mp_term, mp -> mp.term_id IS NOT NULL)"),
         )
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "mp_term",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.size(pyspark.sql.functions.col("mp_term.term_id"))
-                == 0,
-                pyspark.sql.functions.lit(None),
-            ).otherwise(pyspark.sql.functions.col("mp_term")),
+            f.when(
+                f.size(f.col("mp_term.term_id")) == 0,
+                f.lit(None),
+            ).otherwise(f.col("mp_term")),
         )
 
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
-            "statistical_method", pyspark.sql.functions.lit("Supplied as data")
+            "statistical_method", f.lit("Supplied as data")
         )
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
-            "status", pyspark.sql.functions.lit("Successful")
+            "status", f.lit("Successful")
         )
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "p_value",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("mp_term").isNull(),
-                pyspark.sql.functions.lit(1.0),
-            ).otherwise(pyspark.sql.functions.lit(0.0)),
+            f.when(
+                f.col("mp_term").isNull(),
+                f.lit(1.0),
+            ).otherwise(f.lit(0.0)),
         )
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "effect_size",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.col("mp_term").isNull(),
-                pyspark.sql.functions.lit(0.0),
-            ).otherwise(pyspark.sql.functions.lit(1.0)),
+            f.when(
+                f.col("mp_term").isNull(),
+                f.lit(0.0),
+            ).otherwise(f.lit(1.0)),
         )
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
-            "data_type", pyspark.sql.functions.lit("adult-gross-path")
+            "data_type", f.lit("adult-gross-path")
         )
         return gross_pathology_stats_results
 
@@ -2465,51 +2255,37 @@ class ImpcStatsBundleMapper(PySparkTask):
     def _add_via_002_mp_term_options(self, pipeline_core_df):
         pipeline_core_df = pipeline_core_df.withColumn(
             "top_level_mp_id",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.array_contains(
-                    pyspark.sql.functions.col("procedure_stable_id"), "IMPC_VIA_002"
-                ),
-                pyspark.sql.functions.array(pyspark.sql.functions.lit("MP:0010768")),
-            ).otherwise(pyspark.sql.functions.col("top_level_mp_id")),
+            f.when(
+                f.array_contains(f.col("procedure_stable_id"), "IMPC_VIA_002"),
+                f.array(f.lit("MP:0010768")),
+            ).otherwise(f.col("top_level_mp_id")),
         )
         pipeline_core_df = pipeline_core_df.withColumn(
             "top_level_mp_term",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.array_contains(
-                    pyspark.sql.functions.col("procedure_stable_id"), "IMPC_VIA_002"
-                ),
-                pyspark.sql.functions.array(
-                    pyspark.sql.functions.lit("mortality/aging")
-                ),
-            ).otherwise(pyspark.sql.functions.col("top_level_mp_term")),
+            f.when(
+                f.array_contains(f.col("procedure_stable_id"), "IMPC_VIA_002"),
+                f.array(f.lit("mortality/aging")),
+            ).otherwise(f.col("top_level_mp_term")),
         )
         pipeline_core_df = pipeline_core_df.withColumn(
             "mp_id",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.array_contains(
-                    pyspark.sql.functions.col("procedure_stable_id"), "IMPC_VIA_002"
+            f.when(
+                f.array_contains(f.col("procedure_stable_id"), "IMPC_VIA_002"),
+                f.array(
+                    f.lit("MP:0011100"),
+                    f.lit("MP:0011110"),
                 ),
-                pyspark.sql.functions.array(
-                    pyspark.sql.functions.lit("MP:0011100"),
-                    pyspark.sql.functions.lit("MP:0011110"),
-                ),
-            ).otherwise(pyspark.sql.functions.col("mp_id")),
+            ).otherwise(f.col("mp_id")),
         )
         pipeline_core_df = pipeline_core_df.withColumn(
             "mp_term",
-            pyspark.sql.functions.when(
-                pyspark.sql.functions.array_contains(
-                    pyspark.sql.functions.col("procedure_stable_id"), "IMPC_VIA_002"
+            f.when(
+                f.array_contains(f.col("procedure_stable_id"), "IMPC_VIA_002"),
+                f.array(
+                    f.lit("preweaning lethality, complete penetrance"),
+                    f.lit("preweaning lethality, incomplete penetrance"),
                 ),
-                pyspark.sql.functions.array(
-                    pyspark.sql.functions.lit(
-                        "preweaning lethality, complete penetrance"
-                    ),
-                    pyspark.sql.functions.lit(
-                        "preweaning lethality, incomplete penetrance"
-                    ),
-                ),
-            ).otherwise(pyspark.sql.functions.col("mp_term")),
+            ).otherwise(f.col("mp_term")),
         )
         return pipeline_core_df
 
