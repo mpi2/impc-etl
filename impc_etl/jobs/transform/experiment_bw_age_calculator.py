@@ -136,7 +136,7 @@ class ExperimentBWAgeCalculator(PySparkTask):
 
         # Filter the IMPReSS using the analysisWithBodyweight flag
         weight_parameters = parameters.where(
-            col("analysisWithBodyweight") == "is_body_weight"
+            col("analysisWithBodyweight") == "is_bodyweight"
         )
 
         # Join both the  observations DF and the BW parameters DF to obtain the observations that are BW

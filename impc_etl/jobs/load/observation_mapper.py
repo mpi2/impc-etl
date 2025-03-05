@@ -200,7 +200,7 @@ class ExperimentToObservationMapper(PySparkTask):
             "parameter.analysisWithBodyweight",
         ).distinct()
         not_use_body_weight_parameters = parameters.where(
-            col("analysisWithBodyweight") != "analyse_with_body_weight"
+            ~(col("analysisWithBodyweight") == "analyse_with_bodyweight")
         )
         not_use_body_weight_parameters = not_use_body_weight_parameters.alias("bw")
         observations_df = observations_df.alias("obs")
@@ -1097,7 +1097,7 @@ class ExperimentToObservationMapper(PySparkTask):
             ).distinct()
             body_weight_parameters = parameters.where(
                 col("analysisWithBodyweight").isin(
-                    ["is_body_weight", "drop_body_weight_from_analysis"]
+                    ["is_bodyweight", "drop_bodyweight_from_analysis"]
                 )
             )
             if "ESLIM" in parameter_stable_id:
