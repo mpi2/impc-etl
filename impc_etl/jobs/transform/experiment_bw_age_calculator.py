@@ -323,16 +323,7 @@ class ExperimentBWAgeCalculator(PySparkTask):
         errors = []
         min_time = datetime.min.time()
         experiment_date_time = datetime.combine(experiment_date, min_time)
-        fasted_weights = [w for w in specimen_weights if w["weightFasted"]]
-        non_fasted_weights = [w for w in specimen_weights if not w["weightFasted"]]
-        if len(fasted_weights) > 0:
-            same_procedure_fasted_weights = [
-                w for w in fasted_weights if procedure_group in w["weightParameterID"]
-            ]
-            if len(same_procedure_fasted_weights) > 0:
-                specimen_weights = same_procedure_fasted_weights
-            else:
-                specimen_weights = non_fasted_weights
+
         for candidate_weight in specimen_weights:
             if (
                 candidate_weight["weightValue"] == "null"
