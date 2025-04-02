@@ -5,13 +5,20 @@ Jobs to generate JPEG images for all the IMPC Imaging data.
 - Should have a function to generate a thumbnail image
 """
 
-from pathlib import Path
 import shutil
 import subprocess
+from pathlib import Path
+
 import click
 
 
-def convert_image(input_path: str, output_path: str, width: int = None, quality: int = None):
+def convert_image(
+    input_path: str,
+    output_path: str,
+    width: int = None,
+    quality: int = None,
+    mogrify: bool = False,
+) -> None:
     """Converts an image using the system 'convert' command.
 
     Parameters:
@@ -27,11 +34,13 @@ def convert_image(input_path: str, output_path: str, width: int = None, quality:
     if not input_path or not output_path:
         raise ValueError("Both input_path and output_path must be specified.")
 
-    input_ext = Path(input_path).suffix.lower()
-
     # Construct the command.
-    command = ["convert", input_path]
+    if mogrify:
+        command = ["mogrify", "-format", "jpg"]
+    else:
+        command = ["convert", input_path]
 
+    input_ext = Path(input_path).suffix.lower()
     # Apply auto-level and normalize only for DICOM images.
     if input_ext in [".dcm"]:
         command.extend(["-auto-level", "-normalize"])
@@ -47,22 +56,22 @@ def convert_image(input_path: str, output_path: str, width: int = None, quality:
     # Add the output path.
     command.append(output_path)
 
-    # Execute the command.
-    try:
-        subprocess.run(command, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error: Failed to convert image. {e}")
-        raise
+    # Execute the command
+    subprocess.run(command, check=True)
 
 
 @click.command()
-@click.option("--manifest", type=click.Path(exists=True, file_okay=True, dir_okay=False))
+@click.option(
+    "--manifest", type=click.Path(exists=True, file_okay=True, dir_okay=False)
+)
 @click.option("--batch-from", type=int, required=True)
 @click.option("--batch-to", type=int, required=True)
 @click.option("--full-suffix", type=str, required=True, help="Full size image suffix")
 @click.option("--thumbnail-suffix", type=str, required=True, help="Thumbnail suffix")
 @click.option("--thumbnail-width", type=int, required=True, help="Width of thumbnail")
-@click.option("--thumbnail-quality", type=int, required=True, help="Quality of thumbnail")
+@click.option(
+    "--thumbnail-quality", type=int, required=True, help="Quality of thumbnail"
+)
 def process_images(
     manifest: str,
     batch_from: int,
@@ -70,7 +79,7 @@ def process_images(
     full_suffix: str,
     thumbnail_suffix: str,
     thumbnail_width: int,
-    thumbnail_quality: int
+    thumbnail_quality: int,
 ) -> None:
     """Processes images in the given manifest within the specified batch range."""
     click.echo(f"Manifest file: {manifest}")
@@ -89,13 +98,42 @@ def process_images(
         output_dir.mkdir(parents=True, exist_ok=True)
         output_file = output_file_basename + full_suffix + ".jpg"
         thumbnail_file = output_file_basename + thumbnail_suffix + ".jpg"
-
-        if Path(input_file).suffix.lower() in [".jpg", ".jpeg"] and (input_file != output_file):
+        if Path(input_file).suffix.lower() in [".jpg", ".jpeg"] and (
+            input_file != output_file
+        ):
             shutil.copy2(input_file, output_file)
         else:
-            convert_image(input_file, output_file, width=None, quality=100)
+            try:
+                convert_image(input_file, output_file, width=None, quality=100)
+            except Exception as e:
+                try:
+                    convert_image(
+                        input_file, output_file, width=None, quality=100, mogrify=True
+                    )
+                except Exception as e:
+                    click.echo(f"Error converting full JPG {input_file}: {e}")
 
-        convert_image(input_file, thumbnail_file, width=thumbnail_width, quality=thumbnail_quality)
+        try:
+            convert_image(
+                output_file,
+                thumbnail_file,
+                width=thumbnail_width,
+                quality=thumbnail_quality,
+            )
+        except Exception as e:
+            try:
+                convert_image(
+                    output_file,
+                    thumbnail_file,
+                    width=thumbnail_width,
+                    quality=thumbnail_quality,
+                    mogrify=True,
+                )
+            except Exception as e:
+                click.echo(f"Error converting thumbnail JPG {output_file}: {e}")
+
+    click.echo("Done.")
+
 
 if __name__ == "__main__":
     process_images()
