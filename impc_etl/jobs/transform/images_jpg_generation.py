@@ -40,6 +40,7 @@ def convert_image(
     else:
         command = ["convert", input_path]
 
+    input_ext = Path(input_path).suffix.lower()
     # Apply auto-level and normalize only for DICOM images.
     if input_ext in [".dcm"]:
         command.extend(["-auto-level", "-normalize"])
