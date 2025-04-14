@@ -1763,7 +1763,9 @@ class ImpcMiceProductsMapper(SmallPySparkTask):
         )
 
         specimen_df = specimen_df.join(
-            mgi_strain_df, col("strain_id") == col("mgiStrainID"), "left_outer"
+            mgi_strain_df,
+            concat(lit("MGI:"), col("_strainID")) == col("mgiStrainID"),
+            "left_outer",
         )
 
         specimen_df = specimen_df.withColumn(
