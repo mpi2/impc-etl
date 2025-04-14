@@ -1,22 +1,12 @@
 import csv
+import json
+import os
 import re
 
 import luigi
 from luigi.contrib.spark import PySparkTask
 from pyspark import SparkContext
-from pyspark.sql import SparkSession, Window, DataFrame
-import json
-import os
-from pyspark.sql.types import (
-    DoubleType,
-    IntegerType,
-    BooleanType,
-    ArrayType,
-    StringType,
-    StructType,
-    StructField,
-    Row,
-)
+from pyspark.sql import SparkSession, Window
 from pyspark.sql.functions import (
     col,
     first,
@@ -28,10 +18,8 @@ from pyspark.sql.functions import (
     collect_set,
     lit,
     concat,
-    count,
     max,
     min,
-    avg,
     regexp_replace,
     split,
     arrays_zip,
@@ -52,14 +40,25 @@ from pyspark.sql.functions import (
     lower,
     size,
     array_intersect,
-    filter,
     trim,
     explode_outer,
     desc,
 )
+from pyspark.sql.types import (
+    DoubleType,
+    IntegerType,
+    BooleanType,
+    ArrayType,
+    StringType,
+    StructType,
+    StructField,
+)
 
-from impc_etl.config.constants import Constants
-from impc_etl.jobs.extract import ProductReportExtractor
+from impc_etl.jobs.clean.specimen_cleaner import (
+    MouseSpecimenCleaner,
+    EmbryoSpecimenCleaner,
+)
+from impc_etl.jobs.extract import MGIStrainReportExtractor
 from impc_etl.jobs.extract.ontology_hierarchy_extractor import (
     OntologyTermHierarchyExtractor,
 )
@@ -1687,19 +1686,26 @@ class ImpcPublicationsMapper(SmallPySparkTask):
             )
 
 
-class ImpcProductsMapper(SmallPySparkTask):
+class ImpcMiceProductsMapper(SmallPySparkTask):
     """
     PySpark Task class to extract GenTar Product report data.
     """
 
     #: Name of the Spark task
-    name: str = "ImpcProductsMapper"
+    name: str = "ImpcMiceProductsMapper"
+
+    #: Path to the Mice products report JSON file
+    mice_products_report_json_path = luigi.Parameter()
 
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
     def requires(self):
-        return [ProductReportExtractor()]
+        return [
+            MouseSpecimenCleaner(),
+            EmbryoSpecimenCleaner(),
+            MGIStrainReportExtractor(),
+        ]
 
     def output(self):
         """
@@ -1707,7 +1713,7 @@ class ImpcProductsMapper(SmallPySparkTask):
         (e.g. impc/dr15.2/parquet/product_report_parquet)
         """
         return ImpcConfig().get_target(
-            f"{self.output_path}/impc_web_api/gene_order_service_json"
+            f"{self.output_path}/impc_web_api/gentar-products_mice-latest.json"
         )
 
     def app_options(self):
@@ -1715,7 +1721,10 @@ class ImpcProductsMapper(SmallPySparkTask):
         Generates the options pass to the PySpark job
         """
         return [
+            self.mice_products_report_json_path,
             self.input()[0].path,
+            self.input()[1].path,
+            self.input()[2].path,
             self.output().path,
         ]
 
@@ -1726,35 +1735,57 @@ class ImpcProductsMapper(SmallPySparkTask):
         spark = SparkSession(sc)
 
         # Parsing app options
-        products_parquet_path = args[0]
-        output_path = args[1]
+        mice_products_report_json_path = args[0]
+        mouse_specimen_parquet_path = args[1]
+        embryo_specimen_parquet_path = args[2]
+        mgi_strain_parquet_path = args[3]
+        output_path = args[4]
 
-        products_df = spark.read.parquet(products_parquet_path)
-        products_df = products_df.select(
-            "mgi_accession_id",
-            "marker_symbol",
-            "allele_name",
-            "allele_description",
-            "type",
+        products_df = spark.read.json(mice_products_report_json_path)
+        mouse_specimen_df = spark.read.parquet(mouse_specimen_parquet_path)
+        embryo_specimen_df = spark.read.parquet(embryo_specimen_parquet_path)
+        mgi_strain_df = spark.read.parquet(mgi_strain_parquet_path)
+
+        mouse_specimen_df = mouse_specimen_df.select("_colonyID", "_strainID")
+        embryo_specimen_df = embryo_specimen_df.select("_colonyID", "_strainID")
+        specimen_df = mouse_specimen_df.union(embryo_specimen_df).distinct()
+        specimen_df = specimen_df.withColumn(
+            "strain_id",
+            when(col("_strainID").rlike("^[0-9]+$"), col("_strainID")).otherwise(
+                lit(None)
+            ),
         )
-        products_df = products_df.withColumn(
-            "allele_symbol",
-            concat(col("marker_symbol"), lit("<"), col("allele_name"), lit(">")),
-        )
-        products_df = products_df.groupBy(
-            "mgi_accession_id", "allele_symbol", "allele_description"
-        ).agg(collect_set("type").alias("product_types"))
-
-        products_df = products_df.withColumnRenamed(
-            "mgi_accession_id", "mgiGeneAccessionId"
+        specimen_df = specimen_df.withColumn(
+            "strain_name",
+            when(~col("_strainID").rlike("^[0-9]+$"), col("_strainID")).otherwise(
+                lit(None)
+            ),
         )
 
-        for col_name in products_df.columns:
-            products_df = products_df.withColumnRenamed(
-                col_name, to_camel_case(col_name)
-            )
+        specimen_df = specimen_df.join(
+            mgi_strain_df, col("strain_id") == col("mgiStrainID"), "left_outer"
+        )
 
-        products_df.repartition(100).write.option("ignoreNullFields", "false").json(
+        specimen_df = specimen_df.withColumn(
+            "strain_name",
+            when(col("strain_name").isNull(), col("strainName")).otherwise(
+                col("strain_name")
+            ),
+        )
+
+        specimen_df = specimen_df.withColumnRenamed(
+            "_colonyID", "associatedProductColonyName"
+        )
+        specimen_df = specimen_df.withColumnRenamed("strain_name", "displayStrainName")
+        specimen_df = specimen_df.select(
+            "associatedProductColonyName", "displayStrainName"
+        ).distinct()
+
+        products_df = products_df.join(
+            specimen_df, "associatedProductColonyName", "left_outer"
+        )
+
+        products_df.repartition(1).write.option("ignoreNullFields", "false").json(
             output_path
         )
 
