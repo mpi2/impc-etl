@@ -1775,9 +1775,7 @@ class ImpcMiceProductsMapper(SmallPySparkTask):
             ),
         )
 
-        specimen_df = specimen_df.withColumnRenamed(
-            "_colonyID", "associatedProductColonyName"
-        )
+        specimen_df = specimen_df.withColumnRenamed("_colonyID", "name")
         specimen_df = specimen_df.withColumnRenamed("strain_name", "displayStrainName")
         specimen_df = specimen_df.select("name", "displayStrainName").distinct()
 
