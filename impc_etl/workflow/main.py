@@ -13,7 +13,7 @@ from impc_etl.jobs.load.impc_api.impc_api_mapper import (
     ImpcGenePhenotypeHitsMapper,
     ImpcLacZExpressionMapper,
     ImpcPublicationsMapper,
-    ImpcProductsMapper,
+    ImpcMiceProductsMapper,
     ImpcGeneImagesMapper,
     ImpcGeneDiseasesMapper,
     ImpcGeneHistopathologyMapper,
@@ -37,7 +37,6 @@ from impc_etl.jobs.load.impc_api.impc_api_mapper import (
     ImpcBatchQueryMapper,
 )
 from impc_etl.jobs.load.impc_api.impc_bulk_api_mapper import ImpcBulkApiMapper
-from impc_etl.jobs.load.impc_api.impc_bulk_api_mongo_load import ImpcBulkApiMongoLoader
 from impc_etl.jobs.load.impc_images_mapper import ImagesPipelineInputGenerator
 from impc_etl.jobs.load.impc_kg.impc_kg_mapper import (
     ImpcKgTimeSeriesObservationObservationMapper,
@@ -262,7 +261,7 @@ class ImpcWebApiMapper(luigi.Task):
             ImpcGeneHistopathologyMapper(),
             ImpcGeneDiseasesMapper(),
             ImpcPublicationsMapper(),
-            ImpcProductsMapper(),
+            ImpcMiceProductsMapper(),
             ImpcDatasetsMetadataMapper(),
             ImpcDatasetsMapper(),
             ImpcPhenotypeSearchMapper(),
