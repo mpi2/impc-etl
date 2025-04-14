@@ -1775,17 +1775,11 @@ class ImpcMiceProductsMapper(SmallPySparkTask):
             ),
         )
 
-        specimen_df = specimen_df.withColumnRenamed(
-            "_colonyID", "associatedProductColonyName"
-        )
+        specimen_df = specimen_df.withColumnRenamed("_colonyID", "name")
         specimen_df = specimen_df.withColumnRenamed("strain_name", "displayStrainName")
-        specimen_df = specimen_df.select(
-            "associatedProductColonyName", "displayStrainName"
-        ).distinct()
+        specimen_df = specimen_df.select("name", "displayStrainName").distinct()
 
-        products_df = products_df.join(
-            specimen_df, "associatedProductColonyName", "left_outer"
-        )
+        products_df = products_df.join(specimen_df, "name", "left_outer")
 
         products_df.repartition(1).write.option("ignoreNullFields", "false").json(
             output_path
