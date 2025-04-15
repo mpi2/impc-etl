@@ -3312,7 +3312,7 @@ class ImpcExternalLinksMapper(PySparkTask):
         )
 
         gwas_mouse_human_ortholog_report_df = mouse_human_ortholog_report_df.select(
-            "human_gene_symbol", "mgi_gene_acc_id"
+            "human_gene_symbol", "mgi_gene_accession_id"
         ).distinct()
 
         gene_mgi_accession_df = (
@@ -3392,9 +3392,7 @@ class ImpcExternalLinksMapper(PySparkTask):
         ).distinct()
 
         morphic_mouse_human_ortholog_report_df = mouse_human_ortholog_report_df.select(
-            "human_gene_symbol",
-            "mgi_gene_acc_id",
-            "hgnc_acc_id"
+            "human_gene_symbol", "mgi_gene_accession_id", "hgnc_acc_id"
         ).distinct()
 
         morphic_external_links_df = gene_mgi_accession_df.join(
