@@ -3382,7 +3382,7 @@ class ImpcExternalLinksMapper(PySparkTask):
         )
         uniprot_external_links_df = uniprot_external_links_df.withColumn(
             "href",
-            concat(lit("https://www.uniprot.org/uniprot/uniprotkb/"), col("label")),
+            concat(lit("https://www.uniprot.org/uniprotkb/"), col("label")),
         )
         uniprot_external_links_df = uniprot_external_links_df.withColumn(
             "description", lit(None)
