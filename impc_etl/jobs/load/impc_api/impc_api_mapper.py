@@ -3305,15 +3305,15 @@ class ImpcExternalLinksMapper(PySparkTask):
                 )
             )
 
-        mouse_human_ortholog_report_df = mouse_human_ortholog_report_df.select(
-            "human_gene_symbol", "mgi_gene_acc_id", "hgnc_acc_id"
-        ).distinct()
-
         mouse_human_ortholog_report_df = (
             mouse_human_ortholog_report_df.withColumnRenamed(
                 "mgi_gene_acc_id", "mgi_gene_accession_id"
             )
         )
+
+        gwas_mouse_human_ortholog_report_df = mouse_human_ortholog_report_df.select(
+            "human_gene_symbol", "mgi_gene_acc_id"
+        ).distinct()
 
         gene_mgi_accession_df = (
             gene_df.select("mgi_accession_id")
@@ -3322,7 +3322,7 @@ class ImpcExternalLinksMapper(PySparkTask):
         )
 
         gwas_external_links_df = gene_mgi_accession_df.join(
-            mouse_human_ortholog_report_df, "mgi_gene_accession_id"
+            gwas_mouse_human_ortholog_report_df, "mgi_gene_accession_id"
         )
 
         gwas_external_links_df = gwas_external_links_df.withColumnRenamed(
@@ -3391,8 +3391,14 @@ class ImpcExternalLinksMapper(PySparkTask):
             "mgiGeneAccessionId", "label", "href", "providerName", "description"
         ).distinct()
 
+        morphic_mouse_human_ortholog_report_df = mouse_human_ortholog_report_df.select(
+            "human_gene_symbol",
+            "mgi_gene_acc_id",
+            "hgnc_acc_id"
+        ).distinct()
+
         morphic_external_links_df = gene_mgi_accession_df.join(
-            mouse_human_ortholog_report_df, "mgi_gene_accession_id"
+            morphic_mouse_human_ortholog_report_df, "mgi_gene_accession_id"
         )
 
         morphic_external_links_df = morphic_external_links_df.join(
