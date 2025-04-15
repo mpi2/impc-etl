@@ -3306,8 +3306,8 @@ class ImpcExternalLinksMapper(PySparkTask):
             )
 
         mouse_human_ortholog_report_df = mouse_human_ortholog_report_df.select(
-            "human_gene_symbol", "mgi_gene_acc_id"
-        )
+            "human_gene_symbol", "mgi_gene_acc_id", "hgnc_acc_id"
+        ).distinct()
 
         mouse_human_ortholog_report_df = (
             mouse_human_ortholog_report_df.withColumnRenamed(
@@ -3382,9 +3382,7 @@ class ImpcExternalLinksMapper(PySparkTask):
         )
         uniprot_external_links_df = uniprot_external_links_df.withColumn(
             "href",
-            concat(
-                lit("https://www.uniprot.org/uniprot/uniprotkb/"), col("label")
-            ),
+            concat(lit("https://www.uniprot.org/uniprot/uniprotkb/"), col("label")),
         )
         uniprot_external_links_df = uniprot_external_links_df.withColumn(
             "description", lit(None)
@@ -3404,10 +3402,6 @@ class ImpcExternalLinksMapper(PySparkTask):
 
         morphic_external_links_df = morphic_external_links_df.withColumnRenamed(
             "mgi_gene_accession_id", "mgiGeneAccessionId"
-        )
-
-        morphic_external_links_df = morphic_external_links_df.withColumnRenamed(
-            "human_gene_symbol", "label"
         )
 
         morphic_external_links_df = morphic_external_links_df.withColumnRenamed(
