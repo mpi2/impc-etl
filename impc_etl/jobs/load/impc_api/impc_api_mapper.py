@@ -3372,7 +3372,7 @@ class ImpcExternalLinksMapper(PySparkTask):
             col("uniprot_db_id") == lit("MGI")
         )
         uniprot_external_links_df = uniprot_external_links_df.withColumn(
-            "mgiGeneAccessionId", concat(lit("MGI:"), col("uniprot_external_id"))
+            "mgiGeneAccessionId", col("uniprot_external_id")
         )
         uniprot_external_links_df = uniprot_external_links_df.withColumnRenamed(
             "uniprot_id", "label"
