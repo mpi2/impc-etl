@@ -3205,6 +3205,8 @@ class ImpcExternalLinksMapper(PySparkTask):
 
     mouse_human_ortholog_report_tsv_path: luigi.Parameter = luigi.Parameter()
     umass_early_lethal_report_csv_path: luigi.Parameter = luigi.Parameter()
+    uniprot_report_csv_path: luigi.Parameter = luigi.Parameter()
+    morphic_report_csv_path: luigi.Parameter = luigi.Parameter()
     #: Path of the output directory where the new parquet file will be generated.
     output_path: luigi.Parameter = luigi.Parameter()
 
@@ -3228,6 +3230,8 @@ class ImpcExternalLinksMapper(PySparkTask):
             self.input()[0].path,
             self.mouse_human_ortholog_report_tsv_path,
             self.umass_early_lethal_report_csv_path,
+            self.uniprot_report_csv_path,
+            self.morphic_report_csv_path,
             self.output().path,
         ]
 
@@ -3241,7 +3245,9 @@ class ImpcExternalLinksMapper(PySparkTask):
         gene_parquet_path = args[0]
         mouse_human_ortholog_report_tsv_path = args[1]
         umass_early_lethal_report_csv_path = args[2]
-        output_path = args[3]
+        uniprot_report_csv_path = args[3]
+        morphic_report_csv_path = args[4]
+        output_path = args[5]
 
         gene_df = spark.read.parquet(gene_parquet_path)
         mouse_human_ortholog_report_df = spark.read.csv(
@@ -3250,6 +3256,28 @@ class ImpcExternalLinksMapper(PySparkTask):
         umass_early_lethal_report_df = spark.read.csv(
             umass_early_lethal_report_csv_path, header=True, multiLine=True
         )
+        uniprot_report_df = spark.read.csv(
+            uniprot_report_csv_path,
+            sep="\t",
+            header=False,
+            schema=StructType(
+                [
+                    StructField("uniprot_id", StringType(), True),
+                    StructField("uniprot_db_id", StringType(), True),
+                    StructField("uniprot_external_id", StringType(), True),
+                ]
+            ),
+        )
+        morphic_report_df = spark.read.csv(
+            morphic_report_csv_path,
+            header=False,
+            schema=StructType(
+                [
+                    StructField("morphic_human_gene_symbol", StringType(), True),
+                ]
+            ),
+        )
+
         umass_early_lethal_report_df = umass_early_lethal_report_df.withColumnRenamed(
             "MGI Number", "mgi_accession_id"
         )
@@ -3340,7 +3368,73 @@ class ImpcExternalLinksMapper(PySparkTask):
             "mgiGeneAccessionId", "label", "href", "providerName", "description"
         )
 
-        external_links_df = gwas_external_links_df.union(umass_external_links_df)
+        uniprot_external_links_df = uniprot_report_df.where(
+            col("uniprot_db_id") == lit("MGI")
+        )
+        uniprot_external_links_df = uniprot_external_links_df.withColumn(
+            "mgiGeneAccessionId", concat(lit("MGI:"), col("uniprot_external_id"))
+        )
+        uniprot_external_links_df = uniprot_external_links_df.withColumnRenamed(
+            "uniprot_id", "label"
+        )
+        uniprot_external_links_df = uniprot_external_links_df.withColumn(
+            "providerName", lit("UniProt")
+        )
+        uniprot_external_links_df = uniprot_external_links_df.withColumn(
+            "href",
+            concat(
+                lit("https://www.uniprot.org/uniprot/uniprotkb/"), col("uniprot_id")
+            ),
+        )
+        uniprot_external_links_df = uniprot_external_links_df.withColumn(
+            "description", lit(None)
+        )
+        uniprot_external_links_df = uniprot_external_links_df.select(
+            "mgiGeneAccessionId", "label", "href", "providerName", "description"
+        ).distinct()
+
+        morphic_external_links_df = gene_mgi_accession_df.join(
+            mouse_human_ortholog_report_df, "mgi_gene_accession_id"
+        )
+
+        morphic_external_links_df = morphic_external_links_df.join(
+            morphic_report_df,
+            col("human_gene_symbol") == col("morphic_human_gene_symbol"),
+        )
+
+        morphic_external_links_df = morphic_external_links_df.withColumnRenamed(
+            "mgi_gene_accession_id", "mgiGeneAccessionId"
+        )
+
+        morphic_external_links_df = morphic_external_links_df.withColumnRenamed(
+            "human_gene_symbol", "label"
+        )
+
+        morphic_external_links_df = morphic_external_links_df.withColumnRenamed(
+            "human_gene_symbol", "label"
+        )
+
+        morphic_external_links_df = morphic_external_links_df.withColumn(
+            "href",
+            concat(lit("https://morphic.bio/genes/"), col("hgnc_acc_id"), lit("/")),
+        )
+        morphic_external_links_df = morphic_external_links_df.withColumn(
+            "providerName", lit("MorPhiC Program")
+        )
+
+        morphic_external_links_df = morphic_external_links_df.withColumn(
+            "description", lit(None)
+        )
+
+        morphic_external_links_df = morphic_external_links_df.select(
+            "mgiGeneAccessionId", "label", "href", "providerName", "description"
+        ).distinct()
+
+        external_links_df = (
+            gwas_external_links_df.union(umass_external_links_df)
+            .union(uniprot_external_links_df)
+            .union(morphic_external_links_df)
+        )
         external_links_df.write.json(output_path, mode="overwrite")
 
 
