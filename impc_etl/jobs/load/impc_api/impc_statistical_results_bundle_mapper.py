@@ -809,7 +809,12 @@ class ImpcStatsBundleMapper(PySparkTask):
                 f.when(
                     (
                         f.col("data_type").isin(
-                            ["unidimensional", "time_series", "categorical"]
+                            [
+                                "unidimensional",
+                                "time_series",
+                                "categorical",
+                                "adult-gross-path",
+                            ]
                         )
                         & (f.col(col_name).isNotNull())
                     ),
@@ -821,7 +826,12 @@ class ImpcStatsBundleMapper(PySparkTask):
             f.when(
                 (
                     f.col("data_type").isin(
-                        ["unidimensional", "time_series", "categorical"]
+                        [
+                            "unidimensional",
+                            "time_series",
+                            "categorical",
+                            "adult-gross-path",
+                        ]
                     )
                     & (f.col("body_weight").isNotNull())
                 ),
@@ -839,7 +849,7 @@ class ImpcStatsBundleMapper(PySparkTask):
         open_stats_df = open_stats_df.withColumn(
             "category",
             f.when(
-                (f.col("data_type") == "categorical")
+                (f.col("data_type").isin(["categorical", "adult-gross-path"]))
                 & (f.col("observations_response").isNotNull()),
                 f.col("observations_response"),
             ).otherwise(f.expr("transform(external_sample_id, sample_id -> NULL)")),
@@ -2034,7 +2044,39 @@ class ImpcStatsBundleMapper(PySparkTask):
                     ).otherwise(f.lit(None))
                 )
                 / f.countDistinct("specimen_id")
-            ).alias("wt_hit_rate")
+            ).alias("wt_hit_rate"),
+            (
+                f.countDistinct(
+                    f.when(
+                        f.expr(
+                            "exists(sub_term_id, term -> term LIKE 'MP:%' AND term <> 'MP:0002169')"
+                        ),
+                        f.col("specimen_id"),
+                    ).otherwise(f.lit(None))
+                )
+            ).alias("wt_hit_count"),
+            f.countDistinct("specimen_id").alias("wt_specimen_count"),
+            f.collect_list("weight").alias("wt_observations_body_weight"),
+            f.collect_list("date_of_experiment").alias(
+                "wt_observations_date_of_experiment"
+            ),
+            f.collect_list("external_sample_id").alias(
+                "wt_observations_external_sample_id"
+            ),
+            f.collect_list("sex").alias("wt_observations_sex"),
+            f.collect_list(
+                f.when(
+                    f.expr(
+                        "exists(sub_term_id, term -> term LIKE 'MP:%' AND term <> 'MP:0002169')"
+                    ),
+                    f.lit("abnormal"),
+                ).otherwise(f.lit("normal"))
+            ).alias("wt_observations_response"),
+            f.collect_list("sex").alias("wt_observations_sex"),
+            f.collect_list("biological_sample_group").alias(
+                "wt_observations_biological_sample_group"
+            ),
+            f.collect_list("observation_id").alias("wt_observations_id"),
         )
 
         gross_pathology_ko_hit_rate = observations_df.where(
@@ -2060,7 +2102,39 @@ class ImpcStatsBundleMapper(PySparkTask):
                     ).otherwise(f.lit(None))
                 )
                 / f.countDistinct("specimen_id")
-            ).alias("ko_hit_rate")
+            ).alias("ko_hit_rate"),
+            (
+                f.countDistinct(
+                    f.when(
+                        f.expr(
+                            "exists(sub_term_id, term -> term LIKE 'MP:%' AND term <> 'MP:0002169')"
+                        ),
+                        f.col("specimen_id"),
+                    ).otherwise(f.lit(None))
+                )
+            ).alias("ko_hit_count"),
+            f.countDistinct("specimen_id").alias("ko_specimen_count"),
+            f.collect_list("weight").alias("ko_observations_body_weight"),
+            f.collect_list("date_of_experiment").alias(
+                "ko_observations_date_of_experiment"
+            ),
+            f.collect_list("external_sample_id").alias(
+                "ko_observations_external_sample_id"
+            ),
+            f.collect_list("sex").alias("ko_observations_sex"),
+            f.collect_list(
+                f.when(
+                    f.expr(
+                        "exists(sub_term_id, term -> term LIKE 'MP:%' AND term <> 'MP:0002169')"
+                    ),
+                    f.lit("abnormal"),
+                ).otherwise(f.lit("normal"))
+            ).alias("ko_observations_response"),
+            f.collect_list("sex").alias("ko_observations_sex"),
+            f.collect_list("biological_sample_group").alias(
+                "ko_observations_biological_sample_group"
+            ),
+            f.collect_list("observation_id").alias("ko_observations_id"),
         )
 
         gross_pathology_significance_scores = gross_pathology_ko_hit_rate.join(
@@ -2085,6 +2159,45 @@ class ImpcStatsBundleMapper(PySparkTask):
             )
         )
 
+        gross_pathology_significance_scores = (
+            gross_pathology_significance_scores.withColumn(
+                "observations_body_weight",
+                f.concat("ko_observations_body_weight", "wt_observations_body_weight"),
+            )
+            .withColumn(
+                "observations_date_of_experiment",
+                f.concat(
+                    "ko_observations_date_of_experiment",
+                    "wt_observations_date_of_experiment",
+                ),
+            )
+            .withColumn(
+                "observations_external_sample_id",
+                f.concat(
+                    "ko_observations_external_sample_id",
+                    "wt_observations_external_sample_id",
+                ),
+            )
+            .withColumn(
+                "observations_sex",
+                f.concat("ko_observations_sex", "wt_observations_sex"),
+            )
+            .withColumn(
+                "observations_response",
+                f.concat("ko_observations_response", "wt_observations_response"),
+            )
+            .withColumn(
+                "observations_biological_sample_group",
+                f.concat(
+                    "ko_observations_biological_sample_group",
+                    "wt_observations_biological_sample_group",
+                ),
+            )
+            .withColumn(
+                "observations_id", f.concat("ko_observations_id", "wt_observations_id")
+            )
+        )
+
         required_stats_columns = STATS_OBSERVATIONS_JOIN + [
             "sex",
             "procedure_stable_id",
@@ -2099,6 +2212,13 @@ class ImpcStatsBundleMapper(PySparkTask):
             "sub_term_id",
             "sub_term_name",
             "specimen_id",
+            "observations_body_weight",
+            "observations_date_of_experiment",
+            "observations_external_sample_id",
+            "observations_sex",
+            "observations_response",
+            "observations_biological_sample_group",
+            "observations_id",
         ]
         gross_pathology_stats_results = (
             gross_pathology_stats_results.withColumnRenamed(
