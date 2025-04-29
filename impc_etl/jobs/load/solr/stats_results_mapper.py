@@ -2577,7 +2577,6 @@ class StatsResultsMapper(PySparkTask):
             f.collect_list("external_sample_id").alias(
                 "wt_observations_external_sample_id"
             ),
-            f.collect_list("sex").alias("wt_observations_sex"),
             f.collect_list(
                 f.when(
                     f.expr(
@@ -2635,7 +2634,6 @@ class StatsResultsMapper(PySparkTask):
             f.collect_list("external_sample_id").alias(
                 "ko_observations_external_sample_id"
             ),
-            f.collect_list("sex").alias("ko_observations_sex"),
             f.collect_list(
                 f.when(
                     f.expr(
