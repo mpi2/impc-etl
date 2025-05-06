@@ -2536,9 +2536,11 @@ class StatsResultsMapper(PySparkTask):
             & f.col("parameter_stable_id").like("%PAT%")
             & (f.expr("exists(sub_term_id, term -> term LIKE 'MP:%')"))
         )
+
         gross_pathology_wt_hit_rate = observations_df.where(
             (f.col("biological_sample_group") == "control")
             & f.col("parameter_stable_id").like("%PAT%")
+            & (f.expr("exists(sub_term_id, term -> term LIKE 'MP:%')"))
         )
         gross_pathology_wt_hit_rate = gross_pathology_wt_hit_rate.groupBy(
             "pipeline_stable_id",
@@ -2562,9 +2564,7 @@ class StatsResultsMapper(PySparkTask):
             (
                 f.countDistinct(
                     f.when(
-                        f.expr(
-                            "exists(sub_term_id, term -> term LIKE 'MP:%' AND term <> 'MP:0002169')"
-                        ),
+                        f.expr("exists(sub_term_id, term -> term <> 'MP:0002169')"),
                         f.col("specimen_id"),
                     ).otherwise(f.lit(None))
                 )
@@ -2579,9 +2579,7 @@ class StatsResultsMapper(PySparkTask):
             ),
             f.collect_list(
                 f.when(
-                    f.expr(
-                        "exists(sub_term_id, term -> term LIKE 'MP:%' AND term <> 'MP:0002169')"
-                    ),
+                    f.expr("exists(sub_term_id, term -> term <> 'MP:0002169')"),
                     f.lit("abnormal"),
                 ).otherwise(f.lit("normal"))
             ).alias("wt_observations_response"),
@@ -2590,11 +2588,24 @@ class StatsResultsMapper(PySparkTask):
                 "wt_observations_biological_sample_group"
             ),
             f.collect_list("observation_id").alias("wt_observations_id"),
+            f.countDistinct(
+                f.when(
+                    f.col("sex") == "female",
+                    f.col("specimen_id"),
+                ).otherwise(f.lit(None))
+            ).alias("female_control_count"),
+            f.countDistinct(
+                f.when(
+                    f.col("sex") == "male",
+                    f.col("specimen_id"),
+                ).otherwise(f.lit(None))
+            ).alias("male_control_count"),
         )
 
         gross_pathology_ko_hit_rate = observations_df.where(
             (f.col("biological_sample_group") == "experimental")
             & f.col("parameter_stable_id").like("%PAT%")
+            & (f.expr("exists(sub_term_id, term -> term LIKE 'MP:%')"))
         )
         gross_pathology_ko_hit_rate = gross_pathology_ko_hit_rate.groupBy(
             "pipeline_stable_id",
@@ -2647,6 +2658,18 @@ class StatsResultsMapper(PySparkTask):
                 "ko_observations_biological_sample_group"
             ),
             f.collect_list("observation_id").alias("ko_observations_id"),
+            f.countDistinct(
+                f.when(
+                    f.col("sex") == "female",
+                    f.col("specimen_id"),
+                ).otherwise(f.lit(None))
+            ).alias("female_mutant_count"),
+            f.countDistinct(
+                f.when(
+                    f.col("sex") == "male",
+                    f.col("specimen_id"),
+                ).otherwise(f.lit(None))
+            ).alias("male_mutant_count"),
         )
 
         gross_pathology_significance_scores = gross_pathology_ko_hit_rate.join(
@@ -2785,7 +2808,30 @@ class StatsResultsMapper(PySparkTask):
                     f.col("sex"),
                     f.col("term_id"),
                 )
-            ).alias("mp_term")
+            ).alias("mp_term"),
+            f.first("observations_body_weight").alias("observations_body_weight"),
+            f.first("observations_date_of_experiment").alias(
+                "observations_date_of_experiment"
+            ),
+            f.first("observations_external_sample_id").alias(
+                "observations_external_sample_id"
+            ),
+            f.first("observations_sex").alias("observations_sex"),
+            f.first("observations_response").alias("observations_response"),
+            f.first("observations_biological_sample_group").alias(
+                "observations_biological_sample_group"
+            ),
+            f.first("observations_id").alias("observations_id"),
+            f.first("wt_hit_rate").alias("wt_hit_rate"),
+            f.first("wt_hit_count").alias("wt_hit_count"),
+            f.first("wt_specimen_count").alias("wt_specimen_count"),
+            f.first("ko_hit_rate").alias("ko_hit_rate"),
+            f.first("ko_hit_count").alias("ko_hit_count"),
+            f.first("ko_specimen_count").alias("ko_specimen_count"),
+            f.first("female_control_count").alias("female_control_count"),
+            f.first("male_control_count").alias("male_control_count"),
+            f.first("female_mutant_count").alias("female_mutant_count"),
+            f.first("male_mutant_count").alias("male_mutant_count"),
         )
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "mp_term",
@@ -2821,6 +2867,28 @@ class StatsResultsMapper(PySparkTask):
         )
         gross_pathology_stats_results = gross_pathology_stats_results.withColumn(
             "data_type", f.lit("adult-gross-path")
+        )
+        gross_pathology_stats_results = (
+            gross_pathology_stats_results.drop(
+                *[
+                    col_name
+                    for col_name in gross_pathology_stats_results.columns
+                    if col_name.startswith("observations")
+                ]
+            )
+            .drop("specimen_id")
+            .withColumn("mp_term", f.explode_outer("mp_term"))
+            .groupBy(
+                *[
+                    col_name
+                    for col_name in gross_pathology_stats_results.columns
+                    if not col_name.startswith("observations")
+                       and col_name != "mp_term"
+                       and col_name != "specimen_id"
+                ]
+            )
+            .agg(f.collect_set("mp_term").alias("mp_term"))
+            .distinct()
         )
         return gross_pathology_stats_results
 
