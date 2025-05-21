@@ -2438,6 +2438,9 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
                         "female_effect_size",
                         "batch_significant",
                         "variance_significant",
+                        "weight_effect_p_value",
+                        "weight_effect_parameter_estimate",
+                        "weight_effect_stderr_estimate",
                     ]
                 },
             ],
@@ -2593,6 +2596,9 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
             "mp_term_name_options",
             "unit",
             "parameter_category_list",
+            "weight_effect_p_value",
+            "weight_effect_parameter_estimate",
+            "weight_effect_stderr_estimate",
         )
 
         stats_results_df = stats_results_df.withColumn(
