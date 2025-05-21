@@ -2682,7 +2682,9 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
                                     col(sub_column).alias(col_name_map[sub_column])
                                     if sub_column in col_name_map
                                     else col(sub_column).alias(
-                                        to_camel_case(sub_column)
+                                        to_camel_case(
+                                            sub_column.replace("pvalue", "p_value")
+                                        )
                                     )
                                     for sub_column in column[sub_field_name]
                                 ]
