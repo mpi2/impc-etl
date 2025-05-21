@@ -2552,6 +2552,18 @@ class ImpcDatasetsMetadataMapper(PySparkTask):
             "group_1_residuals_normality_test",  # group under statisticalMethod.attributes
             "group_2_genotype",  # group under statisticalMethod.attributes
             "group_2_residuals_normality_test",  # group under statisticalMethod.attributes
+            "female_effect_size_low_normal_vs_high",  # group under statisticalMethod.attributes
+            "female_effect_size_low_vs_normal_high",  # group under statisticalMethod.attributes
+            "female_pvalue_low_normal_vs_high",  # group under statisticalMethod.attributes
+            "female_pvalue_low_vs_normal_high",  # group under statisticalMethod.attributes
+            "male_effect_size_low_normal_vs_high",  # group under statisticalMethod.attributes
+            "male_effect_size_low_vs_normal_high",  # group under statisticalMethod.attributes
+            "male_pvalue_low_normal_vs_high",  # group under statisticalMethod.attributes
+            "male_pvalue_low_vs_normal_high",  # group under statisticalMethod.attributes
+            "genotype_effect_size_low_normal_vs_high",  # group under statisticalMethod.attributes
+            "genotype_effect_size_low_vs_normal_high",  # group under statisticalMethod.attributes
+            "genotype_pvalue_low_normal_vs_high",  # group under statisticalMethod.attributes
+            "genotype_pvalue_low_vs_normal_high",  # group under statisticalMethod.attributes
             "interaction_effect_p_value",  # group under statisticalMethod.attributes
             "interaction_significant",  # group under statisticalMethod.attributes
             "intercept_estimate",  # group under statisticalMethod.attributes
